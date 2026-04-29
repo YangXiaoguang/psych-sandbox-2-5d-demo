@@ -21,8 +21,8 @@ export function App(): JSX.Element {
   const [initialScene] = useState<SceneState>(() => loadScene() ?? createInitialScene());
   const [objects, setObjects] = useState<SandboxObject[]>(initialScene.objects);
   const [events, setEvents] = useState<SandboxEvent[]>(initialScene.events);
-  const [selectedId, setSelectedId] = useState<string | null>(objects[0]?.id ?? null);
-  const [showGuides, setShowGuides] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showGuides, setShowGuides] = useState(false);
   const editorRef = useRef<SandboxEditorHandle | null>(null);
 
   const analysis = useMemo(() => analyzeScene(objects), [objects]);

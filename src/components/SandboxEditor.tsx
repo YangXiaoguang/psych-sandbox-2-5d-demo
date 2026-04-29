@@ -12,6 +12,7 @@ import { Group, Layer, Stage, Transformer } from "react-konva";
 import type { SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp, depthSortObjects } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
+import { getDepthScale, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
 import { SandboxObjectShape } from "./SandboxObjectShape";
@@ -70,8 +71,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
     const updateScale = () => {
       const nextScale = Math.min(
-        (node.clientWidth - 24) / BOARD_WIDTH,
-        (node.clientHeight - 24) / BOARD_HEIGHT,
+        (node.clientWidth - 24) / VIEW_WIDTH,
+        (node.clientHeight - 24) / VIEW_HEIGHT,
       );
       setScale(clamp(Number(nextScale.toFixed(3)), 0.5, 1.2));
     };
@@ -125,7 +126,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onDeleteSelected, selectedId]);
 
-  const toStagePoint = useCallback(
+  const toBoardPoint = useCallback(
     (clientX: number, clientY: number) => {
       const frame = stageFrameRef.current;
       if (!frame) {
@@ -133,10 +134,10 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       }
 
       const rect = frame.getBoundingClientRect();
-      return {
-        x: clamp((clientX - rect.left) / scale, 24, BOARD_WIDTH - 24),
-        y: clamp((clientY - rect.top) / scale, 24, BOARD_HEIGHT - 24),
-      };
+      return unprojectPoint({
+        x: (clientX - rect.left) / scale,
+        y: (clientY - rect.top) / scale,
+      });
     },
     [scale],
   );
@@ -173,7 +174,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       return;
     }
 
-    onDropAsset(assetId, toStagePoint(event.clientX, event.clientY));
+    onDropAsset(assetId, toBoardPoint(event.clientX, event.clientY));
   };
 
   const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
@@ -185,11 +186,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
   const handleDragMove = (object: SandboxObject, event: Konva.KonvaEventObject<DragEvent>) => {
     const node = event.target as Konva.Group;
-    const next = {
-      x: clamp(node.x(), 24, BOARD_WIDTH - 24),
-      y: clamp(node.y(), 24, BOARD_HEIGHT - 24),
-    };
-    node.position(next);
+    const next = unprojectPoint({ x: node.x(), y: node.y() });
+    node.position(projectPoint(next));
     onPatchObject(object.id, next);
   };
 
@@ -199,15 +197,18 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       return;
     }
 
-    const rawScale = (Math.abs(node.scaleX()) + Math.abs(node.scaleY())) / 2;
+    const boardPoint = unprojectPoint({ x: node.x(), y: node.y() });
+    const depthScale = getDepthScale(boardPoint.y);
+    const rawScale = (Math.abs(node.scaleX()) + Math.abs(node.scaleY())) / 2 / depthScale;
     const nextScale = clamp(Number(rawScale.toFixed(2)), 0.35, 2.4);
     const patch = {
-      x: clamp(node.x(), 24, BOARD_WIDTH - 24),
-      y: clamp(node.y(), 24, BOARD_HEIGHT - 24),
+      x: boardPoint.x,
+      y: boardPoint.y,
       rotation: normalizeRotation(node.rotation()),
       scale: nextScale,
     };
-    node.scale({ x: nextScale, y: nextScale });
+    node.position(projectPoint(boardPoint));
+    node.scale({ x: nextScale * depthScale, y: nextScale * depthScale });
     onPatchObject(object.id, patch);
 
     const from = transformStartRef.current[object.id];
@@ -229,82 +230,87 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
         <div
           className="stage-frame"
           ref={stageFrameRef}
-          style={{ width: BOARD_WIDTH * scale, height: BOARD_HEIGHT * scale }}
+          style={{ width: VIEW_WIDTH * scale, height: VIEW_HEIGHT * scale }}
           onDragOver={(event) => event.preventDefault()}
           onDrop={handleDrop}
         >
           <Stage
             ref={stageRef}
-            width={BOARD_WIDTH * scale}
-            height={BOARD_HEIGHT * scale}
+            width={VIEW_WIDTH * scale}
+            height={VIEW_HEIGHT * scale}
             onMouseDown={handleStageMouseDown}
             onTouchStart={handleStageMouseDown}
           >
             <Layer scaleX={scale} scaleY={scale}>
               <SandboxGuideLayer showGuides={showGuides} />
 
-              {sortedObjects.map((object, index) => (
-                <Group
-                  key={object.id}
-                  ref={(node) => {
-                    objectRefs.current[object.id] = node;
-                  }}
-                  name="sandbox-object"
-                  x={object.x}
-                  y={object.y}
-                  rotation={object.rotation}
-                  scaleX={object.scale}
-                  scaleY={object.scale}
-                  draggable
-                  onMouseDown={(event) => {
-                    event.cancelBubble = true;
-                    onSelectObject(object.id);
-                  }}
-                  onTouchStart={(event) => {
-                    event.cancelBubble = true;
-                    onSelectObject(object.id);
-                  }}
-                  onDragStart={() => {
-                    onSelectObject(object.id);
-                    dragStartRef.current[object.id] = { x: object.x, y: object.y };
-                  }}
-                  onDragMove={(event) => handleDragMove(object, event)}
-                  onDragEnd={(event) => {
-                    handleDragMove(object, event);
-                    const node = event.target as Konva.Group;
-                    onRecordEvent({
-                      type: "move",
-                      objectId: object.id,
-                      assetId: object.assetId,
-                      label: `移动沙具: ${object.name}`,
-                      payload: {
-                        from: dragStartRef.current[object.id],
-                        to: {
-                          x: Number(node.x().toFixed(1)),
-                          y: Number(node.y().toFixed(1)),
+              {sortedObjects.map((object, index) => {
+                const projected = projectPoint(object);
+                const depthScale = getDepthScale(object.y);
+                return (
+                  <Group
+                    key={object.id}
+                    ref={(node) => {
+                      objectRefs.current[object.id] = node;
+                    }}
+                    name="sandbox-object"
+                    x={projected.x}
+                    y={projected.y}
+                    rotation={object.rotation}
+                    scaleX={object.scale * depthScale}
+                    scaleY={object.scale * depthScale}
+                    draggable
+                    onMouseDown={(event) => {
+                      event.cancelBubble = true;
+                      onSelectObject(object.id);
+                    }}
+                    onTouchStart={(event) => {
+                      event.cancelBubble = true;
+                      onSelectObject(object.id);
+                    }}
+                    onDragStart={() => {
+                      onSelectObject(object.id);
+                      dragStartRef.current[object.id] = { x: object.x, y: object.y };
+                    }}
+                    onDragMove={(event) => handleDragMove(object, event)}
+                    onDragEnd={(event) => {
+                      handleDragMove(object, event);
+                      const node = event.target as Konva.Group;
+                      const dropped = unprojectPoint({ x: node.x(), y: node.y() });
+                      onRecordEvent({
+                        type: "move",
+                        objectId: object.id,
+                        assetId: object.assetId,
+                        label: `移动沙具: ${object.name}`,
+                        payload: {
+                          from: dragStartRef.current[object.id],
+                          to: {
+                            x: Number(dropped.x.toFixed(1)),
+                            y: Number(dropped.y.toFixed(1)),
+                          },
+                          depthIndex: index,
                         },
-                        depthIndex: index,
-                      },
-                    });
-                  }}
-                  onTransformStart={() => {
-                    transformStartRef.current[object.id] = {
-                      x: object.x,
-                      y: object.y,
-                      rotation: object.rotation,
-                      scale: object.scale,
-                    };
-                  }}
-                  onTransformEnd={() => handleTransformEnd(object)}
-                >
-                  <SandboxObjectShape
-                    assetId={object.assetId}
-                    width={object.width}
-                    height={object.height}
-                    riskTag={object.riskTag}
-                  />
-                </Group>
-              ))}
+                      });
+                    }}
+                    onTransformStart={() => {
+                      transformStartRef.current[object.id] = {
+                        x: object.x,
+                        y: object.y,
+                        rotation: object.rotation,
+                        scale: object.scale,
+                      };
+                    }}
+                    onTransformEnd={() => handleTransformEnd(object)}
+                  >
+                    <SandboxObjectShape
+                      assetId={object.assetId}
+                      width={object.width}
+                      height={object.height}
+                      riskTag={object.riskTag}
+                    />
+                  </Group>
+                );
+              })}
 
               <Transformer
                 ref={transformerRef}

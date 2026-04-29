@@ -1,6 +1,6 @@
 import type { SandboxEvent, SandboxObject } from "../types";
 
-const STORAGE_KEY = "psych-sandbox-2-5d-demo.scene";
+const STORAGE_KEY = "psych-sandbox-2-5d-demo.scene.v5";
 
 interface StoredScene {
   objects: SandboxObject[];

@@ -8,252 +8,391 @@ interface SandboxObjectShapeProps {
   riskTag: RiskTag;
 }
 
+interface IsoBlockProps {
+  x: number;
+  y: number;
+  w: number;
+  d: number;
+  h: number;
+  top: string;
+  left: string;
+  right: string;
+  stroke?: string;
+}
+
 export function SandboxObjectShape({
   assetId,
   width,
   height,
   riskTag,
 }: SandboxObjectShapeProps): JSX.Element {
-  const accent = riskTag === "death" ? "#60666d" : riskTag === "conflict" ? "#bd6b36" : riskTag === "fantasy" ? "#7157a5" : "#2f8f83";
+  const palette = getPalette(riskTag);
+
   return (
     <Group>
-      <Ellipse
-        x={0}
-        y={height * 0.43}
-        radiusX={width * 0.44}
-        radiusY={height * 0.08}
-        fill="#352719"
-        opacity={0.16}
-        shadowColor="#352719"
-        shadowBlur={18}
-        shadowOpacity={0.12}
-        listening={false}
-      />
-      <AssetBody assetId={assetId} width={width} height={height} accent={accent} />
+      <Group x={height * 0.2} y={height * 0.11} rotation={-8} listening={false}>
+        <Ellipse
+          radiusX={width * 0.5}
+          radiusY={height * 0.13}
+          fill="#2b2318"
+          opacity={0.22}
+          shadowColor="#2b2318"
+          shadowBlur={14}
+          shadowOpacity={0.2}
+        />
+      </Group>
+      <AssetModel assetId={assetId} width={width} height={height} palette={palette} />
     </Group>
   );
 }
 
-function AssetBody({
+function AssetModel({
   assetId,
   width,
   height,
-  accent,
+  palette,
 }: {
   assetId: string;
   width: number;
   height: number;
-  accent: string;
+  palette: ReturnType<typeof getPalette>;
 }): JSX.Element {
-  const left = -width / 2;
-  const top = -height / 2;
-
   switch (assetId) {
-    case "person_child":
-    case "person_adult":
-    case "person_elder": {
-      const isChild = assetId === "person_child";
-      const isElder = assetId === "person_elder";
-      const skin = isElder ? "#d8b089" : isChild ? "#f0ba78" : "#d49a68";
-      const cloth = isElder ? "#7a7169" : isChild ? "#5ba8d8" : "#376b8d";
-      return (
-        <Group>
-          <Line points={[left + width * 0.38, top + height * 0.82, left + width * 0.28, top + height]} stroke="#654936" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.62, top + height * 0.82, left + width * 0.72, top + height]} stroke="#654936" strokeWidth={6} lineCap="round" />
-          <Rect x={left + width * 0.3} y={top + height * 0.32} width={width * 0.4} height={height * 0.5} cornerRadius={9} fill={cloth} stroke="#1d2e36" strokeWidth={1} />
-          <Circle x={0} y={top + height * 0.2} radius={width * 0.18} fill={skin} stroke="#7b543b" strokeWidth={1.5} />
-          <Line points={[left + width * 0.31, top + height * 0.44, left + width * 0.12, top + height * 0.58]} stroke="#654936" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.69, top + height * 0.44, left + width * 0.88, top + height * 0.58]} stroke="#654936" strokeWidth={6} lineCap="round" />
-          {isElder ? <Line points={[left + width * 0.78, top + height * 0.5, left + width * 0.86, top + height]} stroke="#5a4030" strokeWidth={4} lineCap="round" /> : null}
-          <Circle x={-width * 0.06} y={top + height * 0.2} radius={2.2} fill="#172027" />
-          <Circle x={width * 0.06} y={top + height * 0.2} radius={2.2} fill="#172027" />
-        </Group>
-      );
-    }
-    case "animal_dog":
-      return (
-        <Group>
-          <Ellipse x={left + width * 0.43} y={top + height * 0.56} radiusX={width * 0.3} radiusY={height * 0.26} fill="#b97845" stroke="#7a4b2d" strokeWidth={1.5} />
-          <Circle x={left + width * 0.76} y={top + height * 0.42} radius={height * 0.23} fill="#c98a50" stroke="#7a4b2d" strokeWidth={1.5} />
-          <Circle x={left + width * 0.81} y={top + height * 0.4} radius={2.4} fill="#101820" />
-          <Line points={[left + width * 0.24, top + height * 0.52, left + width * 0.05, top + height * 0.34]} stroke="#8b5834" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.36, top + height * 0.75, left + width * 0.34, top + height]} stroke="#8b5834" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.58, top + height * 0.75, left + width * 0.6, top + height]} stroke="#8b5834" strokeWidth={6} lineCap="round" />
-        </Group>
-      );
-    case "animal_bird":
-      return (
-        <Group>
-          <Ellipse x={0} y={top + height * 0.52} radiusX={width * 0.31} radiusY={height * 0.23} fill="#4f8bbd" stroke="#315c7e" strokeWidth={1.5} />
-          <Path data={`M${left + width * 0.38} ${top + height * 0.48} C${left + width * 0.1} ${top + height * 0.42} ${left + width * 0.08} ${top + height * 0.12} ${left + width * 0.48} ${top + height * 0.46} Z`} fill="#78b8db" />
-          <Line points={[left + width * 0.72, top + height * 0.49, left + width, top + height * 0.38, left + width * 0.72, top + height * 0.31]} closed fill="#d99b36" stroke="#a86d21" strokeWidth={1} />
-          <Circle x={left + width * 0.6} y={top + height * 0.39} radius={2.6} fill="#16202a" />
-          <Line points={[left + width * 0.42, top + height * 0.7, left + width * 0.34, top + height]} stroke="#6f482f" strokeWidth={4} lineCap="round" />
-          <Line points={[left + width * 0.55, top + height * 0.71, left + width * 0.64, top + height]} stroke="#6f482f" strokeWidth={4} lineCap="round" />
-        </Group>
-      );
-    case "animal_fish":
-      return (
-        <Group>
-          <Line points={[left + width * 0.2, top + height * 0.5, left, top + height * 0.18, left, top + height * 0.82]} closed fill="#2a7f86" />
-          <Ellipse x={left + width * 0.55} y={0} radiusX={width * 0.33} radiusY={height * 0.36} fill="#3d9fa8" stroke="#236d74" strokeWidth={1.5} />
-          <Path data={`M${left + width * 0.52} ${top + height * 0.18} C${left + width * 0.7} ${top + height * 0.28} ${left + width * 0.76} ${top + height * 0.44} ${left + width * 0.62} ${top + height * 0.58} C${left + width * 0.51} ${top + height * 0.5} ${left + width * 0.45} ${top + height * 0.36} ${left + width * 0.52} ${top + height * 0.18} Z`} fill="#75c5c8" />
-          <Circle x={left + width * 0.78} y={top + height * 0.42} radius={2.8} fill="#172027" />
-        </Group>
-      );
-    case "animal_lion":
-      return (
-        <Group>
-          <Ellipse x={left + width * 0.42} y={top + height * 0.63} radiusX={width * 0.28} radiusY={height * 0.2} fill="#bd8640" stroke="#7d4f2a" strokeWidth={1.5} />
-          <Circle x={left + width * 0.75} y={top + height * 0.42} radius={height * 0.28} fill="#8e5a2d" />
-          <Circle x={left + width * 0.75} y={top + height * 0.42} radius={height * 0.18} fill="#d0a04f" />
-          <Circle x={left + width * 0.7} y={top + height * 0.39} radius={2.4} fill="#171717" />
-          <Circle x={left + width * 0.8} y={top + height * 0.39} radius={2.4} fill="#171717" />
-          <Line points={[left + width * 0.2, top + height * 0.6, left + width * 0.02, top + height * 0.47]} stroke="#80512b" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.34, top + height * 0.78, left + width * 0.33, top + height]} stroke="#80512b" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.56, top + height * 0.78, left + width * 0.58, top + height]} stroke="#80512b" strokeWidth={6} lineCap="round" />
-        </Group>
-      );
     case "env_house":
-      return (
-        <Group>
-          <Rect x={left + width * 0.2} y={top + height * 0.44} width={width * 0.6} height={height * 0.46} cornerRadius={4} fill="#e2b06d" stroke="#96633b" strokeWidth={1.5} />
-          <Line points={[left + width * 0.13, top + height * 0.48, 0, top + height * 0.12, left + width * 0.87, top + height * 0.48]} closed fill="#b9493e" stroke="#79342f" strokeWidth={1.5} />
-          <Rect x={left + width * 0.43} y={top + height * 0.64} width={width * 0.14} height={height * 0.26} cornerRadius={2} fill="#6d4a35" />
-          <Rect x={left + width * 0.27} y={top + height * 0.57} width={width * 0.12} height={height * 0.12} cornerRadius={2} fill="#7db1c6" />
-          <Rect x={left + width * 0.61} y={top + height * 0.57} width={width * 0.12} height={height * 0.12} cornerRadius={2} fill="#7db1c6" />
-        </Group>
-      );
+      return <IsoHouse width={width} height={height} />;
     case "env_bridge":
-      return (
-        <Group>
-          <Path data={`M${left + width * 0.1} ${top + height * 0.73} C${left + width * 0.3} ${top + height * 0.15} ${left + width * 0.7} ${top + height * 0.15} ${left + width * 0.9} ${top + height * 0.73}`} stroke="#8b6a4e" strokeWidth={height * 0.14} lineCap="round" />
-          <Line points={[left + width * 0.1, top + height * 0.74, left + width * 0.9, top + height * 0.74]} stroke="#c19867" strokeWidth={height * 0.16} lineCap="round" />
-          {[0.28, 0.5, 0.72].map((ratio) => (
-            <Line key={ratio} points={[left + width * ratio, top + height * 0.37, left + width * ratio, top + height * 0.82]} stroke="#6d4e39" strokeWidth={4} lineCap="round" />
-          ))}
-        </Group>
-      );
+      return <IsoBridge width={width} height={height} />;
     case "env_fence":
-      return (
-        <Group>
-          <Line points={[left + width * 0.06, top + height * 0.42, left + width * 0.94, top + height * 0.42]} stroke="#9b734c" strokeWidth={7} lineCap="round" />
-          <Line points={[left + width * 0.06, top + height * 0.68, left + width * 0.94, top + height * 0.68]} stroke="#9b734c" strokeWidth={7} lineCap="round" />
-          {[0.13, 0.31, 0.5, 0.69, 0.87].map((ratio) => (
-            <Line key={ratio} points={[left + width * ratio, top + height * 0.12, left + width * ratio, top + height * 0.92]} stroke="#c6925d" strokeWidth={8} lineCap="round" />
-          ))}
-        </Group>
-      );
+      return <IsoFence width={width} height={height} />;
     case "env_tower":
-      return (
-        <Group>
-          <Line points={[left + width * 0.24, top + height * 0.2, 0, top + height * 0.02, left + width * 0.76, top + height * 0.2]} closed fill="#4f6475" />
-          <Line points={[left + width * 0.28, top + height * 0.2, left + width * 0.72, top + height * 0.2, left + width * 0.82, top + height * 0.92, left + width * 0.18, top + height * 0.92]} closed fill="#8a98a4" stroke="#56606a" strokeWidth={1.5} />
-          <Rect x={left + width * 0.42} y={top + height * 0.68} width={width * 0.16} height={height * 0.24} cornerRadius={2} fill="#4b3b34" />
-          <Rect x={left + width * 0.4} y={top + height * 0.34} width={width * 0.2} height={height * 0.1} cornerRadius={2} fill="#e8c66e" />
-        </Group>
-      );
+      return <IsoTower width={width} height={height} />;
     case "nature_tree":
-      return (
-        <Group>
-          <Rect x={left + width * 0.42} y={top + height * 0.55} width={width * 0.16} height={height * 0.36} cornerRadius={4} fill="#8c6139" stroke="#67452a" strokeWidth={1} />
-          <Circle x={left + width * 0.38} y={top + height * 0.43} radius={width * 0.24} fill="#478f5b" />
-          <Circle x={left + width * 0.6} y={top + height * 0.36} radius={width * 0.27} fill="#3f7f52" />
-          <Circle x={left + width * 0.59} y={top + height * 0.55} radius={width * 0.23} fill="#5da66c" />
-        </Group>
-      );
+      return <IsoTree width={width} height={height} />;
     case "nature_water":
-      return (
-        <Group>
-          <Ellipse x={0} y={top + height * 0.56} radiusX={width * 0.43} radiusY={height * 0.28} fill="#77bed0" stroke="#3a8fa1" strokeWidth={1.5} />
-          <Line points={[left + width * 0.2, top + height * 0.5, left + width * 0.34, top + height * 0.42, left + width * 0.48, top + height * 0.5, left + width * 0.62, top + height * 0.58, left + width * 0.8, top + height * 0.5]} stroke="#e4fbff" strokeWidth={5} lineCap="round" tension={0.55} />
-          <Line points={[left + width * 0.28, top + height * 0.66, left + width * 0.42, top + height * 0.58, left + width * 0.57, top + height * 0.66, left + width * 0.75, top + height * 0.61]} stroke="#2b8da1" strokeWidth={4} lineCap="round" tension={0.5} />
-        </Group>
-      );
+      return <IsoWater width={width} height={height} />;
     case "nature_rock":
-      return (
-        <Line
-          points={[left + width * 0.08, top + height * 0.72, left + width * 0.22, top + height * 0.26, left + width * 0.48, top + height * 0.12, left + width * 0.82, top + height * 0.32, left + width * 0.94, top + height * 0.72, left + width * 0.68, top + height * 0.92, left + width * 0.26, top + height * 0.9]}
-          closed
-          fill="#8e9494"
-          stroke="#687173"
-          strokeWidth={2}
-        />
-      );
+      return <IsoRock width={width} height={height} />;
     case "nature_sun":
-      return (
-        <Group>
-          <Star x={0} y={0} numPoints={12} innerRadius={width * 0.27} outerRadius={width * 0.47} fill="#f0ad37" stroke="#ca8120" strokeWidth={1.5} />
-          <Circle x={0} y={0} radius={width * 0.27} fill="#f3c94e" />
-        </Group>
-      );
-    case "symbol_monster":
-      return (
-        <Group>
-          <Line points={[left + width * 0.3, top + height * 0.22, left + width * 0.2, top + height * 0.02, left + width * 0.42, top + height * 0.18]} closed fill={accent} />
-          <Line points={[left + width * 0.68, top + height * 0.22, left + width * 0.82, top + height * 0.02, left + width * 0.56, top + height * 0.18]} closed fill={accent} />
-          <Ellipse x={0} y={top + height * 0.56} radiusX={width * 0.36} radiusY={height * 0.34} fill="#7b66b1" stroke="#4f3b78" strokeWidth={1.5} />
-          <Circle x={-width * 0.12} y={top + height * 0.45} radius={width * 0.07} fill="#e9f5fb" />
-          <Circle x={width * 0.12} y={top + height * 0.45} radius={width * 0.07} fill="#e9f5fb" />
-          <Circle x={-width * 0.11} y={top + height * 0.46} radius={2.2} fill="#111827" />
-          <Circle x={width * 0.13} y={top + height * 0.46} radius={2.2} fill="#111827" />
-          <Line points={[-width * 0.16, top + height * 0.66, width * 0.16, top + height * 0.66, width * 0.05, top + height * 0.75, 0, top + height * 0.69, -width * 0.05, top + height * 0.75]} closed fill="#ffffff" />
-        </Group>
-      );
+      return <IsoSun width={width} />;
+    case "animal_dog":
+      return <IsoAnimal width={width} height={height} body="#b97845" head="#d29255" ear="#765036" />;
+    case "animal_bird":
+      return <IsoBird width={width} height={height} />;
+    case "animal_fish":
+      return <IsoFish width={width} height={height} />;
+    case "animal_lion":
+      return <IsoLion width={width} height={height} />;
+    case "person_child":
+      return <IsoPerson width={width} height={height} cloth="#57a7d7" skin="#f0bb78" small />;
+    case "person_adult":
+      return <IsoPerson width={width} height={height} cloth="#376b8d" skin="#d89a67" />;
+    case "person_elder":
+      return <IsoPerson width={width} height={height} cloth="#81766e" skin="#d7ae83" cane />;
     case "symbol_robot":
-      return (
-        <Group>
-          <Line points={[0, top + height * 0.02, 0, top + height * 0.16]} stroke="#56606d" strokeWidth={4} lineCap="round" />
-          <Circle x={0} y={top + height * 0.02} radius={4} fill="#e06f4f" />
-          <Rect x={left + width * 0.28} y={top + height * 0.18} width={width * 0.44} height={height * 0.28} cornerRadius={5} fill="#9aa6b2" stroke="#56606d" strokeWidth={1.5} />
-          <Rect x={left + width * 0.22} y={top + height * 0.52} width={width * 0.56} height={height * 0.3} cornerRadius={6} fill="#6f7f8d" stroke="#4f5c66" strokeWidth={1.5} />
-          <Circle x={-width * 0.08} y={top + height * 0.32} radius={3.3} fill="#22313d" />
-          <Circle x={width * 0.08} y={top + height * 0.32} radius={3.3} fill="#22313d" />
-          <Line points={[left + width * 0.22, top + height * 0.62, left + width * 0.03, top + height * 0.62]} stroke="#56606d" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.78, top + height * 0.62, left + width * 0.97, top + height * 0.62]} stroke="#56606d" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.38, top + height * 0.82, left + width * 0.38, top + height]} stroke="#56606d" strokeWidth={6} lineCap="round" />
-          <Line points={[left + width * 0.62, top + height * 0.82, left + width * 0.62, top + height]} stroke="#56606d" strokeWidth={6} lineCap="round" />
-        </Group>
-      );
+      return <IsoRobot width={width} height={height} />;
     case "symbol_skull":
-      return (
-        <Group>
-          <Circle x={0} y={top + height * 0.36} radius={width * 0.35} fill="#e8e4da" stroke="#8f887d" strokeWidth={1.5} />
-          <Rect x={left + width * 0.31} y={top + height * 0.56} width={width * 0.38} height={height * 0.26} cornerRadius={5} fill="#d8d2c6" stroke="#8f887d" strokeWidth={1} />
-          <Circle x={-width * 0.14} y={top + height * 0.34} radius={width * 0.09} fill="#30343a" />
-          <Circle x={width * 0.14} y={top + height * 0.34} radius={width * 0.09} fill="#30343a" />
-          <Line points={[0, top + height * 0.42, -width * 0.08, top + height * 0.54, width * 0.08, top + height * 0.54]} closed fill="#34383d" />
-          {[-0.12, 0, 0.12].map((ratio) => (
-            <Line key={ratio} points={[width * ratio, top + height * 0.65, width * ratio, top + height * 0.82]} stroke="#817a70" strokeWidth={2.5} />
-          ))}
-        </Group>
-      );
+      return <IsoSkull width={width} height={height} />;
+    case "symbol_monster":
+      return <IsoMonster width={width} height={height} accent={palette.accent} />;
     case "symbol_light":
-      return (
-        <Group>
-          {[0, 45, 90, 135].map((angle) => {
-            const radians = (angle * Math.PI) / 180;
-            return (
-              <Line
-                key={angle}
-                points={[
-                  Math.cos(radians) * width * 0.28,
-                  top + height * 0.34 + Math.sin(radians) * width * 0.28,
-                  Math.cos(radians) * width * 0.46,
-                  top + height * 0.34 + Math.sin(radians) * width * 0.46,
-                ]}
-                stroke="#f3c85c"
-                strokeWidth={4}
-                lineCap="round"
-              />
-            );
-          })}
-          <Circle x={0} y={top + height * 0.42} radius={width * 0.26} fill="#f7d978" stroke="#d9a83d" strokeWidth={1.5} shadowColor="#f1c75e" shadowBlur={14} shadowOpacity={0.35} />
-          <Rect x={left + width * 0.39} y={top + height * 0.68} width={width * 0.22} height={height * 0.13} cornerRadius={3} fill="#77715e" />
-          <Line points={[left + width * 0.38, top + height * 0.86, left + width * 0.62, top + height * 0.86]} stroke="#4e4a40" strokeWidth={5} lineCap="round" />
-        </Group>
-      );
+      return <IsoLamp width={width} height={height} />;
     default:
-      return <Circle x={0} y={0} radius={Math.min(width, height) * 0.35} fill={accent} />;
+      return <IsoBlock x={0} y={0} w={width * 0.74} d={height * 0.42} h={height * 0.52} top={palette.top} left={palette.left} right={palette.right} />;
   }
+}
+
+function IsoBlock({ x, y, w, d, h, top, left, right, stroke = "#5d5146" }: IsoBlockProps): JSX.Element {
+  const topFace = [x, y - h - d * 0.5, x + w * 0.5, y - h, x, y - h + d * 0.5, x - w * 0.5, y - h];
+  const rightFace = [x + w * 0.5, y - h, x, y - h + d * 0.5, x, y + d * 0.5, x + w * 0.5, y];
+  const leftFace = [x - w * 0.5, y - h, x, y - h + d * 0.5, x, y + d * 0.5, x - w * 0.5, y];
+
+  return (
+    <Group>
+      <Line points={leftFace} closed fill={left} stroke={stroke} strokeWidth={1.8} lineJoin="round" />
+      <Line points={rightFace} closed fill={right} stroke={stroke} strokeWidth={1.8} lineJoin="round" />
+      <Line points={topFace} closed fill={top} stroke={stroke} strokeWidth={1.8} lineJoin="round" />
+      <Line points={[x - w * 0.34, y - h - d * 0.08, x - w * 0.08, y - h - d * 0.22]} stroke="#ffffff" strokeWidth={2.2} opacity={0.32} lineCap="round" />
+    </Group>
+  );
+}
+
+function IsoHouse({ width, height }: { width: number; height: number }): JSX.Element {
+  const w = width * 0.88;
+  const d = height * 0.5;
+  const h = height * 0.52;
+  return (
+    <Group y={height * 0.12}>
+      <IsoBlock x={0} y={0} w={w} d={d} h={h} top="#f3d29c" left="#dca96e" right="#b97a4e" stroke="#704629" />
+      <Roof w={w * 1.08} d={d * 1.08} y={-h} />
+      <IsoWindow x={-w * 0.22} y={-h * 0.43} />
+      <IsoWindow x={w * 0.2} y={-h * 0.35} />
+      <Rect x={-8} y={-h * 0.22} width={16} height={h * 0.46} cornerRadius={3} fill="#74472b" stroke="#442a1d" strokeWidth={1.5} />
+    </Group>
+  );
+}
+
+function Roof({ w, d, y }: { w: number; d: number; y: number }): JSX.Element {
+  const ridgeY = y - d * 0.62;
+  return (
+    <Group>
+      <Line points={[0, ridgeY, w * 0.52, y, 0, y + d * 0.52, -w * 0.52, y]} closed fill="#d9513e" stroke="#71352c" strokeWidth={2} />
+      <Line points={[0, ridgeY, w * 0.52, y, 0, y + d * 0.52]} closed fill="#b64135" opacity={0.72} />
+      <Line points={[0, ridgeY, -w * 0.52, y, 0, y + d * 0.52]} closed fill="#ef6a4d" opacity={0.82} />
+    </Group>
+  );
+}
+
+function IsoWindow({ x, y }: { x: number; y: number }): JSX.Element {
+  return <Rect x={x - 8} y={y - 12} width={16} height={20} cornerRadius={3} fill="#9dd5e2" stroke="#f7f0dc" strokeWidth={2} />;
+}
+
+function IsoBridge({ width, height }: { width: number; height: number }): JSX.Element {
+  const w = width * 0.86;
+  return (
+    <Group y={height * 0.05}>
+      <IsoBlock x={0} y={0} w={w} d={height * 0.32} h={height * 0.18} top="#c89a62" left="#8a6040" right="#6e4b34" stroke="#5a3d2a" />
+      {[-0.3, 0, 0.3].map((ratio) => (
+        <Rect key={`bridge-post-${ratio}`} x={w * ratio - 5} y={-height * 0.58} width={10} height={height * 0.48} cornerRadius={4} fill="#7b573a" stroke="#4d3424" strokeWidth={1.4} />
+      ))}
+      <Path data={`M${-w * 0.42} ${-height * 0.34} C${-w * 0.14} ${-height * 0.72} ${w * 0.14} ${-height * 0.72} ${w * 0.42} ${-height * 0.34}`} stroke="#b98754" strokeWidth={8} lineCap="round" />
+    </Group>
+  );
+}
+
+function IsoFence({ width, height }: { width: number; height: number }): JSX.Element {
+  const w = width * 0.9;
+  return (
+    <Group y={height * 0.14}>
+      <IsoBlock x={0} y={0} w={w} d={height * 0.18} h={height * 0.12} top="#c9975d" left="#9e6f43" right="#765033" stroke="#5d3a24" />
+      {[-0.38, -0.18, 0.02, 0.22, 0.42].map((ratio) => (
+        <IsoBlock key={`post-${ratio}`} x={w * ratio} y={-height * 0.03} w={width * 0.1} d={height * 0.18} h={height * 0.58} top="#f2bd7a" left="#c38750" right="#9c623b" stroke="#764928" />
+      ))}
+      <Line points={[-w * 0.48, -height * 0.42, w * 0.46, -height * 0.3]} stroke="#dca36d" strokeWidth={7} lineCap="round" />
+      <Line points={[-w * 0.48, -height * 0.22, w * 0.46, -height * 0.1]} stroke="#a16d42" strokeWidth={7} lineCap="round" />
+    </Group>
+  );
+}
+
+function IsoTower({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.08}>
+      <IsoBlock x={0} y={0} w={width * 0.52} d={height * 0.34} h={height * 0.86} top="#d7d0b8" left="#9fa7a6" right="#7f898d" stroke="#5f676a" />
+      <Roof w={width * 0.68} d={height * 0.28} y={-height * 0.86} />
+      <Rect x={-8} y={-height * 0.44} width={16} height={26} cornerRadius={3} fill="#f6d873" stroke="#5f676a" strokeWidth={1.5} />
+    </Group>
+  );
+}
+
+function IsoTree({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.1}>
+      <IsoBlock x={0} y={0} w={width * 0.18} d={height * 0.22} h={height * 0.42} top="#b78245" left="#8b5d34" right="#684528" stroke="#51351f" />
+      <TreeTier y={-height * 0.46} w={width * 0.84} color="#45b96b" />
+      <TreeTier y={-height * 0.7} w={width * 0.7} color="#6fde88" />
+      <TreeTier y={-height * 0.92} w={width * 0.54} color="#a9f08e" />
+    </Group>
+  );
+}
+
+function TreeTier({ y, w, color }: { y: number; w: number; color: string }): JSX.Element {
+  return (
+    <Group>
+      <Line points={[0, y - w * 0.34, w * 0.5, y, 0, y + w * 0.2, -w * 0.5, y]} closed fill={color} stroke="#247447" strokeWidth={2.2} />
+      <Line points={[0, y - w * 0.34, -w * 0.5, y, 0, y + w * 0.2]} closed fill="#8df58c" opacity={0.2} />
+      <Line points={[0, y - w * 0.34, w * 0.5, y, 0, y + w * 0.2]} closed fill="#1f7d4a" opacity={0.18} />
+    </Group>
+  );
+}
+
+function IsoWater({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.08}>
+      <Ellipse radiusX={width * 0.48} radiusY={height * 0.28} fill="#41a9c2" stroke="#e8fdff" strokeWidth={4} />
+      <Ellipse y={height * 0.08} radiusX={width * 0.42} radiusY={height * 0.14} fill="#1c7d9d" opacity={0.48} />
+      <Path data={`M${-width * 0.32} 0 C${-width * 0.15} ${-height * 0.12} ${width * 0.08} ${height * 0.12} ${width * 0.32} ${-height * 0.04}`} stroke="#dffcff" strokeWidth={5} lineCap="round" opacity={0.8} />
+    </Group>
+  );
+}
+
+function IsoRock({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.1}>
+      <Line points={[0, -height * 0.5, width * 0.44, -height * 0.1, width * 0.22, height * 0.18, -width * 0.3, height * 0.16, -width * 0.46, -height * 0.16]} closed fill="#969d9b" stroke="#626c6b" strokeWidth={2} />
+      <Line points={[0, -height * 0.5, width * 0.44, -height * 0.1, width * 0.02, -height * 0.05]} closed fill="#c0c5c1" opacity={0.62} />
+      <Line points={[0, -height * 0.5, -width * 0.46, -height * 0.16, width * 0.02, -height * 0.05]} closed fill="#737d7b" opacity={0.5} />
+    </Group>
+  );
+}
+
+function IsoSun({ width }: { width: number }): JSX.Element {
+  return (
+    <Group>
+      <Star numPoints={12} innerRadius={width * 0.28} outerRadius={width * 0.48} fill="#f7b941" stroke="#c17926" strokeWidth={2} shadowColor="#ffd566" shadowBlur={16} shadowOpacity={0.28} />
+      <Circle radius={width * 0.28} fillRadialGradientStartPoint={{ x: -8, y: -10 }} fillRadialGradientStartRadius={2} fillRadialGradientEndPoint={{ x: 0, y: 0 }} fillRadialGradientEndRadius={width * 0.3} fillRadialGradientColorStops={[0, "#fff6a6", 0.42, "#ffd25a", 1, "#e58b28"]} />
+    </Group>
+  );
+}
+
+function IsoPerson({ width, height, cloth, skin, small = false, cane = false }: { width: number; height: number; cloth: string; skin: string; small?: boolean; cane?: boolean }): JSX.Element {
+  const s = small ? 0.86 : 1;
+  return (
+    <Group y={height * 0.08} scaleX={s} scaleY={s}>
+      <IsoBlock x={0} y={0} w={width * 0.36} d={height * 0.22} h={height * 0.48} top={lighten(cloth)} left={cloth} right={darken(cloth)} stroke="#4b3a31" />
+      <Sphere x={0} y={-height * 0.62} r={width * 0.2} color={skin} />
+      <IsoBlock x={-width * 0.16} y={height * 0.14} w={width * 0.11} d={height * 0.12} h={height * 0.2} top="#6c4b35" left="#5c3d2c" right="#402b21" />
+      <IsoBlock x={width * 0.16} y={height * 0.14} w={width * 0.11} d={height * 0.12} h={height * 0.2} top="#6c4b35" left="#5c3d2c" right="#402b21" />
+      {cane ? <Line points={[width * 0.34, -height * 0.42, width * 0.44, height * 0.18]} stroke="#5b3824" strokeWidth={4} lineCap="round" /> : null}
+    </Group>
+  );
+}
+
+function IsoAnimal({ width, height, body, head, ear }: { width: number; height: number; body: string; head: string; ear: string }): JSX.Element {
+  return (
+    <Group y={height * 0.08}>
+      <Ellipse x={-width * 0.05} y={-height * 0.2} radiusX={width * 0.34} radiusY={height * 0.23} fillRadialGradientStartPoint={{ x: -width * 0.14, y: -height * 0.1 }} fillRadialGradientStartRadius={2} fillRadialGradientEndPoint={{ x: 0, y: 0 }} fillRadialGradientEndRadius={width * 0.5} fillRadialGradientColorStops={[0, lighten(body), 0.52, body, 1, darken(body)]} stroke="#704a2d" strokeWidth={2} />
+      <Sphere x={width * 0.32} y={-height * 0.36} r={height * 0.2} color={head} />
+      <Line points={[width * 0.21, -height * 0.53, width * 0.15, -height * 0.72, width * 0.35, -height * 0.57]} closed fill={ear} stroke="#704a2d" strokeWidth={1.5} />
+      <Circle x={width * 0.39} y={-height * 0.38} radius={2.4} fill="#251915" />
+      <Line points={[-width * 0.38, -height * 0.2, -width * 0.52, -height * 0.35]} stroke="#704a2d" strokeWidth={5} lineCap="round" />
+      {[-0.18, 0.06].map((ratio) => (
+        <IsoBlock key={`leg-${ratio}`} x={width * ratio} y={height * 0.1} w={width * 0.09} d={height * 0.1} h={height * 0.22} top={body} left={darken(body)} right={darken(body)} stroke="#704a2d" />
+      ))}
+    </Group>
+  );
+}
+
+function IsoBird({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.08}>
+      <Ellipse radiusX={width * 0.32} radiusY={height * 0.24} fill="#58a7d9" stroke="#315c7e" strokeWidth={2} />
+      <Line points={[-width * 0.14, -height * 0.08, -width * 0.5, -height * 0.34, -width * 0.36, height * 0.08]} closed fill="#86c7e7" stroke="#315c7e" strokeWidth={1.8} />
+      <Line points={[width * 0.3, -height * 0.04, width * 0.52, -height * 0.14, width * 0.33, -height * 0.23]} closed fill="#e7a03a" stroke="#9a6522" strokeWidth={1.5} />
+      <Circle x={width * 0.16} y={-height * 0.13} radius={2.5} fill="#1d1d1d" />
+      <Line points={[-width * 0.06, height * 0.17, -width * 0.1, height * 0.36]} stroke="#6e4a2d" strokeWidth={3} lineCap="round" />
+      <Line points={[width * 0.1, height * 0.16, width * 0.17, height * 0.34]} stroke="#6e4a2d" strokeWidth={3} lineCap="round" />
+    </Group>
+  );
+}
+
+function IsoFish({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.06}>
+      <Line points={[-width * 0.36, 0, -width * 0.55, -height * 0.24, -width * 0.55, height * 0.24]} closed fill="#2e8490" stroke="#205d66" strokeWidth={2} />
+      <Ellipse x={width * 0.05} y={0} radiusX={width * 0.42} radiusY={height * 0.28} fill="#42a7ae" stroke="#205d66" strokeWidth={2} />
+      <Path data={`M${-width * 0.08} ${-height * 0.2} C${width * 0.1} ${-height * 0.32} ${width * 0.28} ${-height * 0.12} ${width * 0.16} ${height * 0.05}`} fill="#8ed6d7" opacity={0.8} />
+      <Circle x={width * 0.34} y={-height * 0.06} radius={2.6} fill="#172027" />
+    </Group>
+  );
+}
+
+function IsoLion({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group>
+      <IsoAnimal width={width} height={height} body="#bd8640" head="#d4a04f" ear="#8e5a2d" />
+      <Circle x={width * 0.32} y={-height * 0.28} radius={height * 0.27} fill="#8e5a2d" opacity={0.88} />
+      <Sphere x={width * 0.32} y={-height * 0.3} r={height * 0.17} color="#d2a04f" />
+    </Group>
+  );
+}
+
+function IsoRobot({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.1}>
+      <IsoBlock x={0} y={0} w={width * 0.56} d={height * 0.3} h={height * 0.45} top="#aab6c2" left="#7d8c9a" right="#596979" stroke="#3e4a56" />
+      <IsoBlock x={0} y={-height * 0.45} w={width * 0.44} d={height * 0.28} h={height * 0.26} top="#c7d0da" left="#9aa7b4" right="#738190" stroke="#3e4a56" />
+      <Circle x={-width * 0.1} y={-height * 0.56} radius={3.5} fill="#1f3340" />
+      <Circle x={width * 0.1} y={-height * 0.56} radius={3.5} fill="#1f3340" />
+      <Line points={[0, -height * 0.76, 0, -height * 0.92]} stroke="#53606d" strokeWidth={4} lineCap="round" />
+      <Circle x={0} y={-height * 0.96} radius={5} fill="#e0634d" />
+    </Group>
+  );
+}
+
+function IsoSkull({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.08}>
+      <Sphere x={0} y={-height * 0.36} r={width * 0.34} color="#e9e4d9" stroke="#827a70" />
+      <IsoBlock x={0} y={height * 0.05} w={width * 0.36} d={height * 0.2} h={height * 0.22} top="#ded7cc" left="#c5bdb2" right="#a59c91" stroke="#827a70" />
+      <Circle x={-width * 0.12} y={-height * 0.38} radius={width * 0.08} fill="#30343a" />
+      <Circle x={width * 0.12} y={-height * 0.38} radius={width * 0.08} fill="#30343a" />
+      <Line points={[0, -height * 0.28, -width * 0.07, -height * 0.16, width * 0.07, -height * 0.16]} closed fill="#34383d" />
+    </Group>
+  );
+}
+
+function IsoMonster({ width, height, accent }: { width: number; height: number; accent: string }): JSX.Element {
+  return (
+    <Group y={height * 0.1}>
+      <Ellipse radiusX={width * 0.4} radiusY={height * 0.42} fillRadialGradientStartPoint={{ x: -width * 0.18, y: -height * 0.25 }} fillRadialGradientStartRadius={2} fillRadialGradientEndPoint={{ x: 0, y: 0 }} fillRadialGradientEndRadius={width * 0.54} fillRadialGradientColorStops={[0, "#b7a5ff", 0.48, accent, 1, "#46316e"]} stroke="#3d2a62" strokeWidth={2.5} />
+      <Line points={[-width * 0.24, -height * 0.38, -width * 0.34, -height * 0.68, -width * 0.02, -height * 0.48]} closed fill={accent} stroke="#3d2a62" strokeWidth={2} />
+      <Line points={[width * 0.24, -height * 0.38, width * 0.38, -height * 0.68, width * 0.02, -height * 0.48]} closed fill={accent} stroke="#3d2a62" strokeWidth={2} />
+      <Circle x={-width * 0.12} y={-height * 0.14} radius={width * 0.08} fill="#eaf7ff" />
+      <Circle x={width * 0.12} y={-height * 0.14} radius={width * 0.08} fill="#eaf7ff" />
+      <Circle x={-width * 0.1} y={-height * 0.13} radius={2.2} fill="#111827" />
+      <Circle x={width * 0.14} y={-height * 0.13} radius={2.2} fill="#111827" />
+    </Group>
+  );
+}
+
+function IsoLamp({ width, height }: { width: number; height: number }): JSX.Element {
+  return (
+    <Group y={height * 0.06}>
+      <IsoBlock x={0} y={0} w={width * 0.26} d={height * 0.18} h={height * 0.18} top="#8b7f64" left="#68604e" right="#4b453a" stroke="#3d372c" />
+      <Line points={[0, -height * 0.18, 0, -height * 0.55]} stroke="#74684f" strokeWidth={5} lineCap="round" />
+      <Circle x={0} y={-height * 0.7} radius={width * 0.24} fillRadialGradientStartPoint={{ x: -7, y: -9 }} fillRadialGradientStartRadius={1} fillRadialGradientEndPoint={{ x: 0, y: 0 }} fillRadialGradientEndRadius={width * 0.28} fillRadialGradientColorStops={[0, "#fff8b0", 0.45, "#ffd765", 1, "#d58a2e"]} stroke="#8c6332" strokeWidth={2} shadowColor="#ffd765" shadowBlur={16} shadowOpacity={0.45} />
+    </Group>
+  );
+}
+
+function Sphere({ x, y, r, color, stroke = "#6e4c36" }: { x: number; y: number; r: number; color: string; stroke?: string }): JSX.Element {
+  return (
+    <Circle
+      x={x}
+      y={y}
+      radius={r}
+      fillRadialGradientStartPoint={{ x: -r * 0.38, y: -r * 0.45 }}
+      fillRadialGradientStartRadius={1}
+      fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+      fillRadialGradientEndRadius={r * 1.1}
+      fillRadialGradientColorStops={[0, "#ffffff", 0.22, color, 1, darken(color)]}
+      stroke={stroke}
+      strokeWidth={1.8}
+    />
+  );
+}
+
+function getPalette(riskTag: RiskTag): { accent: string; top: string; left: string; right: string } {
+  if (riskTag === "death") {
+    return { accent: "#60666d", top: "#dedbd2", left: "#9aa0a3", right: "#6c7378" };
+  }
+  if (riskTag === "conflict") {
+    return { accent: "#bd6b36", top: "#f1b267", left: "#c47940", right: "#8d4f2f" };
+  }
+  if (riskTag === "fantasy") {
+    return { accent: "#7157a5", top: "#c1acf0", left: "#8068ba", right: "#564082" };
+  }
+
+  return { accent: "#2f8f83", top: "#bfe7d7", left: "#68b49d", right: "#3d7c72" };
+}
+
+function lighten(color: string): string {
+  const hex = color.replace("#", "");
+  const value = Number.parseInt(hex, 16);
+  const r = Math.min(255, ((value >> 16) & 255) + 38);
+  const g = Math.min(255, ((value >> 8) & 255) + 38);
+  const b = Math.min(255, (value & 255) + 38);
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function darken(color: string): string {
+  const hex = color.replace("#", "");
+  const value = Number.parseInt(hex, 16);
+  const r = Math.max(0, ((value >> 16) & 255) - 42);
+  const g = Math.max(0, ((value >> 8) & 255) - 42);
+  const b = Math.max(0, (value & 255) - 42);
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function toHex(value: number): string {
+  return value.toString(16).padStart(2, "0");
 }
