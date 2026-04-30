@@ -27,7 +27,7 @@ interface MeshOptions {
   opacity?: number;
 }
 
-const SPRITE_VERSION = "toy-render-v2";
+const SPRITE_VERSION = "toy-render-v3";
 const spriteCache = new Map<string, Promise<ToyAssetSprite>>();
 let renderQueue: Promise<void> = Promise.resolve();
 let sharedRenderer: THREE.WebGLRenderer | null = null;
@@ -117,15 +117,87 @@ function renderSprite({
   scene.add(root);
   renderer.render(scene, camera);
 
-  const dataUrl = renderer.domElement.toDataURL("image/png");
+  const cropped = cropTransparentPixels(renderer.domElement, pixelRatio, {
+    x: width / 2,
+    y: height * 0.77,
+  });
   disposeScene(scene);
 
   return {
-    dataUrl,
-    width,
-    height,
-    anchorX: width / 2,
-    anchorY: height * 0.77,
+    dataUrl: cropped.dataUrl,
+    width: cropped.width,
+    height: cropped.height,
+    anchorX: cropped.anchorX,
+    anchorY: cropped.anchorY,
+  };
+}
+
+function cropTransparentPixels(
+  source: HTMLCanvasElement,
+  pixelRatio: number,
+  anchor: { x: number; y: number },
+): ToyAssetSprite {
+  const context = source.getContext("2d", { willReadFrequently: true });
+  if (!context) {
+    return {
+      dataUrl: source.toDataURL("image/png"),
+      width: source.width / pixelRatio,
+      height: source.height / pixelRatio,
+      anchorX: anchor.x,
+      anchorY: anchor.y,
+    };
+  }
+
+  const imageData = context.getImageData(0, 0, source.width, source.height);
+  const pixels = imageData.data;
+  let minX = source.width;
+  let minY = source.height;
+  let maxX = 0;
+  let maxY = 0;
+
+  for (let y = 0; y < source.height; y += 1) {
+    for (let x = 0; x < source.width; x += 1) {
+      const alpha = pixels[(y * source.width + x) * 4 + 3];
+      if (alpha > 8) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (minX > maxX || minY > maxY) {
+    return {
+      dataUrl: source.toDataURL("image/png"),
+      width: source.width / pixelRatio,
+      height: source.height / pixelRatio,
+      anchorX: anchor.x,
+      anchorY: anchor.y,
+    };
+  }
+
+  const padding = Math.round(8 * pixelRatio);
+  const cropX = Math.max(0, minX - padding);
+  const cropY = Math.max(0, minY - padding);
+  const cropRight = Math.min(source.width, maxX + padding);
+  const cropBottom = Math.min(source.height, maxY + padding);
+  const cropWidth = Math.max(1, cropRight - cropX);
+  const cropHeight = Math.max(1, cropBottom - cropY);
+  const target = document.createElement("canvas");
+
+  target.width = cropWidth;
+  target.height = cropHeight;
+  target
+    .getContext("2d")
+    ?.drawImage(source, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+  return {
+    dataUrl: target.toDataURL("image/png"),
+    width: cropWidth / pixelRatio,
+    height: cropHeight / pixelRatio,
+    anchorX: anchor.x - cropX / pixelRatio,
+    anchorY: anchor.y - cropY / pixelRatio,
   };
 }
 

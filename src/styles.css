@@ -136,22 +136,27 @@ button {
 .asset-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .asset-card {
   display: grid;
-  grid-template-columns: 44px 1fr;
-  align-items: center;
-  gap: 9px;
+  grid-template-rows: 98px auto;
+  align-items: stretch;
+  gap: 8px;
   min-width: 0;
-  min-height: 68px;
+  min-height: 142px;
   padding: 8px;
   border: 1px solid #d3c6ae;
   border-radius: 8px;
-  background: #fff9ed;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 225, 0.98), rgba(245, 223, 187, 0.92)),
+    #fff2d5;
   color: #273333;
-  text-align: left;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 4px 12px rgba(97, 69, 35, 0.08);
   transition:
     transform 120ms ease,
     border-color 120ms ease,
@@ -161,31 +166,40 @@ button {
 .asset-card:hover,
 .asset-card:focus-visible {
   border-color: #6ea79c;
-  box-shadow: 0 7px 18px rgba(49, 89, 83, 0.13);
-  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 22px rgba(49, 89, 83, 0.16);
+  transform: translateY(-2px);
   outline: none;
 }
 
 .asset-preview {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 100%;
+  height: 98px;
   place-items: center;
-  overflow: visible;
-  border-radius: 8px;
-  background: #efe7d8;
+  overflow: hidden;
+  border: 1px solid rgba(204, 163, 93, 0.52);
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 42% 22%, rgba(255, 250, 228, 0.96), rgba(244, 202, 134, 0.84) 70%),
+    #f1d5a3;
+  box-shadow:
+    inset 0 2px 8px rgba(255, 255, 255, 0.78),
+    inset 0 -10px 18px rgba(147, 92, 38, 0.1);
 }
 
 .asset-preview img {
-  width: 62px;
-  height: 62px;
+  width: 116%;
+  height: 116%;
   object-fit: contain;
-  transform: translateY(3px);
+  filter: drop-shadow(0 7px 5px rgba(93, 64, 34, 0.2));
+  transform: translateY(2px);
 }
 
 .asset-preview-loading {
-  width: 24px;
-  height: 24px;
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   background: radial-gradient(circle at 34% 28%, #fff5d8, #d7be8d 70%);
   box-shadow: 0 5px 12px rgba(90, 68, 37, 0.18);
@@ -194,13 +208,16 @@ button {
 .asset-card-main {
   display: grid;
   min-width: 0;
-  gap: 6px;
+  justify-items: center;
+  gap: 5px;
 }
 
 .asset-card-name {
   overflow: hidden;
-  font-size: 13px;
+  max-width: 100%;
+  font-size: 14px;
   font-weight: 800;
+  line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
