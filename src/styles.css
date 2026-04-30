@@ -190,11 +190,11 @@ button {
 }
 
 .asset-preview img {
-  width: 116%;
-  height: 116%;
+  width: 108%;
+  height: 108%;
   object-fit: contain;
   filter: drop-shadow(0 7px 5px rgba(93, 64, 34, 0.2));
-  transform: translateY(2px);
+  transform: translateY(2px) scale(var(--asset-thumbnail-scale, 1));
 }
 
 .asset-preview-loading {

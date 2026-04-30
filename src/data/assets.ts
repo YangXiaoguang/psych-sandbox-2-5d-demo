@@ -1,4 +1,5 @@
 import type { RiskTag, SandboxAsset } from "../types";
+import { getToyAssetSpec } from "./toyAssetSpecs";
 
 export const ASSET_CATEGORIES = [
   "人物",
@@ -22,7 +23,12 @@ export const RISK_COLORS: Record<RiskTag, string> = {
   fantasy: "#7657b8",
 };
 
-export const SANDBOX_ASSETS: SandboxAsset[] = [
+type SandboxAssetBase = Omit<
+  SandboxAsset,
+  "anchor" | "footprint" | "modelRecipe" | "semanticTags" | "thumbnailScale"
+>;
+
+const SANDBOX_ASSET_BASES: SandboxAssetBase[] = [
   {
     assetId: "person_child",
     name: "儿童",
@@ -195,6 +201,19 @@ export const SANDBOX_ASSETS: SandboxAsset[] = [
     riskTag: "normal",
   },
 ];
+
+export const SANDBOX_ASSETS: SandboxAsset[] = SANDBOX_ASSET_BASES.map((asset) => {
+  const spec = getToyAssetSpec(asset.assetId, asset.riskTag);
+
+  return {
+    ...asset,
+    anchor: spec.anchor,
+    footprint: spec.footprint,
+    thumbnailScale: spec.thumbnailScale,
+    semanticTags: spec.semanticTags,
+    modelRecipe: spec.modelRecipe,
+  };
+});
 
 export function findAsset(assetId: string): SandboxAsset | undefined {
   return SANDBOX_ASSETS.find((asset) => asset.assetId === assetId);

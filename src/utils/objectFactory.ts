@@ -24,5 +24,10 @@ export function createSandboxObject(
     createdAt: Date.now(),
     riskTag: asset.riskTag,
     symbolicCandidates: asset.symbolicCandidates,
+    anchor: asset.anchor,
+    footprint: asset.footprint,
+    thumbnailScale: asset.thumbnailScale,
+    semanticTags: asset.semanticTags,
+    modelRecipe: asset.modelRecipe,
   };
 }

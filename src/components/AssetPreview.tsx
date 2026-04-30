@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { SandboxAsset } from "../types";
 import { useToyAssetSprite } from "../hooks/useToyAssetSprite";
 
@@ -14,7 +15,11 @@ export function AssetPreview({ asset }: AssetPreviewProps): JSX.Element {
   });
 
   return (
-    <span className="asset-preview" aria-hidden="true">
+    <span
+      className="asset-preview"
+      style={{ "--asset-thumbnail-scale": asset.thumbnailScale } as CSSProperties}
+      aria-hidden="true"
+    >
       {sprite ? (
         <img src={sprite.frame.dataUrl} alt="" draggable={false} />
       ) : (

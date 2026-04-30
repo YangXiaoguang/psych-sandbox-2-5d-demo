@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import type { RiskTag } from "../types";
+import { getToyAssetSpec } from "../data/toyAssetSpecs";
+import type { RiskTag, ToyAssetSpec, ToyModelRecipe } from "../types";
 
 export interface ToyAssetSprite {
   dataUrl: string;
@@ -27,7 +28,7 @@ interface MeshOptions {
   opacity?: number;
 }
 
-const SPRITE_VERSION = "toy-render-v3";
+const SPRITE_VERSION = "toy-render-v4-spec";
 const spriteCache = new Map<string, Promise<ToyAssetSprite>>();
 let renderQueue: Promise<void> = Promise.resolve();
 let sharedRenderer: THREE.WebGLRenderer | null = null;
@@ -39,16 +40,17 @@ export function renderToyAssetSprite({
   height,
   riskTag,
 }: ToyAssetRenderRequest): Promise<ToyAssetSprite> {
+  const spec = getToyAssetSpec(assetId, riskTag);
   const frameWidth = Math.max(112, Math.round(width * 1.62));
   const frameHeight = Math.max(112, Math.round(height * 1.66));
-  const cacheKey = `${SPRITE_VERSION}:${assetId}:${riskTag}:${frameWidth}x${frameHeight}`;
+  const cacheKey = `${SPRITE_VERSION}:${assetId}:${riskTag}:${frameWidth}x${frameHeight}:${spec.thumbnailScale}`;
   const cached = spriteCache.get(cacheKey);
 
   if (cached) {
     return cached;
   }
 
-  const rendered = enqueueRender(() => renderSprite({ assetId, width: frameWidth, height: frameHeight, riskTag }));
+  const rendered = enqueueRender(() => renderSprite({ width: frameWidth, height: frameHeight, riskTag, spec }));
   spriteCache.set(cacheKey, rendered);
   return rendered;
 }
@@ -63,15 +65,15 @@ function enqueueRender(task: () => ToyAssetSprite): Promise<ToyAssetSprite> {
 }
 
 function renderSprite({
-  assetId,
   width,
   height,
   riskTag,
+  spec,
 }: {
-  assetId: string;
   width: number;
   height: number;
   riskTag: RiskTag;
+  spec: ToyAssetSpec;
 }): ToyAssetSprite {
   if (typeof document === "undefined") {
     return createEmptySprite(width, height);
@@ -81,13 +83,13 @@ function renderSprite({
   const renderer = getSharedRenderer(width, height, pixelRatio);
 
   const scene = new THREE.Scene();
-  const camera = createCamera(width / height, assetId);
-  const root = buildToyAsset(assetId, riskTag);
-  normalizeModel(root, assetId);
+  const camera = createCamera(width / height, spec);
+  const root = buildToyAsset(spec, riskTag);
+  normalizeModel(root, spec);
 
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(8, 8),
-    new THREE.ShadowMaterial({ color: 0x2a2118, opacity: 0.28 }),
+    new THREE.ShadowMaterial({ color: 0x2a2118, opacity: spec.render.shadowOpacity }),
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.012;
@@ -118,8 +120,8 @@ function renderSprite({
   renderer.render(scene, camera);
 
   const cropped = cropTransparentPixels(renderer.domElement, pixelRatio, {
-    x: width / 2,
-    y: height * 0.77,
+    x: width * spec.anchor.x,
+    y: height * spec.anchor.y,
   });
   disposeScene(scene);
 
@@ -227,8 +229,8 @@ function getSharedRenderer(width: number, height: number, pixelRatio: number): T
   return sharedRenderer;
 }
 
-function createCamera(aspect: number, assetId: string): THREE.OrthographicCamera {
-  const viewHeight = getCameraViewHeight(assetId);
+function createCamera(aspect: number, spec: ToyAssetSpec): THREE.OrthographicCamera {
+  const viewHeight = spec.render.viewHeight;
   const camera = new THREE.OrthographicCamera(
     (-viewHeight * aspect) / 2,
     (viewHeight * aspect) / 2,
@@ -242,94 +244,78 @@ function createCamera(aspect: number, assetId: string): THREE.OrthographicCamera
   return camera;
 }
 
-function getCameraViewHeight(assetId: string): number {
-  if (assetId === "env_bridge" || assetId === "env_fence" || assetId === "nature_water") {
-    return 2.9;
-  }
-  if (assetId === "env_tower" || assetId === "nature_tree") {
-    return 3.55;
-  }
-  if (assetId === "nature_sun" || assetId === "symbol_light") {
-    return 3.15;
-  }
-  return 3.05;
-}
-
-function buildToyAsset(assetId: string, riskTag: RiskTag): THREE.Group {
+function buildToyAsset(spec: ToyAssetSpec, riskTag: RiskTag): THREE.Group {
   const group = new THREE.Group();
 
-  switch (assetId) {
-    case "person_child":
-      buildPerson(group, "#5fb4e4", "#f0bd84", 0.88);
+  buildToyModelFromRecipe(group, spec.modelRecipe, riskTag);
+  return group;
+}
+
+function buildToyModelFromRecipe(group: THREE.Group, recipe: ToyModelRecipe, riskTag: RiskTag): void {
+  switch (recipe.kind) {
+    case "person":
+      buildPerson(group, recipe.cloth, recipe.skin, recipe.bodyScale, recipe.elder);
       break;
-    case "person_adult":
-      buildPerson(group, "#3c7296", "#d99a65", 1);
-      break;
-    case "person_elder":
-      buildPerson(group, "#8a7c70", "#ddb487", 0.96, true);
-      break;
-    case "animal_dog":
+    case "dog":
       buildDog(group);
       break;
-    case "animal_bird":
+    case "bird":
       buildBird(group);
       break;
-    case "animal_fish":
+    case "fish":
       buildFish(group);
       break;
-    case "animal_lion":
+    case "lion":
       buildLion(group);
       break;
-    case "env_house":
+    case "house":
       buildHouse(group);
       break;
-    case "env_bridge":
+    case "bridge":
       buildBridge(group);
       break;
-    case "env_fence":
+    case "fence":
       buildFence(group);
       break;
-    case "env_tower":
+    case "tower":
       buildTower(group);
       break;
-    case "nature_tree":
+    case "tree":
       buildTree(group);
       break;
-    case "nature_water":
+    case "water":
       buildWater(group);
       break;
-    case "nature_rock":
+    case "rock":
       buildRock(group);
       break;
-    case "nature_sun":
+    case "sun":
       buildSun(group);
       break;
-    case "symbol_monster":
+    case "monster":
       buildMonster(group);
       break;
-    case "symbol_robot":
+    case "robot":
       buildRobot(group);
       break;
-    case "symbol_skull":
+    case "skull":
       buildSkull(group);
       break;
-    case "symbol_light":
+    case "light":
       buildLight(group);
       break;
     default:
       buildFallback(group, riskTag);
       break;
   }
-
-  return group;
 }
 
-function normalizeModel(group: THREE.Group, assetId: string): void {
+function normalizeModel(group: THREE.Group, spec: ToyAssetSpec): void {
   const box = new THREE.Box3().setFromObject(group);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  const targetWidth = getTargetModelWidth(assetId);
-  const targetHeight = getTargetModelHeight(assetId);
+  const targetWidth = spec.render.targetWidth;
+  const targetHeight = spec.render.targetHeight;
   const scale = Math.min(targetWidth / Math.max(size.x, size.z, 0.001), targetHeight / Math.max(size.y, 0.001));
 
   group.scale.setScalar(scale);
@@ -338,33 +324,7 @@ function normalizeModel(group: THREE.Group, assetId: string): void {
 
   const scaledBox = new THREE.Box3().setFromObject(group);
   group.position.y -= scaledBox.min.y;
-  group.rotation.y = -0.22;
-}
-
-function getTargetModelWidth(assetId: string): number {
-  if (assetId === "env_bridge" || assetId === "env_fence" || assetId === "nature_water") {
-    return 2.42;
-  }
-  if (assetId === "env_house") {
-    return 1.72;
-  }
-  if (assetId === "animal_fish" || assetId === "animal_dog" || assetId === "animal_lion") {
-    return 1.78;
-  }
-  return 1.45;
-}
-
-function getTargetModelHeight(assetId: string): number {
-  if (assetId === "env_tower" || assetId === "nature_tree") {
-    return 2.42;
-  }
-  if (assetId === "symbol_light" || assetId === "nature_sun") {
-    return 1.85;
-  }
-  if (assetId === "env_house") {
-    return 1.82;
-  }
-  return 1.62;
+  group.rotation.y = spec.render.yaw;
 }
 
 function buildPerson(group: THREE.Group, cloth: string, skin: string, scale: number, elder = false): void {

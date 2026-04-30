@@ -1,5 +1,57 @@
 export type RiskTag = "normal" | "conflict" | "death" | "fantasy";
 
+export type FootprintKind = "compact" | "wide" | "tall" | "flat";
+
+export interface ToyAssetAnchor {
+  x: number;
+  y: number;
+}
+
+export interface ToyAssetFootprint {
+  kind: FootprintKind;
+  width: number;
+  depth: number;
+  height: number;
+}
+
+export type ToyModelRecipe =
+  | { kind: "person"; cloth: string; skin: string; bodyScale: number; elder?: boolean }
+  | { kind: "dog" }
+  | { kind: "bird" }
+  | { kind: "fish" }
+  | { kind: "lion" }
+  | { kind: "house" }
+  | { kind: "bridge" }
+  | { kind: "fence" }
+  | { kind: "tower" }
+  | { kind: "tree" }
+  | { kind: "water" }
+  | { kind: "rock" }
+  | { kind: "sun" }
+  | { kind: "monster" }
+  | { kind: "robot" }
+  | { kind: "skull" }
+  | { kind: "light" }
+  | { kind: "fallback" };
+
+export interface ToyRenderProfile {
+  viewHeight: number;
+  targetWidth: number;
+  targetHeight: number;
+  yaw: number;
+  shadowOpacity: number;
+}
+
+export interface ToyAssetSpec {
+  assetId: string;
+  anchor: ToyAssetAnchor;
+  footprint: ToyAssetFootprint;
+  thumbnailScale: number;
+  semanticTags: string[];
+  modelRecipe: ToyModelRecipe;
+  render: ToyRenderProfile;
+}
+
 export type SandboxEventType =
   | "add"
   | "move"
@@ -19,6 +71,11 @@ export interface SandboxAsset {
   defaultHeight: number;
   symbolicCandidates: string[];
   riskTag: RiskTag;
+  anchor: ToyAssetAnchor;
+  footprint: ToyAssetFootprint;
+  thumbnailScale: number;
+  semanticTags: string[];
+  modelRecipe: ToyModelRecipe;
 }
 
 export interface SandboxObject {
@@ -35,6 +92,11 @@ export interface SandboxObject {
   createdAt: number;
   riskTag: RiskTag;
   symbolicCandidates: string[];
+  anchor: ToyAssetAnchor;
+  footprint: ToyAssetFootprint;
+  thumbnailScale: number;
+  semanticTags: string[];
+  modelRecipe: ToyModelRecipe;
 }
 
 export interface SandboxEvent {
