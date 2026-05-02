@@ -1,4 +1,4 @@
-import { MessageCirclePlus, Send, Sparkles } from "lucide-react";
+import { ClipboardList, MessageCirclePlus, MessageSquarePlus, ScrollText, Send, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type {
   AgentConversation,
@@ -221,6 +221,22 @@ export function AgentChatView({
     }, 34);
   };
 
+  const appendDraft = (text: string) => {
+    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${text}` : text));
+  };
+
+  const insertSceneSummary = () => {
+    appendDraft(`请结合这个沙盘摘要继续和我探索：${sceneSummary}`);
+  };
+
+  const continueWithQuestion = () => {
+    appendDraft("请基于刚才的对话，继续问我一个更具体、温和、开放的问题。");
+  };
+
+  const requestConversationSummary = () => {
+    appendDraft("请把这次对话整理成一段温和、非诊断性的沙盘探索小结，并保留可以继续探索的问题。");
+  };
+
   return (
     <main className="agent-chat-shell" aria-label="Agent 对话界面">
       <aside className="conversation-rail" aria-label="会话列表">
@@ -300,13 +316,27 @@ export function AgentChatView({
               {!activeConversation ? (
                 <div className="agent-empty-chat">
                   <Sparkles size={18} />
-                <p>点击左侧“新建会话”，或直接输入一句话开始。若配置可用，会优先使用真实 LLM 流式输出。</p>
-              </div>
-            ) : null}
+                  <p>点击左侧“新建会话”，或直接输入一句话开始。若配置可用，会优先使用真实 LLM 流式输出。</p>
+                </div>
+              ) : null}
               <div ref={chatEndRef} className="agent-chat-end" aria-hidden="true" />
-          </div>
+            </div>
 
             <p className="agent-stream-status">{streamStatus}</p>
+            <div className="agent-compose-actions" aria-label="快捷对话动作">
+              <button type="button" onClick={insertSceneSummary} disabled={Boolean(streamingMessageId)}>
+                <ClipboardList size={14} />
+                沙盘摘要
+              </button>
+              <button type="button" onClick={continueWithQuestion} disabled={Boolean(streamingMessageId)}>
+                <MessageSquarePlus size={14} />
+                继续追问
+              </button>
+              <button type="button" onClick={requestConversationSummary} disabled={Boolean(streamingMessageId)}>
+                <ScrollText size={14} />
+                生成小结
+              </button>
+            </div>
             <form
               className="agent-composer"
               onSubmit={(event) => {
