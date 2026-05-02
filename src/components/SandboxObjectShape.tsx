@@ -16,19 +16,35 @@ export function SandboxObjectShape({
   riskTag,
 }: SandboxObjectShapeProps): JSX.Element {
   const sprite = useToyAssetSprite({ assetId, width, height, riskTag });
+  const shadowWidth = width * 0.54;
+  const shadowHeight = Math.max(8, height * 0.13);
+  const castOffsetX = Math.max(8, width * 0.12);
+  const castOffsetY = Math.max(5, height * 0.06);
 
   return (
     <Group>
       <Ellipse
-        x={0}
-        y={height * 0.12}
-        radiusX={width * 0.48}
-        radiusY={height * 0.12}
-        fill="#2c2117"
-        opacity={0.2}
+        x={castOffsetX}
+        y={height * 0.13 + castOffsetY}
+        radiusX={shadowWidth * 1.04}
+        radiusY={shadowHeight * 1.18}
+        fill="#47331f"
+        opacity={0.12}
         shadowColor="#2c2117"
-        shadowBlur={14}
+        shadowBlur={18}
         shadowOpacity={0.2}
+        listening={false}
+      />
+      <Ellipse
+        x={width * 0.02}
+        y={height * 0.11}
+        radiusX={shadowWidth * 0.78}
+        radiusY={shadowHeight * 0.72}
+        fill="#2c2117"
+        opacity={0.22}
+        shadowColor="#2c2117"
+        shadowBlur={9}
+        shadowOpacity={0.24}
         listening={false}
       />
 

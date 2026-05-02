@@ -23,8 +23,9 @@ interface SandPoint {
 const thirdsX = [BOARD_WIDTH / 3, (BOARD_WIDTH * 2) / 3];
 const thirdsY = [BOARD_HEIGHT / 3, (BOARD_HEIGHT * 2) / 3];
 
-const grains = createSandPoints(640, 37, 46, 42, BOARD_WIDTH - 92, BOARD_HEIGHT - 86);
-const flecks = createSandPoints(132, 211, 74, 64, BOARD_WIDTH - 148, BOARD_HEIGHT - 128);
+const grains = createSandPoints(760, 37, 46, 42, BOARD_WIDTH - 92, BOARD_HEIGHT - 86);
+const fineGrains = createSandPoints(520, 913, 58, 54, BOARD_WIDTH - 116, BOARD_HEIGHT - 108);
+const flecks = createSandPoints(170, 211, 74, 64, BOARD_WIDTH - 148, BOARD_HEIGHT - 128);
 
 export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.Element {
   const corners = getProjectedStageCorners();
@@ -112,7 +113,9 @@ export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.E
       />
 
       <SandMounds />
+      <SandRakeLines />
       <BlueInnerLiner />
+      <StageLightWash />
       <SandTexture />
       {showGuides ? <GuideOverlay /> : null}
       <WoodFrameHighlights />
@@ -187,9 +190,111 @@ function SandMounds(): JSX.Element {
   );
 }
 
+function SandRakeLines(): JSX.Element {
+  const paths = [
+    {
+      points: [
+        { x: 118, y: 184 },
+        { x: 220, y: 162 },
+        { x: 346, y: 174 },
+        { x: 478, y: 150 },
+      ],
+      stroke: "#fff0c4",
+      width: 5,
+      opacity: 0.18,
+    },
+    {
+      points: [
+        { x: 558, y: 222 },
+        { x: 650, y: 202 },
+        { x: 752, y: 214 },
+        { x: 866, y: 188 },
+      ],
+      stroke: "#7c6746",
+      width: 4,
+      opacity: 0.09,
+    },
+    {
+      points: [
+        { x: 130, y: 438 },
+        { x: 276, y: 410 },
+        { x: 418, y: 430 },
+        { x: 582, y: 396 },
+      ],
+      stroke: "#fff1c9",
+      width: 6,
+      opacity: 0.13,
+    },
+  ];
+
+  return (
+    <Group listening={false}>
+      {paths.map((path, index) => (
+        <Path
+          key={`sand-rake-${index}`}
+          data={sandCurve(path.points)}
+          stroke={path.stroke}
+          strokeWidth={path.width}
+          opacity={path.opacity}
+          lineCap="round"
+          lineJoin="round"
+        />
+      ))}
+    </Group>
+  );
+}
+
+function StageLightWash(): JSX.Element {
+  const warm = projectPoint({ x: 260, y: 132 });
+  const cool = projectPoint({ x: 760, y: 430 });
+
+  return (
+    <Group listening={false}>
+      <Ellipse
+        x={warm.x}
+        y={warm.y}
+        radiusX={310}
+        radiusY={88}
+        fill="#fff7cf"
+        opacity={0.16}
+        rotation={-8}
+      />
+      <Ellipse
+        x={cool.x}
+        y={cool.y}
+        radiusX={250}
+        radiusY={72}
+        fill="#8ccfc7"
+        opacity={0.08}
+        rotation={-10}
+      />
+      <Line
+        points={projectRect(42, 42, BOARD_WIDTH - 84, BOARD_HEIGHT - 84)}
+        closed
+        stroke="#fff5ca"
+        strokeWidth={5}
+        opacity={0.13}
+      />
+    </Group>
+  );
+}
+
 function SandTexture(): JSX.Element {
   return (
     <Group listening={false}>
+      {fineGrains.map((grain) => {
+        const point = projectPoint(grain);
+        return (
+          <Circle
+            key={grain.id}
+            x={point.x}
+            y={point.y}
+            radius={0.55 + grain.tone * 0.45}
+            fill={grain.tone > 0.58 ? "#fff6d3" : "#b69462"}
+            opacity={grain.tone > 0.58 ? 0.36 : 0.16}
+          />
+        );
+      })}
       {grains.map((grain) => {
         const point = projectPoint(grain);
         const radius = grain.tone > 0.72 ? 1.5 : 0.9;
@@ -232,7 +337,21 @@ function WoodFrameHighlights(): JSX.Element {
       <Line points={[corners.bottomLeft.x, corners.bottomLeft.y, corners.bottomRight.x, corners.bottomRight.y]} stroke="#5f3d22" strokeWidth={5} opacity={0.52} />
       <Line points={[corners.topRight.x, corners.topRight.y, corners.bottomRight.x, corners.bottomRight.y]} stroke="#5a3921" strokeWidth={5} opacity={0.5} />
       <Line points={projectRect(30, 30, BOARD_WIDTH - 60, BOARD_HEIGHT - 60)} closed stroke="#fff0c5" strokeWidth={2.4} opacity={0.34} />
+      <Line points={projectRect(18, 18, BOARD_WIDTH - 36, BOARD_HEIGHT - 36)} closed stroke="#2d1d12" strokeWidth={5} opacity={0.12} />
       <Line points={projectRect(22, 22, BOARD_WIDTH - 44, BOARD_HEIGHT - 44)} closed stroke="#4b3320" strokeWidth={2.2} opacity={0.16} />
+      {[0.18, 0.82].map((offset) => {
+        const topPoint = projectPoint({ x: BOARD_WIDTH * offset, y: 18 });
+        const bottomPoint = projectPoint({ x: BOARD_WIDTH * offset, y: BOARD_HEIGHT - 18 });
+        return (
+          <Line
+            key={`wood-cross-highlight-${offset}`}
+            points={[topPoint.x, topPoint.y, bottomPoint.x, bottomPoint.y]}
+            stroke="#fff2c5"
+            strokeWidth={1}
+            opacity={0.16}
+          />
+        );
+      })}
     </Group>
   );
 }

@@ -689,8 +689,9 @@ button {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background:
-    radial-gradient(circle at 16% 12%, rgba(255, 250, 230, 0.28), transparent 36%),
-    linear-gradient(135deg, rgba(75, 93, 89, 0.18), transparent 32%),
+    radial-gradient(circle at 22% 12%, rgba(255, 250, 230, 0.44), transparent 32%),
+    radial-gradient(circle at 82% 78%, rgba(83, 126, 111, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(75, 93, 89, 0.2), transparent 34%),
     var(--app-bg-deep);
   box-shadow: var(--shadow-stage);
 }
@@ -710,8 +711,19 @@ button {
   overflow: hidden;
   border-radius: var(--radius-sm);
   box-shadow:
-    0 26px 58px rgba(45, 65, 53, 0.24),
-    0 0 0 1px rgba(255, 255, 255, 0.18);
+    0 32px 70px rgba(38, 55, 47, 0.28),
+    0 12px 26px rgba(111, 83, 44, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.stage-frame::before {
+  position: absolute;
+  inset: -18% -12% auto -12%;
+  height: 46%;
+  background: radial-gradient(ellipse at 32% 38%, rgba(255, 249, 220, 0.28), transparent 64%);
+  content: "";
+  pointer-events: none;
+  z-index: 2;
 }
 
 .ai-stage-companion {
