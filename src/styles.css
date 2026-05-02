@@ -610,7 +610,15 @@ button {
 .topbar {
   position: relative;
   z-index: 2;
-  min-height: 72px;
+  display: grid;
+  grid-template-areas:
+    "title environment actions"
+    "status environment actions";
+  grid-template-columns: minmax(210px, 1fr) 196px max-content;
+  min-height: 92px;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background:
@@ -620,38 +628,41 @@ button {
 }
 
 .topbar-title {
-  min-width: 210px;
+  grid-area: title;
+  min-width: 0;
 }
 
 .topbar-status {
+  grid-area: status;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
   color: #5e6b65;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .topbar-status span {
-  padding: 6px 8px;
+  padding: 5px 7px;
   border: 1px solid #d0c5b0;
   border-radius: 7px;
   background: #fbf4e6;
 }
 
 .environment-controls {
-  display: flex;
-  flex: 1 1 286px;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  min-width: 250px;
+  grid-area: environment;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-content: stretch;
+  gap: 7px;
+  min-width: 0;
 }
 
 .environment-controls label {
   display: inline-grid;
   grid-template-columns: 15px auto minmax(76px, 1fr);
-  min-height: 36px;
+  min-height: 34px;
   align-items: center;
   gap: 6px;
   padding: 0 8px;
@@ -682,8 +693,10 @@ button {
 }
 
 .topbar-actions {
+  grid-area: actions;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
 }
