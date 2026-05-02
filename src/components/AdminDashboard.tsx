@@ -1,15 +1,19 @@
 import {
   Bot,
   Boxes,
+  Download,
   KeyRound,
   Plus,
   RefreshCcw,
+  ShieldCheck,
   Sparkles,
   Trash2,
   Undo2,
+  Upload,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ASSET_CATEGORIES, RISK_LABELS } from "../data/assets";
+import { createDefaultLlmProviders, createDefaultPsychAgents } from "../data/defaultAgents";
 import { getToyAssetSpec } from "../data/toyAssetSpecs";
 import { getProviderLabel, getProviderPreset, PROVIDER_PRESETS } from "../llm/providerPresets";
 import type {
@@ -32,6 +36,7 @@ type AssetStatusFilter = "all" | "enabled" | "disabled" | "deleted";
 type AssetOriginFilter = "all" | "builtin" | "custom";
 type AssetViewMode = "table" | "grid";
 type AssetSortKey = "updatedAt" | "name" | "category" | "riskTag" | "status";
+type ConfigStatusTone = "ok" | "warn" | "error";
 
 interface AdminDashboardProps {
   managedAssets: ManagedAsset[];
@@ -41,6 +46,15 @@ interface AdminDashboardProps {
   onLlmProvidersChange: (providers: LlmProviderConfig[]) => void;
   onAgentsChange: (agents: PsychAgentProfile[]) => void;
   onResetAssets: () => void;
+}
+
+interface AdminConfigBackup {
+  schema: "psych-sandbox-admin-config";
+  version: 1;
+  exportedAt: string;
+  managedAssets: ManagedAsset[];
+  llmProviders: LlmProviderConfig[];
+  agents: PsychAgentProfile[];
 }
 
 const RISK_OPTIONS: RiskTag[] = ["normal", "conflict", "death", "fantasy"];
@@ -77,6 +91,55 @@ export function AdminDashboard({
   onResetAssets,
 }: AdminDashboardProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<AdminTab>("assets");
+  const [configStatus, setConfigStatus] = useState<{ tone: ConfigStatusTone; text: string } | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+
+  const exportAdminConfig = () => {
+    const exportedAt = new Date().toISOString();
+    downloadJsonFile(`psych-sandbox-admin-config-${exportedAt.slice(0, 10)}.json`, {
+      schema: "psych-sandbox-admin-config",
+      version: 1,
+      exportedAt,
+      managedAssets,
+      llmProviders,
+      agents,
+    } satisfies AdminConfigBackup);
+    setConfigStatus({ tone: "ok", text: "已导出本地配置 JSON，包含沙具、LLM 与 Agent 配置。" });
+  };
+
+  const importAdminConfig = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      if (!isAdminConfigBackup(parsed)) {
+        throw new Error("文件结构不符合 psych-sandbox-admin-config v1。");
+      }
+      onManagedAssetsChange(parsed.managedAssets);
+      onLlmProvidersChange(parsed.llmProviders);
+      onAgentsChange(parsed.agents);
+      setConfigStatus({
+        tone: "ok",
+        text: `已导入 ${parsed.managedAssets.length} 个沙具、${parsed.llmProviders.length} 个 LLM 配置和 ${parsed.agents.length} 个 Agent。`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setConfigStatus({ tone: "error", text: `导入失败：${message}` });
+    } finally {
+      if (importInputRef.current) {
+        importInputRef.current.value = "";
+      }
+    }
+  };
+
+  const resetAdminConfig = () => {
+    onResetAssets();
+    onLlmProvidersChange(createDefaultLlmProviders());
+    onAgentsChange(createDefaultPsychAgents());
+    setConfigStatus({ tone: "warn", text: "已恢复本地默认沙具、LLM 与 Agent 配置。" });
+  };
 
   return (
     <main className="admin-shell" aria-label="管理后台">
@@ -86,10 +149,40 @@ export function AdminDashboard({
           <h2>管理后台</h2>
           <p>本地管理沙具资产、LLM 厂商配置和心理学家 Agent。当前 Demo 不会向第三方发送任何密钥或对话。</p>
         </div>
-        <div className="admin-tabbar" role="tablist" aria-label="管理类型">
-          <TabButton id="assets" label="沙具资产" activeTab={activeTab} onSelect={setActiveTab} icon={<Boxes size={16} />} />
-          <TabButton id="llm" label="LLM 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<KeyRound size={16} />} />
-          <TabButton id="agents" label="Agent 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<Bot size={16} />} />
+        <div className="admin-hero-controls">
+          <div className="admin-config-actions" aria-label="本地配置导入导出">
+            <button type="button" onClick={exportAdminConfig}>
+              <Download size={15} />
+              导出配置
+            </button>
+            <button type="button" onClick={() => importInputRef.current?.click()}>
+              <Upload size={15} />
+              导入配置
+            </button>
+            <button type="button" onClick={resetAdminConfig}>
+              <RefreshCcw size={15} />
+              恢复默认
+            </button>
+            <input
+              ref={importInputRef}
+              className="visually-hidden"
+              type="file"
+              accept="application/json"
+              onChange={(event) => {
+                void importAdminConfig(event.target.files?.[0] ?? null);
+              }}
+            />
+          </div>
+          {configStatus ? (
+            <p className={`admin-config-status ${configStatus.tone}`} role="status">
+              {configStatus.text}
+            </p>
+          ) : null}
+          <div className="admin-tabbar" role="tablist" aria-label="管理类型">
+            <TabButton id="assets" label="沙具资产" activeTab={activeTab} onSelect={setActiveTab} icon={<Boxes size={16} />} />
+            <TabButton id="llm" label="LLM 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<KeyRound size={16} />} />
+            <TabButton id="agents" label="Agent 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<Bot size={16} />} />
+          </div>
         </div>
       </section>
 
@@ -844,6 +937,62 @@ function formatDateTime(value: string): string {
   return new Date(value).toLocaleString();
 }
 
+function ProviderReadinessPill({
+  provider,
+  status,
+}: {
+  provider: LlmProviderConfig;
+  status?: { tone: ConfigStatusTone; text: string };
+}): JSX.Element {
+  const readiness = status
+    ? { tone: status.tone, label: status.tone === "ok" ? "已测试" : status.tone === "error" ? "异常" : "需处理" }
+    : getProviderReadiness(provider);
+  return <span className={`status-pill ${readiness.tone}`}>{readiness.label}</span>;
+}
+
+function getProviderReadiness(provider: LlmProviderConfig): { tone: ConfigStatusTone; label: string } {
+  if (!provider.enabled) {
+    return { tone: "warn", label: "停用" };
+  }
+  if (!provider.apiKey.trim() || !provider.baseUrl.trim() || !provider.model.trim()) {
+    return { tone: "warn", label: "待补全" };
+  }
+  return { tone: "ok", label: "可调用" };
+}
+
+function validateProviderForBrowserStreaming(provider: LlmProviderConfig): { tone: ConfigStatusTone; text: string } {
+  const issues: string[] = [];
+  if (!provider.enabled) {
+    issues.push("配置未启用");
+  }
+  if (!provider.apiKey.trim()) {
+    issues.push("缺少 API Key");
+  }
+  if (!provider.model.trim()) {
+    issues.push("缺少模型名");
+  }
+  try {
+    const url = new URL(provider.baseUrl);
+    if (!["http:", "https:"].includes(url.protocol)) {
+      issues.push("Base URL 必须使用 http 或 https");
+    }
+  } catch {
+    issues.push("Base URL 格式无效");
+  }
+
+  if (issues.length > 0) {
+    return {
+      tone: "warn",
+      text: `配置未就绪：${issues.join("、")}。`,
+    };
+  }
+
+  return {
+    tone: "ok",
+    text: `配置完整：${getProviderLabel(provider.provider)} / ${provider.model}。真实流式调用将在对话时发送请求；若遇到 CORS 或网络限制会自动回退。`,
+  };
+}
+
 function LlmAdminPanel({
   providers,
   onProvidersChange,
@@ -852,6 +1001,7 @@ function LlmAdminPanel({
   onProvidersChange: (providers: LlmProviderConfig[]) => void;
 }): JSX.Element {
   const [selectedId, setSelectedId] = useState(() => providers[0]?.id ?? "");
+  const [testStatus, setTestStatus] = useState<Record<string, { tone: ConfigStatusTone; text: string }>>({});
   const selected = providers.find((provider) => provider.id === selectedId) ?? providers[0] ?? null;
 
   useEffect(() => {
@@ -894,6 +1044,18 @@ function LlmAdminPanel({
     onProvidersChange(providers.filter((provider) => provider.id !== selected.id));
   };
 
+  const testSelectedProvider = () => {
+    if (!selected) {
+      return;
+    }
+
+    const result = validateProviderForBrowserStreaming(selected);
+    setTestStatus((current) => ({
+      ...current,
+      [selected.id]: result,
+    }));
+  };
+
   return (
     <section className="admin-grid two-col">
       <div className="admin-card">
@@ -922,7 +1084,7 @@ function LlmAdminPanel({
                   {getProviderLabel(provider.provider)} · {provider.model || "未设置模型"} · {maskKey(provider.apiKey)}
                 </em>
               </span>
-              <span className={`status-pill ${provider.enabled ? "enabled" : ""}`}>{provider.enabled ? "启用" : "停用"}</span>
+              <ProviderReadinessPill provider={provider} status={testStatus[provider.id]} />
             </button>
           ))}
         </div>
@@ -934,14 +1096,24 @@ function LlmAdminPanel({
             <h3>{selected ? selected.name : "请选择配置"}</h3>
           </div>
           {selected ? (
-            <button type="button" className="icon-button danger" onClick={removeProvider}>
-              <Trash2 size={15} />
-              删除
-            </button>
+            <div className="admin-actions">
+              <button type="button" className="icon-button" onClick={testSelectedProvider}>
+                <ShieldCheck size={15} />
+                连接测试
+              </button>
+              <button type="button" className="icon-button danger" onClick={removeProvider}>
+                <Trash2 size={15} />
+                删除
+              </button>
+            </div>
           ) : null}
         </div>
         {selected ? (
           <div className="admin-form">
+            <div className="provider-readiness-card">
+              <ProviderReadinessPill provider={selected} status={testStatus[selected.id]} />
+              <span>{testStatus[selected.id]?.text ?? "尚未测试。当前测试会做浏览器直连前的配置检查，不会发送 API Key。"}</span>
+            </div>
             <label>
               配置名称
               <input value={selected.name} onChange={(event) => updateProvider({ name: event.target.value })} />
@@ -976,6 +1148,13 @@ function LlmAdminPanel({
                 ))}
               </datalist>
             </label>
+            <div className="model-hint-grid" aria-label="常用模型">
+              {getProviderPreset(selected.provider).modelHints.slice(0, 6).map((model) => (
+                <button key={model} type="button" onClick={() => updateProvider({ model })}>
+                  {model}
+                </button>
+              ))}
+            </div>
             <label>
               API Key
               <input
@@ -1292,6 +1471,34 @@ function maskKey(apiKey: string): string {
     return "未配置 key";
   }
   return apiKey.length <= 8 ? "••••••" : `${apiKey.slice(0, 4)}••••${apiKey.slice(-4)}`;
+}
+
+function downloadJsonFile(filename: string, payload: unknown): void {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function isAdminConfigBackup(value: unknown): value is AdminConfigBackup {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    value.schema === "psych-sandbox-admin-config" &&
+    value.version === 1 &&
+    typeof value.exportedAt === "string" &&
+    Array.isArray(value.managedAssets) &&
+    Array.isArray(value.llmProviders) &&
+    Array.isArray(value.agents)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function buildDraftProfile(prompt: string, providerId?: string): PsychAgentProfile {
