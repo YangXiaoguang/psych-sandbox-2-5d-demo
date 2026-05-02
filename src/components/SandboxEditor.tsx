@@ -321,12 +321,15 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                 ref={transformerRef}
                 rotateEnabled
                 keepRatio
-                anchorSize={10}
-                anchorCornerRadius={3}
+                anchorSize={9}
+                anchorCornerRadius={4}
                 borderStroke="#256c65"
-                borderDash={[8, 5]}
-                anchorFill="#f9fbf8"
+                borderStrokeWidth={1.4}
+                borderDash={[6, 5]}
+                anchorFill="#fffdf2"
                 anchorStroke="#256c65"
+                anchorStrokeWidth={1.5}
+                rotateAnchorOffset={30}
                 rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
                 boundBoxFunc={(oldBox, newBox) => {
                   if (newBox.width < 24 || newBox.height < 24) {

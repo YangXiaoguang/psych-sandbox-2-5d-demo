@@ -23,8 +23,8 @@ interface SandPoint {
 const thirdsX = [BOARD_WIDTH / 3, (BOARD_WIDTH * 2) / 3];
 const thirdsY = [BOARD_HEIGHT / 3, (BOARD_HEIGHT * 2) / 3];
 
-const grains = createSandPoints(420, 37, 46, 42, BOARD_WIDTH - 92, BOARD_HEIGHT - 86);
-const flecks = createSandPoints(84, 211, 74, 64, BOARD_WIDTH - 148, BOARD_HEIGHT - 128);
+const grains = createSandPoints(640, 37, 46, 42, BOARD_WIDTH - 92, BOARD_HEIGHT - 86);
+const flecks = createSandPoints(132, 211, 74, 64, BOARD_WIDTH - 148, BOARD_HEIGHT - 128);
 
 export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.Element {
   const corners = getProjectedStageCorners();
@@ -92,9 +92,10 @@ export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.E
         listening={false}
       />
 
-      <Line points={leftFace} closed fill="#9b7446" stroke="#5f452b" strokeWidth={3} listening={false} />
+      <Line points={leftFace} closed fill="#a98151" stroke="#5f452b" strokeWidth={3} listening={false} />
       <Line points={rightFace} closed fill="#7d5a35" stroke="#4c3522" strokeWidth={3} listening={false} />
-      <Line points={frontFace} closed fillLinearGradientStartPoint={{ x: corners.bottomLeft.x, y: corners.bottomLeft.y }} fillLinearGradientEndPoint={{ x: corners.bottomRight.x, y: corners.bottomRight.y + STAGE_THICKNESS }} fillLinearGradientColorStops={[0, "#b98c55", 0.52, "#8b6137", 1, "#654323"]} stroke="#4f3722" strokeWidth={3} listening={false} />
+      <Line points={frontFace} closed fillLinearGradientStartPoint={{ x: corners.bottomLeft.x, y: corners.bottomLeft.y }} fillLinearGradientEndPoint={{ x: corners.bottomRight.x, y: corners.bottomRight.y + STAGE_THICKNESS }} fillLinearGradientColorStops={[0, "#c79a5e", 0.52, "#8b6137", 1, "#654323"]} stroke="#4f3722" strokeWidth={3} listening={false} />
+      <WoodGrain />
 
       <Line
         name="tray"
@@ -168,6 +169,20 @@ function SandMounds(): JSX.Element {
         lineCap="round"
         lineJoin="round"
       />
+      <Path
+        data={sandCurve([
+          { x: 190, y: 360 },
+          { x: 300, y: 330 },
+          { x: 430, y: 350 },
+          { x: 570, y: 325 },
+          { x: 720, y: 360 },
+        ])}
+        stroke="#7e6744"
+        strokeWidth={10}
+        opacity={0.07}
+        lineCap="round"
+        lineJoin="round"
+      />
     </Group>
   );
 }
@@ -216,6 +231,62 @@ function WoodFrameHighlights(): JSX.Element {
       <Line points={[corners.topLeft.x, corners.topLeft.y, corners.bottomLeft.x, corners.bottomLeft.y]} stroke="#e1ba76" strokeWidth={4} opacity={0.72} />
       <Line points={[corners.bottomLeft.x, corners.bottomLeft.y, corners.bottomRight.x, corners.bottomRight.y]} stroke="#5f3d22" strokeWidth={5} opacity={0.52} />
       <Line points={[corners.topRight.x, corners.topRight.y, corners.bottomRight.x, corners.bottomRight.y]} stroke="#5a3921" strokeWidth={5} opacity={0.5} />
+      <Line points={projectRect(30, 30, BOARD_WIDTH - 60, BOARD_HEIGHT - 60)} closed stroke="#fff0c5" strokeWidth={2.4} opacity={0.34} />
+      <Line points={projectRect(22, 22, BOARD_WIDTH - 44, BOARD_HEIGHT - 44)} closed stroke="#4b3320" strokeWidth={2.2} opacity={0.16} />
+    </Group>
+  );
+}
+
+function WoodGrain(): JSX.Element {
+  const corners = getProjectedStageCorners();
+  const frontLines = [0.22, 0.36, 0.5, 0.64, 0.78];
+  const leftLines = [0.24, 0.42, 0.6, 0.78];
+  const rightLines = [0.22, 0.4, 0.58, 0.76];
+
+  return (
+    <Group listening={false}>
+      {frontLines.map((offset) => (
+        <Line
+          key={`front-grain-${offset}`}
+          points={[
+            corners.bottomLeft.x + 24,
+            corners.bottomLeft.y + STAGE_THICKNESS * offset,
+            corners.bottomRight.x - 18,
+            corners.bottomRight.y + STAGE_THICKNESS * (offset + 0.02),
+          ]}
+          stroke="#e1b575"
+          strokeWidth={1.2}
+          opacity={0.2}
+        />
+      ))}
+      {leftLines.map((offset) => (
+        <Line
+          key={`left-grain-${offset}`}
+          points={[
+            corners.topLeft.x + 8,
+            corners.topLeft.y + STAGE_THICKNESS * offset,
+            corners.bottomLeft.x + 8,
+            corners.bottomLeft.y + STAGE_THICKNESS * (offset + 0.08),
+          ]}
+          stroke="#e6bd7a"
+          strokeWidth={1}
+          opacity={0.18}
+        />
+      ))}
+      {rightLines.map((offset) => (
+        <Line
+          key={`right-grain-${offset}`}
+          points={[
+            corners.topRight.x - 8,
+            corners.topRight.y + STAGE_THICKNESS * offset,
+            corners.bottomRight.x - 8,
+            corners.bottomRight.y + STAGE_THICKNESS * (offset + 0.1),
+          ]}
+          stroke="#3f2a1a"
+          strokeWidth={1}
+          opacity={0.15}
+        />
+      ))}
     </Group>
   );
 }
