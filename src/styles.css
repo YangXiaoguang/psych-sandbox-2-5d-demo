@@ -81,10 +81,10 @@ button {
 .product-shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 12px;
+  gap: 14px;
   width: 100vw;
   height: 100vh;
-  padding: 12px;
+  padding: 14px;
   overflow: hidden;
   background:
     radial-gradient(circle at 18% 10%, rgba(255, 250, 231, 0.72), transparent 34%),
@@ -95,7 +95,7 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 300px minmax(620px, 1fr) 372px;
+  grid-template-columns: 306px minmax(620px, 1fr) 382px;
   gap: 14px;
   width: 100%;
   min-height: 0;
@@ -104,34 +104,48 @@ button {
 
 .app-navigation {
   display: flex;
-  min-height: 70px;
+  min-height: 78px;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 12px 14px;
+  padding: 13px 16px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background:
+    radial-gradient(circle at 9% 8%, rgba(255, 255, 255, 0.92), transparent 42%),
     linear-gradient(180deg, rgba(255, 252, 242, 0.96), rgba(241, 232, 213, 0.95)),
     var(--panel-strong);
-  box-shadow: var(--shadow);
+  box-shadow:
+    var(--shadow-sm),
+    var(--inner-highlight);
+}
+
+.app-brand {
+  display: grid;
+  gap: 2px;
 }
 
 .app-brand h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 21px;
   letter-spacing: 0;
+}
+
+.app-brand span {
+  color: #718078;
+  font-size: var(--font-xs);
+  font-weight: 820;
 }
 
 .app-nav-tabs {
   display: flex;
-  gap: 8px;
+  gap: 9px;
 }
 
 .app-nav-tabs button {
   display: inline-flex;
-  min-width: 138px;
-  min-height: 46px;
+  min-width: 146px;
+  min-height: var(--control-lg);
   align-items: center;
   gap: 9px;
   padding: 0 12px;
@@ -140,7 +154,14 @@ button {
   background: var(--panel-strong);
   color: #37413e;
   text-align: left;
-  box-shadow: var(--inner-highlight);
+  box-shadow:
+    var(--inner-highlight),
+    0 6px 14px rgba(73, 60, 42, 0.06);
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .app-nav-tabs button span {
@@ -166,6 +187,10 @@ button {
   background: var(--accent-soft);
   color: var(--accent-dark);
   outline: none;
+  transform: translateY(-1px);
+  box-shadow:
+    var(--inner-highlight),
+    0 10px 20px rgba(53, 100, 90, 0.12);
 }
 
 .asset-library,
@@ -183,8 +208,10 @@ button {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.74), rgba(246, 241, 230, 0.84)),
+    var(--panel);
+  box-shadow: var(--shadow-sm);
 }
 
 .workspace-column {
@@ -399,10 +426,13 @@ button {
 .topbar {
   position: relative;
   z-index: 2;
-  min-height: 76px;
+  min-height: 72px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.85), transparent 45%),
+    var(--panel-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 .topbar-title {
@@ -473,11 +503,12 @@ button {
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background:
+    radial-gradient(circle at 16% 12%, rgba(255, 250, 230, 0.28), transparent 36%),
     linear-gradient(135deg, rgba(75, 93, 89, 0.18), transparent 32%),
-    #bfcbbf;
-  box-shadow: var(--shadow);
+    var(--app-bg-deep);
+  box-shadow: var(--shadow-stage);
 }
 
 .stage-host {
@@ -493,8 +524,10 @@ button {
 .stage-frame {
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
-  box-shadow: 0 18px 38px rgba(45, 65, 53, 0.2);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 26px 58px rgba(45, 65, 53, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .ai-stage-companion {
@@ -984,11 +1017,12 @@ button {
   gap: 18px;
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background:
-    radial-gradient(circle at 12% 18%, rgba(123, 188, 172, 0.18), transparent 44%),
+    radial-gradient(circle at 12% 18%, rgba(123, 188, 172, 0.2), transparent 44%),
+    radial-gradient(circle at 92% 0%, rgba(255, 244, 213, 0.7), transparent 36%),
     var(--panel-strong);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .admin-hero h2 {
@@ -1017,8 +1051,8 @@ button {
   gap: 7px;
   padding: 0 12px;
   border: 1px solid #c5b89f;
-  border-radius: 8px;
-  background: #fffaf0;
+  border-radius: var(--radius-sm);
+  background: var(--panel-strong);
   color: #394340;
   font-size: 13px;
   font-weight: 900;
@@ -1027,8 +1061,8 @@ button {
 .admin-tabbar button.active,
 .admin-tabbar button:hover,
 .admin-tabbar button:focus-visible {
-  border-color: #70a99d;
-  background: #edf8f3;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
   color: var(--accent-dark);
   outline: none;
 }
@@ -1059,9 +1093,11 @@ button {
   min-height: 0;
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.54), transparent 160px),
+    var(--panel);
+  box-shadow: var(--shadow-sm);
 }
 
 .asset-filter-panel,
@@ -1090,7 +1126,9 @@ button {
   gap: 12px;
   padding: 14px;
   border-bottom: 1px solid var(--line);
-  background: var(--panel-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), transparent),
+    var(--panel-strong);
 }
 
 .admin-card-header h3,
@@ -1864,7 +1902,7 @@ button {
 
 .agent-chat-shell {
   display: grid;
-  grid-template-columns: 318px minmax(680px, 1fr);
+  grid-template-columns: 326px minmax(680px, 1fr);
   gap: 14px;
 }
 
@@ -1873,9 +1911,11 @@ button {
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.62), transparent 180px),
+    var(--panel);
+  box-shadow: var(--shadow-sm);
 }
 
 .conversation-rail {

@@ -19,6 +19,7 @@ export function AppNavigation({ activeView, onViewChange }: AppNavigationProps):
       <div className="app-brand">
         <p className="eyebrow">Psych Sandbox Studio</p>
         <h1>2.5D 心理沙盘协作系统</h1>
+        <span>本地原型 · 沙盘编辑 · AI 陪伴 · 管理配置</span>
       </div>
       <nav className="app-nav-tabs" aria-label="主功能">
         {NAV_ITEMS.map((item) => {
