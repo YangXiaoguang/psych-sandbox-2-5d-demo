@@ -1,16 +1,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminDashboard } from "./components/AdminDashboard";
+import { AgentChatView } from "./components/AgentChatView";
+import { AppNavigation, type AppView } from "./components/AppNavigation";
 import { AssetLibrary } from "./components/AssetLibrary";
-import { RightPanel } from "./components/RightPanel";
+import { RightPanel, type RightPanelTab } from "./components/RightPanel";
 import { SandboxEditor, type SandboxEditorHandle } from "./components/SandboxEditor";
 import { TopBar } from "./components/TopBar";
-import { findAsset } from "./data/assets";
+import { toSandboxAsset } from "./data/assets";
 import { createInitialScene } from "./data/initialScene";
 import type { SandboxAsset, SandboxEvent, SandboxEventDraft, SandboxObject } from "./types";
 import { BOARD_HEIGHT, BOARD_WIDTH, analyzeScene, buildSnapshot, clamp } from "./utils/analysis";
 import { downloadSnapshot } from "./utils/download";
 import { createSandboxEvent } from "./utils/events";
 import { createSandboxObject } from "./utils/objectFactory";
-import { loadScene, saveScene } from "./utils/storage";
+import {
+  loadAgentConversations,
+  loadLlmProviders,
+  loadManagedAssets,
+  loadPsychAgents,
+  loadScene,
+  resetManagedAssets,
+  saveAgentConversations,
+  saveLlmProviders,
+  saveManagedAssets,
+  savePsychAgents,
+  saveScene,
+} from "./utils/storage";
 
 interface SceneState {
   objects: SandboxObject[];
@@ -23,9 +38,22 @@ export function App(): JSX.Element {
   const [events, setEvents] = useState<SandboxEvent[]>(initialScene.events);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showGuides, setShowGuides] = useState(false);
+  const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("scene");
+  const [activeView, setActiveView] = useState<AppView>("sandbox");
+  const [managedAssets, setManagedAssets] = useState(() => loadManagedAssets());
+  const [llmProviders, setLlmProviders] = useState(() => loadLlmProviders());
+  const [agents, setAgents] = useState(() => loadPsychAgents());
+  const [conversations, setConversations] = useState(() => loadAgentConversations());
   const editorRef = useRef<SandboxEditorHandle | null>(null);
 
   const analysis = useMemo(() => analyzeScene(objects), [objects]);
+  const visibleAssets = useMemo(
+    () =>
+      managedAssets
+        .filter((asset) => asset.enabled && !asset.deletedAt)
+        .map((asset) => toSandboxAsset(asset)),
+    [managedAssets],
+  );
   const selectedObject = useMemo(
     () => objects.find((object) => object.id === selectedId) ?? null,
     [objects, selectedId],
@@ -34,6 +62,22 @@ export function App(): JSX.Element {
   useEffect(() => {
     saveScene({ objects, events });
   }, [events, objects]);
+
+  useEffect(() => {
+    saveManagedAssets(managedAssets);
+  }, [managedAssets]);
+
+  useEffect(() => {
+    saveLlmProviders(llmProviders);
+  }, [llmProviders]);
+
+  useEffect(() => {
+    savePsychAgents(agents);
+  }, [agents]);
+
+  useEffect(() => {
+    saveAgentConversations(conversations);
+  }, [conversations]);
 
   const recordEvent = useCallback((draft: SandboxEventDraft) => {
     const event = createSandboxEvent(draft);
@@ -80,12 +124,12 @@ export function App(): JSX.Element {
 
   const handleDropAsset = useCallback(
     (assetId: string, position: { x: number; y: number }) => {
-      const asset = findAsset(assetId);
+      const asset = visibleAssets.find((item) => item.assetId === assetId);
       if (asset) {
         addAssetToScene(asset, position);
       }
     },
-    [addAssetToScene],
+    [addAssetToScene, visibleAssets],
   );
 
   const handlePatchSelected = useCallback(
@@ -169,39 +213,74 @@ export function App(): JSX.Element {
   }, [objects.length, recordEvent]);
 
   return (
-    <div className="app-shell">
-      <AssetLibrary onAddAsset={addAssetToScene} />
+    <div className="product-shell">
+      <AppNavigation activeView={activeView} onViewChange={setActiveView} />
 
-      <section className="workspace-column" aria-label="沙盘编辑区">
-        <TopBar
-          objectCount={objects.length}
-          showGuides={showGuides}
-          onToggleGuides={() => setShowGuides((current) => !current)}
-          onExportJson={handleExportJson}
-          onExportPng={handleExportPng}
-          onClearScene={handleClearScene}
-        />
-        <SandboxEditor
-          ref={editorRef}
+      {activeView === "sandbox" ? (
+        <div className="app-shell">
+          <AssetLibrary assets={visibleAssets} onAddAsset={addAssetToScene} />
+
+          <section className="workspace-column" aria-label="沙盘编辑区">
+            <TopBar
+              objectCount={objects.length}
+              showGuides={showGuides}
+              onToggleGuides={() => setShowGuides((current) => !current)}
+              onExportJson={handleExportJson}
+              onExportPng={handleExportPng}
+              onClearScene={handleClearScene}
+            />
+            <SandboxEditor
+              ref={editorRef}
+              objects={objects}
+              selectedId={selectedId}
+              showGuides={showGuides}
+              onSelectObject={handleSelectObject}
+              onPatchObject={patchObject}
+              onDropAsset={handleDropAsset}
+              onDeleteSelected={handleDeleteSelected}
+              onRecordEvent={recordEvent}
+              aiCompanionActive={rightPanelTab === "ai"}
+              onOpenAiCompanion={() => setRightPanelTab("ai")}
+            />
+          </section>
+
+          <RightPanel
+            objects={objects}
+            selectedObject={selectedObject}
+            events={events}
+            analysis={analysis}
+            llmProviders={llmProviders}
+            activeTab={rightPanelTab}
+            onTabChange={setRightPanelTab}
+            onPatchSelected={handlePatchSelected}
+            onDeleteSelected={handleDeleteSelected}
+          />
+        </div>
+      ) : null}
+
+      {activeView === "agentChat" ? (
+        <AgentChatView
+          agents={agents}
+          llmProviders={llmProviders}
+          conversations={conversations}
           objects={objects}
-          selectedId={selectedId}
-          showGuides={showGuides}
-          onSelectObject={handleSelectObject}
-          onPatchObject={patchObject}
-          onDropAsset={handleDropAsset}
-          onDeleteSelected={handleDeleteSelected}
-          onRecordEvent={recordEvent}
+          events={events}
+          analysis={analysis}
+          onConversationsChange={setConversations}
         />
-      </section>
+      ) : null}
 
-      <RightPanel
-        objects={objects}
-        selectedObject={selectedObject}
-        events={events}
-        analysis={analysis}
-        onPatchSelected={handlePatchSelected}
-        onDeleteSelected={handleDeleteSelected}
-      />
+      {activeView === "admin" ? (
+        <AdminDashboard
+          managedAssets={managedAssets}
+          llmProviders={llmProviders}
+          agents={agents}
+          onManagedAssetsChange={setManagedAssets}
+          onLlmProvidersChange={setLlmProviders}
+          onAgentsChange={setAgents}
+          onResetAssets={() => setManagedAssets(resetManagedAssets())}
+        />
+      ) : null}
     </div>
   );
 }

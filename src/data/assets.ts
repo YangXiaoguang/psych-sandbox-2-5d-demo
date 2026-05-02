@@ -1,4 +1,4 @@
-import type { RiskTag, SandboxAsset } from "../types";
+import type { ManagedAsset, RiskTag, SandboxAsset } from "../types";
 import { getToyAssetSpec } from "./toyAssetSpecs";
 
 export const ASSET_CATEGORIES = [
@@ -214,6 +214,33 @@ export const SANDBOX_ASSETS: SandboxAsset[] = SANDBOX_ASSET_BASES.map((asset) =>
     modelRecipe: spec.modelRecipe,
   };
 });
+
+export function createDefaultManagedAssets(timestamp = new Date().toISOString()): ManagedAsset[] {
+  return SANDBOX_ASSETS.map((asset) => ({
+    ...asset,
+    isBuiltIn: true,
+    enabled: true,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }));
+}
+
+export function toSandboxAsset(asset: ManagedAsset): SandboxAsset {
+  return {
+    assetId: asset.assetId,
+    name: asset.name,
+    category: asset.category,
+    defaultWidth: asset.defaultWidth,
+    defaultHeight: asset.defaultHeight,
+    symbolicCandidates: asset.symbolicCandidates,
+    riskTag: asset.riskTag,
+    anchor: asset.anchor,
+    footprint: asset.footprint,
+    thumbnailScale: asset.thumbnailScale,
+    semanticTags: asset.semanticTags,
+    modelRecipe: asset.modelRecipe,
+  };
+}
 
 export function findAsset(assetId: string): SandboxAsset | undefined {
   return SANDBOX_ASSETS.find((asset) => asset.assetId === assetId);

@@ -78,6 +78,14 @@ export interface SandboxAsset {
   modelRecipe: ToyModelRecipe;
 }
 
+export interface ManagedAsset extends SandboxAsset {
+  isBuiltIn: boolean;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
 export interface SandboxObject {
   id: string;
   assetId: string;
@@ -145,4 +153,67 @@ export interface SandboxSnapshot {
   objects: SandboxObject[];
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
+}
+
+export type LlmProviderKind =
+  | "openai"
+  | "openai-compatible"
+  | "anthropic"
+  | "deepseek"
+  | "qwen"
+  | "minimax"
+  | "gemini"
+  | "openrouter"
+  | "moonshot"
+  | "zhipu"
+  | "siliconflow"
+  | "groq"
+  | "mistral"
+  | "together"
+  | "xai";
+
+export interface LlmProviderConfig {
+  id: string;
+  name: string;
+  provider: LlmProviderKind;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AgentAvatarStyle = "sage" | "warm" | "analyst" | "dream" | "mentor";
+
+export interface PsychAgentProfile {
+  id: string;
+  name: string;
+  school: string;
+  description: string;
+  avatarStyle: AgentAvatarStyle;
+  openingMessage: string;
+  systemPrompt: string;
+  providerId?: string;
+  temperature: number;
+  enabled: boolean;
+  isBuiltIn: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentMessage {
+  id: string;
+  role: "assistant" | "user";
+  text: string;
+  createdAt: string;
+}
+
+export interface AgentConversation {
+  id: string;
+  agentId: string;
+  title: string;
+  messages: AgentMessage[];
+  createdAt: string;
+  updatedAt: string;
 }

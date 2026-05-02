@@ -1,6 +1,19 @@
-import type { SandboxEvent, SandboxObject } from "../types";
+import { createDefaultManagedAssets } from "../data/assets";
+import { createDefaultLlmProviders, createDefaultPsychAgents } from "../data/defaultAgents";
+import type {
+  AgentConversation,
+  LlmProviderConfig,
+  ManagedAsset,
+  PsychAgentProfile,
+  SandboxEvent,
+  SandboxObject,
+} from "../types";
 
 const STORAGE_KEY = "psych-sandbox-2-5d-demo.scene.v6";
+const MANAGED_ASSETS_KEY = "psych-sandbox-2-5d-demo.managed-assets.v1";
+const LLM_PROVIDERS_KEY = "psych-sandbox-2-5d-demo.llm-providers.v1";
+const PSYCH_AGENTS_KEY = "psych-sandbox-2-5d-demo.psych-agents.v1";
+const AGENT_CONVERSATIONS_KEY = "psych-sandbox-2-5d-demo.agent-conversations.v1";
 
 interface StoredScene {
   objects: SandboxObject[];
@@ -27,4 +40,62 @@ export function loadScene(): StoredScene | null {
 
 export function saveScene(scene: StoredScene): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(scene));
+}
+
+export function loadManagedAssets(): ManagedAsset[] {
+  const parsed = readJson<ManagedAsset[]>(MANAGED_ASSETS_KEY);
+  return Array.isArray(parsed) ? parsed : createDefaultManagedAssets();
+}
+
+export function saveManagedAssets(assets: ManagedAsset[]): void {
+  writeJson(MANAGED_ASSETS_KEY, assets);
+}
+
+export function resetManagedAssets(): ManagedAsset[] {
+  const assets = createDefaultManagedAssets();
+  saveManagedAssets(assets);
+  return assets;
+}
+
+export function loadLlmProviders(): LlmProviderConfig[] {
+  const parsed = readJson<LlmProviderConfig[]>(LLM_PROVIDERS_KEY);
+  return Array.isArray(parsed) ? parsed : createDefaultLlmProviders();
+}
+
+export function saveLlmProviders(providers: LlmProviderConfig[]): void {
+  writeJson(LLM_PROVIDERS_KEY, providers);
+}
+
+export function loadPsychAgents(): PsychAgentProfile[] {
+  const parsed = readJson<PsychAgentProfile[]>(PSYCH_AGENTS_KEY);
+  return Array.isArray(parsed) ? parsed : createDefaultPsychAgents();
+}
+
+export function savePsychAgents(agents: PsychAgentProfile[]): void {
+  writeJson(PSYCH_AGENTS_KEY, agents);
+}
+
+export function loadAgentConversations(): AgentConversation[] {
+  const parsed = readJson<AgentConversation[]>(AGENT_CONVERSATIONS_KEY);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+export function saveAgentConversations(conversations: AgentConversation[]): void {
+  writeJson(AGENT_CONVERSATIONS_KEY, conversations);
+}
+
+function readJson<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function writeJson<T>(key: string, value: T): void {
+  localStorage.setItem(key, JSON.stringify(value));
 }

@@ -13,6 +13,7 @@ import type { SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp, depthSortObjects } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
 import { getDepthScale, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
+import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
 import { SandboxObjectShape } from "./SandboxObjectShape";
@@ -30,6 +31,8 @@ interface SandboxEditorProps {
   onDropAsset: (assetId: string, position: { x: number; y: number }) => void;
   onDeleteSelected: () => void;
   onRecordEvent: (draft: SandboxEventDraft) => void;
+  aiCompanionActive: boolean;
+  onOpenAiCompanion: () => void;
 }
 
 interface TransformState {
@@ -49,6 +52,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     onDropAsset,
     onDeleteSelected,
     onRecordEvent,
+    aiCompanionActive,
+    onOpenAiCompanion,
   },
   ref,
 ) {
@@ -334,6 +339,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
           </Stage>
         </div>
       </div>
+      <AiCompanionAvatar active={aiCompanionActive} onOpen={onOpenAiCompanion} />
     </main>
   );
 });
