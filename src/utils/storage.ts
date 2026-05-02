@@ -5,15 +5,18 @@ import type {
   LlmProviderConfig,
   ManagedAsset,
   PsychAgentProfile,
+  SandboxEnvironment,
   SandboxEvent,
   SandboxObject,
 } from "../types";
+import { DEFAULT_ENVIRONMENT, LIGHT_OPTIONS, WEATHER_OPTIONS } from "../data/environment";
 
 const STORAGE_KEY = "psych-sandbox-2-5d-demo.scene.v6";
 const MANAGED_ASSETS_KEY = "psych-sandbox-2-5d-demo.managed-assets.v1";
 const LLM_PROVIDERS_KEY = "psych-sandbox-2-5d-demo.llm-providers.v1";
 const PSYCH_AGENTS_KEY = "psych-sandbox-2-5d-demo.psych-agents.v1";
 const AGENT_CONVERSATIONS_KEY = "psych-sandbox-2-5d-demo.agent-conversations.v1";
+const SANDBOX_ENVIRONMENT_KEY = "psych-sandbox-2-5d-demo.environment.v1";
 
 interface StoredScene {
   objects: SandboxObject[];
@@ -40,6 +43,22 @@ export function loadScene(): StoredScene | null {
 
 export function saveScene(scene: StoredScene): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(scene));
+}
+
+export function loadSandboxEnvironment(): SandboxEnvironment {
+  const parsed = readJson<SandboxEnvironment>(SANDBOX_ENVIRONMENT_KEY);
+  if (
+    parsed &&
+    WEATHER_OPTIONS.includes(parsed.weather) &&
+    LIGHT_OPTIONS.includes(parsed.light)
+  ) {
+    return parsed;
+  }
+  return DEFAULT_ENVIRONMENT;
+}
+
+export function saveSandboxEnvironment(environment: SandboxEnvironment): void {
+  writeJson(SANDBOX_ENVIRONMENT_KEY, environment);
 }
 
 export function loadManagedAssets(): ManagedAsset[] {

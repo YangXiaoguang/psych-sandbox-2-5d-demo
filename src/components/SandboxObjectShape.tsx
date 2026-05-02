@@ -1,5 +1,6 @@
 import { Ellipse, Group, Image as KonvaImage, Rect, Text } from "react-konva";
-import type { RiskTag } from "../types";
+import { getEnvironmentProfile } from "../data/environment";
+import type { RiskTag, SandboxEnvironment } from "../types";
 import { useToyAssetSprite } from "../hooks/useToyAssetSprite";
 
 interface SandboxObjectShapeProps {
@@ -7,6 +8,7 @@ interface SandboxObjectShapeProps {
   width: number;
   height: number;
   riskTag: RiskTag;
+  environment: SandboxEnvironment;
 }
 
 export function SandboxObjectShape({
@@ -14,12 +16,14 @@ export function SandboxObjectShape({
   width,
   height,
   riskTag,
+  environment,
 }: SandboxObjectShapeProps): JSX.Element {
   const sprite = useToyAssetSprite({ assetId, width, height, riskTag });
+  const profile = getEnvironmentProfile(environment).object;
   const shadowWidth = width * 0.54;
   const shadowHeight = Math.max(8, height * 0.13);
-  const castOffsetX = Math.max(8, width * 0.12);
-  const castOffsetY = Math.max(5, height * 0.06);
+  const castOffsetX = Math.max(4, width * profile.castOffsetX);
+  const castOffsetY = Math.max(4, height * profile.castOffsetY);
 
   return (
     <Group>
@@ -28,10 +32,10 @@ export function SandboxObjectShape({
         y={height * 0.13 + castOffsetY}
         radiusX={shadowWidth * 1.04}
         radiusY={shadowHeight * 1.18}
-        fill="#47331f"
-        opacity={0.12}
-        shadowColor="#2c2117"
-        shadowBlur={18}
+        fill={profile.shadowColor}
+        opacity={profile.castOpacity}
+        shadowColor={profile.shadowColor}
+        shadowBlur={profile.shadowBlur + 8}
         shadowOpacity={0.2}
         listening={false}
       />
@@ -40,10 +44,10 @@ export function SandboxObjectShape({
         y={height * 0.11}
         radiusX={shadowWidth * 0.78}
         radiusY={shadowHeight * 0.72}
-        fill="#2c2117"
-        opacity={0.22}
-        shadowColor="#2c2117"
-        shadowBlur={9}
+        fill={profile.shadowColor}
+        opacity={profile.contactOpacity}
+        shadowColor={profile.shadowColor}
+        shadowBlur={profile.shadowBlur}
         shadowOpacity={0.24}
         listening={false}
       />
@@ -55,6 +59,7 @@ export function SandboxObjectShape({
           y={-sprite.frame.anchorY}
           width={sprite.frame.width}
           height={sprite.frame.height}
+          opacity={profile.spriteOpacity}
         />
       ) : (
         <ToySpriteFallback width={width} height={height} />

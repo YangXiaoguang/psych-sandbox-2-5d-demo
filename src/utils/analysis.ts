@@ -2,6 +2,7 @@ import type {
   GridCellCount,
   RiskTag,
   SandboxAnalysis,
+  SandboxEnvironment,
   SandboxEvent,
   SandboxObject,
   SandboxSnapshot,
@@ -105,10 +106,12 @@ export function buildSnapshot(
   objects: SandboxObject[],
   events: SandboxEvent[],
   analysis: SandboxAnalysis,
+  environment: SandboxEnvironment,
 ): SandboxSnapshot {
   return {
     version: "0.1.0",
     exportedAt: new Date().toISOString(),
+    environment,
     canvas: {
       width: BOARD_WIDTH,
       height: BOARD_HEIGHT,

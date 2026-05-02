@@ -7,8 +7,9 @@ import { RightPanel, type RightPanelTab } from "./components/RightPanel";
 import { SandboxEditor, type SandboxEditorHandle } from "./components/SandboxEditor";
 import { TopBar } from "./components/TopBar";
 import { toSandboxAsset } from "./data/assets";
+import { getEnvironmentLabel } from "./data/environment";
 import { createInitialScene } from "./data/initialScene";
-import type { SandboxAsset, SandboxEvent, SandboxEventDraft, SandboxObject } from "./types";
+import type { SandboxAsset, SandboxEnvironment, SandboxEvent, SandboxEventDraft, SandboxObject } from "./types";
 import { BOARD_HEIGHT, BOARD_WIDTH, analyzeScene, buildSnapshot, clamp } from "./utils/analysis";
 import { downloadSnapshot } from "./utils/download";
 import { createSandboxEvent } from "./utils/events";
@@ -18,12 +19,14 @@ import {
   loadLlmProviders,
   loadManagedAssets,
   loadPsychAgents,
+  loadSandboxEnvironment,
   loadScene,
   resetManagedAssets,
   saveAgentConversations,
   saveLlmProviders,
   saveManagedAssets,
   savePsychAgents,
+  saveSandboxEnvironment,
   saveScene,
 } from "./utils/storage";
 
@@ -38,6 +41,7 @@ export function App(): JSX.Element {
   const [events, setEvents] = useState<SandboxEvent[]>(initialScene.events);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showGuides, setShowGuides] = useState(false);
+  const [environment, setEnvironment] = useState(() => loadSandboxEnvironment());
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("scene");
   const [activeView, setActiveView] = useState<AppView>("sandbox");
   const [managedAssets, setManagedAssets] = useState(() => loadManagedAssets());
@@ -62,6 +66,10 @@ export function App(): JSX.Element {
   useEffect(() => {
     saveScene({ objects, events });
   }, [events, objects]);
+
+  useEffect(() => {
+    saveSandboxEnvironment(environment);
+  }, [environment]);
 
   useEffect(() => {
     saveManagedAssets(managedAssets);
@@ -198,8 +206,8 @@ export function App(): JSX.Element {
     });
     const nextEvents = [...events, event].slice(-320);
     setEvents(nextEvents);
-    downloadSnapshot(buildSnapshot(objects, nextEvents, analysis));
-  }, [analysis, events, objects]);
+    downloadSnapshot(buildSnapshot(objects, nextEvents, analysis, environment));
+  }, [analysis, environment, events, objects]);
 
   const handleExportPng = useCallback(() => {
     editorRef.current?.exportPng();
@@ -212,6 +220,21 @@ export function App(): JSX.Element {
     });
   }, [objects.length, recordEvent]);
 
+  const handleEnvironmentChange = useCallback(
+    (patch: Partial<SandboxEnvironment>) => {
+      const next = { ...environment, ...patch };
+      setEnvironment(next);
+      recordEvent({
+        type: "property_change",
+        label: `调整沙盘环境: ${getEnvironmentLabel(next)}`,
+        payload: {
+          environment: next,
+        },
+      });
+    },
+    [environment, recordEvent],
+  );
+
   return (
     <div className="product-shell">
       <AppNavigation activeView={activeView} onViewChange={setActiveView} />
@@ -223,7 +246,9 @@ export function App(): JSX.Element {
           <section className="workspace-column" aria-label="沙盘编辑区">
             <TopBar
               objectCount={objects.length}
+              environment={environment}
               showGuides={showGuides}
+              onEnvironmentChange={handleEnvironmentChange}
               onToggleGuides={() => setShowGuides((current) => !current)}
               onExportJson={handleExportJson}
               onExportPng={handleExportPng}
@@ -233,6 +258,7 @@ export function App(): JSX.Element {
               ref={editorRef}
               objects={objects}
               selectedId={selectedId}
+              environment={environment}
               showGuides={showGuides}
               onSelectObject={handleSelectObject}
               onPatchObject={patchObject}

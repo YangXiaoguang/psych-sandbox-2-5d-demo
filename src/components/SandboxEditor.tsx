@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { Group, Layer, Stage, Transformer } from "react-konva";
-import type { SandboxEventDraft, SandboxObject } from "../types";
+import type { SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp, depthSortObjects } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
 import { getDepthScale, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
@@ -17,6 +17,7 @@ import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
 import { SandboxObjectShape } from "./SandboxObjectShape";
+import { WeatherLayer } from "./WeatherLayer";
 
 export interface SandboxEditorHandle {
   exportPng: () => void;
@@ -25,6 +26,7 @@ export interface SandboxEditorHandle {
 interface SandboxEditorProps {
   objects: SandboxObject[];
   selectedId: string | null;
+  environment: SandboxEnvironment;
   showGuides: boolean;
   onSelectObject: (objectId: string | null) => void;
   onPatchObject: (objectId: string, patch: Partial<SandboxObject>) => void;
@@ -46,6 +48,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   {
     objects,
     selectedId,
+    environment,
     showGuides,
     onSelectObject,
     onPatchObject,
@@ -247,7 +250,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             onTouchStart={handleStageMouseDown}
           >
             <Layer scaleX={scale} scaleY={scale}>
-              <SandboxGuideLayer showGuides={showGuides} />
+              <SandboxGuideLayer environment={environment} showGuides={showGuides} />
 
               {sortedObjects.map((object, index) => {
                 const projected = projectPoint(object);
@@ -312,10 +315,13 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                       width={object.width}
                       height={object.height}
                       riskTag={object.riskTag}
+                      environment={environment}
                     />
                   </Group>
                 );
               })}
+
+              <WeatherLayer environment={environment} />
 
               <Transformer
                 ref={transformerRef}

@@ -1,8 +1,18 @@
-import { FileDown, Grid3X3, ImageDown, Trash2 } from "lucide-react";
+import { Cloud, CloudRain, FileDown, Grid3X3, ImageDown, Moon, Sun, Trash2 } from "lucide-react";
+import {
+  getEnvironmentLabel,
+  LIGHT_LABELS,
+  LIGHT_OPTIONS,
+  WEATHER_LABELS,
+  WEATHER_OPTIONS,
+} from "../data/environment";
+import type { SandboxEnvironment, SandboxLightMode, SandboxWeather } from "../types";
 
 interface TopBarProps {
   objectCount: number;
+  environment: SandboxEnvironment;
   showGuides: boolean;
+  onEnvironmentChange: (patch: Partial<SandboxEnvironment>) => void;
   onToggleGuides: () => void;
   onExportJson: () => void;
   onExportPng: () => void;
@@ -11,7 +21,9 @@ interface TopBarProps {
 
 export function TopBar({
   objectCount,
+  environment,
   showGuides,
+  onEnvironmentChange,
   onToggleGuides,
   onExportJson,
   onExportPng,
@@ -26,6 +38,39 @@ export function TopBar({
       <div className="topbar-status" aria-label="作品状态">
         <span>沙具 {objectCount}</span>
         <span>深度排序 y-axis</span>
+        <span>{getEnvironmentLabel(environment)}</span>
+      </div>
+      <div className="environment-controls" aria-label="沙盘环境">
+        <label>
+          <WeatherIcon weather={environment.weather} />
+          <span>天气</span>
+          <select
+            value={environment.weather}
+            onChange={(event) => onEnvironmentChange({ weather: event.target.value as SandboxWeather })}
+            aria-label="选择天气"
+          >
+            {WEATHER_OPTIONS.map((weather) => (
+              <option key={weather} value={weather}>
+                {WEATHER_LABELS[weather]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {environment.light === "night" ? <Moon size={15} /> : <Sun size={15} />}
+          <span>光照</span>
+          <select
+            value={environment.light}
+            onChange={(event) => onEnvironmentChange({ light: event.target.value as SandboxLightMode })}
+            aria-label="选择光照"
+          >
+            {LIGHT_OPTIONS.map((light) => (
+              <option key={light} value={light}>
+                {LIGHT_LABELS[light]}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <div className="topbar-actions">
         <button
@@ -52,4 +97,14 @@ export function TopBar({
       </div>
     </header>
   );
+}
+
+function WeatherIcon({ weather }: { weather: SandboxWeather }): JSX.Element {
+  if (weather === "rainy") {
+    return <CloudRain size={15} />;
+  }
+  if (weather === "cloudy") {
+    return <Cloud size={15} />;
+  }
+  return <Sun size={15} />;
 }

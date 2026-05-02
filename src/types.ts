@@ -1,4 +1,11 @@
 export type RiskTag = "normal" | "conflict" | "death" | "fantasy";
+export type SandboxWeather = "sunny" | "cloudy" | "rainy";
+export type SandboxLightMode = "day" | "night";
+
+export interface SandboxEnvironment {
+  weather: SandboxWeather;
+  light: SandboxLightMode;
+}
 
 export type FootprintKind = "compact" | "wide" | "tall" | "flat";
 
@@ -145,6 +152,7 @@ export interface SandboxAnalysis {
 export interface SandboxSnapshot {
   version: string;
   exportedAt: string;
+  environment: SandboxEnvironment;
   canvas: {
     width: number;
     height: number;

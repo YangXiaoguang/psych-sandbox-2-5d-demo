@@ -1,4 +1,6 @@
 import { Circle, Ellipse, Group, Line, Path, Rect } from "react-konva";
+import { getEnvironmentProfile } from "../data/environment";
+import type { SandboxEnvironment } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, BOUNDARY_MARGIN } from "../utils/analysis";
 import {
   getProjectedStageCorners,
@@ -10,6 +12,7 @@ import {
 } from "../utils/projection";
 
 interface SandboxGuideLayerProps {
+  environment: SandboxEnvironment;
   showGuides: boolean;
 }
 
@@ -27,7 +30,8 @@ const grains = createSandPoints(760, 37, 46, 42, BOARD_WIDTH - 92, BOARD_HEIGHT 
 const fineGrains = createSandPoints(520, 913, 58, 54, BOARD_WIDTH - 116, BOARD_HEIGHT - 108);
 const flecks = createSandPoints(170, 211, 74, 64, BOARD_WIDTH - 148, BOARD_HEIGHT - 128);
 
-export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.Element {
+export function SandboxGuideLayer({ environment, showGuides }: SandboxGuideLayerProps): JSX.Element {
+  const profile = getEnvironmentProfile(environment);
   const corners = getProjectedStageCorners();
   const top = projectRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
   const frontFace = [
@@ -70,7 +74,7 @@ export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.E
         height={VIEW_HEIGHT}
         fillLinearGradientStartPoint={{ x: 0, y: 0 }}
         fillLinearGradientEndPoint={{ x: VIEW_WIDTH, y: VIEW_HEIGHT }}
-        fillLinearGradientColorStops={[0, "#dfe8df", 1, "#bfcbbf"]}
+        fillLinearGradientColorStops={profile.backgroundStops}
       />
 
       <Line
@@ -86,7 +90,7 @@ export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.E
         ]}
         closed
         fill="#273026"
-        opacity={0.16}
+        opacity={profile.stageShadowOpacity}
         shadowColor="#1f261d"
         shadowBlur={28}
         shadowOpacity={0.24}
@@ -104,7 +108,7 @@ export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.E
         closed
         fillLinearGradientStartPoint={{ x: corners.topLeft.x, y: corners.topLeft.y }}
         fillLinearGradientEndPoint={{ x: corners.bottomRight.x, y: corners.bottomRight.y }}
-        fillLinearGradientColorStops={[0, "#f1deac", 0.45, "#dec38b", 1, "#c8a66f"]}
+        fillLinearGradientColorStops={profile.sandStops}
         stroke="#6d4a2b"
         strokeWidth={9}
         shadowColor="#6d4a2b"
@@ -115,7 +119,7 @@ export function SandboxGuideLayer({ showGuides }: SandboxGuideLayerProps): JSX.E
       <SandMounds />
       <SandRakeLines />
       <BlueInnerLiner />
-      <StageLightWash />
+      <StageLightWash environment={environment} />
       <SandTexture />
       {showGuides ? <GuideOverlay /> : null}
       <WoodFrameHighlights />
@@ -244,7 +248,8 @@ function SandRakeLines(): JSX.Element {
   );
 }
 
-function StageLightWash(): JSX.Element {
+function StageLightWash({ environment }: { environment: SandboxEnvironment }): JSX.Element {
+  const profile = getEnvironmentProfile(environment);
   const warm = projectPoint({ x: 260, y: 132 });
   const cool = projectPoint({ x: 760, y: 430 });
 
@@ -256,7 +261,7 @@ function StageLightWash(): JSX.Element {
         radiusX={310}
         radiusY={88}
         fill="#fff7cf"
-        opacity={0.16}
+        opacity={profile.warmWashOpacity}
         rotation={-8}
       />
       <Ellipse
@@ -265,7 +270,7 @@ function StageLightWash(): JSX.Element {
         radiusX={250}
         radiusY={72}
         fill="#8ccfc7"
-        opacity={0.08}
+        opacity={profile.coolWashOpacity}
         rotation={-10}
       />
       <Line

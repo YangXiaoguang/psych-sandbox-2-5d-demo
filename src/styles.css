@@ -639,6 +639,48 @@ button {
   background: #fbf4e6;
 }
 
+.environment-controls {
+  display: flex;
+  flex: 1 1 286px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  min-width: 250px;
+}
+
+.environment-controls label {
+  display: inline-grid;
+  grid-template-columns: 15px auto minmax(76px, 1fr);
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid #cfc3ae;
+  border-radius: var(--radius-xs);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 244, 0.96), rgba(247, 238, 218, 0.92)),
+    #fff9ed;
+  box-shadow: var(--inner-highlight);
+  color: #52635d;
+  font-size: var(--font-xs);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.environment-controls svg {
+  color: var(--accent-dark);
+}
+
+.environment-controls select {
+  min-width: 76px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: var(--font-sm);
+  font-weight: 900;
+  outline: none;
+}
+
 .topbar-actions {
   display: flex;
   flex-wrap: wrap;
