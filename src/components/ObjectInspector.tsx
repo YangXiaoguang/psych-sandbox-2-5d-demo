@@ -101,6 +101,29 @@ export function ObjectInspector({
           <span key={candidate}>{candidate}</span>
         ))}
       </div>
+
+      <div className="object-meta-grid" aria-label="沙具空间与语义信息">
+        <div>
+          <span>足迹</span>
+          <strong>{selectedObject.footprint.kind}</strong>
+          <em>
+            {selectedObject.footprint.width} x {selectedObject.footprint.depth}
+          </em>
+        </div>
+        <div>
+          <span>锚点</span>
+          <strong>
+            {selectedObject.anchor.x.toFixed(2)}, {selectedObject.anchor.y.toFixed(2)}
+          </strong>
+          <em>用于落点与截图</em>
+        </div>
+      </div>
+
+      <div className="semantic-chip-list">
+        {selectedObject.semanticTags.map((tag) => (
+          <span key={tag}>{tag}</span>
+        ))}
+      </div>
     </section>
   );
 }

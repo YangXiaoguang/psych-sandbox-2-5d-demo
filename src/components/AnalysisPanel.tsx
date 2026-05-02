@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { RISK_COLORS, RISK_LABELS } from "../data/assets";
 import type { RiskTag, SandboxAnalysis, SandboxObject } from "../types";
 
@@ -10,10 +11,17 @@ const riskOrder: RiskTag[] = ["normal", "conflict", "death", "fantasy"];
 
 export function AnalysisPanel({ analysis, objects }: AnalysisPanelProps): JSX.Element {
   const objectNames = new Map(objects.map((object) => [object.id, object.name]));
+  const maxGridCount = Math.max(1, ...analysis.grid.map((cell) => cell.count));
+  const categoryEntries = Object.entries(analysis.categoryCounts)
+    .filter(([, count]) => count > 0)
+    .sort(([, a], [, b]) => b - a);
 
   return (
     <section className="side-section analysis-panel" aria-label="区域分析">
-      <h2>区域分析</h2>
+      <div className="section-title-row">
+        <h2>作品洞察</h2>
+        <span className="insight-pill">实时</span>
+      </div>
 
       <div className="metric-row">
         <Metric label="中心区域" value={analysis.centerObjects.length} />
@@ -40,12 +48,37 @@ export function AnalysisPanel({ analysis, objects }: AnalysisPanelProps): JSX.El
       </div>
 
       <div className="mini-grid" aria-label="九宫格对象数量">
-        {analysis.grid.map((cell) => (
-          <div key={cell.id} className={cell.id === "middle-center" ? "mini-grid-cell center" : "mini-grid-cell"}>
-            <span>{cell.label}</span>
-            <strong>{cell.count}</strong>
-          </div>
-        ))}
+        {analysis.grid.map((cell) => {
+          const heat = cell.count / maxGridCount;
+
+          return (
+            <div
+              key={cell.id}
+              className={cell.id === "middle-center" ? "mini-grid-cell center" : "mini-grid-cell"}
+              style={{ "--heat-mix": `${Math.round(heat * 72)}%` } as CSSProperties}
+            >
+              <span>{cell.label}</span>
+              <strong>{cell.count}</strong>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="category-distribution" aria-label="分类分布">
+        <h3>分类分布</h3>
+        {categoryEntries.length > 0 ? (
+          categoryEntries.map(([category, count]) => (
+            <div key={category} className="category-row">
+              <span>{category}</span>
+              <div>
+                <i style={{ width: `${(count / Math.max(1, analysis.totalObjects)) * 100}%` }} />
+              </div>
+              <strong>{count}</strong>
+            </div>
+          ))
+        ) : (
+          <p className="empty-state compact">还没有沙具。</p>
+        )}
       </div>
 
       <div className="depth-list">
