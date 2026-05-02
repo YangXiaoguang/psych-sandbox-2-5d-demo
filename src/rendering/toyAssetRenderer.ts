@@ -28,7 +28,7 @@ interface MeshOptions {
   opacity?: number;
 }
 
-const SPRITE_VERSION = "toy-render-v4-spec";
+const SPRITE_VERSION = "toy-render-v5-soft-toy";
 const spriteCache = new Map<string, Promise<ToyAssetSprite>>();
 let renderQueue: Promise<void> = Promise.resolve();
 let sharedRenderer: THREE.WebGLRenderer | null = null;
@@ -96,7 +96,8 @@ function renderSprite({
   floor.receiveShadow = true;
   scene.add(floor);
 
-  scene.add(new THREE.AmbientLight(0xfff3dc, 2.3));
+  scene.add(new THREE.AmbientLight(0xfff3dc, 2.45));
+  scene.add(new THREE.HemisphereLight(0xfff6dc, 0x8fc1b6, 1.15));
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 3.6);
   keyLight.position.set(-3.8, 6.8, 4.7);
@@ -115,6 +116,10 @@ function renderSprite({
   const rimLight = new THREE.DirectionalLight(0xb7e6ff, 1);
   rimLight.position.set(3.5, 3.2, -4.4);
   scene.add(rimLight);
+
+  const warmFill = new THREE.DirectionalLight(0xffd7a0, 0.85);
+  warmFill.position.set(2.6, 2.2, 3.2);
+  scene.add(warmFill);
 
   scene.add(root);
   renderer.render(scene, camera);
@@ -337,6 +342,7 @@ function buildPerson(group: THREE.Group, cloth: string, skin: string, scale: num
   addSphere(group, [0, 1.22 * scale, 0.02], [0.34 * scale, 0.36 * scale, 0.34 * scale], skin);
   addSphere(group, [-0.08 * scale, 1.42 * scale, 0], [0.27 * scale, 0.12 * scale, 0.28 * scale], elder ? "#f4f0df" : "#5a3b2a");
   addEyes(group, 0, 1.24 * scale, 0.31 * scale, 0.13 * scale, 0.75 * scale);
+  addBlush(group, 0, 1.16 * scale, 0.34 * scale, 0.16 * scale, 0.78 * scale);
   addMouth(group, 1.1 * scale, 0.32 * scale, 0.62 * scale);
 
   if (elder) {
@@ -354,6 +360,7 @@ function buildDog(group: THREE.Group): void {
   addSphere(group, [0.68, 0.86, 0.06], [0.14, 0.22, 0.08], "#765036");
   addSphere(group, [0.83, 0.61, 0.14], [0.12, 0.09, 0.1], "#543823");
   addEyes(group, 0.58, 0.75, 0.37, 0.11, 0.62);
+  addBlush(group, 0.58, 0.64, 0.38, 0.13, 0.55);
   addMouth(group, 0.61, 0.39, 0.48, 0.022);
   addTail(group, [-0.88, 0.75, -0.02], "#765036");
   [-0.52, -0.1, 0.25, 0.55].forEach((x) => {
@@ -366,6 +373,7 @@ function buildBird(group: THREE.Group): void {
   addSphere(group, [-0.24, 0.65, 0.12], [0.34, 0.16, 0.08], "#8dd0ef", [0.1, 0.1, -0.35]);
   addCone(group, 0.13, 0.28, [0.5, 0.72, 0.18], "#eaa541", [Math.PI / 2, 0, -Math.PI / 2], 24);
   addEyes(group, 0.2, 0.8, 0.35, 0.1, 0.58);
+  addBlush(group, 0.2, 0.68, 0.36, 0.12, 0.5);
   addTube(group, [[-0.14, 0.16, 0.08], [-0.2, 0.02, 0.18]], "#7a4b2d", 0.025);
   addTube(group, [[0.14, 0.16, 0.08], [0.2, 0.02, 0.18]], "#7a4b2d", 0.025);
 }
@@ -385,6 +393,7 @@ function buildLion(group: THREE.Group): void {
   addSphere(group, [0.38, 1.02, 0.06], [0.13, 0.16, 0.08], "#8b582d");
   addSphere(group, [0.74, 1.02, 0.06], [0.13, 0.16, 0.08], "#8b582d");
   addEyes(group, 0.58, 0.78, 0.4, 0.1, 0.56);
+  addBlush(group, 0.58, 0.67, 0.42, 0.12, 0.54);
   addMouth(group, 0.62, 0.43, 0.5, 0.024);
   addTail(group, [-0.84, 0.62, -0.02], "#8b582d");
   addSphere(group, [-1.06, 0.72, 0.02], [0.11, 0.11, 0.11], "#8b582d");
@@ -476,6 +485,7 @@ function buildMonster(group: THREE.Group): void {
   addCapsule(group, 0.13, 0.34, [-0.55, 0.52, 0.04], "#5e4aa2", [0, 0, 0.65]);
   addCapsule(group, 0.13, 0.34, [0.55, 0.52, 0.04], "#5e4aa2", [0, 0, -0.65]);
   addEyes(group, 0, 0.73, 0.5, 0.22, 0.82);
+  addBlush(group, 0, 0.56, 0.52, 0.16, 0.62);
   addTube(group, [[-0.22, 0.46, 0.5], [-0.06, 0.36, 0.56], [0.12, 0.38, 0.54], [0.28, 0.48, 0.5]], "#2c2033", 0.035);
   addCone(group, 0.05, 0.12, [-0.02, 0.36, 0.58], "#ffffff", [Math.PI / 2, 0, 0], 16);
 }
@@ -541,6 +551,27 @@ function addEyes(
   [-spread, spread].forEach((x) => {
     addSphere(group, [centerX + x, centerY, z], [0.074 * scale, 0.09 * scale, 0.025 * scale], "#fff7df", [0, 0, 0], false, true);
     addSphere(group, [centerX + x + 0.012 * scale, centerY - 0.006 * scale, z + 0.028 * scale], [0.031 * scale, 0.04 * scale, 0.014 * scale], "#25201d", [0, 0, 0], false, true);
+    addSphere(group, [centerX + x - 0.008 * scale, centerY + 0.02 * scale, z + 0.038 * scale], [0.012 * scale, 0.014 * scale, 0.006 * scale], "#ffffff", [0, 0, 0], false, true);
+  });
+}
+
+function addBlush(
+  group: THREE.Group,
+  centerX: number,
+  centerY: number,
+  z: number,
+  spread: number,
+  scale = 1,
+): void {
+  [-spread, spread].forEach((x) => {
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 24, 12),
+      createMaterial({ color: "#f29b83", roughness: 0.64, transparent: true, opacity: 0.34 }),
+    );
+    mesh.position.set(centerX + x, centerY, z);
+    mesh.scale.set(0.052 * scale, 0.025 * scale, 0.01 * scale);
+    finishMesh(mesh, true);
+    group.add(mesh);
   });
 }
 
@@ -704,14 +735,20 @@ function createMaterial({
   emissiveIntensity = 0,
   transparent = false,
   opacity = 1,
-}: MeshOptions): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({
+}: MeshOptions): THREE.MeshPhysicalMaterial {
+  return new THREE.MeshPhysicalMaterial({
+    clearcoat: 0.24,
+    clearcoatRoughness: 0.72,
     color,
     emissive: emissive ?? "#000000",
     emissiveIntensity,
+    ior: 1.42,
     metalness,
     opacity,
+    reflectivity: 0.24,
     roughness,
+    sheen: 0.16,
+    sheenRoughness: 0.85,
     transparent,
   });
 }
