@@ -7,15 +7,53 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  /* Product color system */
+  --app-bg: #dfe7df;
+  --app-bg-deep: #bfcbbf;
   --panel: #f7f4eb;
+  --panel-soft: #fbf6ea;
   --panel-strong: #fffaf0;
+  --surface: #fffdf6;
+  --surface-warm: #fff9ed;
+  --sand: #e9cf95;
+  --sand-light: #f6e6bd;
+  --wood: #9b6d3e;
+  --wood-dark: #513720;
   --line: #cfc5b2;
+  --line-soft: #ddd2bd;
   --line-strong: #9b8d76;
+  --ink: #1f2b2c;
+  --ink-soft: #34413e;
   --ink-muted: #66726d;
   --accent: #2f8f83;
+  --accent-soft: #edf8f3;
+  --accent-line: #70a99d;
   --accent-dark: #256c65;
+  --warning: #b06124;
   --danger: #a94a35;
+
+  /* Product scale */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-md: 13px;
+  --font-body: 14px;
+  --font-readable: 15px;
+  --font-title: 20px;
+  --control-sm: 34px;
+  --control-md: 38px;
+  --control-lg: 46px;
+
+  /* Product depth */
+  --shadow-xs: 0 4px 12px rgba(97, 69, 35, 0.08);
+  --shadow-sm: 0 10px 24px rgba(52, 71, 63, 0.1);
   --shadow: 0 18px 45px rgba(55, 48, 37, 0.16);
+  --shadow-stage: 0 24px 60px rgba(45, 65, 53, 0.22);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 * {
@@ -30,7 +68,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -47,8 +87,10 @@ button {
   padding: 12px;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0)),
-    #dfe7df;
+    radial-gradient(circle at 18% 10%, rgba(255, 250, 231, 0.72), transparent 34%),
+    radial-gradient(circle at 84% 8%, rgba(123, 188, 172, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0) 42%),
+    var(--app-bg);
 }
 
 .app-shell {
@@ -68,7 +110,7 @@ button {
   gap: 18px;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background:
     linear-gradient(180deg, rgba(255, 252, 242, 0.96), rgba(241, 232, 213, 0.95)),
     var(--panel-strong);
@@ -94,11 +136,11 @@ button {
   gap: 9px;
   padding: 0 12px;
   border: 1px solid #c5b89f;
-  border-radius: 8px;
-  background: #fffaf0;
+  border-radius: var(--radius-sm);
+  background: var(--panel-strong);
   color: #37413e;
   text-align: left;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: var(--inner-highlight);
 }
 
 .app-nav-tabs button span {
@@ -120,8 +162,8 @@ button {
 .app-nav-tabs button.active,
 .app-nav-tabs button:hover,
 .app-nav-tabs button:focus-visible {
-  border-color: #70a99d;
-  background: #edf8f3;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
   color: var(--accent-dark);
   outline: none;
 }
@@ -140,7 +182,7 @@ button {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--panel);
   box-shadow: var(--shadow);
 }
@@ -183,8 +225,8 @@ button {
 .panel-tabs button {
   min-height: 34px;
   border: 1px solid #c8b99f;
-  border-radius: 7px;
-  background: #fff9ed;
+  border-radius: var(--radius-xs);
+  background: var(--surface-warm);
   color: #5d675f;
   font-size: 13px;
   font-weight: 850;
@@ -193,9 +235,9 @@ button {
 .panel-tabs button.active,
 .panel-tabs button:hover,
 .panel-tabs button:focus-visible {
-  border-color: #73a89e;
-  background: #edf8f3;
-  color: #256c65;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
   outline: none;
 }
 
@@ -215,7 +257,7 @@ button {
   align-items: center;
   justify-content: center;
   border: 1px solid #b9ac94;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   background: #efe5d1;
   color: #5c513e;
   font-weight: 800;
@@ -248,7 +290,7 @@ button {
   margin: 0;
   padding: 12px;
   border: 1px dashed #cdbfA8;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: #7b7164;
   font-size: 12px;
   font-weight: 750;
@@ -264,7 +306,7 @@ button {
   min-height: 142px;
   padding: 8px;
   border: 1px solid #d3c6ae;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background:
     linear-gradient(180deg, rgba(255, 247, 225, 0.98), rgba(245, 223, 187, 0.92)),
     #fff2d5;
@@ -272,7 +314,7 @@ button {
   text-align: center;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 4px 12px rgba(97, 69, 35, 0.08);
+    var(--shadow-xs);
   transition:
     transform 120ms ease,
     border-color 120ms ease,
