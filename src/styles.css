@@ -93,13 +93,63 @@ button {
     var(--app-bg);
 }
 
+.product-shell.night-mode {
+  --app-bg: #101923;
+  --app-bg-deep: #0b141d;
+  --panel: #17232c;
+  --panel-soft: #1d2c34;
+  --panel-strong: #22313a;
+  --surface: #19262f;
+  --surface-warm: #201d19;
+  --line: #3f5157;
+  --line-soft: #31424a;
+  --line-strong: #7c8e8e;
+  --ink: #edf5ee;
+  --ink-soft: #d6e5dc;
+  --ink-muted: #9fb1ab;
+  --accent: #69cab9;
+  --accent-soft: #173b3a;
+  --accent-line: #62b9ae;
+  --accent-dark: #a6efe1;
+  --warning: #f0b36f;
+  --danger: #ff8c79;
+  --shadow-xs: 0 4px 12px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.32);
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.42);
+  --shadow-stage: 0 24px 70px rgba(0, 0, 0, 0.48);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 20% 8%, rgba(98, 185, 174, 0.14), transparent 34%),
+    radial-gradient(circle at 80% 10%, rgba(84, 117, 170, 0.18), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 42%),
+    var(--app-bg);
+}
+
+.product-shell.focus-mode {
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  padding: 10px;
+}
+
 .app-shell {
   display: grid;
-  grid-template-columns: 306px minmax(620px, 1fr) 382px;
+  grid-template-columns: 306px minmax(0, 1fr) 382px;
   gap: 14px;
   width: 100%;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.app-shell.right-panel-collapsed {
+  grid-template-columns: 306px minmax(0, 1fr) 54px;
+}
+
+.app-shell.focus-mode {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
 .app-navigation {
@@ -196,6 +246,7 @@ button {
 .asset-library,
 .right-panel,
 .workspace-column {
+  min-width: 0;
   min-height: 0;
 }
 
@@ -214,11 +265,48 @@ button {
   box-shadow: var(--shadow-sm);
 }
 
+.right-panel.collapsed {
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.7), rgba(240, 232, 214, 0.84)),
+    var(--panel);
+}
+
+.rail-toggle,
+.rail-tab {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c5b89f;
+  border-radius: var(--radius-xs);
+  background: var(--surface-warm);
+  color: var(--ink-soft);
+  box-shadow: var(--inner-highlight);
+}
+
+.rail-tab.active,
+.rail-tab:hover,
+.rail-toggle:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
 .workspace-column {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 12px;
+  min-width: 0;
   overflow: hidden;
+}
+
+.app-shell.focus-mode .workspace-column {
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
 }
 
 .panel-header,
@@ -614,11 +702,13 @@ button {
   grid-template-areas:
     "title environment actions"
     "status environment actions";
-  grid-template-columns: minmax(210px, 1fr) 196px max-content;
-  min-height: 92px;
+  grid-template-columns: minmax(180px, 1fr) minmax(190px, 220px) max-content;
+  min-width: 0;
+  min-height: 88px;
   align-items: center;
   gap: 8px 12px;
   padding: 14px 16px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background:
@@ -648,6 +738,10 @@ button {
   border: 1px solid #d0c5b0;
   border-radius: 7px;
   background: #fbf4e6;
+}
+
+.topbar-status span:nth-child(2) {
+  display: none;
 }
 
 .environment-controls {
@@ -698,7 +792,18 @@ button {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 7px;
+  min-width: 0;
+}
+
+.topbar-actions .icon-button {
+  width: 38px;
+  min-width: 38px;
+  padding: 0;
+}
+
+.topbar-actions .icon-button span {
+  display: none;
 }
 
 .icon-button,
@@ -739,6 +844,7 @@ button {
 .sandbox-editor {
   position: relative;
   z-index: 1;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -755,7 +861,8 @@ button {
   display: grid;
   width: 100%;
   height: 100%;
-  min-height: 540px;
+  min-width: 0;
+  min-height: 0;
   place-items: center;
   overflow: hidden;
   padding: 12px;
@@ -763,6 +870,8 @@ button {
 
 .stage-frame {
   position: relative;
+  max-width: 100%;
+  max-height: 100%;
   overflow: hidden;
   border-radius: var(--radius-sm);
   box-shadow:
@@ -779,6 +888,14 @@ button {
   content: "";
   pointer-events: none;
   z-index: 2;
+}
+
+.app-shell.focus-mode .sandbox-editor {
+  border-radius: var(--radius-md);
+}
+
+.app-shell.focus-mode .stage-host {
+  padding: 10px 12px 12px;
 }
 
 .ai-stage-companion {
@@ -799,6 +916,243 @@ button {
   box-shadow:
     0 16px 26px rgba(46, 67, 59, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app-shell.focus-mode .ai-stage-companion {
+  right: 16px;
+  bottom: 16px;
+}
+
+.focus-floating-button {
+  position: absolute;
+  z-index: 9;
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-xs);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.95), rgba(238, 247, 240, 0.92)),
+    var(--panel-strong);
+  color: var(--accent-dark);
+  font-size: var(--font-sm);
+  font-weight: 900;
+  box-shadow: var(--shadow-sm);
+}
+
+.focus-asset-toggle {
+  left: 14px;
+  top: 114px;
+}
+
+.focus-panel-toggle {
+  right: 14px;
+  top: 114px;
+}
+
+.focus-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  border: 0;
+  background: rgba(18, 30, 34, 0.22);
+}
+
+.focus-asset-drawer {
+  position: absolute;
+  left: 14px;
+  top: 162px;
+  bottom: 14px;
+  z-index: 8;
+  width: min(354px, calc(100vw - 42px));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.focus-asset-drawer .asset-library {
+  width: 100%;
+  height: 100%;
+}
+
+.focus-selection-card {
+  position: absolute;
+  right: 146px;
+  bottom: 16px;
+  z-index: 8;
+  display: grid;
+  width: min(310px, calc(100vw - 190px));
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(97, 142, 132, 0.58);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 237, 0.94), rgba(236, 246, 239, 0.9)),
+    var(--panel-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.focus-selection-card.empty {
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  color: var(--ink-muted);
+  font-size: var(--font-sm);
+  font-weight: 800;
+}
+
+.focus-selection-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.focus-selection-card > div > span {
+  color: var(--ink-muted);
+  font-size: var(--font-xs);
+  font-weight: 850;
+}
+
+.focus-selection-card label {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: var(--font-xs);
+  font-weight: 900;
+}
+
+.focus-selection-card input[type="range"] {
+  accent-color: var(--accent);
+}
+
+.focus-selection-card strong {
+  color: var(--ink);
+  text-align: right;
+}
+
+.product-shell.night-mode .app-navigation,
+.product-shell.night-mode .asset-library,
+.product-shell.night-mode .right-panel,
+.product-shell.night-mode .topbar,
+.product-shell.night-mode .focus-selection-card,
+.product-shell.night-mode .focus-floating-button {
+  border-color: var(--line);
+  background:
+    radial-gradient(circle at 12% 4%, rgba(255, 255, 255, 0.06), transparent 36%),
+    linear-gradient(180deg, rgba(34, 49, 58, 0.95), rgba(22, 34, 42, 0.95)),
+    var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.product-shell.night-mode .sandbox-editor {
+  border-color: #314852;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(96, 181, 177, 0.14), transparent 34%),
+    radial-gradient(circle at 80% 72%, rgba(66, 88, 135, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(4, 12, 18, 0.36), transparent 38%),
+    var(--app-bg-deep);
+}
+
+.product-shell.night-mode .app-brand span,
+.product-shell.night-mode .topbar-status,
+.product-shell.night-mode .event-item time,
+.product-shell.night-mode .event-item span,
+.product-shell.night-mode .depth-list li,
+.product-shell.night-mode .focus-selection-card.empty,
+.product-shell.night-mode .focus-selection-card > div > span {
+  color: var(--ink-muted);
+}
+
+.product-shell.night-mode .topbar-status span,
+.product-shell.night-mode .environment-controls label,
+.product-shell.night-mode .icon-button,
+.product-shell.night-mode .small-icon-button,
+.product-shell.night-mode .rail-toggle,
+.product-shell.night-mode .rail-tab,
+.product-shell.night-mode .app-nav-tabs button,
+.product-shell.night-mode .panel-tabs button,
+.product-shell.night-mode .asset-tool-toggle,
+.product-shell.night-mode .segmented-mini button,
+.product-shell.night-mode .asset-filter-row select,
+.product-shell.night-mode .asset-search,
+.product-shell.night-mode .event-item,
+.product-shell.night-mode .depth-list li {
+  border-color: var(--line);
+  background: #192832;
+  color: var(--ink-soft);
+  box-shadow: var(--inner-highlight);
+}
+
+.product-shell.night-mode .asset-library-tools,
+.product-shell.night-mode .panel-tabs,
+.product-shell.night-mode .panel-header {
+  border-color: var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+    #182730;
+}
+
+.product-shell.night-mode input,
+.product-shell.night-mode select,
+.product-shell.night-mode textarea {
+  color: var(--ink);
+}
+
+.product-shell.night-mode input::placeholder,
+.product-shell.night-mode textarea::placeholder {
+  color: #7f948f;
+}
+
+.product-shell.night-mode .asset-card,
+.product-shell.night-mode .asset-card-action,
+.product-shell.night-mode .metric-card,
+.product-shell.night-mode .grid-cell,
+.product-shell.night-mode .category-panel,
+.product-shell.night-mode .object-inspector,
+.product-shell.night-mode .analysis-panel,
+.product-shell.night-mode .event-stream,
+.product-shell.night-mode .structured-data-panel,
+.product-shell.night-mode .ai-panel,
+.product-shell.night-mode .ai-stage-companion {
+  border-color: var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    var(--surface);
+  color: var(--ink);
+}
+
+.product-shell.night-mode .asset-card-name,
+.product-shell.night-mode .panel-tabs button.active,
+.product-shell.night-mode .panel-tabs button:hover,
+.product-shell.night-mode .icon-button:hover,
+.product-shell.night-mode .icon-button.active,
+.product-shell.night-mode .small-icon-button:hover,
+.product-shell.night-mode .rail-tab.active,
+.product-shell.night-mode .app-nav-tabs button.active {
+  color: var(--accent-dark);
+}
+
+.product-shell.night-mode .panel-tabs button.active,
+.product-shell.night-mode .panel-tabs button:hover,
+.product-shell.night-mode .icon-button:hover,
+.product-shell.night-mode .icon-button.active,
+.product-shell.night-mode .small-icon-button:hover,
+.product-shell.night-mode .rail-tab.active,
+.product-shell.night-mode .app-nav-tabs button.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.product-shell.night-mode .category-row div {
+  background: #35444b;
+}
+
+.product-shell.night-mode .data-panel pre {
+  border-color: #456066;
+  background: #071018;
+  color: #dff5ee;
 }
 
 .ai-stage-companion:hover,
@@ -3273,7 +3627,15 @@ button:disabled {
   }
 
   .app-shell {
-    grid-template-columns: 272px minmax(560px, 1fr) 330px;
+    grid-template-columns: 272px minmax(0, 1fr) 330px;
+  }
+
+  .app-shell.right-panel-collapsed {
+    grid-template-columns: 272px minmax(0, 1fr) 54px;
+  }
+
+  .app-shell.focus-mode {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .icon-button span {

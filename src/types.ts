@@ -7,6 +7,12 @@ export interface SandboxEnvironment {
   light: SandboxLightMode;
 }
 
+export interface SandboxLayoutPreferences {
+  rightPanelCollapsed: boolean;
+  focusMode: boolean;
+  assetDrawerOpen: boolean;
+}
+
 export type FootprintKind = "compact" | "wide" | "tall" | "flat";
 
 export interface ToyAssetAnchor {

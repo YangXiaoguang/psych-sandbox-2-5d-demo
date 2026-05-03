@@ -1,4 +1,17 @@
-import { Cloud, CloudRain, FileDown, Grid3X3, ImageDown, Moon, Sun, Trash2 } from "lucide-react";
+import {
+  Cloud,
+  CloudRain,
+  FileDown,
+  Grid3X3,
+  ImageDown,
+  Maximize2,
+  Minimize2,
+  Moon,
+  PanelRightClose,
+  PanelRightOpen,
+  Sun,
+  Trash2,
+} from "lucide-react";
 import {
   getEnvironmentLabel,
   LIGHT_LABELS,
@@ -11,8 +24,13 @@ import type { SandboxEnvironment, SandboxLightMode, SandboxWeather } from "../ty
 interface TopBarProps {
   objectCount: number;
   environment: SandboxEnvironment;
+  focusMode: boolean;
+  rightPanelCollapsed: boolean;
+  showRightPanelToggle: boolean;
   showGuides: boolean;
   onEnvironmentChange: (patch: Partial<SandboxEnvironment>) => void;
+  onToggleFocusMode: () => void;
+  onToggleRightPanel: () => void;
   onToggleGuides: () => void;
   onExportJson: () => void;
   onExportPng: () => void;
@@ -22,8 +40,13 @@ interface TopBarProps {
 export function TopBar({
   objectCount,
   environment,
+  focusMode,
+  rightPanelCollapsed,
+  showRightPanelToggle,
   showGuides,
   onEnvironmentChange,
+  onToggleFocusMode,
+  onToggleRightPanel,
   onToggleGuides,
   onExportJson,
   onExportPng,
@@ -73,6 +96,26 @@ export function TopBar({
         </label>
       </div>
       <div className="topbar-actions">
+        <button
+          className="icon-button"
+          type="button"
+          onClick={onToggleFocusMode}
+          aria-label={focusMode ? "退出沙盘全屏模式" : "进入沙盘全屏模式"}
+        >
+          {focusMode ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+          <span>{focusMode ? "退出全屏" : "全屏"}</span>
+        </button>
+        {showRightPanelToggle ? (
+          <button
+            className={`icon-button ${rightPanelCollapsed ? "active" : ""}`}
+            type="button"
+            onClick={onToggleRightPanel}
+            aria-label={rightPanelCollapsed ? "展开右侧作品面板" : "隐藏右侧作品面板"}
+          >
+            {rightPanelCollapsed ? <PanelRightOpen size={17} /> : <PanelRightClose size={17} />}
+            <span>{rightPanelCollapsed ? "展开面板" : "隐藏面板"}</span>
+          </button>
+        ) : null}
         <button
           className={`icon-button ${showGuides ? "active" : ""}`}
           type="button"

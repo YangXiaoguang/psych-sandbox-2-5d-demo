@@ -1,3 +1,4 @@
+import { Bot, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
 import type { LlmProviderConfig, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
 import { AnalysisPanel } from "./AnalysisPanel";
@@ -14,7 +15,9 @@ interface RightPanelProps {
   analysis: SandboxAnalysis;
   llmProviders: LlmProviderConfig[];
   activeTab: RightPanelTab;
+  collapsed: boolean;
   onTabChange: (tab: RightPanelTab) => void;
+  onToggleCollapsed: () => void;
   onPatchSelected: (patch: Partial<SandboxObject>, label: string) => void;
   onDeleteSelected: () => void;
 }
@@ -26,10 +29,52 @@ export function RightPanel({
   analysis,
   llmProviders,
   activeTab,
+  collapsed,
   onTabChange,
+  onToggleCollapsed,
   onPatchSelected,
   onDeleteSelected,
 }: RightPanelProps): JSX.Element {
+  if (collapsed) {
+    return (
+      <aside className="right-panel collapsed" aria-label="右侧面板快捷栏">
+        <button
+          className="rail-toggle"
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label="展开右侧作品面板"
+          title="展开面板"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          type="button"
+          className={activeTab === "scene" ? "rail-tab active" : "rail-tab"}
+          onClick={() => {
+            onTabChange("scene");
+            onToggleCollapsed();
+          }}
+          aria-label="打开作品数据"
+          title="作品数据"
+        >
+          <LayoutDashboard size={18} />
+        </button>
+        <button
+          type="button"
+          className={activeTab === "ai" ? "rail-tab active" : "rail-tab"}
+          onClick={() => {
+            onTabChange("ai");
+            onToggleCollapsed();
+          }}
+          aria-label="打开 AI 伙伴"
+          title="AI 伙伴"
+        >
+          <Bot size={18} />
+        </button>
+      </aside>
+    );
+  }
+
   return (
     <aside className="right-panel" aria-label="作品与 AI 伙伴面板">
       <div className="panel-header">
@@ -37,6 +82,15 @@ export function RightPanel({
           <p className="eyebrow">{activeTab === "ai" ? "AI Companion" : "Scene Data"}</p>
           <h1>{activeTab === "ai" ? "AI 伙伴" : "作品面板"}</h1>
         </div>
+        <button
+          className="small-icon-button"
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label="隐藏右侧作品面板"
+          title="隐藏面板"
+        >
+          <ChevronRight size={17} />
+        </button>
       </div>
       <div className="panel-tabs" role="tablist" aria-label="右侧面板视图">
         <button
