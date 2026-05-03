@@ -11,6 +11,7 @@ export interface SandboxLayoutPreferences {
   rightPanelCollapsed: boolean;
   focusMode: boolean;
   assetDrawerOpen: boolean;
+  aiDrawerOpen: boolean;
 }
 
 export type FootprintKind = "compact" | "wide" | "tall" | "flat";

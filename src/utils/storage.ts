@@ -24,6 +24,7 @@ const DEFAULT_LAYOUT_PREFERENCES: SandboxLayoutPreferences = {
   rightPanelCollapsed: false,
   focusMode: false,
   assetDrawerOpen: false,
+  aiDrawerOpen: false,
 };
 
 interface StoredScene {
@@ -77,6 +78,7 @@ export function loadSandboxLayoutPreferences(): SandboxLayoutPreferences {
     rightPanelCollapsed: Boolean(parsed?.rightPanelCollapsed),
     focusMode: Boolean(parsed?.focusMode),
     assetDrawerOpen: Boolean(parsed?.assetDrawerOpen),
+    aiDrawerOpen: Boolean(parsed?.aiDrawerOpen),
   };
 }
 

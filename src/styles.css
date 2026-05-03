@@ -952,6 +952,11 @@ button {
   top: 114px;
 }
 
+.focus-ai-toggle {
+  right: 14px;
+  top: 162px;
+}
+
 .focus-drawer-scrim {
   position: absolute;
   inset: 0;
@@ -974,6 +979,72 @@ button {
 .focus-asset-drawer .asset-library {
   width: 100%;
   height: 100%;
+}
+
+.focus-ai-drawer {
+  position: absolute;
+  top: 162px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 12;
+  display: grid;
+  width: min(468px, calc(100vw - 86px));
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(97, 142, 132, 0.64);
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(129, 211, 191, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(255, 252, 242, 0.96), rgba(239, 247, 241, 0.94)),
+    var(--panel);
+  box-shadow:
+    0 28px 58px rgba(13, 29, 33, 0.32),
+    var(--inner-highlight);
+  backdrop-filter: blur(16px);
+}
+
+.focus-ai-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent),
+    rgba(255, 249, 237, 0.7);
+}
+
+.focus-ai-drawer-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 18px;
+}
+
+.focus-ai-drawer-body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.focus-ai-drawer .ai-panel {
+  min-height: 100%;
+  padding: 12px;
+}
+
+.focus-ai-drawer .ai-chat-log {
+  max-height: min(34vh, 360px);
+}
+
+.focus-ai-drawer .ai-hero {
+  min-height: 88px;
+}
+
+.app-shell.focus-mode.ai-drawer-open .ai-stage-companion {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
 }
 
 .focus-selection-card {
@@ -1035,6 +1106,7 @@ button {
 .product-shell.night-mode .asset-library,
 .product-shell.night-mode .right-panel,
 .product-shell.night-mode .topbar,
+.product-shell.night-mode .focus-ai-drawer,
 .product-shell.night-mode .focus-selection-card,
 .product-shell.night-mode .focus-floating-button {
   border-color: var(--line);
@@ -1087,7 +1159,8 @@ button {
 
 .product-shell.night-mode .asset-library-tools,
 .product-shell.night-mode .panel-tabs,
-.product-shell.night-mode .panel-header {
+.product-shell.night-mode .panel-header,
+.product-shell.night-mode .focus-ai-drawer-header {
   border-color: var(--line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
@@ -1121,6 +1194,16 @@ button {
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
     var(--surface);
   color: var(--ink);
+}
+
+.product-shell.night-mode .focus-ai-drawer {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(119, 210, 191, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(29, 44, 54, 0.96), rgba(15, 27, 35, 0.96)),
+    var(--panel);
+  box-shadow:
+    0 28px 62px rgba(0, 0, 0, 0.42),
+    var(--inner-highlight);
 }
 
 .product-shell.night-mode .asset-card-name,

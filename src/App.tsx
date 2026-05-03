@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Boxes, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Bot, Boxes, MessageCircle, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { AiCompanionPanel } from "./components/AiCompanionPanel";
 import { AgentChatView } from "./components/AgentChatView";
 import { AppNavigation, type AppView } from "./components/AppNavigation";
 import { AssetLibrary } from "./components/AssetLibrary";
@@ -11,6 +12,8 @@ import { toSandboxAsset } from "./data/assets";
 import { getEnvironmentLabel } from "./data/environment";
 import { createInitialScene } from "./data/initialScene";
 import type {
+  LlmProviderConfig,
+  SandboxAnalysis,
   SandboxAsset,
   SandboxEnvironment,
   SandboxEvent,
@@ -101,7 +104,15 @@ export function App(): JSX.Element {
 
       if (event.key === "Escape" && layoutPreferences.focusMode) {
         event.preventDefault();
-        setLayoutPreferences((current) => ({ ...current, focusMode: false, assetDrawerOpen: false }));
+        setLayoutPreferences((current) => {
+          if (current.aiDrawerOpen) {
+            return { ...current, aiDrawerOpen: false };
+          }
+          if (current.assetDrawerOpen) {
+            return { ...current, assetDrawerOpen: false };
+          }
+          return { ...current, focusMode: false, assetDrawerOpen: false, aiDrawerOpen: false };
+        });
       }
 
       if (event.key.toLowerCase() === "f") {
@@ -110,6 +121,7 @@ export function App(): JSX.Element {
           ...current,
           focusMode: !current.focusMode,
           assetDrawerOpen: false,
+          aiDrawerOpen: false,
         }));
       }
 
@@ -126,6 +138,7 @@ export function App(): JSX.Element {
         setLayoutPreferences((current) => ({
           ...current,
           assetDrawerOpen: !current.assetDrawerOpen,
+          aiDrawerOpen: false,
         }));
       }
     };
@@ -307,6 +320,7 @@ export function App(): JSX.Element {
       ...current,
       focusMode: !current.focusMode,
       assetDrawerOpen: false,
+      aiDrawerOpen: false,
     }));
   }, []);
 
@@ -319,7 +333,11 @@ export function App(): JSX.Element {
 
   const handleOpenAiCompanion = useCallback(() => {
     setRightPanelTab("ai");
-    setLayoutPreferences((current) => ({ ...current, rightPanelCollapsed: false }));
+    setLayoutPreferences((current) =>
+      current.focusMode
+        ? { ...current, aiDrawerOpen: !current.aiDrawerOpen, assetDrawerOpen: false }
+        : { ...current, rightPanelCollapsed: false },
+    );
   }, []);
 
   return (
@@ -333,6 +351,7 @@ export function App(): JSX.Element {
             rightPanelCollapsed && !sandboxFocusMode && "right-panel-collapsed",
             sandboxFocusMode && "focus-mode",
             sandboxFocusMode && layoutPreferences.assetDrawerOpen && "asset-drawer-open",
+            sandboxFocusMode && layoutPreferences.aiDrawerOpen && "ai-drawer-open",
           )}
         >
           {sandboxFocusMode ? (
@@ -340,16 +359,34 @@ export function App(): JSX.Element {
               <button
                 className="focus-floating-button focus-asset-toggle"
                 type="button"
-                onClick={() => patchLayoutPreferences({ assetDrawerOpen: !layoutPreferences.assetDrawerOpen })}
+                onClick={() =>
+                  patchLayoutPreferences({
+                    assetDrawerOpen: !layoutPreferences.assetDrawerOpen,
+                    aiDrawerOpen: false,
+                  })
+                }
                 aria-label={layoutPreferences.assetDrawerOpen ? "关闭全屏沙具库" : "打开全屏沙具库"}
               >
                 {layoutPreferences.assetDrawerOpen ? <X size={18} /> : <Boxes size={18} />}
                 <span>{layoutPreferences.assetDrawerOpen ? "关闭沙具库" : "沙具库"}</span>
               </button>
               <button
+                className={classNames(
+                  "focus-floating-button",
+                  "focus-ai-toggle",
+                  layoutPreferences.aiDrawerOpen && "active",
+                )}
+                type="button"
+                onClick={handleOpenAiCompanion}
+                aria-label={layoutPreferences.aiDrawerOpen ? "关闭全屏 AI 伙伴" : "打开全屏 AI 伙伴"}
+              >
+                {layoutPreferences.aiDrawerOpen ? <X size={18} /> : <MessageCircle size={18} />}
+                <span>{layoutPreferences.aiDrawerOpen ? "关闭 AI" : "AI 伙伴"}</span>
+              </button>
+              <button
                 className="focus-floating-button focus-panel-toggle"
                 type="button"
-                onClick={() => patchLayoutPreferences({ focusMode: false, rightPanelCollapsed: false })}
+                onClick={() => patchLayoutPreferences({ focusMode: false, rightPanelCollapsed: false, aiDrawerOpen: false })}
                 aria-label="退出全屏并打开作品面板"
               >
                 <PanelRightOpen size={18} />
@@ -367,6 +404,16 @@ export function App(): JSX.Element {
                     <AssetLibrary assets={visibleAssets} onAddAsset={addAssetToScene} />
                   </div>
                 </>
+              ) : null}
+              {layoutPreferences.aiDrawerOpen ? (
+                <FocusAiCompanionDrawer
+                  objects={objects}
+                  selectedObject={selectedObject}
+                  events={events}
+                  analysis={analysis}
+                  llmProviders={llmProviders}
+                  onClose={() => patchLayoutPreferences({ aiDrawerOpen: false })}
+                />
               ) : null}
             </>
           ) : (
@@ -400,12 +447,12 @@ export function App(): JSX.Element {
               onDropAsset={handleDropAsset}
               onDeleteSelected={handleDeleteSelected}
               onRecordEvent={recordEvent}
-              aiCompanionActive={rightPanelTab === "ai"}
+              aiCompanionActive={rightPanelTab === "ai" || (sandboxFocusMode && layoutPreferences.aiDrawerOpen)}
               onOpenAiCompanion={handleOpenAiCompanion}
             />
           </section>
 
-          {sandboxFocusMode ? (
+          {sandboxFocusMode && !layoutPreferences.aiDrawerOpen ? (
             <FocusSelectionCard
               selectedObject={selectedObject}
               onPatchSelected={handlePatchSelected}
@@ -453,6 +500,48 @@ export function App(): JSX.Element {
         />
       ) : null}
     </div>
+  );
+}
+
+function FocusAiCompanionDrawer({
+  objects,
+  selectedObject,
+  events,
+  analysis,
+  llmProviders,
+  onClose,
+}: {
+  objects: SandboxObject[];
+  selectedObject: SandboxObject | null;
+  events: SandboxEvent[];
+  analysis: SandboxAnalysis;
+  llmProviders: LlmProviderConfig[];
+  onClose: () => void;
+}): JSX.Element {
+  return (
+    <aside className="focus-ai-drawer" aria-label="全屏 AI 伙伴对话">
+      <header className="focus-ai-drawer-header">
+        <div>
+          <p className="eyebrow">Live Sandplay Dialogue</p>
+          <h2>
+            <Bot size={17} />
+            AI 伙伴
+          </h2>
+        </div>
+        <button className="small-icon-button" type="button" onClick={onClose} aria-label="关闭全屏 AI 伙伴">
+          <X size={17} />
+        </button>
+      </header>
+      <div className="focus-ai-drawer-body">
+        <AiCompanionPanel
+          objects={objects}
+          selectedObject={selectedObject}
+          events={events}
+          analysis={analysis}
+          llmProviders={llmProviders}
+        />
+      </div>
+    </aside>
   );
 }
 
