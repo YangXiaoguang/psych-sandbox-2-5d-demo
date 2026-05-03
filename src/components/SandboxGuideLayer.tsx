@@ -10,6 +10,7 @@ import {
   VIEW_HEIGHT,
   VIEW_WIDTH,
 } from "../utils/projection";
+import { EnvironmentBackdrop } from "./EnvironmentBackdrop";
 
 interface SandboxGuideLayerProps {
   environment: SandboxEnvironment;
@@ -76,6 +77,7 @@ export function SandboxGuideLayer({ environment, showGuides }: SandboxGuideLayer
         fillLinearGradientEndPoint={{ x: VIEW_WIDTH, y: VIEW_HEIGHT }}
         fillLinearGradientColorStops={profile.backgroundStops}
       />
+      <EnvironmentBackdrop environment={environment} />
 
       <Line
         points={[

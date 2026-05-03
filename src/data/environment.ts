@@ -40,7 +40,6 @@ export interface StageEnvironmentProfile {
   vignetteOpacity: number;
   rainOpacity: number;
   mistOpacity: number;
-  starOpacity: number;
   object: ObjectEnvironmentStyle;
 }
 
@@ -66,7 +65,6 @@ export function getEnvironmentProfile(environment: SandboxEnvironment): StageEnv
     vignetteOpacity: night ? 0.32 : 0.08,
     rainOpacity: 0,
     mistOpacity: 0,
-    starOpacity: night ? 0.26 : 0,
     object: {
       castOffsetX: night ? 0.05 : 0.14,
       castOffsetY: night ? 0.08 : 0.07,

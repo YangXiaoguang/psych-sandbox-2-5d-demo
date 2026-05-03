@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import type Konva from "konva";
-import { Circle, Ellipse, Group, Line, Rect } from "react-konva";
+import { Ellipse, Group, Line, Rect } from "react-konva";
 import { getEnvironmentProfile } from "../data/environment";
 import type { SandboxEnvironment } from "../types";
 import { VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
@@ -17,25 +17,15 @@ interface RainDrop {
   opacity: number;
 }
 
-interface StarPoint {
-  id: string;
-  x: number;
-  y: number;
-  radius: number;
-  opacity: number;
-}
-
 const rainDrops = createRainDrops(84);
-const stars = createStars(46);
 
 export function WeatherLayer({ environment }: WeatherLayerProps): JSX.Element {
   const profile = getEnvironmentProfile(environment);
   const rainRef = useRef<Konva.Group | null>(null);
   const mistRef = useRef<Konva.Group | null>(null);
-  const starRef = useRef<Konva.Group | null>(null);
 
   useEffect(() => {
-    if (profile.rainOpacity <= 0 && profile.mistOpacity <= 0 && profile.starOpacity <= 0) {
+    if (profile.rainOpacity <= 0 && profile.mistOpacity <= 0) {
       return undefined;
     }
 
@@ -55,23 +45,18 @@ export function WeatherLayer({ environment }: WeatherLayerProps): JSX.Element {
         mistRef.current.x(Math.sin(elapsed * 0.28) * 14);
       }
 
-      if (starRef.current) {
-        starRef.current.opacity(profile.starOpacity * (0.82 + Math.sin(elapsed * 1.25) * 0.18));
-      }
-
-      const layer = rainRef.current?.getLayer() ?? mistRef.current?.getLayer() ?? starRef.current?.getLayer();
+      const layer = rainRef.current?.getLayer() ?? mistRef.current?.getLayer();
       layer?.batchDraw();
       animationFrame = requestAnimationFrame(animate);
     };
 
     animationFrame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrame);
-  }, [profile.mistOpacity, profile.rainOpacity, profile.starOpacity]);
+  }, [profile.mistOpacity, profile.rainOpacity]);
 
   return (
     <Group listening={false}>
       {profile.mistOpacity > 0 ? <Mist opacity={profile.mistOpacity} nodeRef={mistRef} /> : null}
-      {profile.starOpacity > 0 ? <Stars opacity={profile.starOpacity} nodeRef={starRef} /> : null}
       <Rect
         x={0}
         y={0}
@@ -133,29 +118,6 @@ function Rain({
           strokeWidth={1.4}
           opacity={opacity * drop.opacity}
           lineCap="round"
-        />
-      ))}
-    </Group>
-  );
-}
-
-function Stars({
-  opacity,
-  nodeRef,
-}: {
-  opacity: number;
-  nodeRef: MutableRefObject<Konva.Group | null>;
-}): JSX.Element {
-  return (
-    <Group ref={nodeRef} listening={false} opacity={opacity}>
-      {stars.map((star) => (
-        <Circle
-          key={star.id}
-          x={star.x}
-          y={star.y}
-          radius={star.radius}
-          fill="#fff4ca"
-          opacity={star.opacity}
         />
       ))}
     </Group>
@@ -228,25 +190,6 @@ function createRainDrops(count: number): RainDrop[] {
       y,
       length: 24 + (seed / 233280) * 26,
       opacity: 0.42 + (seed / 233280) * 0.58,
-    };
-  });
-}
-
-function createStars(count: number): StarPoint[] {
-  let seed = 4909;
-  return Array.from({ length: count }, (_, index) => {
-    seed = (seed * 9301 + 49297) % 233280;
-    const x = (seed / 233280) * VIEW_WIDTH;
-    seed = (seed * 9301 + 49297) % 233280;
-    const y = (seed / 233280) * VIEW_HEIGHT * 0.52;
-    seed = (seed * 9301 + 49297) % 233280;
-
-    return {
-      id: `star-${index}`,
-      x,
-      y,
-      radius: 0.8 + (seed / 233280) * 1.3,
-      opacity: 0.35 + (seed / 233280) * 0.65,
     };
   });
 }
