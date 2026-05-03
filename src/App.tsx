@@ -332,13 +332,18 @@ export function App(): JSX.Element {
   }, []);
 
   const handleOpenAiCompanion = useCallback(() => {
+    if (sandboxFocusMode) {
+      setLayoutPreferences((current) => ({
+        ...current,
+        aiDrawerOpen: !current.aiDrawerOpen,
+        assetDrawerOpen: false,
+      }));
+      return;
+    }
+
     setRightPanelTab("ai");
-    setLayoutPreferences((current) =>
-      current.focusMode
-        ? { ...current, aiDrawerOpen: !current.aiDrawerOpen, assetDrawerOpen: false }
-        : { ...current, rightPanelCollapsed: false },
-    );
-  }, []);
+    setLayoutPreferences((current) => ({ ...current, rightPanelCollapsed: false }));
+  }, [sandboxFocusMode]);
 
   return (
     <div className={classNames("product-shell", environment.light === "night" && "night-mode", sandboxFocusMode && "focus-mode")}>
@@ -447,17 +452,19 @@ export function App(): JSX.Element {
               onDropAsset={handleDropAsset}
               onDeleteSelected={handleDeleteSelected}
               onRecordEvent={recordEvent}
-              aiCompanionActive={rightPanelTab === "ai" || (sandboxFocusMode && layoutPreferences.aiDrawerOpen)}
+              aiCompanionActive={sandboxFocusMode ? layoutPreferences.aiDrawerOpen : rightPanelTab === "ai"}
               onOpenAiCompanion={handleOpenAiCompanion}
             />
           </section>
 
-          {sandboxFocusMode && !layoutPreferences.aiDrawerOpen ? (
-            <FocusSelectionCard
-              selectedObject={selectedObject}
-              onPatchSelected={handlePatchSelected}
-              onDeleteSelected={handleDeleteSelected}
-            />
+          {sandboxFocusMode ? (
+            !layoutPreferences.aiDrawerOpen ? (
+              <FocusSelectionCard
+                selectedObject={selectedObject}
+                onPatchSelected={handlePatchSelected}
+                onDeleteSelected={handleDeleteSelected}
+              />
+            ) : null
           ) : (
             <RightPanel
               objects={objects}
@@ -519,7 +526,7 @@ function FocusAiCompanionDrawer({
   onClose: () => void;
 }): JSX.Element {
   return (
-    <aside className="focus-ai-drawer" aria-label="全屏 AI 伙伴对话">
+    <aside className="focus-ai-drawer" aria-label="全屏 AI 伙伴对话" data-testid="focus-ai-drawer">
       <header className="focus-ai-drawer-header">
         <div>
           <p className="eyebrow">Live Sandplay Dialogue</p>
