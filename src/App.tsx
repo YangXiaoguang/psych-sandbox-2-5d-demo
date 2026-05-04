@@ -5,6 +5,7 @@ import { AiCompanionPanel } from "./components/AiCompanionPanel";
 import { AgentChatView } from "./components/AgentChatView";
 import { AppNavigation, type AppView } from "./components/AppNavigation";
 import { AssetLibrary } from "./components/AssetLibrary";
+import { PersonalCenter } from "./components/PersonalCenter";
 import { RightPanel, type RightPanelTab } from "./components/RightPanel";
 import { SandboxEditor, type SandboxEditorHandle } from "./components/SandboxEditor";
 import { TopBar } from "./components/TopBar";
@@ -26,22 +27,31 @@ import { downloadSnapshot } from "./utils/download";
 import { createSandboxEvent } from "./utils/events";
 import { createSandboxObject } from "./utils/objectFactory";
 import {
-  loadAgentConversations,
   loadLlmProviders,
   loadManagedAssets,
   loadPsychAgents,
-  loadSandboxLayoutPreferences,
-  loadSandboxEnvironment,
   loadScene,
   resetManagedAssets,
-  saveAgentConversations,
+  saveAgentConversationsForUser,
   saveLlmProviders,
   saveManagedAssets,
   savePsychAgents,
-  saveSandboxLayoutPreferences,
-  saveSandboxEnvironment,
-  saveScene,
+  saveSandboxEnvironmentForUser,
+  saveSandboxLayoutPreferencesForUser,
+  saveSceneForUser,
+  loadAgentConversationsForUser,
+  loadSandboxEnvironmentForUser,
+  loadSandboxLayoutPreferencesForUser,
+  loadSceneForUser,
 } from "./utils/storage";
+import {
+  createLocalPersonalUser,
+  getActiveProfile,
+  loadPersonalData,
+  savePersonalData,
+  switchActivePersonalUser,
+} from "./personal/localMemoryStore";
+import type { CreatePersonalUserInput } from "./personal/types";
 
 interface SceneState {
   objects: SandboxObject[];
@@ -49,20 +59,23 @@ interface SceneState {
 }
 
 export function App(): JSX.Element {
-  const [initialScene] = useState<SceneState>(() => loadScene() ?? createInitialScene());
+  const [initialPersonalData] = useState(() => loadPersonalData());
+  const [personalData, setPersonalData] = useState(initialPersonalData);
+  const [initialScene] = useState<SceneState>(() => loadSceneForUser(initialPersonalData.activeUserId) ?? loadScene() ?? createInitialScene());
   const [objects, setObjects] = useState<SandboxObject[]>(initialScene.objects);
   const [events, setEvents] = useState<SandboxEvent[]>(initialScene.events);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showGuides, setShowGuides] = useState(false);
-  const [environment, setEnvironment] = useState(() => loadSandboxEnvironment());
-  const [layoutPreferences, setLayoutPreferences] = useState(() => loadSandboxLayoutPreferences());
+  const [environment, setEnvironment] = useState(() => loadSandboxEnvironmentForUser(initialPersonalData.activeUserId));
+  const [layoutPreferences, setLayoutPreferences] = useState(() => loadSandboxLayoutPreferencesForUser(initialPersonalData.activeUserId));
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("scene");
   const [activeView, setActiveView] = useState<AppView>("sandbox");
   const [managedAssets, setManagedAssets] = useState(() => loadManagedAssets());
   const [llmProviders, setLlmProviders] = useState(() => loadLlmProviders());
   const [agents, setAgents] = useState(() => loadPsychAgents());
-  const [conversations, setConversations] = useState(() => loadAgentConversations());
+  const [conversations, setConversations] = useState(() => loadAgentConversationsForUser(initialPersonalData.activeUserId));
   const editorRef = useRef<SandboxEditorHandle | null>(null);
+  const activeUserId = personalData.activeUserId;
 
   const analysis = useMemo(() => analyzeScene(objects), [objects]);
   const visibleAssets = useMemo(
@@ -78,18 +91,23 @@ export function App(): JSX.Element {
   );
   const sandboxFocusMode = activeView === "sandbox" && layoutPreferences.focusMode;
   const rightPanelCollapsed = layoutPreferences.rightPanelCollapsed;
+  const activeProfile = useMemo(() => getActiveProfile(personalData), [personalData]);
 
   useEffect(() => {
-    saveScene({ objects, events });
-  }, [events, objects]);
+    saveSceneForUser(activeUserId, { objects, events });
+  }, [activeUserId, events, objects]);
 
   useEffect(() => {
-    saveSandboxEnvironment(environment);
-  }, [environment]);
+    saveSandboxEnvironmentForUser(activeUserId, environment);
+  }, [activeUserId, environment]);
 
   useEffect(() => {
-    saveSandboxLayoutPreferences(layoutPreferences);
-  }, [layoutPreferences]);
+    saveSandboxLayoutPreferencesForUser(activeUserId, layoutPreferences);
+  }, [activeUserId, layoutPreferences]);
+
+  useEffect(() => {
+    savePersonalData(personalData);
+  }, [personalData]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -160,8 +178,8 @@ export function App(): JSX.Element {
   }, [agents]);
 
   useEffect(() => {
-    saveAgentConversations(conversations);
-  }, [conversations]);
+    saveAgentConversationsForUser(activeUserId, conversations);
+  }, [activeUserId, conversations]);
 
   const recordEvent = useCallback((draft: SandboxEventDraft) => {
     const event = createSandboxEvent(draft);
@@ -345,9 +363,63 @@ export function App(): JSX.Element {
     setLayoutPreferences((current) => ({ ...current, rightPanelCollapsed: false }));
   }, [sandboxFocusMode]);
 
+  const loadRuntimeStateForUser = useCallback((userId: string) => {
+    const nextScene = loadSceneForUser(userId) ?? createInitialScene();
+    setObjects(nextScene.objects);
+    setEvents(nextScene.events);
+    setConversations(loadAgentConversationsForUser(userId));
+    setEnvironment(loadSandboxEnvironmentForUser(userId));
+    setLayoutPreferences({
+      ...loadSandboxLayoutPreferencesForUser(userId),
+      focusMode: false,
+      assetDrawerOpen: false,
+      aiDrawerOpen: false,
+    });
+    setSelectedId(null);
+    setShowGuides(false);
+    setRightPanelTab("scene");
+  }, []);
+
+  const persistRuntimeStateForUser = useCallback(
+    (userId: string) => {
+      saveSceneForUser(userId, { objects, events });
+      saveAgentConversationsForUser(userId, conversations);
+      saveSandboxEnvironmentForUser(userId, environment);
+      saveSandboxLayoutPreferencesForUser(userId, layoutPreferences);
+    },
+    [conversations, environment, events, layoutPreferences, objects],
+  );
+
+  const handleSwitchPersonalUser = useCallback(
+    (userId: string) => {
+      if (userId === activeUserId) {
+        return;
+      }
+
+      persistRuntimeStateForUser(activeUserId);
+      setPersonalData((current) => switchActivePersonalUser(current, userId));
+      loadRuntimeStateForUser(userId);
+      setActiveView("personal");
+    },
+    [activeUserId, loadRuntimeStateForUser, persistRuntimeStateForUser],
+  );
+
+  const handleCreatePersonalUser = useCallback(
+    (input: CreatePersonalUserInput) => {
+      persistRuntimeStateForUser(activeUserId);
+      const { data, userId } = createLocalPersonalUser(personalData, input);
+      setPersonalData(data);
+      loadRuntimeStateForUser(userId);
+      setActiveView("personal");
+    },
+    [activeUserId, loadRuntimeStateForUser, persistRuntimeStateForUser, personalData],
+  );
+
   return (
     <div className={classNames("product-shell", environment.light === "night" && "night-mode", sandboxFocusMode && "focus-mode")}>
-      {!sandboxFocusMode ? <AppNavigation activeView={activeView} onViewChange={setActiveView} /> : null}
+      {!sandboxFocusMode ? (
+        <AppNavigation activeView={activeView} onViewChange={setActiveView} activeUserName={activeProfile.displayName} />
+      ) : null}
 
       {activeView === "sandbox" ? (
         <div
@@ -504,6 +576,19 @@ export function App(): JSX.Element {
           onLlmProvidersChange={setLlmProviders}
           onAgentsChange={setAgents}
           onResetAssets={() => setManagedAssets(resetManagedAssets())}
+        />
+      ) : null}
+
+      {activeView === "personal" ? (
+        <PersonalCenter
+          personalData={personalData}
+          objects={objects}
+          events={events}
+          conversations={conversations}
+          analysis={analysis}
+          onPersonalDataChange={setPersonalData}
+          onCreateUser={handleCreatePersonalUser}
+          onSwitchUser={handleSwitchPersonalUser}
         />
       ) : null}
     </div>

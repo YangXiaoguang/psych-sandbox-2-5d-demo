@@ -11,6 +11,7 @@ import type {
   SandboxObject,
 } from "../types";
 import { DEFAULT_ENVIRONMENT, LIGHT_OPTIONS, WEATHER_OPTIONS } from "../data/environment";
+import { DEFAULT_PERSONAL_USER_ID } from "../personal/types";
 
 const STORAGE_KEY = "psych-sandbox-2-5d-demo.scene.v6";
 const MANAGED_ASSETS_KEY = "psych-sandbox-2-5d-demo.managed-assets.v1";
@@ -27,7 +28,7 @@ const DEFAULT_LAYOUT_PREFERENCES: SandboxLayoutPreferences = {
   aiDrawerOpen: false,
 };
 
-interface StoredScene {
+export interface StoredScene {
   objects: SandboxObject[];
   events: SandboxEvent[];
 }
@@ -54,6 +55,17 @@ export function saveScene(scene: StoredScene): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(scene));
 }
 
+export function loadSceneForUser(userId: string): StoredScene | null {
+  return readJson<StoredScene>(userScopedKey(STORAGE_KEY, userId)) ?? (userId === DEFAULT_PERSONAL_USER_ID ? loadScene() : null);
+}
+
+export function saveSceneForUser(userId: string, scene: StoredScene): void {
+  writeJson(userScopedKey(STORAGE_KEY, userId), scene);
+  if (userId === DEFAULT_PERSONAL_USER_ID) {
+    saveScene(scene);
+  }
+}
+
 export function loadSandboxEnvironment(): SandboxEnvironment {
   const parsed = readJson<SandboxEnvironment>(SANDBOX_ENVIRONMENT_KEY);
   if (
@@ -70,6 +82,25 @@ export function saveSandboxEnvironment(environment: SandboxEnvironment): void {
   writeJson(SANDBOX_ENVIRONMENT_KEY, environment);
 }
 
+export function loadSandboxEnvironmentForUser(userId: string): SandboxEnvironment {
+  const parsed = readJson<SandboxEnvironment>(userScopedKey(SANDBOX_ENVIRONMENT_KEY, userId));
+  if (
+    parsed &&
+    WEATHER_OPTIONS.includes(parsed.weather) &&
+    LIGHT_OPTIONS.includes(parsed.light)
+  ) {
+    return parsed;
+  }
+  return userId === DEFAULT_PERSONAL_USER_ID ? loadSandboxEnvironment() : DEFAULT_ENVIRONMENT;
+}
+
+export function saveSandboxEnvironmentForUser(userId: string, environment: SandboxEnvironment): void {
+  writeJson(userScopedKey(SANDBOX_ENVIRONMENT_KEY, userId), environment);
+  if (userId === DEFAULT_PERSONAL_USER_ID) {
+    saveSandboxEnvironment(environment);
+  }
+}
+
 export function loadSandboxLayoutPreferences(): SandboxLayoutPreferences {
   const parsed = readJson<Partial<SandboxLayoutPreferences>>(SANDBOX_LAYOUT_KEY);
   return {
@@ -84,6 +115,28 @@ export function loadSandboxLayoutPreferences(): SandboxLayoutPreferences {
 
 export function saveSandboxLayoutPreferences(preferences: SandboxLayoutPreferences): void {
   writeJson(SANDBOX_LAYOUT_KEY, preferences);
+}
+
+export function loadSandboxLayoutPreferencesForUser(userId: string): SandboxLayoutPreferences {
+  const parsed = readJson<Partial<SandboxLayoutPreferences>>(userScopedKey(SANDBOX_LAYOUT_KEY, userId));
+  if (!parsed && userId === DEFAULT_PERSONAL_USER_ID) {
+    return loadSandboxLayoutPreferences();
+  }
+  return {
+    ...DEFAULT_LAYOUT_PREFERENCES,
+    ...(parsed ?? {}),
+    rightPanelCollapsed: Boolean(parsed?.rightPanelCollapsed),
+    focusMode: Boolean(parsed?.focusMode),
+    assetDrawerOpen: Boolean(parsed?.assetDrawerOpen),
+    aiDrawerOpen: Boolean(parsed?.aiDrawerOpen),
+  };
+}
+
+export function saveSandboxLayoutPreferencesForUser(userId: string, preferences: SandboxLayoutPreferences): void {
+  writeJson(userScopedKey(SANDBOX_LAYOUT_KEY, userId), preferences);
+  if (userId === DEFAULT_PERSONAL_USER_ID) {
+    saveSandboxLayoutPreferences(preferences);
+  }
 }
 
 export function loadManagedAssets(): ManagedAsset[] {
@@ -128,6 +181,21 @@ export function saveAgentConversations(conversations: AgentConversation[]): void
   writeJson(AGENT_CONVERSATIONS_KEY, conversations);
 }
 
+export function loadAgentConversationsForUser(userId: string): AgentConversation[] {
+  const parsed = readJson<AgentConversation[]>(userScopedKey(AGENT_CONVERSATIONS_KEY, userId));
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+  return userId === DEFAULT_PERSONAL_USER_ID ? loadAgentConversations() : [];
+}
+
+export function saveAgentConversationsForUser(userId: string, conversations: AgentConversation[]): void {
+  writeJson(userScopedKey(AGENT_CONVERSATIONS_KEY, userId), conversations);
+  if (userId === DEFAULT_PERSONAL_USER_ID) {
+    saveAgentConversations(conversations);
+  }
+}
+
 function readJson<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
@@ -142,4 +210,8 @@ function readJson<T>(key: string): T | null {
 
 function writeJson<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+function userScopedKey(baseKey: string, userId: string): string {
+  return `${baseKey}.user.${encodeURIComponent(userId)}`;
 }
