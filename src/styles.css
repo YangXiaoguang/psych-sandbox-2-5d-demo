@@ -1199,6 +1199,8 @@ button {
 .product-shell.night-mode .personal-archive-pager,
 .product-shell.night-mode .personal-consent-row,
 .product-shell.night-mode .personal-governance-body section,
+.product-shell.night-mode .personal-context-packet-item,
+.product-shell.night-mode .personal-context-raw,
 .product-shell.night-mode .personal-memory-candidate,
 .product-shell.night-mode .personal-memory-empty,
 .product-shell.night-mode .personal-audit-list article,
@@ -1236,6 +1238,8 @@ button {
 .product-shell.night-mode .personal-archive-composer h4,
 .product-shell.night-mode .personal-archive-item-head strong,
 .product-shell.night-mode .personal-archive-empty strong,
+.product-shell.night-mode .personal-context-stats strong,
+.product-shell.night-mode .personal-context-packet-item strong,
 .product-shell.night-mode .personal-memory-candidate strong,
 .product-shell.night-mode .personal-memory-empty strong,
 .product-shell.night-mode .panel-tabs button.active,
@@ -1310,8 +1314,11 @@ button {
 }
 
 .product-shell.night-mode .personal-memory-search,
+.product-shell.night-mode .personal-context-stats span,
+.product-shell.night-mode .personal-context-raw pre,
 .product-shell.night-mode .personal-memory-actions button,
 .product-shell.night-mode .personal-memory-actions label,
+.product-shell.night-mode .personal-context-source button,
 .product-shell.night-mode .personal-memory-candidate > div:first-child span,
 .product-shell.night-mode .personal-memory-evidence em {
   border-color: var(--line);
@@ -1325,7 +1332,14 @@ button {
   color: #f7d78c;
 }
 
+.product-shell.night-mode .personal-context-blocked p {
+  border-color: rgba(245, 188, 92, 0.42);
+  background: rgba(84, 61, 25, 0.72);
+  color: #f7d78c;
+}
+
 .product-shell.night-mode .personal-memory-header span,
+.product-shell.night-mode .personal-context-packet-item > div:first-child span,
 .product-shell.night-mode .personal-memory-tags span,
 .product-shell.night-mode .personal-memory-candidate.confirmed > div:first-child span {
   border-color: var(--accent-line);
@@ -2922,6 +2936,179 @@ button {
 .personal-memory-candidates-card {
   display: grid;
   gap: 10px;
+}
+
+.personal-context-packet-card {
+  display: grid;
+  gap: 10px;
+}
+
+.personal-context-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.personal-context-stats span {
+  display: grid;
+  gap: 3px;
+  padding: 9px 7px;
+  border: 1px solid #e1d1b4;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(128, 204, 184, 0.18), transparent 42%),
+    #fffdf6;
+  text-align: center;
+}
+
+.personal-context-stats strong {
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.personal-context-stats em {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.personal-context-blocked {
+  display: grid;
+  gap: 6px;
+}
+
+.personal-context-blocked p {
+  margin: 0;
+  padding: 8px 9px;
+  border: 1px solid #e1c592;
+  border-radius: 8px;
+  background: #fff0ce;
+  color: #7a5a22;
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.4;
+}
+
+.personal-context-packet-list {
+  display: grid;
+  gap: 9px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.personal-context-packet-item {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(47, 143, 131, 0.36);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(128, 204, 184, 0.22), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 86px),
+    #fffdf6;
+  box-shadow: var(--inner-highlight);
+}
+
+.personal-context-packet-item > div:first-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.personal-context-packet-item strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-context-packet-item > div:first-child span {
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personal-context-packet-item p,
+.personal-context-packet-item em {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.personal-context-packet-item em {
+  color: #74644e;
+}
+
+.personal-context-source {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.personal-context-source span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-context-source button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personal-context-raw {
+  border: 1px solid #d2c3a8;
+  border-radius: 8px;
+  background: rgba(255, 253, 246, 0.68);
+  overflow: hidden;
+}
+
+.personal-context-raw summary {
+  cursor: pointer;
+  padding: 9px 10px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.personal-context-raw pre {
+  max-height: 170px;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border-top: 1px solid var(--line);
+  background: #fffaf0;
+  color: #4e463d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 
 .personal-memory-header {

@@ -184,6 +184,30 @@ export interface PersonalMemoryCandidate {
   retiredAt?: string;
 }
 
+export interface PersonalContextPacketItem {
+  memoryId: string;
+  title: string;
+  summary: string;
+  reason: string;
+  sourceSessionId?: string;
+  sourceSessionTitle?: string;
+  sourceArchivedAt?: string;
+  evidence: string[];
+  tags: string[];
+  confidence: number;
+  updatedAt: string;
+}
+
+export interface PersonalContextPacket {
+  userId: string;
+  builtAt: string;
+  enabled: boolean;
+  blockedReasons: string[];
+  maxItems: number;
+  items: PersonalContextPacketItem[];
+  promptLines: string[];
+}
+
 export interface PersonalDataBundle {
   schema: typeof PERSONAL_MEMORY_SCHEMA;
   version: typeof PERSONAL_MEMORY_VERSION;

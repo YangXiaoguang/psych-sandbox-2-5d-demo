@@ -37,6 +37,7 @@ import {
   type SandtraySessionArchive,
 } from "../personal/types";
 import {
+  buildPersonalContextPacket,
   createSandtraySessionArchive,
   extractMemoryCandidatesFromSandtraySession,
   exportPersonalArchive,
@@ -248,6 +249,14 @@ export function PersonalCenter({
         .includes(normalizedQuery);
     });
   }, [activeMemoryCandidates, memoryQuery]);
+  const contextPacket = useMemo(
+    () => buildPersonalContextPacket(personalData, activeAccount.userId),
+    [activeAccount.userId, personalData],
+  );
+  const contextSourceCount = useMemo(
+    () => new Set(contextPacket.items.map((item) => item.sourceSessionId).filter(Boolean)).size,
+    [contextPacket.items],
+  );
 
   useEffect(() => {
     setArchivePage(1);
@@ -271,7 +280,7 @@ export function PersonalCenter({
         icon: <Brain size={18} />,
         label: "记忆候选",
         value: `${confirmedMemoryCount}/${activeMemoryCandidates.length}`,
-        detail: `${agentContextMemoryCount} 条已允许注入 Agent 上下文`,
+        detail: `${contextPacket.items.length} 条当前进入 Context Packet`,
       },
       {
         icon: <ShieldCheck size={18} />,
@@ -296,9 +305,9 @@ export function PersonalCenter({
       analysis.centerObjects.length,
       activeMemoryCandidates.length,
       consents.length,
+      contextPacket.items.length,
       conversations.length,
       events.length,
-      agentContextMemoryCount,
       confirmedMemoryCount,
       grantedCount,
       objects.length,
@@ -969,6 +978,81 @@ export function PersonalCenter({
                 <li>Agent 会话按用户命名空间保存</li>
                 <li>授权项与审计日志可见</li>
               </ul>
+            </section>
+            <section className="personal-context-packet-card">
+              <div className="personal-memory-header">
+                <h4>
+                  <Sparkles size={15} />
+                  Context Packet 预览
+                </h4>
+                <span>{contextPacket.enabled ? "可注入" : "未启用"}</span>
+              </div>
+              <div className="personal-context-stats">
+                <span>
+                  <strong>{contextPacket.items.length}</strong>
+                  <em>将被使用</em>
+                </span>
+                <span>
+                  <strong>{agentContextMemoryCount}</strong>
+                  <em>已勾选</em>
+                </span>
+                <span>
+                  <strong>{contextSourceCount}</strong>
+                  <em>来源作品</em>
+                </span>
+              </div>
+              {contextPacket.blockedReasons.length > 0 ? (
+                <div className="personal-context-blocked">
+                  {contextPacket.blockedReasons.map((reason) => (
+                    <p key={reason}>{reason}</p>
+                  ))}
+                </div>
+              ) : null}
+              <div className="personal-context-packet-list">
+                {contextPacket.items.length > 0 ? (
+                  contextPacket.items.map((item) => {
+                    const sourceSession = item.sourceSessionId
+                      ? sandtrayArchives.find((session) => session.sessionId === item.sourceSessionId)
+                      : undefined;
+                    return (
+                      <article key={item.memoryId} className="personal-context-packet-item">
+                        <div>
+                          <strong>{item.title}</strong>
+                          <span>{Math.round(item.confidence * 100)}%</span>
+                        </div>
+                        <p>{item.summary}</p>
+                        <em>{item.reason}</em>
+                        <div className="personal-context-source">
+                          <span>
+                            来源：{item.sourceSessionTitle ?? "未关联历史作品"}
+                            {item.sourceArchivedAt ? ` · ${new Date(item.sourceArchivedAt).toLocaleDateString("zh-CN")}` : ""}
+                          </span>
+                          {sourceSession ? (
+                            <button type="button" onClick={() => handleRestoreArchive(sourceSession)}>
+                              <RotateCcw size={13} />
+                              恢复来源
+                            </button>
+                          ) : null}
+                        </div>
+                      </article>
+                    );
+                  })
+                ) : (
+                  <div className="personal-memory-empty">
+                    <Sparkles size={17} />
+                    <strong>暂无可注入记忆</strong>
+                    <span>确认候选记忆，并开启 Agent 注入后，会在这里显示将被 AI 使用的上下文。</span>
+                  </div>
+                )}
+              </div>
+              <details className="personal-context-raw">
+                <summary>查看将注入 Agent 的文本</summary>
+                <pre>
+                  {contextPacket.promptLines.length > 0
+                    ? contextPacket.promptLines.join("\n")
+                    : "当前没有可注入的 Context Packet 文本。"}
+                </pre>
+              </details>
             </section>
             <section className="personal-memory-candidates-card">
               <div className="personal-memory-header">

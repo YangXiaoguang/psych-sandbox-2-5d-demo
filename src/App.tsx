@@ -45,9 +45,9 @@ import {
   loadSceneForUser,
 } from "./utils/storage";
 import {
+  buildPersonalContextPacket,
   createLocalPersonalUser,
   getActiveProfile,
-  getConfirmedMemoryContext,
   loadPersonalData,
   savePersonalData,
   switchActivePersonalUser,
@@ -93,10 +93,11 @@ export function App(): JSX.Element {
   const sandboxFocusMode = activeView === "sandbox" && layoutPreferences.focusMode;
   const rightPanelCollapsed = layoutPreferences.rightPanelCollapsed;
   const activeProfile = useMemo(() => getActiveProfile(personalData), [personalData]);
-  const personalMemoryContext = useMemo(
-    () => getConfirmedMemoryContext(personalData, activeUserId),
+  const personalContextPacket = useMemo(
+    () => buildPersonalContextPacket(personalData, activeUserId),
     [activeUserId, personalData],
   );
+  const personalMemoryContext = personalContextPacket.promptLines;
 
   useEffect(() => {
     saveSceneForUser(activeUserId, { objects, events });

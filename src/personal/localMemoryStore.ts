@@ -13,6 +13,7 @@ import {
   type PersonalAccount,
   type PersonalAgeGroup,
   type PersonalAuditLog,
+  type PersonalContextPacket,
   type PersonalDataBundle,
   type PersonalMemoryCandidate,
   type PersonalRole,
@@ -217,7 +218,20 @@ export function updatePersonalMemoryCandidate(
 }
 
 export function getConfirmedMemoryContext(data: PersonalDataBundle, userId: string): string[] {
-  return data.memoryCandidates
+  return buildPersonalContextPacket(data, userId).promptLines;
+}
+
+export function buildPersonalContextPacket(
+  data: PersonalDataBundle,
+  userId: string,
+  maxItems = 8,
+): PersonalContextPacket {
+  const consents = getUserConsents(data, userId);
+  const canUseForPersonalization = consents.some(
+    (consent) => consent.consentType === "ai_personalization" && consent.granted,
+  );
+  const sourceSessions = new Map(data.sandtraySessions.map((session) => [session.sessionId, session]));
+  const selectedCandidates = data.memoryCandidates
     .filter(
       (candidate) =>
         candidate.userId === userId &&
@@ -225,8 +239,38 @@ export function getConfirmedMemoryContext(data: PersonalDataBundle, userId: stri
         candidate.includeInAgentContext,
     )
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-    .slice(0, 8)
-    .map((candidate) => `${candidate.title}：${candidate.summary}`);
+    .slice(0, maxItems);
+  const items = selectedCandidates.map((candidate) => {
+    const source = candidate.sourceSessionId ? sourceSessions.get(candidate.sourceSessionId) : undefined;
+    return {
+      memoryId: candidate.memoryId,
+      title: candidate.title,
+      summary: candidate.summary,
+      reason: buildContextPacketReason(candidate, source),
+      sourceSessionId: candidate.sourceSessionId,
+      sourceSessionTitle: source?.title,
+      sourceArchivedAt: source?.archivedAt,
+      evidence: candidate.evidence,
+      tags: candidate.tags,
+      confidence: candidate.confidence,
+      updatedAt: candidate.updatedAt,
+    };
+  });
+  const blockedReasons = canUseForPersonalization
+    ? []
+    : ["AI 个性化上下文授权未开启，已确认记忆不会注入 Agent。"];
+
+  return {
+    userId,
+    builtAt: new Date().toISOString(),
+    enabled: canUseForPersonalization,
+    blockedReasons,
+    maxItems,
+    items: canUseForPersonalization ? items : [],
+    promptLines: canUseForPersonalization
+      ? items.map((item) => `${item.title}：${item.summary}（来源：${item.sourceSessionTitle ?? "未关联历史作品"}；原因：${item.reason}）`)
+      : [],
+  };
 }
 
 export function markSandtrayArchiveRestored(
@@ -498,6 +542,17 @@ function buildMemoryCandidatesForSession(session: SandtraySessionArchive): Perso
 
 function buildMemoryCandidateKey(candidate: PersonalMemoryCandidate): string {
   return [candidate.userId, candidate.sourceSessionId ?? "", candidate.kind, candidate.title].join("::");
+}
+
+function buildContextPacketReason(
+  candidate: PersonalMemoryCandidate,
+  source?: SandtraySessionArchive,
+): string {
+  const sourceText = source
+    ? `来自历史作品“${source.title}”`
+    : "来自用户确认的本地记忆";
+  const confidenceText = `${Math.round(candidate.confidence * 100)}% 置信度`;
+  return `${sourceText}，状态已确认，已允许注入 Agent，上下文按最近更新时间优先；${confidenceText}。`;
 }
 
 function buildSandtrayFeatureSummary(
