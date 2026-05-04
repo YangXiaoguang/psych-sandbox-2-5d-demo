@@ -45,6 +45,17 @@ export type MemoryCandidateKind =
   | "environment_note";
 export type MemoryCandidateStatus = "candidate" | "confirmed" | "dismissed" | "retired";
 export type PersonalArchiveImportMode = "merge" | "replace";
+export type PersonalArchiveDiffDomainKey =
+  | "accounts"
+  | "profiles"
+  | "preferences"
+  | "consents"
+  | "workspaces"
+  | "sandtraySessions"
+  | "memoryCandidates"
+  | "memoryBlockRules"
+  | "auditLogs";
+export type PersonalArchiveConflictPolicy = "use_import" | "keep_local";
 
 export interface PersonalAccount {
   userId: string;
@@ -270,7 +281,47 @@ export interface PersonalArchiveImportResult {
   importedAt: string;
   data: PersonalDataBundle;
   report: PersonalArchiveValidationReport;
+  diffReport: PersonalArchiveDiffReport;
 }
+
+export interface PersonalArchiveDiffItem {
+  id: string;
+  label: string;
+  changeType: "added" | "changed" | "unchanged" | "removed";
+  changedFields: string[];
+  localUpdatedAt?: string;
+  importUpdatedAt?: string;
+}
+
+export interface PersonalArchiveDiffDomain {
+  key: PersonalArchiveDiffDomainKey;
+  label: string;
+  policy: PersonalArchiveConflictPolicy;
+  added: number;
+  changed: number;
+  unchanged: number;
+  removed: number;
+  keptLocal: number;
+  items: PersonalArchiveDiffItem[];
+}
+
+export interface PersonalArchiveDiffReport {
+  mode: PersonalArchiveImportMode;
+  builtAt: string;
+  hasConflicts: boolean;
+  totals: {
+    added: number;
+    changed: number;
+    unchanged: number;
+    removed: number;
+    keptLocal: number;
+  };
+  domains: PersonalArchiveDiffDomain[];
+}
+
+export type PersonalArchiveConflictPolicies = Partial<
+  Record<PersonalArchiveDiffDomainKey, PersonalArchiveConflictPolicy>
+>;
 
 export interface CreatePersonalUserInput {
   displayName: string;

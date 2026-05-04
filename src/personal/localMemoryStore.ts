@@ -11,6 +11,12 @@ import {
   type CreatePersonalUserInput,
   type IdentityProfile,
   type PersonalAccount,
+  type PersonalArchiveConflictPolicies,
+  type PersonalArchiveConflictPolicy,
+  type PersonalArchiveDiffDomain,
+  type PersonalArchiveDiffDomainKey,
+  type PersonalArchiveDiffItem,
+  type PersonalArchiveDiffReport,
   type PersonalArchiveImportMode,
   type PersonalArchiveImportResult,
   type PersonalArchiveValidationReport,
@@ -694,13 +700,45 @@ export function validatePersonalArchivePayload(payload: unknown): PersonalArchiv
   });
 }
 
+export function buildPersonalArchiveDiffReport(
+  currentData: PersonalDataBundle,
+  incomingData: PersonalDataBundle,
+  mode: PersonalArchiveImportMode,
+  conflictPolicies: PersonalArchiveConflictPolicies = {},
+): PersonalArchiveDiffReport {
+  const current = normalizePersonalData(currentData);
+  const incoming = normalizePersonalData(incomingData);
+  const domains = ARCHIVE_COLLECTIONS.map((collection) =>
+    buildArchiveCollectionDiff(current, incoming, mode, collection, conflictPolicies[collection.key] ?? "use_import"),
+  );
+
+  return {
+    mode,
+    builtAt: new Date().toISOString(),
+    hasConflicts: domains.some((domain) => domain.changed > 0),
+    totals: domains.reduce(
+      (totals, domain) => ({
+        added: totals.added + domain.added,
+        changed: totals.changed + domain.changed,
+        unchanged: totals.unchanged + domain.unchanged,
+        removed: totals.removed + domain.removed,
+        keptLocal: totals.keptLocal + domain.keptLocal,
+      }),
+      { added: 0, changed: 0, unchanged: 0, removed: 0, keptLocal: 0 },
+    ),
+    domains,
+  };
+}
+
 export function importPersonalArchive(
   currentData: PersonalDataBundle,
   incomingData: PersonalDataBundle,
   mode: PersonalArchiveImportMode,
+  conflictPolicies: PersonalArchiveConflictPolicies = {},
 ): PersonalArchiveImportResult {
   const importedAt = new Date().toISOString();
   const incoming = normalizePersonalData(incomingData);
+  const diffReport = buildPersonalArchiveDiffReport(currentData, incoming, mode, conflictPolicies);
   const nextData =
     mode === "replace"
       ? incoming
@@ -709,31 +747,60 @@ export function importPersonalArchive(
           activeUserId: currentData.accounts.some((account) => account.userId === currentData.activeUserId)
             ? currentData.activeUserId
             : incoming.activeUserId,
-          accounts: mergeByKey(currentData.accounts, incoming.accounts, (account) => account.userId),
-          profiles: mergeByKey(currentData.profiles, incoming.profiles, (profile) => profile.userId),
-          preferences: mergeByKey(currentData.preferences, incoming.preferences, (preference) => preference.userId),
-          consents: mergeByKey(
+          accounts: mergeByKeyWithPolicy(
+            currentData.accounts,
+            incoming.accounts,
+            (account) => account.userId,
+            conflictPolicies.accounts ?? "use_import",
+          ),
+          profiles: mergeByKeyWithPolicy(
+            currentData.profiles,
+            incoming.profiles,
+            (profile) => profile.userId,
+            conflictPolicies.profiles ?? "use_import",
+          ),
+          preferences: mergeByKeyWithPolicy(
+            currentData.preferences,
+            incoming.preferences,
+            (preference) => preference.userId,
+            conflictPolicies.preferences ?? "use_import",
+          ),
+          consents: mergeByKeyWithPolicy(
             currentData.consents,
             incoming.consents,
             (consent) => `${consent.userId}:${consent.consentType}`,
+            conflictPolicies.consents ?? "use_import",
           ),
-          workspaces: mergeByKey(currentData.workspaces, incoming.workspaces, (workspace) => workspace.workspaceId),
-          sandtraySessions: mergeByKey(
+          workspaces: mergeByKeyWithPolicy(
+            currentData.workspaces,
+            incoming.workspaces,
+            (workspace) => workspace.workspaceId,
+            conflictPolicies.workspaces ?? "use_import",
+          ),
+          sandtraySessions: mergeByKeyWithPolicy(
             currentData.sandtraySessions,
             incoming.sandtraySessions,
             (session) => session.sessionId,
+            conflictPolicies.sandtraySessions ?? "use_import",
           ),
-          memoryCandidates: mergeByKey(
+          memoryCandidates: mergeByKeyWithPolicy(
             currentData.memoryCandidates,
             incoming.memoryCandidates,
             (candidate) => candidate.memoryId,
+            conflictPolicies.memoryCandidates ?? "use_import",
           ),
-          memoryBlockRules: mergeByKey(
+          memoryBlockRules: mergeByKeyWithPolicy(
             currentData.memoryBlockRules,
             incoming.memoryBlockRules,
             (rule) => rule.ruleId,
+            conflictPolicies.memoryBlockRules ?? "use_import",
           ),
-          auditLogs: mergeByKey(currentData.auditLogs, incoming.auditLogs, (log) => log.id).sort((a, b) =>
+          auditLogs: mergeByKeyWithPolicy(
+            currentData.auditLogs,
+            incoming.auditLogs,
+            (log) => log.id,
+            conflictPolicies.auditLogs ?? "use_import",
+          ).sort((a, b) =>
             b.createdAt.localeCompare(a.createdAt),
           ),
           exportedAt: incoming.exportedAt,
@@ -760,7 +827,219 @@ export function importPersonalArchive(
         ...report.migrationNotes,
       ],
     },
+    diffReport,
   };
+}
+
+interface ArchiveCollectionConfig {
+  key: PersonalArchiveDiffDomainKey;
+  label: string;
+  getId: (item: unknown) => string;
+  getLabel: (item: unknown) => string;
+  getUpdatedAt: (item: unknown) => string | undefined;
+}
+
+const ARCHIVE_COLLECTIONS: ArchiveCollectionConfig[] = [
+  {
+    key: "accounts",
+    label: "用户账号",
+    getId: (item) => readStringField(item, "userId"),
+    getLabel: (item) => readStringField(item, "displayName") || readStringField(item, "localHandle") || "未命名用户",
+    getUpdatedAt: (item) => readStringField(item, "lastActiveAt") || readStringField(item, "createdAt"),
+  },
+  {
+    key: "profiles",
+    label: "基础资料",
+    getId: (item) => readStringField(item, "userId"),
+    getLabel: (item) => readStringField(item, "displayName") || "基础资料",
+    getUpdatedAt: (item) => readStringField(item, "updatedAt") || readStringField(item, "createdAt"),
+  },
+  {
+    key: "preferences",
+    label: "沟通偏好",
+    getId: (item) => readStringField(item, "userId"),
+    getLabel: (item) => `${readStringField(item, "userId") || "用户"} 的沟通偏好`,
+    getUpdatedAt: (item) => readStringField(item, "updatedAt"),
+  },
+  {
+    key: "consents",
+    label: "授权记录",
+    getId: (item) => `${readStringField(item, "userId")}:${readStringField(item, "consentType")}`,
+    getLabel: (item) => readStringField(item, "consentType") || "授权记录",
+    getUpdatedAt: (item) => readStringField(item, "updatedAt") || readStringField(item, "createdAt"),
+  },
+  {
+    key: "workspaces",
+    label: "工作区",
+    getId: (item) => readStringField(item, "workspaceId"),
+    getLabel: (item) => readStringField(item, "title") || "沙盘工作区",
+    getUpdatedAt: (item) => readStringField(item, "updatedAt") || readStringField(item, "createdAt"),
+  },
+  {
+    key: "sandtraySessions",
+    label: "历史作品",
+    getId: (item) => readStringField(item, "sessionId"),
+    getLabel: (item) => readStringField(item, "title") || "沙盘会话档案",
+    getUpdatedAt: (item) => readStringField(item, "updatedAt") || readStringField(item, "archivedAt"),
+  },
+  {
+    key: "memoryCandidates",
+    label: "记忆候选",
+    getId: (item) => readStringField(item, "memoryId"),
+    getLabel: (item) => readStringField(item, "title") || "记忆候选",
+    getUpdatedAt: (item) => readStringField(item, "updatedAt") || readStringField(item, "createdAt"),
+  },
+  {
+    key: "memoryBlockRules",
+    label: "屏蔽规则",
+    getId: (item) => readStringField(item, "ruleId"),
+    getLabel: (item) => readStringField(item, "label") || "记忆屏蔽规则",
+    getUpdatedAt: (item) => readStringField(item, "updatedAt") || readStringField(item, "createdAt"),
+  },
+  {
+    key: "auditLogs",
+    label: "审计日志",
+    getId: (item) => readStringField(item, "id"),
+    getLabel: (item) => readStringField(item, "detail") || readStringField(item, "action") || "审计记录",
+    getUpdatedAt: (item) => readStringField(item, "createdAt"),
+  },
+];
+
+function buildArchiveCollectionDiff(
+  current: PersonalDataBundle,
+  incoming: PersonalDataBundle,
+  mode: PersonalArchiveImportMode,
+  collection: ArchiveCollectionConfig,
+  policy: PersonalArchiveConflictPolicy,
+): PersonalArchiveDiffDomain {
+  const currentItems = getArchiveCollectionItems(current, collection.key);
+  const incomingItems = getArchiveCollectionItems(incoming, collection.key);
+  const currentMap = buildArchiveItemMap(currentItems, collection);
+  const incomingMap = buildArchiveItemMap(incomingItems, collection);
+  const diffKeys =
+    mode === "replace"
+      ? Array.from(new Set([...currentMap.keys(), ...incomingMap.keys()]))
+      : Array.from(incomingMap.keys());
+  const items = diffKeys
+    .map((id): PersonalArchiveDiffItem | null => {
+      const localItem = currentMap.get(id);
+      const importItem = incomingMap.get(id);
+
+      if (!localItem && importItem) {
+        return {
+          id,
+          label: collection.getLabel(importItem),
+          changeType: "added",
+          changedFields: [],
+          importUpdatedAt: collection.getUpdatedAt(importItem),
+        };
+      }
+
+      if (localItem && !importItem) {
+        return {
+          id,
+          label: collection.getLabel(localItem),
+          changeType: "removed",
+          changedFields: [],
+          localUpdatedAt: collection.getUpdatedAt(localItem),
+        };
+      }
+
+      if (!localItem || !importItem) {
+        return null;
+      }
+
+      const changedFields = getChangedTopLevelFields(localItem, importItem);
+      return {
+        id,
+        label: collection.getLabel(importItem) || collection.getLabel(localItem),
+        changeType: changedFields.length > 0 ? "changed" : "unchanged",
+        changedFields,
+        localUpdatedAt: collection.getUpdatedAt(localItem),
+        importUpdatedAt: collection.getUpdatedAt(importItem),
+      };
+    })
+    .filter((item): item is PersonalArchiveDiffItem => Boolean(item));
+
+  const added = items.filter((item) => item.changeType === "added").length;
+  const changed = items.filter((item) => item.changeType === "changed").length;
+  const unchanged = items.filter((item) => item.changeType === "unchanged").length;
+  const removed = items.filter((item) => item.changeType === "removed").length;
+  const keptLocal = mode === "merge" && policy === "keep_local" ? changed : 0;
+
+  return {
+    key: collection.key,
+    label: collection.label,
+    policy,
+    added,
+    changed,
+    unchanged,
+    removed,
+    keptLocal,
+    items: items.sort(sortArchiveDiffItems).slice(0, 8),
+  };
+}
+
+function getArchiveCollectionItems(data: PersonalDataBundle, key: PersonalArchiveDiffDomainKey): unknown[] {
+  const value = data[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function buildArchiveItemMap(items: unknown[], collection: ArchiveCollectionConfig): Map<string, unknown> {
+  const map = new Map<string, unknown>();
+  items.forEach((item) => {
+    const id = collection.getId(item);
+    if (id) {
+      map.set(id, item);
+    }
+  });
+  return map;
+}
+
+function sortArchiveDiffItems(a: PersonalArchiveDiffItem, b: PersonalArchiveDiffItem): number {
+  const priority = {
+    changed: 0,
+    added: 1,
+    removed: 2,
+    unchanged: 3,
+  };
+  return priority[a.changeType] - priority[b.changeType] || a.label.localeCompare(b.label, "zh-CN");
+}
+
+function getChangedTopLevelFields(localItem: unknown, importItem: unknown): string[] {
+  if (!isRecord(localItem) || !isRecord(importItem)) {
+    return stableStringify(localItem) === stableStringify(importItem) ? [] : ["value"];
+  }
+
+  return Array.from(new Set([...Object.keys(localItem), ...Object.keys(importItem)]))
+    .filter((key) => stableStringify(localItem[key]) !== stableStringify(importItem[key]))
+    .slice(0, 8);
+}
+
+function readStringField(item: unknown, field: string): string {
+  if (!isRecord(item)) {
+    return "";
+  }
+  const value = item[field];
+  return typeof value === "string" ? value : "";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
+    .join(",")}}`;
 }
 
 function createArchiveValidationReport(input: {
@@ -840,7 +1119,12 @@ function addDuplicateWarnings(warnings: string[], label: string, ids: string[]):
   }
 }
 
-function mergeByKey<T>(current: T[], incoming: T[], getKey: (item: T) => string): T[] {
+function mergeByKeyWithPolicy<T>(
+  current: T[],
+  incoming: T[],
+  getKey: (item: T) => string,
+  policy: PersonalArchiveConflictPolicy,
+): T[] {
   const merged = new Map<string, T>();
   current.forEach((item) => {
     const key = getKey(item);
@@ -851,6 +1135,10 @@ function mergeByKey<T>(current: T[], incoming: T[], getKey: (item: T) => string)
   incoming.forEach((item) => {
     const key = getKey(item);
     if (key) {
+      const localItem = merged.get(key);
+      if (localItem && policy === "keep_local" && stableStringify(localItem) !== stableStringify(item)) {
+        return;
+      }
       merged.set(key, item);
     }
   });

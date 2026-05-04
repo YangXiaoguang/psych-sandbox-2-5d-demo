@@ -35,6 +35,9 @@ import {
   type CreatePersonalUserInput,
   type IdentityProfile,
   type MemoryCandidateStatus,
+  type PersonalArchiveConflictPolicies,
+  type PersonalArchiveConflictPolicy,
+  type PersonalArchiveDiffDomainKey,
   type PersonalArchiveImportMode,
   type PersonalArchiveValidationReport,
   type PersonalAgeGroup,
@@ -44,6 +47,7 @@ import {
   type SandtraySessionArchive,
 } from "../personal/types";
 import {
+  buildPersonalArchiveDiffReport,
   buildPersonalContextPacket,
   createMemoryBlockRuleFromCandidate,
   createSandtraySessionArchive,
@@ -115,6 +119,18 @@ const MEMORY_STATUS_LABELS: Record<MemoryCandidateStatus, string> = {
   retired: "已撤回",
 };
 
+const ARCHIVE_DIFF_CHANGE_LABELS = {
+  added: "新增",
+  changed: "冲突",
+  unchanged: "相同",
+  removed: "移除",
+} as const;
+
+const ARCHIVE_CONFLICT_POLICY_LABELS: Record<PersonalArchiveConflictPolicy, string> = {
+  use_import: "使用导入",
+  keep_local: "保留本地",
+};
+
 const EMPTY_IMPORT_REPORT: PersonalArchiveValidationReport = {
   valid: false,
   errors: [],
@@ -175,6 +191,7 @@ export function PersonalCenter({
   const [archiveImportCandidate, setArchiveImportCandidate] = useState<PersonalDataBundle | null>(null);
   const [archiveImportReport, setArchiveImportReport] = useState<PersonalArchiveValidationReport | null>(null);
   const [archiveImportMessage, setArchiveImportMessage] = useState("");
+  const [archiveConflictPolicies, setArchiveConflictPolicies] = useState<PersonalArchiveConflictPolicies>({});
 
   const directoryUsers = useMemo(
     () =>
@@ -302,6 +319,17 @@ export function PersonalCenter({
         .slice(0, 8),
     [activeAccount.userId, personalData.memoryBlockRules],
   );
+  const archiveDiffReport = useMemo(() => {
+    if (!archiveImportCandidate || !archiveImportReport?.valid) {
+      return null;
+    }
+    return buildPersonalArchiveDiffReport(
+      personalData,
+      archiveImportCandidate,
+      archiveImportMode,
+      archiveConflictPolicies,
+    );
+  }, [archiveConflictPolicies, archiveImportCandidate, archiveImportMode, archiveImportReport?.valid, personalData]);
 
   useEffect(() => {
     setArchivePage(1);
@@ -439,6 +467,7 @@ export function PersonalCenter({
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     setArchiveImportMessage("");
+    setArchiveConflictPolicies({});
 
     if (!file) {
       return;
@@ -489,13 +518,23 @@ export function PersonalCenter({
       return;
     }
 
-    const result = importPersonalArchive(personalData, archiveImportCandidate, archiveImportMode);
+    const result = importPersonalArchive(personalData, archiveImportCandidate, archiveImportMode, archiveConflictPolicies);
     onPersonalDataChange(result.data);
     setArchiveImportCandidate(null);
     setArchiveImportReport(result.report);
     setArchiveImportMessage(
       `${archiveImportMode === "replace" ? "替换" : "合并"}导入完成：当前共有 ${result.report.summary.accounts} 个用户、${result.report.summary.sandtraySessions} 个历史作品、${result.report.summary.memoryCandidates} 条记忆候选。`,
     );
+  };
+
+  const updateArchiveConflictPolicy = (
+    domainKey: PersonalArchiveDiffDomainKey,
+    policy: PersonalArchiveConflictPolicy,
+  ) => {
+    setArchiveConflictPolicies((current) => ({
+      ...current,
+      [domainKey]: policy,
+    }));
   };
 
   const handleSaveCurrentSandtrayArchive = () => {
@@ -1335,6 +1374,95 @@ export function PersonalCenter({
                       ))}
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+              {archiveDiffReport ? (
+                <div className="personal-import-diff">
+                  <div className="personal-import-diff-head">
+                    <div>
+                      <strong>导入差异预览</strong>
+                      <span>
+                        {archiveDiffReport.mode === "replace"
+                          ? "替换模式会移除导入包中不存在的本地记录"
+                          : "合并模式只处理导入包中出现的记录"}
+                      </span>
+                    </div>
+                    <em>{archiveDiffReport.hasConflicts ? "存在冲突" : "无冲突"}</em>
+                  </div>
+                  <div className="personal-import-diff-totals">
+                    <span>
+                      <strong>{archiveDiffReport.totals.added}</strong>
+                      <em>新增</em>
+                    </span>
+                    <span>
+                      <strong>{archiveDiffReport.totals.changed}</strong>
+                      <em>冲突</em>
+                    </span>
+                    <span>
+                      <strong>{archiveDiffReport.totals.unchanged}</strong>
+                      <em>相同</em>
+                    </span>
+                    <span>
+                      <strong>{archiveDiffReport.totals.removed}</strong>
+                      <em>移除</em>
+                    </span>
+                    <span>
+                      <strong>{archiveDiffReport.totals.keptLocal}</strong>
+                      <em>保留本地</em>
+                    </span>
+                  </div>
+                  <div className="personal-import-domain-list">
+                    {archiveDiffReport.domains
+                      .filter((domain) => domain.added + domain.changed + domain.removed + domain.unchanged > 0)
+                      .map((domain) => (
+                        <article key={domain.key} className="personal-import-domain-card">
+                          <div className="personal-import-domain-header">
+                            <div>
+                              <strong>{domain.label}</strong>
+                              <span>
+                                +{domain.added} / 冲突 {domain.changed} / 相同 {domain.unchanged}
+                                {domain.removed > 0 ? ` / 移除 ${domain.removed}` : ""}
+                              </span>
+                            </div>
+                            {archiveImportMode === "merge" && domain.changed > 0 ? (
+                              <div className="personal-domain-policy" aria-label={`${domain.label} 冲突策略`}>
+                                {(["use_import", "keep_local"] as PersonalArchiveConflictPolicy[]).map((policy) => (
+                                  <button
+                                    key={policy}
+                                    type="button"
+                                    className={domain.policy === policy ? "active" : ""}
+                                    onClick={() => updateArchiveConflictPolicy(domain.key, policy)}
+                                  >
+                                    {ARCHIVE_CONFLICT_POLICY_LABELS[policy]}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <em>{archiveImportMode === "replace" ? "替换" : ARCHIVE_CONFLICT_POLICY_LABELS[domain.policy]}</em>
+                            )}
+                          </div>
+                          <div className="personal-import-diff-items">
+                            {domain.items.length > 0 ? (
+                              domain.items.slice(0, 4).map((item) => (
+                                <div key={`${domain.key}-${item.id}`} className={`personal-import-diff-item ${item.changeType}`}>
+                                  <span>{ARCHIVE_DIFF_CHANGE_LABELS[item.changeType]}</span>
+                                  <strong>{item.label}</strong>
+                                  <em>
+                                    {item.changedFields.length > 0
+                                      ? `字段：${item.changedFields.join("、")}`
+                                      : item.importUpdatedAt || item.localUpdatedAt
+                                        ? `时间：${new Date(item.importUpdatedAt ?? item.localUpdatedAt ?? "").toLocaleString("zh-CN")}`
+                                        : "结构一致"}
+                                  </em>
+                                </div>
+                              ))
+                            ) : (
+                              <p>该数据域没有可显示的变化。</p>
+                            )}
+                          </div>
+                        </article>
+                      ))}
+                  </div>
                 </div>
               ) : null}
               {archiveImportMessage ? <p className="personal-import-message">{archiveImportMessage}</p> : null}
