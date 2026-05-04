@@ -1,5 +1,6 @@
 import {
   Archive,
+  Ban,
   Brain,
   CalendarClock,
   ChevronLeft,
@@ -8,10 +9,13 @@ import {
   Download,
   FileArchive,
   Fingerprint,
+  GitMerge,
   History,
   KeyRound,
+  Pencil,
   Plus,
   RotateCcw,
+  Save,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -38,6 +42,7 @@ import {
 } from "../personal/types";
 import {
   buildPersonalContextPacket,
+  createMemoryBlockRuleFromCandidate,
   createSandtraySessionArchive,
   extractMemoryCandidatesFromSandtraySession,
   exportPersonalArchive,
@@ -45,8 +50,10 @@ import {
   getActivePreferences,
   getActiveProfile,
   getUserConsents,
+  mergePersonalMemoryCandidates,
   markSandtrayArchiveRestored,
   recordPersonalAudit,
+  updateMemoryBlockRule,
   updatePersonalMemoryCandidate,
 } from "../personal/localMemoryStore";
 
@@ -138,6 +145,10 @@ export function PersonalCenter({
   const [archiveQuery, setArchiveQuery] = useState("");
   const [archivePage, setArchivePage] = useState(1);
   const [memoryQuery, setMemoryQuery] = useState("");
+  const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
+  const [memoryDraftTitle, setMemoryDraftTitle] = useState("");
+  const [memoryDraftSummary, setMemoryDraftSummary] = useState("");
+  const [memoryDraftTags, setMemoryDraftTags] = useState("");
 
   const directoryUsers = useMemo(
     () =>
@@ -256,6 +267,14 @@ export function PersonalCenter({
   const contextSourceCount = useMemo(
     () => new Set(contextPacket.items.map((item) => item.sourceSessionId).filter(Boolean)).size,
     [contextPacket.items],
+  );
+  const visibleBlockRules = useMemo(
+    () =>
+      personalData.memoryBlockRules
+        .filter((rule) => rule.userId === activeAccount.userId)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .slice(0, 8),
+    [activeAccount.userId, personalData.memoryBlockRules],
   );
 
   useEffect(() => {
@@ -471,6 +490,83 @@ export function PersonalCenter({
         resourceType: "memory_candidate",
         resourceId: candidate.memoryId,
         detail,
+      }),
+    );
+  };
+
+  const handleStartEditMemory = (candidate: PersonalMemoryCandidate) => {
+    setEditingMemoryId(candidate.memoryId);
+    setMemoryDraftTitle(candidate.title);
+    setMemoryDraftSummary(candidate.summary);
+    setMemoryDraftTags(candidate.tags.join("、"));
+  };
+
+  const handleCancelEditMemory = () => {
+    setEditingMemoryId(null);
+    setMemoryDraftTitle("");
+    setMemoryDraftSummary("");
+    setMemoryDraftTags("");
+  };
+
+  const handleSaveMemoryEdit = (candidate: PersonalMemoryCandidate) => {
+    const tags = parseMemoryTags(memoryDraftTags);
+    const nextData = updatePersonalMemoryCandidate(personalData, candidate.memoryId, {
+      title: memoryDraftTitle.trim() || candidate.title,
+      summary: memoryDraftSummary.trim() || candidate.summary,
+      tags: tags.length > 0 ? tags : candidate.tags,
+    });
+
+    onPersonalDataChange(
+      recordPersonalAudit(nextData, {
+        action: "memory_candidate_edited",
+        resourceType: "memory_candidate",
+        resourceId: candidate.memoryId,
+        detail: `已编辑记忆：${memoryDraftTitle.trim() || candidate.title}`,
+      }),
+    );
+    handleCancelEditMemory();
+  };
+
+  const handleMergeSimilarMemories = (candidate: PersonalMemoryCandidate) => {
+    const similarCandidates = getSimilarMemoryCandidates(candidate, activeMemoryCandidates).slice(0, 3);
+    if (similarCandidates.length === 0) {
+      return;
+    }
+    const nextData = mergePersonalMemoryCandidates(
+      personalData,
+      candidate.memoryId,
+      similarCandidates.map((item) => item.memoryId),
+    );
+    onPersonalDataChange(
+      recordPersonalAudit(nextData, {
+        action: "memory_candidates_merged",
+        resourceType: "memory_candidate",
+        resourceId: candidate.memoryId,
+        detail: `已将 ${similarCandidates.length} 条相似记忆合并到：${candidate.title}`,
+      }),
+    );
+  };
+
+  const handleBlockSimilarMemories = (candidate: PersonalMemoryCandidate) => {
+    const nextData = createMemoryBlockRuleFromCandidate(personalData, candidate);
+    onPersonalDataChange(
+      recordPersonalAudit(nextData, {
+        action: "memory_rule_created",
+        resourceType: "memory_rule",
+        resourceId: candidate.memoryId,
+        detail: `已建立屏蔽规则，不再向 Agent 注入类似记忆：${candidate.tags[0] ?? candidate.title}`,
+      }),
+    );
+  };
+
+  const handleToggleMemoryRule = (ruleId: string, active: boolean, label: string) => {
+    const nextData = updateMemoryBlockRule(personalData, ruleId, { active });
+    onPersonalDataChange(
+      recordPersonalAudit(nextData, {
+        action: active ? "memory_rule_enabled" : "memory_rule_disabled",
+        resourceType: "memory_rule",
+        resourceId: ruleId,
+        detail: `${active ? "已启用" : "已停用"}记忆屏蔽规则：${label}`,
       }),
     );
   };
@@ -1000,6 +1096,10 @@ export function PersonalCenter({
                   <strong>{contextSourceCount}</strong>
                   <em>来源作品</em>
                 </span>
+                <span>
+                  <strong>{contextPacket.blockedMemoryCount}</strong>
+                  <em>被屏蔽</em>
+                </span>
               </div>
               {contextPacket.blockedReasons.length > 0 ? (
                 <div className="personal-context-blocked">
@@ -1083,92 +1183,187 @@ export function PersonalCenter({
               ) : null}
               <div className="personal-memory-candidate-list">
                 {filteredMemoryCandidates.length > 0 ? (
-                  filteredMemoryCandidates.slice(0, 8).map((candidate) => (
-                    <article key={candidate.memoryId} className={`personal-memory-candidate ${candidate.status}`}>
-                      <div>
-                        <strong>{candidate.title}</strong>
-                        <span>{MEMORY_STATUS_LABELS[candidate.status]}</span>
-                      </div>
-                      <p>{candidate.summary}</p>
-                      <div className="personal-memory-evidence">
-                        {candidate.evidence.slice(0, 2).map((item) => (
-                          <em key={item}>{item}</em>
-                        ))}
-                      </div>
-                      <div className="personal-memory-tags">
-                        {candidate.tags.slice(0, 4).map((tag) => (
-                          <span key={tag}>{tag}</span>
-                        ))}
-                      </div>
-                      <div className="personal-memory-actions">
-                        {candidate.status !== "confirmed" ? (
-                          <button
-                            type="button"
-                            disabled={!canConfirmLongTermMemory}
-                            onClick={() =>
-                              handleUpdateMemoryCandidate(
-                                candidate,
-                                { status: "confirmed", includeInAgentContext: canUseMemoryInAgent },
-                                `已确认候选记忆：${candidate.title}`,
-                              )
-                            }
-                          >
-                            <CheckCircle2 size={14} />
-                            确认
-                          </button>
+                  filteredMemoryCandidates.slice(0, 8).map((candidate) => {
+                    const isEditing = editingMemoryId === candidate.memoryId;
+                    const similarCandidates = getSimilarMemoryCandidates(candidate, activeMemoryCandidates);
+                    return (
+                      <article key={candidate.memoryId} className={`personal-memory-candidate ${candidate.status}`}>
+                        <div>
+                          <strong>{candidate.title}</strong>
+                          <span>{MEMORY_STATUS_LABELS[candidate.status]}</span>
+                        </div>
+                        {isEditing ? (
+                          <div className="personal-memory-editor">
+                            <label>
+                              标题
+                              <input
+                                value={memoryDraftTitle}
+                                onChange={(event) => setMemoryDraftTitle(event.target.value)}
+                              />
+                            </label>
+                            <label>
+                              记忆文本
+                              <textarea
+                                value={memoryDraftSummary}
+                                onChange={(event) => setMemoryDraftSummary(event.target.value)}
+                              />
+                            </label>
+                            <label>
+                              标签
+                              <input
+                                value={memoryDraftTags}
+                                onChange={(event) => setMemoryDraftTags(event.target.value)}
+                                placeholder="用顿号、逗号或空格分隔"
+                              />
+                            </label>
+                          </div>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpdateMemoryCandidate(
-                                candidate,
-                                { status: "retired", includeInAgentContext: false },
-                                `已撤回长期记忆：${candidate.title}`,
-                              )
-                            }
-                          >
-                            <RotateCcw size={14} />
-                            撤回
-                          </button>
+                          <>
+                            <p>{candidate.summary}</p>
+                            <div className="personal-memory-evidence">
+                              {candidate.evidence.slice(0, 2).map((item) => (
+                                <em key={item}>{item}</em>
+                              ))}
+                              {candidate.mergedFromMemoryIds?.length ? (
+                                <em>已合并 {candidate.mergedFromMemoryIds.length} 条</em>
+                              ) : null}
+                            </div>
+                            <div className="personal-memory-tags">
+                              {candidate.tags.slice(0, 4).map((tag) => (
+                                <span key={tag}>{tag}</span>
+                              ))}
+                            </div>
+                          </>
                         )}
-                        <button
-                          type="button"
-                          disabled={candidate.status === "confirmed" || candidate.status === "retired"}
-                          onClick={() =>
-                            handleUpdateMemoryCandidate(
-                              candidate,
-                              { status: "dismissed", includeInAgentContext: false },
-                              `已忽略候选记忆：${candidate.title}`,
-                            )
-                          }
-                        >
-                          <XCircle size={14} />
-                          忽略
-                        </button>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={candidate.status === "confirmed" && candidate.includeInAgentContext}
-                            disabled={candidate.status !== "confirmed" || !canUseMemoryInAgent}
-                            onChange={(event) =>
-                              handleUpdateMemoryCandidate(
-                                candidate,
-                                { includeInAgentContext: event.target.checked },
-                                `${event.target.checked ? "已允许" : "已停止"}注入 Agent 上下文：${candidate.title}`,
-                              )
-                            }
-                          />
-                          Agent
-                        </label>
-                      </div>
-                    </article>
-                  ))
+                        <div className="personal-memory-actions">
+                          {isEditing ? (
+                            <>
+                              <button type="button" onClick={() => handleSaveMemoryEdit(candidate)}>
+                                <Save size={14} />
+                                保存
+                              </button>
+                              <button type="button" onClick={handleCancelEditMemory}>
+                                <XCircle size={14} />
+                                取消
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {candidate.status !== "confirmed" ? (
+                                <button
+                                  type="button"
+                                  disabled={!canConfirmLongTermMemory}
+                                  onClick={() =>
+                                    handleUpdateMemoryCandidate(
+                                      candidate,
+                                      { status: "confirmed", includeInAgentContext: canUseMemoryInAgent },
+                                      `已确认候选记忆：${candidate.title}`,
+                                    )
+                                  }
+                                >
+                                  <CheckCircle2 size={14} />
+                                  确认
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUpdateMemoryCandidate(
+                                      candidate,
+                                      { status: "retired", includeInAgentContext: false },
+                                      `已撤回长期记忆：${candidate.title}`,
+                                    )
+                                  }
+                                >
+                                  <RotateCcw size={14} />
+                                  撤回
+                                </button>
+                              )}
+                              <button type="button" onClick={() => handleStartEditMemory(candidate)}>
+                                <Pencil size={14} />
+                                编辑
+                              </button>
+                              <button
+                                type="button"
+                                disabled={similarCandidates.length === 0 || candidate.status === "retired"}
+                                onClick={() => handleMergeSimilarMemories(candidate)}
+                              >
+                                <GitMerge size={14} />
+                                合并{similarCandidates.length > 0 ? ` ${Math.min(similarCandidates.length, 3)}` : ""}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={candidate.status === "retired"}
+                                onClick={() => handleBlockSimilarMemories(candidate)}
+                              >
+                                <Ban size={14} />
+                                屏蔽此类
+                              </button>
+                              <button
+                                type="button"
+                                disabled={candidate.status === "confirmed" || candidate.status === "retired"}
+                                onClick={() =>
+                                  handleUpdateMemoryCandidate(
+                                    candidate,
+                                    { status: "dismissed", includeInAgentContext: false },
+                                    `已忽略候选记忆：${candidate.title}`,
+                                  )
+                                }
+                              >
+                                <XCircle size={14} />
+                                忽略
+                              </button>
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={candidate.status === "confirmed" && candidate.includeInAgentContext}
+                                  disabled={candidate.status !== "confirmed" || !canUseMemoryInAgent}
+                                  onChange={(event) =>
+                                    handleUpdateMemoryCandidate(
+                                      candidate,
+                                      { includeInAgentContext: event.target.checked },
+                                      `${event.target.checked ? "已允许" : "已停止"}注入 Agent 上下文：${candidate.title}`,
+                                    )
+                                  }
+                                />
+                                Agent
+                              </label>
+                            </>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })
                 ) : (
                   <div className="personal-memory-empty">
                     <Sparkles size={17} />
                     <strong>暂无候选记忆</strong>
                     <span>先保存一个历史作品，再在档案卡片中点击“提取候选”。</span>
                   </div>
+                )}
+              </div>
+              <div className="personal-memory-rules">
+                <div>
+                  <strong>屏蔽规则</strong>
+                  <span>{visibleBlockRules.filter((rule) => rule.active).length} 项启用</span>
+                </div>
+                {visibleBlockRules.length > 0 ? (
+                  visibleBlockRules.map((rule) => (
+                    <article key={rule.ruleId} className={rule.active ? "active" : ""}>
+                      <span>
+                        <strong>{rule.label}</strong>
+                        <em>匹配：{rule.matchText}</em>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleMemoryRule(rule.ruleId, !rule.active, rule.label)}
+                      >
+                        {rule.active ? "停用" : "启用"}
+                      </button>
+                    </article>
+                  ))
+                ) : (
+                  <p>还没有屏蔽规则。点击候选记忆里的“屏蔽此类”，可阻止相似记忆进入 Context Packet。</p>
                 )}
               </div>
             </section>
@@ -1215,4 +1410,34 @@ export function PersonalCenter({
       </section>
     </main>
   );
+}
+
+function parseMemoryTags(value: string): string[] {
+  return Array.from(
+    new Set(
+      value
+        .split(/[、,，\s]+/)
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 10);
+}
+
+function getSimilarMemoryCandidates(
+  candidate: PersonalMemoryCandidate,
+  candidates: PersonalMemoryCandidate[],
+): PersonalMemoryCandidate[] {
+  const tagSet = new Set(candidate.tags);
+  return candidates
+    .filter((item) => item.memoryId !== candidate.memoryId)
+    .filter((item) => item.status !== "dismissed" && item.status !== "retired")
+    .map((item) => {
+      const sharedTags = item.tags.filter((tag) => tagSet.has(tag)).length;
+      const sameKind = item.kind === candidate.kind ? 1 : 0;
+      const sameSource = item.sourceSessionId && item.sourceSessionId === candidate.sourceSessionId ? 1 : 0;
+      return { item, score: sharedTags * 2 + sameKind + sameSource };
+    })
+    .filter(({ score }) => score >= 2)
+    .sort((a, b) => b.score - a.score || b.item.updatedAt.localeCompare(a.item.updatedAt))
+    .map(({ item }) => item);
 }

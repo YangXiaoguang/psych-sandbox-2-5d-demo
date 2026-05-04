@@ -15,6 +15,7 @@ import {
   type PersonalAuditLog,
   type PersonalContextPacket,
   type PersonalDataBundle,
+  type PersonalMemoryBlockRule,
   type PersonalMemoryCandidate,
   type PersonalRole,
   type SandtraySessionArchive,
@@ -79,6 +80,7 @@ export function createDefaultPersonalData(): PersonalDataBundle {
     workspaces,
     sandtraySessions: [],
     memoryCandidates: [],
+    memoryBlockRules: [],
     auditLogs,
   };
 }
@@ -113,6 +115,7 @@ export function createLocalPersonalUser(
     workspaces: [...data.workspaces, createUserWorkspace(userId, `${displayName}的沙盘工作区`, now)],
     sandtraySessions: data.sandtraySessions,
     memoryCandidates: data.memoryCandidates,
+    memoryBlockRules: data.memoryBlockRules,
     auditLogs: [
       createAuditLog({
         userId,
@@ -194,7 +197,12 @@ export function extractMemoryCandidatesFromSandtraySession(
 export function updatePersonalMemoryCandidate(
   data: PersonalDataBundle,
   memoryId: string,
-  patch: Partial<Pick<PersonalMemoryCandidate, "status" | "includeInAgentContext">>,
+  patch: Partial<
+    Pick<
+      PersonalMemoryCandidate,
+      "status" | "includeInAgentContext" | "title" | "summary" | "tags" | "evidence" | "confidence"
+    >
+  >,
 ): PersonalDataBundle {
   const now = new Date().toISOString();
   return {
@@ -209,11 +217,140 @@ export function updatePersonalMemoryCandidate(
         ...candidate,
         ...patch,
         updatedAt: now,
+        editedAt:
+          patch.title !== undefined ||
+          patch.summary !== undefined ||
+          patch.tags !== undefined ||
+          patch.evidence !== undefined
+            ? now
+            : candidate.editedAt,
         confirmedAt: nextStatus === "confirmed" ? now : candidate.confirmedAt,
         dismissedAt: nextStatus === "dismissed" ? now : nextStatus === "confirmed" ? undefined : candidate.dismissedAt,
         retiredAt: nextStatus === "retired" ? now : nextStatus === "confirmed" ? undefined : candidate.retiredAt,
       };
     }),
+  };
+}
+
+export function mergePersonalMemoryCandidates(
+  data: PersonalDataBundle,
+  targetMemoryId: string,
+  sourceMemoryIds: string[],
+): PersonalDataBundle {
+  const now = new Date().toISOString();
+  const target = data.memoryCandidates.find((candidate) => candidate.memoryId === targetMemoryId);
+  const sources = data.memoryCandidates.filter((candidate) => sourceMemoryIds.includes(candidate.memoryId));
+
+  if (!target || sources.length === 0) {
+    return data;
+  }
+
+  const mergedEvidence = uniqueText([...target.evidence, ...sources.flatMap((candidate) => candidate.evidence)]).slice(0, 10);
+  const mergedTags = uniqueText([...target.tags, ...sources.flatMap((candidate) => candidate.tags)]).slice(0, 10);
+  const mergedIds = uniqueText([
+    ...(target.mergedFromMemoryIds ?? []),
+    ...sources.map((candidate) => candidate.memoryId),
+    ...sources.flatMap((candidate) => candidate.mergedFromMemoryIds ?? []),
+  ]);
+  const sourceSummaries = sources
+    .map((candidate) => candidate.summary)
+    .filter((summary) => summary && summary !== target.summary)
+    .slice(0, 2);
+  const mergedSummary =
+    sourceSummaries.length > 0
+      ? `${target.summary} 相关补充：${sourceSummaries.join("；")}`
+      : target.summary;
+
+  return {
+    ...data,
+    memoryCandidates: data.memoryCandidates.map((candidate) => {
+      if (candidate.memoryId === targetMemoryId) {
+        return {
+          ...candidate,
+          summary: mergedSummary,
+          evidence: mergedEvidence,
+          tags: mergedTags,
+          confidence: Math.max(candidate.confidence, ...sources.map((source) => source.confidence)),
+          mergedFromMemoryIds: mergedIds,
+          updatedAt: now,
+          editedAt: now,
+        };
+      }
+
+      if (sourceMemoryIds.includes(candidate.memoryId)) {
+        return {
+          ...candidate,
+          status: "retired",
+          includeInAgentContext: false,
+          retiredAt: now,
+          updatedAt: now,
+        };
+      }
+
+      return candidate;
+    }),
+  };
+}
+
+export function createMemoryBlockRuleFromCandidate(
+  data: PersonalDataBundle,
+  candidate: PersonalMemoryCandidate,
+): PersonalDataBundle {
+  const now = new Date().toISOString();
+  const matchText = normalizeBlockText(candidate.tags[0] ?? candidate.title);
+  const existingRule = data.memoryBlockRules.find(
+    (rule) => rule.userId === candidate.userId && rule.matchText === matchText,
+  );
+  const nextRules = existingRule
+    ? data.memoryBlockRules.map((rule) =>
+        rule.ruleId === existingRule.ruleId
+          ? {
+              ...rule,
+              active: true,
+              updatedAt: now,
+              disabledAt: undefined,
+            }
+          : rule,
+      )
+    : [
+        {
+          ruleId: createId("memory_rule"),
+          userId: candidate.userId,
+          label: `不再使用：${candidate.tags[0] ?? candidate.title}`,
+          matchText,
+          sourceMemoryId: candidate.memoryId,
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        ...data.memoryBlockRules,
+      ];
+
+  return {
+    ...data,
+    memoryBlockRules: nextRules.slice(0, 500),
+  };
+}
+
+export function updateMemoryBlockRule(
+  data: PersonalDataBundle,
+  ruleId: string,
+  patch: Partial<Pick<PersonalMemoryBlockRule, "active" | "label" | "matchText">>,
+): PersonalDataBundle {
+  const now = new Date().toISOString();
+  return {
+    ...data,
+    memoryBlockRules: data.memoryBlockRules.map((rule) =>
+      rule.ruleId === ruleId
+        ? {
+            ...rule,
+            ...patch,
+            matchText: patch.matchText ? normalizeBlockText(patch.matchText) : rule.matchText,
+            updatedAt: now,
+            disabledAt: patch.active === false ? now : patch.active === true ? undefined : rule.disabledAt,
+          }
+        : rule,
+    ),
   };
 }
 
@@ -231,13 +368,23 @@ export function buildPersonalContextPacket(
     (consent) => consent.consentType === "ai_personalization" && consent.granted,
   );
   const sourceSessions = new Map(data.sandtraySessions.map((session) => [session.sessionId, session]));
-  const selectedCandidates = data.memoryCandidates
+  const activeBlockRules = data.memoryBlockRules.filter((rule) => rule.userId === userId && rule.active);
+  const eligibleCandidates = data.memoryCandidates
     .filter(
       (candidate) =>
         candidate.userId === userId &&
         candidate.status === "confirmed" &&
         candidate.includeInAgentContext,
     )
+    .filter((candidate) => !activeBlockRules.some((rule) => memoryCandidateMatchesText(candidate, rule.matchText)));
+  const blockedMemoryCount = data.memoryCandidates.filter(
+    (candidate) =>
+      candidate.userId === userId &&
+      candidate.status === "confirmed" &&
+      candidate.includeInAgentContext &&
+      activeBlockRules.some((rule) => memoryCandidateMatchesText(candidate, rule.matchText)),
+  ).length;
+  const selectedCandidates = eligibleCandidates
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, maxItems);
   const items = selectedCandidates.map((candidate) => {
@@ -265,6 +412,12 @@ export function buildPersonalContextPacket(
     builtAt: new Date().toISOString(),
     enabled: canUseForPersonalization,
     blockedReasons,
+    blockedMemoryCount,
+    activeBlockRules: activeBlockRules.map((rule) => ({
+      ruleId: rule.ruleId,
+      label: rule.label,
+      matchText: rule.matchText,
+    })),
     maxItems,
     items: canUseForPersonalization ? items : [],
     promptLines: canUseForPersonalization
@@ -405,6 +558,7 @@ function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
   const workspaces = [...data.workspaces];
   const sandtraySessions = Array.isArray(data.sandtraySessions) ? [...data.sandtraySessions] : [];
   const memoryCandidates = Array.isArray(data.memoryCandidates) ? [...data.memoryCandidates] : [];
+  const memoryBlockRules = Array.isArray(data.memoryBlockRules) ? [...data.memoryBlockRules] : [];
 
   data.accounts.forEach((account) => {
     if (!profiles.some((profile) => profile.userId === account.userId)) {
@@ -444,6 +598,7 @@ function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
     memoryCandidates: memoryCandidates
       .filter((candidate) => userIds.has(candidate.userId))
       .slice(0, 2000),
+    memoryBlockRules: memoryBlockRules.filter((rule) => userIds.has(rule.userId)).slice(0, 500),
     auditLogs: data.auditLogs.slice(0, 240),
     exportedAt: data.exportedAt,
   };
@@ -542,6 +697,24 @@ function buildMemoryCandidatesForSession(session: SandtraySessionArchive): Perso
 
 function buildMemoryCandidateKey(candidate: PersonalMemoryCandidate): string {
   return [candidate.userId, candidate.sourceSessionId ?? "", candidate.kind, candidate.title].join("::");
+}
+
+function normalizeBlockText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function memoryCandidateMatchesText(candidate: PersonalMemoryCandidate, matchText: string): boolean {
+  if (!matchText) {
+    return false;
+  }
+  return [candidate.title, candidate.summary, ...candidate.tags]
+    .join(" ")
+    .toLowerCase()
+    .includes(matchText);
+}
+
+function uniqueText(values: string[]): string[] {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
 function buildContextPacketReason(

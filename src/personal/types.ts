@@ -31,6 +31,7 @@ export type AuditResourceType =
   | "scene"
   | "sandtray_session"
   | "memory_candidate"
+  | "memory_rule"
   | "conversation"
   | "archive";
 export type SandtrayArchiveMode = "free_creation" | "guided_theme" | "assessment" | "review";
@@ -182,6 +183,20 @@ export interface PersonalMemoryCandidate {
   confirmedAt?: string;
   dismissedAt?: string;
   retiredAt?: string;
+  editedAt?: string;
+  mergedFromMemoryIds?: string[];
+}
+
+export interface PersonalMemoryBlockRule {
+  ruleId: string;
+  userId: string;
+  label: string;
+  matchText: string;
+  sourceMemoryId?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  disabledAt?: string;
 }
 
 export interface PersonalContextPacketItem {
@@ -203,6 +218,8 @@ export interface PersonalContextPacket {
   builtAt: string;
   enabled: boolean;
   blockedReasons: string[];
+  blockedMemoryCount: number;
+  activeBlockRules: Array<Pick<PersonalMemoryBlockRule, "ruleId" | "label" | "matchText">>;
   maxItems: number;
   items: PersonalContextPacketItem[];
   promptLines: string[];
@@ -219,6 +236,7 @@ export interface PersonalDataBundle {
   workspaces: UserWorkspace[];
   sandtraySessions: SandtraySessionArchive[];
   memoryCandidates: PersonalMemoryCandidate[];
+  memoryBlockRules: PersonalMemoryBlockRule[];
   auditLogs: PersonalAuditLog[];
   exportedAt?: string;
 }
