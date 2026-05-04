@@ -1,16 +1,20 @@
 import {
   Archive,
   Brain,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   Download,
   Fingerprint,
   History,
   KeyRound,
   Plus,
+  Search,
   ShieldCheck,
+  SlidersHorizontal,
   UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AgentConversation, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
 import {
   CONSENT_DEFINITIONS,
@@ -73,6 +77,8 @@ const REPLY_LENGTH_LABELS: Record<CommunicationPreferences["replyLength"], strin
   deep: "深入",
 };
 
+const USER_DIRECTORY_PAGE_SIZE = 12;
+
 export function PersonalCenter({
   personalData,
   objects,
@@ -93,6 +99,61 @@ export function PersonalCenter({
   const [newUserName, setNewUserName] = useState("");
   const [newAgeGroup, setNewAgeGroup] = useState<PersonalAgeGroup>("unknown");
   const [newRole, setNewRole] = useState<PersonalRole>("client");
+  const [userQuery, setUserQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<PersonalRole | "all">("all");
+  const [ageFilter, setAgeFilter] = useState<PersonalAgeGroup | "all">("all");
+  const [userPage, setUserPage] = useState(1);
+  const [createPanelOpen, setCreatePanelOpen] = useState(false);
+
+  const directoryUsers = useMemo(
+    () =>
+      personalData.accounts
+        .map((account) => {
+          const profile = personalData.profiles.find((item) => item.userId === account.userId);
+          const role = profile?.role ?? "demo";
+          const ageGroup = profile?.ageGroup ?? "unknown";
+          return {
+            userId: account.userId,
+            displayName: profile?.displayName ?? account.displayName,
+            localHandle: account.localHandle,
+            role,
+            ageGroup,
+            lastActiveAt: account.lastActiveAt,
+          };
+        })
+        .sort((a, b) => Date.parse(b.lastActiveAt) - Date.parse(a.lastActiveAt)),
+    [personalData.accounts, personalData.profiles],
+  );
+  const filteredUsers = useMemo(() => {
+    const normalizedQuery = userQuery.trim().toLowerCase();
+    return directoryUsers.filter((user) => {
+      const matchesQuery =
+        !normalizedQuery ||
+        [
+          user.displayName,
+          user.localHandle,
+          user.userId,
+          ROLE_LABELS[user.role],
+          AGE_GROUP_LABELS[user.ageGroup],
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const matchesAge = ageFilter === "all" || user.ageGroup === ageFilter;
+      return matchesQuery && matchesRole && matchesAge;
+    });
+  }, [ageFilter, directoryUsers, roleFilter, userQuery]);
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / USER_DIRECTORY_PAGE_SIZE));
+  const currentUserPage = Math.min(userPage, totalUserPages);
+  const pagedUsers = filteredUsers.slice(
+    (currentUserPage - 1) * USER_DIRECTORY_PAGE_SIZE,
+    currentUserPage * USER_DIRECTORY_PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [ageFilter, roleFilter, userQuery, personalData.accounts.length]);
 
   const dataDomains = useMemo(
     () => [
@@ -184,6 +245,8 @@ export function PersonalCenter({
     setNewUserName("");
     setNewAgeGroup("unknown");
     setNewRole("client");
+    setCreatePanelOpen(false);
+    setUserPage(1);
   };
 
   const handleExportArchive = () => {
@@ -224,63 +287,176 @@ export function PersonalCenter({
         <aside className="admin-card personal-identity-rail" aria-label="本地用户">
           <div className="admin-card-header">
             <div>
-              <p className="eyebrow">Local Identity</p>
-              <h3>注册 / 切换</h3>
+              <p className="eyebrow">Local Directory</p>
+              <h3>用户目录</h3>
             </div>
+            <span className="personal-directory-count">{personalData.accounts.length}</span>
           </div>
-          <div className="personal-account-list">
-            {personalData.accounts.map((account) => (
+
+          <section className="personal-current-user-card" aria-label="当前用户">
+            <div>
+              <span>
+                <UserRound size={17} />
+              </span>
+              <div>
+                <strong>{activeProfile.displayName}</strong>
+                <em>
+                  当前用户 · {ROLE_LABELS[activeProfile.role]} · {AGE_GROUP_LABELS[activeProfile.ageGroup]}
+                </em>
+              </div>
+            </div>
+            <p>{activeAccount.localHandle}</p>
+          </section>
+
+          <section className="personal-directory-tools" aria-label="用户检索">
+            <label className="personal-user-search">
+              <Search size={15} />
+              <input
+                value={userQuery}
+                onChange={(event) => setUserQuery(event.target.value)}
+                placeholder="搜索姓名、ID、角色..."
+              />
+            </label>
+            <div className="personal-filter-row">
+              <label>
+                <SlidersHorizontal size={14} />
+                <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value as PersonalRole | "all")}>
+                  <option value="all">全部角色</option>
+                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <select value={ageFilter} onChange={(event) => setAgeFilter(event.target.value as PersonalAgeGroup | "all")}>
+                  <option value="all">全部年龄</option>
+                  {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="personal-directory-meta">
+              <span>
+                显示 {filteredUsers.length} / {personalData.accounts.length}
+              </span>
               <button
-                key={account.userId}
                 type="button"
-                className={account.userId === activeAccount.userId ? "active" : ""}
-                onClick={() => onSwitchUser(account.userId)}
+                onClick={() => {
+                  setUserQuery("");
+                  setRoleFilter("all");
+                  setAgeFilter("all");
+                }}
               >
+                重置
+              </button>
+            </div>
+          </section>
+
+          <div className="personal-directory-list" aria-label="用户列表">
+            {pagedUsers.length > 0 ? (
+              pagedUsers.map((user) => (
+                <button
+                  key={user.userId}
+                  type="button"
+                  className={user.userId === activeAccount.userId ? "active" : ""}
+                  onClick={() => onSwitchUser(user.userId)}
+                >
+                  <span>
+                    <UserRound size={16} />
+                  </span>
+                  <strong>{user.displayName}</strong>
+                  <em>
+                    {ROLE_LABELS[user.role]} · {AGE_GROUP_LABELS[user.ageGroup]} · {user.localHandle}
+                  </em>
+                </button>
+              ))
+            ) : (
+              <div className="personal-directory-empty">
                 <span>
                   <UserRound size={16} />
                 </span>
-                <strong>{account.displayName}</strong>
-                <em>{account.localHandle}</em>
-              </button>
-            ))}
+                <strong>没有匹配用户</strong>
+                <em>调整搜索关键词或筛选条件。</em>
+              </div>
+            )}
           </div>
-          <div className="personal-create-box">
-            <h4>
-              <Plus size={15} />
-              新增本地用户
-            </h4>
-            <label>
-              显示名称
-              <input value={newUserName} onChange={(event) => setNewUserName(event.target.value)} placeholder="例如：小明 / 我自己" />
-            </label>
-            <label>
-              年龄段
-              <select value={newAgeGroup} onChange={(event) => setNewAgeGroup(event.target.value as PersonalAgeGroup)}>
-                {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              角色
-              <select value={newRole} onChange={(event) => setNewRole(event.target.value as PersonalRole)}>
-                {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="button" onClick={handleCreateUser}>
-              <Plus size={15} />
-              创建并进入
+
+          <div className="personal-directory-pager" aria-label="用户分页">
+            <button
+              type="button"
+              onClick={() => setUserPage((current) => Math.max(1, current - 1))}
+              disabled={currentUserPage <= 1}
+              aria-label="上一页用户"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <span>
+              {currentUserPage} / {totalUserPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setUserPage((current) => Math.min(totalUserPages, current + 1))}
+              disabled={currentUserPage >= totalUserPages}
+              aria-label="下一页用户"
+            >
+              <ChevronRight size={15} />
             </button>
           </div>
+
+          <button
+            className="personal-create-toggle"
+            type="button"
+            onClick={() => setCreatePanelOpen((current) => !current)}
+          >
+            <Plus size={15} />
+            {createPanelOpen ? "收起新增" : "新增本地用户"}
+          </button>
+
+          {createPanelOpen ? (
+            <div className="personal-create-box">
+              <h4>
+                <Plus size={15} />
+                新建用户档案
+              </h4>
+              <label>
+                显示名称
+                <input value={newUserName} onChange={(event) => setNewUserName(event.target.value)} placeholder="例如：小明 / 我自己" />
+              </label>
+              <label>
+                年龄段
+                <select value={newAgeGroup} onChange={(event) => setNewAgeGroup(event.target.value as PersonalAgeGroup)}>
+                  {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                角色
+                <select value={newRole} onChange={(event) => setNewRole(event.target.value as PersonalRole)}>
+                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" onClick={handleCreateUser}>
+                <Plus size={15} />
+                创建并进入
+              </button>
+            </div>
+          ) : null}
+
           <p className="personal-local-note">
             <KeyRound size={14} />
-            这里先实现本地身份与工作区隔离，不保存真实密码。生产版本应接入服务端认证、加密和权限系统。
+            万级用户应迁移到服务端目录检索、分页和权限系统；当前本地版采用分页渲染，避免一次性堆叠全部用户。
           </p>
         </aside>
 

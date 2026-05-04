@@ -1185,7 +1185,12 @@ button {
 .product-shell.night-mode .asset-card-action,
 .product-shell.night-mode .metric-card,
 .product-shell.night-mode .grid-cell,
-.product-shell.night-mode .personal-account-list button,
+.product-shell.night-mode .personal-current-user-card,
+.product-shell.night-mode .personal-directory-tools,
+.product-shell.night-mode .personal-directory-list button,
+.product-shell.night-mode .personal-directory-empty,
+.product-shell.night-mode .personal-directory-pager,
+.product-shell.night-mode .personal-create-box,
 .product-shell.night-mode .personal-status-card,
 .product-shell.night-mode .personal-consent-row,
 .product-shell.night-mode .personal-governance-body section,
@@ -1217,6 +1222,9 @@ button {
 
 .product-shell.night-mode .asset-card-name,
 .product-shell.night-mode .personal-hero-card strong,
+.product-shell.night-mode .personal-current-user-card strong,
+.product-shell.night-mode .personal-directory-list button strong,
+.product-shell.night-mode .personal-directory-empty strong,
 .product-shell.night-mode .personal-status-card strong,
 .product-shell.night-mode .panel-tabs button.active,
 .product-shell.night-mode .panel-tabs button:hover,
@@ -1943,12 +1951,17 @@ button {
   overflow: hidden;
 }
 
-.personal-identity-rail,
 .personal-governance-panel,
 .personal-profile-card,
 .personal-consent-card {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.personal-identity-rail {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
   overflow: hidden;
 }
 
@@ -2035,19 +2048,173 @@ button {
   padding: 12px;
 }
 
-.personal-account-list {
+.personal-directory-count {
+  min-width: 34px;
+  padding: 5px 8px;
+  border: 1px solid #d4c4aa;
+  border-radius: 999px;
+  background: #fbf1de;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.personal-current-user-card {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(133, 204, 181, 0.18), transparent 34%),
+    rgba(255, 249, 237, 0.5);
+}
+
+.personal-current-user-card > div {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.personal-current-user-card span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 34% 22%, #fff5d0, transparent 32%),
+    linear-gradient(145deg, #9cdeca, #54a397);
+  color: #173a35;
+  box-shadow: 0 10px 16px rgba(54, 81, 74, 0.16);
+}
+
+.personal-current-user-card strong,
+.personal-current-user-card em,
+.personal-current-user-card p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-current-user-card strong {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.personal-current-user-card em {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 780;
+}
+
+.personal-current-user-card p {
+  margin: 0;
+  padding-left: 48px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 780;
+}
+
+.personal-directory-tools {
   display: grid;
   gap: 9px;
   padding: 12px;
   border-bottom: 1px solid var(--line);
 }
 
-.personal-account-list button {
+.personal-user-search {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-muted);
+}
+
+.personal-user-search input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.personal-filter-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.personal-filter-row label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.personal-filter-row label:last-child {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.personal-filter-row select {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: #243030;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.personal-directory-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.personal-directory-meta button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personal-directory-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+.personal-directory-list button,
+.personal-directory-empty {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr);
   gap: 9px;
   align-items: center;
-  min-height: 62px;
+  min-height: 58px;
   padding: 9px;
   border: 1px solid #d2c3a8;
   border-radius: var(--radius-xs);
@@ -2059,15 +2226,16 @@ button {
   box-shadow: var(--inner-highlight);
 }
 
-.personal-account-list button.active,
-.personal-account-list button:hover,
-.personal-account-list button:focus-visible {
+.personal-directory-list button.active,
+.personal-directory-list button:hover,
+.personal-directory-list button:focus-visible {
   border-color: var(--accent-line);
   background: var(--accent-soft);
   outline: none;
 }
 
-.personal-account-list button span {
+.personal-directory-list button span,
+.personal-directory-empty span {
   display: grid;
   grid-row: span 2;
   width: 34px;
@@ -2080,8 +2248,10 @@ button {
   color: #173a35;
 }
 
-.personal-account-list button strong,
-.personal-account-list button em {
+.personal-directory-list button strong,
+.personal-directory-list button em,
+.personal-directory-empty strong,
+.personal-directory-empty em {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -2089,17 +2259,67 @@ button {
   white-space: nowrap;
 }
 
-.personal-account-list button strong {
+.personal-directory-list button strong,
+.personal-directory-empty strong {
   align-self: end;
   font-size: 13px;
 }
 
-.personal-account-list button em {
+.personal-directory-list button em,
+.personal-directory-empty em {
   align-self: start;
   color: var(--ink-muted);
   font-size: 11px;
   font-style: normal;
   font-weight: 780;
+}
+
+.personal-directory-pager {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 249, 237, 0.46);
+}
+
+.personal-directory-pager button {
+  display: grid;
+  width: 34px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-soft);
+}
+
+.personal-directory-pager button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.personal-directory-pager span {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.personal-create-toggle {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 10px 12px 0;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-xs);
+  background: var(--accent);
+  color: #fffdf6;
+  font-weight: 900;
 }
 
 .personal-create-box {
