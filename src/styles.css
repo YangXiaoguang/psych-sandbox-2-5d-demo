@@ -1203,6 +1203,8 @@ button {
 .product-shell.night-mode .personal-context-raw,
 .product-shell.night-mode .personal-memory-candidate,
 .product-shell.night-mode .personal-memory-empty,
+.product-shell.night-mode .personal-import-report,
+.product-shell.night-mode .personal-import-selected,
 .product-shell.night-mode .personal-audit-list article,
 .product-shell.night-mode .personal-local-note,
 .product-shell.night-mode .category-panel,
@@ -1323,6 +1325,11 @@ button {
 .product-shell.night-mode .personal-memory-rules article,
 .product-shell.night-mode .personal-memory-rules > p,
 .product-shell.night-mode .personal-memory-rules button,
+.product-shell.night-mode .personal-portability-actions button,
+.product-shell.night-mode .personal-import-file,
+.product-shell.night-mode .personal-import-mode button,
+.product-shell.night-mode .personal-import-apply,
+.product-shell.night-mode .personal-import-summary-grid span,
 .product-shell.night-mode .personal-context-source button,
 .product-shell.night-mode .personal-memory-candidate > div:first-child span,
 .product-shell.night-mode .personal-memory-evidence em {
@@ -1341,6 +1348,25 @@ button {
   border-color: rgba(245, 188, 92, 0.42);
   background: rgba(84, 61, 25, 0.72);
   color: #f7d78c;
+}
+
+.product-shell.night-mode .personal-import-problems.error {
+  border-color: rgba(245, 104, 92, 0.42);
+  background: rgba(84, 34, 25, 0.72);
+  color: #ffb7a8;
+}
+
+.product-shell.night-mode .personal-import-problems.warning,
+.product-shell.night-mode .personal-import-message {
+  border-color: rgba(245, 188, 92, 0.42);
+  background: rgba(84, 61, 25, 0.72);
+  color: #f7d78c;
+}
+
+.product-shell.night-mode .personal-import-notes {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
 }
 
 .product-shell.night-mode .personal-memory-header span,
@@ -3114,6 +3140,233 @@ button {
   font-weight: 700;
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.personal-data-portability-card {
+  display: grid;
+  gap: 10px;
+}
+
+.personal-data-portability-card > p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.personal-portability-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.personal-portability-actions button,
+.personal-import-file,
+.personal-import-apply {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.personal-portability-actions button:hover,
+.personal-portability-actions button:focus-visible,
+.personal-import-file:hover,
+.personal-import-file:focus-within,
+.personal-import-apply:not(:disabled):hover,
+.personal-import-apply:not(:disabled):focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.personal-import-file {
+  position: relative;
+  cursor: pointer;
+}
+
+.personal-import-file input {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.personal-import-mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid #d2c3a8;
+  border-radius: 10px;
+  background: rgba(251, 241, 222, 0.74);
+}
+
+.personal-import-mode button {
+  min-height: 31px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personal-import-mode button.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  box-shadow: var(--inner-highlight);
+}
+
+.personal-import-mode button.danger.active {
+  border-color: rgba(174, 85, 48, 0.36);
+  background: #fff0dc;
+  color: #9b4c2a;
+}
+
+.personal-import-selected {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  padding: 8px 9px;
+  border: 1px solid #d2c3a8;
+  border-radius: 8px;
+  background: rgba(255, 253, 246, 0.74);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.personal-import-selected span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-import-report {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #d2c3a8;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48), transparent 90px),
+    #fffdf6;
+}
+
+.personal-import-report.valid {
+  border-color: rgba(47, 143, 131, 0.36);
+}
+
+.personal-import-report.invalid {
+  border-color: rgba(174, 85, 48, 0.34);
+}
+
+.personal-import-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.personal-import-summary-grid span {
+  display: grid;
+  gap: 3px;
+  padding: 8px 6px;
+  border: 1px solid #e1d1b4;
+  border-radius: 8px;
+  background: #fff9ed;
+  text-align: center;
+}
+
+.personal-import-summary-grid strong {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.personal-import-summary-grid em {
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.personal-import-version {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.personal-import-version span {
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #f7edd9;
+  color: #6e6251;
+  font-size: 10px;
+  font-weight: 860;
+}
+
+.personal-import-problems,
+.personal-import-notes,
+.personal-import-message {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 8px 9px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.42;
+}
+
+.personal-import-problems p,
+.personal-import-notes p,
+.personal-import-message {
+  margin: 0;
+}
+
+.personal-import-problems.error {
+  border: 1px solid #e1a092;
+  background: #fff0ec;
+  color: #8a321e;
+}
+
+.personal-import-problems.warning,
+.personal-import-message {
+  border: 1px solid #e1c592;
+  background: #fff0ce;
+  color: #7a5a22;
+}
+
+.personal-import-notes {
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.personal-import-apply {
+  width: 100%;
+  min-height: 36px;
+  border-color: var(--accent-line);
+  background: linear-gradient(135deg, #f4fffb, var(--accent-soft));
+  color: var(--accent-dark);
+}
+
+.personal-import-apply:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .personal-memory-header {

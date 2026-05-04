@@ -44,6 +44,7 @@ export type MemoryCandidateKind =
   | "process_note"
   | "environment_note";
 export type MemoryCandidateStatus = "candidate" | "confirmed" | "dismissed" | "retired";
+export type PersonalArchiveImportMode = "merge" | "replace";
 
 export interface PersonalAccount {
   userId: string;
@@ -239,6 +240,36 @@ export interface PersonalDataBundle {
   memoryBlockRules: PersonalMemoryBlockRule[];
   auditLogs: PersonalAuditLog[];
   exportedAt?: string;
+}
+
+export interface PersonalArchiveValidationSummary {
+  accounts: number;
+  profiles: number;
+  workspaces: number;
+  sandtraySessions: number;
+  memoryCandidates: number;
+  memoryBlockRules: number;
+  auditLogs: number;
+}
+
+export interface PersonalArchiveValidationReport {
+  valid: boolean;
+  schema?: string;
+  version?: number;
+  exportedAt?: string;
+  activeUserId?: string;
+  errors: string[];
+  warnings: string[];
+  migrationNotes: string[];
+  summary: PersonalArchiveValidationSummary;
+  data?: PersonalDataBundle;
+}
+
+export interface PersonalArchiveImportResult {
+  mode: PersonalArchiveImportMode;
+  importedAt: string;
+  data: PersonalDataBundle;
+  report: PersonalArchiveValidationReport;
 }
 
 export interface CreatePersonalUserInput {

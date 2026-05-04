@@ -20,10 +20,11 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Upload,
   UserRound,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { getEnvironmentLabel } from "../data/environment";
 import type { AgentConversation, SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 import {
@@ -34,6 +35,8 @@ import {
   type CreatePersonalUserInput,
   type IdentityProfile,
   type MemoryCandidateStatus,
+  type PersonalArchiveImportMode,
+  type PersonalArchiveValidationReport,
   type PersonalAgeGroup,
   type PersonalDataBundle,
   type PersonalMemoryCandidate,
@@ -50,11 +53,13 @@ import {
   getActivePreferences,
   getActiveProfile,
   getUserConsents,
+  importPersonalArchive,
   mergePersonalMemoryCandidates,
   markSandtrayArchiveRestored,
   recordPersonalAudit,
   updateMemoryBlockRule,
   updatePersonalMemoryCandidate,
+  validatePersonalArchivePayload,
 } from "../personal/localMemoryStore";
 
 interface PersonalCenterProps {
@@ -110,6 +115,22 @@ const MEMORY_STATUS_LABELS: Record<MemoryCandidateStatus, string> = {
   retired: "已撤回",
 };
 
+const EMPTY_IMPORT_REPORT: PersonalArchiveValidationReport = {
+  valid: false,
+  errors: [],
+  warnings: [],
+  migrationNotes: [],
+  summary: {
+    accounts: 0,
+    profiles: 0,
+    workspaces: 0,
+    sandtraySessions: 0,
+    memoryCandidates: 0,
+    memoryBlockRules: 0,
+    auditLogs: 0,
+  },
+};
+
 export function PersonalCenter({
   personalData,
   objects,
@@ -149,6 +170,11 @@ export function PersonalCenter({
   const [memoryDraftTitle, setMemoryDraftTitle] = useState("");
   const [memoryDraftSummary, setMemoryDraftSummary] = useState("");
   const [memoryDraftTags, setMemoryDraftTags] = useState("");
+  const [archiveImportMode, setArchiveImportMode] = useState<PersonalArchiveImportMode>("merge");
+  const [archiveImportFileName, setArchiveImportFileName] = useState("");
+  const [archiveImportCandidate, setArchiveImportCandidate] = useState<PersonalDataBundle | null>(null);
+  const [archiveImportReport, setArchiveImportReport] = useState<PersonalArchiveValidationReport | null>(null);
+  const [archiveImportMessage, setArchiveImportMessage] = useState("");
 
   const directoryUsers = useMemo(
     () =>
@@ -406,6 +432,69 @@ export function PersonalCenter({
         resourceType: "archive",
         detail: "已导出本地个人档案 JSON。该文件只下载到本机，没有上传到第三方。",
       }),
+    );
+  };
+
+  const handleReadPersonalArchiveFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    setArchiveImportMessage("");
+
+    if (!file) {
+      return;
+    }
+
+    setArchiveImportFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const payload = JSON.parse(String(reader.result ?? ""));
+        const report = validatePersonalArchivePayload(payload);
+        setArchiveImportReport(report);
+        setArchiveImportCandidate(report.data ?? null);
+        setArchiveImportMessage(
+          report.valid ? "档案结构验证通过，可以选择合并或替换导入。" : "档案验证失败，请查看错误后重新选择文件。",
+        );
+      } catch {
+        setArchiveImportReport({
+          ...EMPTY_IMPORT_REPORT,
+          valid: false,
+          errors: ["JSON 解析失败，请确认选择的是完整的个人档案导出文件。"],
+        });
+        setArchiveImportCandidate(null);
+        setArchiveImportMessage("档案解析失败。");
+      }
+    };
+    reader.onerror = () => {
+      setArchiveImportReport({
+        ...EMPTY_IMPORT_REPORT,
+        valid: false,
+        errors: ["浏览器读取文件失败，请重新选择本地 JSON 文件。"],
+      });
+      setArchiveImportCandidate(null);
+      setArchiveImportMessage("档案读取失败。");
+    };
+    reader.readAsText(file);
+  };
+
+  const handleApplyPersonalArchiveImport = () => {
+    if (!archiveImportCandidate || !archiveImportReport?.valid) {
+      return;
+    }
+
+    if (
+      archiveImportMode === "replace" &&
+      !window.confirm("替换导入会用该 JSON 覆盖当前本地 Personal Memory OS。建议先导出当前档案备份。确认继续吗？")
+    ) {
+      return;
+    }
+
+    const result = importPersonalArchive(personalData, archiveImportCandidate, archiveImportMode);
+    onPersonalDataChange(result.data);
+    setArchiveImportCandidate(null);
+    setArchiveImportReport(result.report);
+    setArchiveImportMessage(
+      `${archiveImportMode === "replace" ? "替换" : "合并"}导入完成：当前共有 ${result.report.summary.accounts} 个用户、${result.report.summary.sandtraySessions} 个历史作品、${result.report.summary.memoryCandidates} 条记忆候选。`,
     );
   };
 
@@ -1154,6 +1243,111 @@ export function PersonalCenter({
                 </pre>
               </details>
             </section>
+            <section className="personal-data-portability-card">
+              <div className="personal-memory-header">
+                <h4>
+                  <Upload size={15} />
+                  数据迁移与备份
+                </h4>
+                <span>{archiveImportReport?.valid ? "已验证" : "本地 JSON"}</span>
+              </div>
+              <p>
+                个人档案包含本地用户、授权、沙盘历史、记忆候选、屏蔽规则和审计摘要。导入前会先做结构和版本检查，不会上传文件。
+              </p>
+              <div className="personal-portability-actions">
+                <button type="button" onClick={handleExportArchive}>
+                  <Download size={14} />
+                  导出完整档案
+                </button>
+                <label className="personal-import-file">
+                  <Upload size={14} />
+                  选择档案 JSON
+                  <input type="file" accept="application/json,.json" onChange={handleReadPersonalArchiveFile} />
+                </label>
+              </div>
+              <div className="personal-import-mode" aria-label="导入模式">
+                <button
+                  type="button"
+                  className={archiveImportMode === "merge" ? "active" : ""}
+                  onClick={() => setArchiveImportMode("merge")}
+                >
+                  合并到当前
+                </button>
+                <button
+                  type="button"
+                  className={archiveImportMode === "replace" ? "active danger" : "danger"}
+                  onClick={() => setArchiveImportMode("replace")}
+                >
+                  替换本地档案
+                </button>
+              </div>
+              {archiveImportFileName ? (
+                <div className="personal-import-selected">
+                  <FileArchive size={14} />
+                  <span>{archiveImportFileName}</span>
+                </div>
+              ) : null}
+              {archiveImportReport ? (
+                <div className={`personal-import-report ${archiveImportReport.valid ? "valid" : "invalid"}`}>
+                  <div className="personal-import-summary-grid">
+                    <span>
+                      <strong>{archiveImportReport.summary.accounts}</strong>
+                      <em>用户</em>
+                    </span>
+                    <span>
+                      <strong>{archiveImportReport.summary.sandtraySessions}</strong>
+                      <em>历史作品</em>
+                    </span>
+                    <span>
+                      <strong>{archiveImportReport.summary.memoryCandidates}</strong>
+                      <em>记忆候选</em>
+                    </span>
+                    <span>
+                      <strong>{archiveImportReport.summary.memoryBlockRules}</strong>
+                      <em>屏蔽规则</em>
+                    </span>
+                  </div>
+                  <div className="personal-import-version">
+                    <span>Schema：{archiveImportReport.schema ?? "未知"}</span>
+                    <span>Version：{archiveImportReport.version ?? "未知"}</span>
+                    {archiveImportReport.exportedAt ? (
+                      <span>导出：{new Date(archiveImportReport.exportedAt).toLocaleString("zh-CN")}</span>
+                    ) : null}
+                  </div>
+                  {archiveImportReport.errors.length > 0 ? (
+                    <div className="personal-import-problems error">
+                      {archiveImportReport.errors.map((error) => (
+                        <p key={error}>{error}</p>
+                      ))}
+                    </div>
+                  ) : null}
+                  {archiveImportReport.warnings.length > 0 ? (
+                    <div className="personal-import-problems warning">
+                      {archiveImportReport.warnings.map((warning) => (
+                        <p key={warning}>{warning}</p>
+                      ))}
+                    </div>
+                  ) : null}
+                  {archiveImportReport.migrationNotes.length > 0 ? (
+                    <div className="personal-import-notes">
+                      {archiveImportReport.migrationNotes.map((note) => (
+                        <p key={note}>{note}</p>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {archiveImportMessage ? <p className="personal-import-message">{archiveImportMessage}</p> : null}
+              <button
+                className="personal-import-apply"
+                type="button"
+                disabled={!archiveImportCandidate || !archiveImportReport?.valid}
+                onClick={handleApplyPersonalArchiveImport}
+              >
+                <CheckCircle2 size={15} />
+                应用{archiveImportMode === "replace" ? "替换" : "合并"}导入
+              </button>
+            </section>
             <section className="personal-memory-candidates-card">
               <div className="personal-memory-header">
                 <h4>
@@ -1373,10 +1567,10 @@ export function PersonalCenter({
                 下一阶段
               </h4>
               <ul>
-                <li>跨会话记忆聚合与冲突提示</li>
-                <li>用户可编辑的记忆 Dashboard</li>
-                <li>Context Packet 可视化预览</li>
-                <li>服务端同步和权限策略</li>
+                <li>导入档案的差异预览与字段级冲突处理</li>
+                <li>服务端账号同步、加密备份和权限策略</li>
+                <li>跨设备工作区恢复与撤销导入</li>
+                <li>面向咨询师的批量迁移审计报表</li>
               </ul>
             </section>
             <section className="personal-workspace-card">

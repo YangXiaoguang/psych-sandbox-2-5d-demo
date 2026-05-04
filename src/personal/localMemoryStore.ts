@@ -11,6 +11,10 @@ import {
   type CreatePersonalUserInput,
   type IdentityProfile,
   type PersonalAccount,
+  type PersonalArchiveImportMode,
+  type PersonalArchiveImportResult,
+  type PersonalArchiveValidationReport,
+  type PersonalArchiveValidationSummary,
   type PersonalAgeGroup,
   type PersonalAuditLog,
   type PersonalContextPacket,
@@ -539,6 +543,318 @@ export function exportPersonalArchive(data: PersonalDataBundle): void {
   link.download = fileName;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export function validatePersonalArchivePayload(payload: unknown): PersonalArchiveValidationReport {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const migrationNotes: string[] = [];
+
+  if (!payload || typeof payload !== "object") {
+    return createArchiveValidationReport({
+      valid: false,
+      errors: ["文件内容不是可识别的 JSON 对象。"],
+      warnings,
+      migrationNotes,
+    });
+  }
+
+  const record = payload as Partial<PersonalDataBundle> & Record<string, unknown>;
+  const schema = typeof record.schema === "string" ? record.schema : undefined;
+  const version = typeof record.version === "number" ? record.version : undefined;
+  const exportedAt = typeof record.exportedAt === "string" ? record.exportedAt : undefined;
+
+  if (schema !== PERSONAL_MEMORY_SCHEMA) {
+    errors.push("档案 schema 不匹配，可能不是当前沙盘系统导出的个人数据包。");
+  }
+
+  if (version === undefined) {
+    errors.push("档案缺少 version 字段，无法判断迁移策略。");
+  } else if (version > PERSONAL_MEMORY_VERSION) {
+    errors.push(`档案版本 ${version} 高于当前支持版本 ${PERSONAL_MEMORY_VERSION}，请先升级应用后再导入。`);
+  } else if (version < PERSONAL_MEMORY_VERSION) {
+    migrationNotes.push(`检测到旧版本档案 v${version}，导入时会按当前 v${PERSONAL_MEMORY_VERSION} 结构补齐缺失字段。`);
+  }
+
+  const requiredArrays: Array<keyof Pick<
+    PersonalDataBundle,
+    | "accounts"
+    | "profiles"
+    | "preferences"
+    | "consents"
+    | "workspaces"
+    | "sandtraySessions"
+    | "memoryCandidates"
+    | "memoryBlockRules"
+    | "auditLogs"
+  >> = [
+    "accounts",
+    "profiles",
+    "preferences",
+    "consents",
+    "workspaces",
+    "sandtraySessions",
+    "memoryCandidates",
+    "memoryBlockRules",
+    "auditLogs",
+  ];
+
+  requiredArrays.forEach((key) => {
+    if (!Array.isArray(record[key])) {
+      if (key === "sandtraySessions" || key === "memoryCandidates" || key === "memoryBlockRules") {
+        warnings.push(`档案缺少 ${key}，导入时会按空列表处理。`);
+      } else {
+        errors.push(`档案缺少必要数组字段：${key}。`);
+      }
+    }
+  });
+
+  const accounts = Array.isArray(record.accounts) ? (record.accounts as PersonalAccount[]) : [];
+  if (accounts.length === 0) {
+    errors.push("档案中没有用户账号，不能作为个人数据包导入。");
+  }
+
+  const activeUserId = typeof record.activeUserId === "string" ? record.activeUserId : accounts[0]?.userId;
+  if (activeUserId && accounts.length > 0 && !accounts.some((account) => account.userId === activeUserId)) {
+    warnings.push("activeUserId 不在账号列表中，导入时会自动切换到档案中的第一个用户。");
+  }
+
+  addDuplicateWarnings(warnings, "用户", accounts.map((account) => account.userId));
+  addDuplicateWarnings(
+    warnings,
+    "沙盘会话",
+    Array.isArray(record.sandtraySessions)
+      ? (record.sandtraySessions as SandtraySessionArchive[]).map((session) => session.sessionId)
+      : [],
+  );
+  addDuplicateWarnings(
+    warnings,
+    "记忆候选",
+    Array.isArray(record.memoryCandidates)
+      ? (record.memoryCandidates as PersonalMemoryCandidate[]).map((candidate) => candidate.memoryId)
+      : [],
+  );
+
+  if (errors.length > 0) {
+    return createArchiveValidationReport({
+      valid: false,
+      schema,
+      version,
+      exportedAt,
+      activeUserId,
+      errors,
+      warnings,
+      migrationNotes,
+      summary: summarizeArchiveLikePayload(record),
+    });
+  }
+
+  const data = normalizePersonalData({
+    schema: PERSONAL_MEMORY_SCHEMA,
+    version: PERSONAL_MEMORY_VERSION,
+    activeUserId: activeUserId ?? accounts[0].userId,
+    accounts,
+    profiles: Array.isArray(record.profiles) ? (record.profiles as IdentityProfile[]) : [],
+    preferences: Array.isArray(record.preferences) ? (record.preferences as CommunicationPreferences[]) : [],
+    consents: Array.isArray(record.consents) ? (record.consents as ConsentRecord[]) : [],
+    workspaces: Array.isArray(record.workspaces) ? (record.workspaces as UserWorkspace[]) : [],
+    sandtraySessions: Array.isArray(record.sandtraySessions)
+      ? (record.sandtraySessions as SandtraySessionArchive[])
+      : [],
+    memoryCandidates: Array.isArray(record.memoryCandidates)
+      ? (record.memoryCandidates as PersonalMemoryCandidate[])
+      : [],
+    memoryBlockRules: Array.isArray(record.memoryBlockRules)
+      ? (record.memoryBlockRules as PersonalMemoryBlockRule[])
+      : [],
+    auditLogs: Array.isArray(record.auditLogs) ? (record.auditLogs as PersonalAuditLog[]) : [],
+    exportedAt,
+  });
+
+  const normalizedSummary = summarizePersonalData(data);
+  const rawSummary = summarizeArchiveLikePayload(record);
+  if (rawSummary.profiles !== normalizedSummary.profiles) {
+    migrationNotes.push("已为缺失基础资料的用户补齐默认 Identity Profile。");
+  }
+  if (rawSummary.workspaces !== normalizedSummary.workspaces) {
+    migrationNotes.push("已为缺失工作区的用户补齐默认沙盘工作区。");
+  }
+
+  return createArchiveValidationReport({
+    valid: true,
+    schema,
+    version,
+    exportedAt,
+    activeUserId: data.activeUserId,
+    errors,
+    warnings,
+    migrationNotes,
+    summary: normalizedSummary,
+    data,
+  });
+}
+
+export function importPersonalArchive(
+  currentData: PersonalDataBundle,
+  incomingData: PersonalDataBundle,
+  mode: PersonalArchiveImportMode,
+): PersonalArchiveImportResult {
+  const importedAt = new Date().toISOString();
+  const incoming = normalizePersonalData(incomingData);
+  const nextData =
+    mode === "replace"
+      ? incoming
+      : normalizePersonalData({
+          ...currentData,
+          activeUserId: currentData.accounts.some((account) => account.userId === currentData.activeUserId)
+            ? currentData.activeUserId
+            : incoming.activeUserId,
+          accounts: mergeByKey(currentData.accounts, incoming.accounts, (account) => account.userId),
+          profiles: mergeByKey(currentData.profiles, incoming.profiles, (profile) => profile.userId),
+          preferences: mergeByKey(currentData.preferences, incoming.preferences, (preference) => preference.userId),
+          consents: mergeByKey(
+            currentData.consents,
+            incoming.consents,
+            (consent) => `${consent.userId}:${consent.consentType}`,
+          ),
+          workspaces: mergeByKey(currentData.workspaces, incoming.workspaces, (workspace) => workspace.workspaceId),
+          sandtraySessions: mergeByKey(
+            currentData.sandtraySessions,
+            incoming.sandtraySessions,
+            (session) => session.sessionId,
+          ),
+          memoryCandidates: mergeByKey(
+            currentData.memoryCandidates,
+            incoming.memoryCandidates,
+            (candidate) => candidate.memoryId,
+          ),
+          memoryBlockRules: mergeByKey(
+            currentData.memoryBlockRules,
+            incoming.memoryBlockRules,
+            (rule) => rule.ruleId,
+          ),
+          auditLogs: mergeByKey(currentData.auditLogs, incoming.auditLogs, (log) => log.id).sort((a, b) =>
+            b.createdAt.localeCompare(a.createdAt),
+          ),
+          exportedAt: incoming.exportedAt,
+        });
+
+  const auditedData = recordPersonalAudit(nextData, {
+    userId: mode === "replace" ? nextData.activeUserId : currentData.activeUserId,
+    action: mode === "replace" ? "personal_archive_imported_replace" : "personal_archive_imported_merge",
+    resourceType: "archive",
+    detail:
+      mode === "replace"
+        ? `已用导入档案替换本地 Personal Memory OS：${incoming.accounts.length} 个用户，${incoming.sandtraySessions.length} 个历史作品。`
+        : `已合并导入个人档案：${incoming.accounts.length} 个用户，${incoming.sandtraySessions.length} 个历史作品。`,
+  });
+  const report = validatePersonalArchivePayload(auditedData);
+  return {
+    mode,
+    importedAt,
+    data: auditedData,
+    report: {
+      ...report,
+      migrationNotes: [
+        `${mode === "replace" ? "替换" : "合并"}导入已完成，所有数据仍只保存在当前浏览器 localStorage。`,
+        ...report.migrationNotes,
+      ],
+    },
+  };
+}
+
+function createArchiveValidationReport(input: {
+  valid: boolean;
+  schema?: string;
+  version?: number;
+  exportedAt?: string;
+  activeUserId?: string;
+  errors: string[];
+  warnings: string[];
+  migrationNotes: string[];
+  summary?: PersonalArchiveValidationSummary;
+  data?: PersonalDataBundle;
+}): PersonalArchiveValidationReport {
+  return {
+    valid: input.valid,
+    schema: input.schema,
+    version: input.version,
+    exportedAt: input.exportedAt,
+    activeUserId: input.activeUserId,
+    errors: input.errors,
+    warnings: input.warnings,
+    migrationNotes: input.migrationNotes,
+    summary: input.summary ?? createEmptyArchiveSummary(),
+    data: input.data,
+  };
+}
+
+function summarizePersonalData(data: PersonalDataBundle): PersonalArchiveValidationSummary {
+  return {
+    accounts: data.accounts.length,
+    profiles: data.profiles.length,
+    workspaces: data.workspaces.length,
+    sandtraySessions: data.sandtraySessions.length,
+    memoryCandidates: data.memoryCandidates.length,
+    memoryBlockRules: data.memoryBlockRules.length,
+    auditLogs: data.auditLogs.length,
+  };
+}
+
+function summarizeArchiveLikePayload(payload: Record<string, unknown>): PersonalArchiveValidationSummary {
+  return {
+    accounts: Array.isArray(payload.accounts) ? payload.accounts.length : 0,
+    profiles: Array.isArray(payload.profiles) ? payload.profiles.length : 0,
+    workspaces: Array.isArray(payload.workspaces) ? payload.workspaces.length : 0,
+    sandtraySessions: Array.isArray(payload.sandtraySessions) ? payload.sandtraySessions.length : 0,
+    memoryCandidates: Array.isArray(payload.memoryCandidates) ? payload.memoryCandidates.length : 0,
+    memoryBlockRules: Array.isArray(payload.memoryBlockRules) ? payload.memoryBlockRules.length : 0,
+    auditLogs: Array.isArray(payload.auditLogs) ? payload.auditLogs.length : 0,
+  };
+}
+
+function createEmptyArchiveSummary(): PersonalArchiveValidationSummary {
+  return {
+    accounts: 0,
+    profiles: 0,
+    workspaces: 0,
+    sandtraySessions: 0,
+    memoryCandidates: 0,
+    memoryBlockRules: 0,
+    auditLogs: 0,
+  };
+}
+
+function addDuplicateWarnings(warnings: string[], label: string, ids: string[]): void {
+  const seen = new Set<string>();
+  const duplicateIds = new Set<string>();
+  ids.filter(Boolean).forEach((id) => {
+    if (seen.has(id)) {
+      duplicateIds.add(id);
+    }
+    seen.add(id);
+  });
+
+  if (duplicateIds.size > 0) {
+    warnings.push(`${label}存在 ${duplicateIds.size} 个重复 ID，导入时会以后出现的数据为准。`);
+  }
+}
+
+function mergeByKey<T>(current: T[], incoming: T[], getKey: (item: T) => string): T[] {
+  const merged = new Map<string, T>();
+  current.forEach((item) => {
+    const key = getKey(item);
+    if (key) {
+      merged.set(key, item);
+    }
+  });
+  incoming.forEach((item) => {
+    const key = getKey(item);
+    if (key) {
+      merged.set(key, item);
+    }
+  });
+  return Array.from(merged.values());
 }
 
 function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
