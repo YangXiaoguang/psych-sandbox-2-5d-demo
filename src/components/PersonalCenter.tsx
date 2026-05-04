@@ -1,21 +1,25 @@
 import {
   Archive,
   Brain,
+  CalendarClock,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
   Download,
+  FileArchive,
   Fingerprint,
   History,
   KeyRound,
   Plus,
+  RotateCcw,
   Search,
   ShieldCheck,
   SlidersHorizontal,
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { AgentConversation, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
+import { getEnvironmentLabel } from "../data/environment";
+import type { AgentConversation, SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 import {
   CONSENT_DEFINITIONS,
   type CommunicationPreferences,
@@ -26,13 +30,16 @@ import {
   type PersonalAgeGroup,
   type PersonalDataBundle,
   type PersonalRole,
+  type SandtraySessionArchive,
 } from "../personal/types";
 import {
+  createSandtraySessionArchive,
   exportPersonalArchive,
   getActiveAccount,
   getActivePreferences,
   getActiveProfile,
   getUserConsents,
+  markSandtrayArchiveRestored,
   recordPersonalAudit,
 } from "../personal/localMemoryStore";
 
@@ -42,9 +49,11 @@ interface PersonalCenterProps {
   events: SandboxEvent[];
   conversations: AgentConversation[];
   analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
   onPersonalDataChange: (data: PersonalDataBundle) => void;
   onCreateUser: (input: CreatePersonalUserInput) => void;
   onSwitchUser: (userId: string) => void;
+  onRestoreSandtraySession: (session: SandtraySessionArchive) => void;
 }
 
 const AGE_GROUP_LABELS: Record<PersonalAgeGroup, string> = {
@@ -78,6 +87,7 @@ const REPLY_LENGTH_LABELS: Record<CommunicationPreferences["replyLength"], strin
 };
 
 const USER_DIRECTORY_PAGE_SIZE = 12;
+const SANDTRAY_ARCHIVE_PAGE_SIZE = 4;
 
 export function PersonalCenter({
   personalData,
@@ -85,15 +95,18 @@ export function PersonalCenter({
   events,
   conversations,
   analysis,
+  environment,
   onPersonalDataChange,
   onCreateUser,
   onSwitchUser,
+  onRestoreSandtraySession,
 }: PersonalCenterProps): JSX.Element {
   const activeAccount = getActiveAccount(personalData);
   const activeProfile = getActiveProfile(personalData);
   const preferences = getActivePreferences(personalData);
   const consents = getUserConsents(personalData, activeAccount.userId);
   const activeWorkspace = personalData.workspaces.find((workspace) => workspace.userId === activeAccount.userId);
+  const canArchiveSandtray = consents.some((consent) => consent.consentType === "sandtray_archive" && consent.granted);
   const activeAuditLogs = personalData.auditLogs.filter((log) => log.userId === activeAccount.userId).slice(0, 8);
   const grantedCount = consents.filter((consent) => consent.granted).length;
   const [newUserName, setNewUserName] = useState("");
@@ -104,6 +117,10 @@ export function PersonalCenter({
   const [ageFilter, setAgeFilter] = useState<PersonalAgeGroup | "all">("all");
   const [userPage, setUserPage] = useState(1);
   const [createPanelOpen, setCreatePanelOpen] = useState(false);
+  const [archiveTitle, setArchiveTitle] = useState("");
+  const [archiveDescription, setArchiveDescription] = useState("");
+  const [archiveQuery, setArchiveQuery] = useState("");
+  const [archivePage, setArchivePage] = useState(1);
 
   const directoryUsers = useMemo(
     () =>
@@ -155,8 +172,50 @@ export function PersonalCenter({
     setUserPage(1);
   }, [ageFilter, roleFilter, userQuery, personalData.accounts.length]);
 
+  const sandtrayArchives = useMemo(
+    () =>
+      personalData.sandtraySessions
+        .filter((session) => session.userId === activeAccount.userId)
+        .sort((a, b) => Date.parse(b.archivedAt) - Date.parse(a.archivedAt)),
+    [activeAccount.userId, personalData.sandtraySessions],
+  );
+  const filteredArchives = useMemo(() => {
+    const normalizedQuery = archiveQuery.trim().toLowerCase();
+    return sandtrayArchives.filter((session) => {
+      if (!normalizedQuery) {
+        return true;
+      }
+      return [
+        session.title,
+        session.description,
+        getEnvironmentLabel(session.snapshot.environment),
+        ...session.featureSummary.dominantCategories,
+        ...session.featureSummary.dominantZones,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery);
+    });
+  }, [archiveQuery, sandtrayArchives]);
+  const totalArchivePages = Math.max(1, Math.ceil(filteredArchives.length / SANDTRAY_ARCHIVE_PAGE_SIZE));
+  const currentArchivePage = Math.min(archivePage, totalArchivePages);
+  const pagedArchives = filteredArchives.slice(
+    (currentArchivePage - 1) * SANDTRAY_ARCHIVE_PAGE_SIZE,
+    currentArchivePage * SANDTRAY_ARCHIVE_PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setArchivePage(1);
+  }, [archiveQuery, sandtrayArchives.length]);
+
   const dataDomains = useMemo(
     () => [
+      {
+        icon: <FileArchive size={18} />,
+        label: "历史档案",
+        value: `${sandtrayArchives.length}`,
+        detail: "已沉淀为可回溯的沙盘会话",
+      },
       {
         icon: <Archive size={18} />,
         label: "当前沙盘",
@@ -182,7 +241,15 @@ export function PersonalCenter({
         detail: "用于后续沙盘记忆摘要，不等于诊断",
       },
     ],
-    [analysis.centerObjects.length, consents.length, conversations.length, events.length, grantedCount, objects.length],
+    [
+      analysis.centerObjects.length,
+      consents.length,
+      conversations.length,
+      events.length,
+      grantedCount,
+      objects.length,
+      sandtrayArchives.length,
+    ],
   );
 
   const updateProfile = (patch: Partial<IdentityProfile>) => {
@@ -258,6 +325,61 @@ export function PersonalCenter({
         detail: "已导出本地个人档案 JSON。该文件只下载到本机，没有上传到第三方。",
       }),
     );
+  };
+
+  const handleSaveCurrentSandtrayArchive = () => {
+    if (!canArchiveSandtray) {
+      return;
+    }
+    const session = createSandtraySessionArchive({
+      userId: activeAccount.userId,
+      workspaceId: activeWorkspace?.workspaceId,
+      title: archiveTitle,
+      description: archiveDescription,
+      objects,
+      events,
+      analysis,
+      environment,
+    });
+    const nextData = {
+      ...personalData,
+      sandtraySessions: [session, ...personalData.sandtraySessions],
+    };
+    onPersonalDataChange(
+      recordPersonalAudit(nextData, {
+        action: "sandtray_session_archived",
+        resourceType: "sandtray_session",
+        resourceId: session.sessionId,
+        detail: `已保存沙盘会话档案：${session.title}`,
+      }),
+    );
+    setArchiveTitle("");
+    setArchiveDescription("");
+    setArchivePage(1);
+  };
+
+  const handleRestoreArchive = (session: SandtraySessionArchive) => {
+    onPersonalDataChange(
+      recordPersonalAudit(markSandtrayArchiveRestored(personalData, session.sessionId), {
+        action: "sandtray_session_restored",
+        resourceType: "sandtray_session",
+        resourceId: session.sessionId,
+        detail: `已从历史档案恢复到沙盘编辑器：${session.title}`,
+      }),
+    );
+    onRestoreSandtraySession(session);
+  };
+
+  const handleExportSandtrayArchive = (session: SandtraySessionArchive) => {
+    const blob = new Blob([JSON.stringify(session, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `psych-sandtray-session-${session.archivedAt.slice(0, 10)}-${session.sessionId}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -473,6 +595,142 @@ export function PersonalCenter({
               </article>
             ))}
           </div>
+
+          <section className="admin-card personal-sandtray-archive-card" aria-label="沙盘会话档案">
+            <div className="admin-card-header">
+              <div>
+                <p className="eyebrow">Sandtray Session Archive</p>
+                <h3>沙盘会话档案</h3>
+              </div>
+              <span className="personal-pill">{sandtrayArchives.length} 个历史作品</span>
+            </div>
+            <div className="personal-archive-body">
+              <section className="personal-archive-composer" aria-label="保存当前沙盘">
+                <div>
+                  <h4>
+                    <FileArchive size={15} />
+                    保存当前作品
+                  </h4>
+                  <p>
+                    将当前沙盘对象、事件流、环境、九宫格统计和风险分布沉淀为该用户的历史档案。
+                  </p>
+                </div>
+                <label>
+                  档案标题
+                  <input
+                    value={archiveTitle}
+                    onChange={(event) => setArchiveTitle(event.target.value)}
+                    placeholder={`沙盘作品 ${new Date().toLocaleDateString("zh-CN")}`}
+                  />
+                </label>
+                <label>
+                  用户叙述 / 备注
+                  <textarea
+                    value={archiveDescription}
+                    onChange={(event) => setArchiveDescription(event.target.value)}
+                    placeholder="可以记录这个作品的主题、创作背景或当下感受。"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSaveCurrentSandtrayArchive}
+                  disabled={!canArchiveSandtray || objects.length === 0}
+                >
+                  <FileArchive size={15} />
+                  保存到历史档案
+                </button>
+                {!canArchiveSandtray ? (
+                  <p className="personal-archive-warning">请先在授权设置中开启“保存沙盘作品与事件流”。</p>
+                ) : null}
+              </section>
+
+              <section className="personal-archive-list-panel" aria-label="历史作品列表">
+                <div className="personal-archive-toolbar">
+                  <label>
+                    <Search size={15} />
+                    <input
+                      value={archiveQuery}
+                      onChange={(event) => setArchiveQuery(event.target.value)}
+                      placeholder="搜索标题、备注、天气、分类或区域..."
+                    />
+                  </label>
+                  <span>
+                    显示 {filteredArchives.length} / {sandtrayArchives.length}
+                  </span>
+                </div>
+
+                <div className="personal-archive-list">
+                  {pagedArchives.length > 0 ? (
+                    pagedArchives.map((session) => (
+                      <article key={session.sessionId} className="personal-archive-item">
+                        <div className="personal-archive-item-head">
+                          <div>
+                            <strong>{session.title}</strong>
+                            <time>
+                              <CalendarClock size={13} />
+                              {new Date(session.archivedAt).toLocaleString("zh-CN")}
+                            </time>
+                          </div>
+                          <span>{getEnvironmentLabel(session.snapshot.environment)}</span>
+                        </div>
+                        {session.description ? <p>{session.description}</p> : null}
+                        <div className="personal-archive-metrics">
+                          <span>{session.featureSummary.objectCount} 沙具</span>
+                          <span>{session.featureSummary.eventCount} 事件</span>
+                          <span>{session.featureSummary.centerCount} 中心</span>
+                          <span>{session.featureSummary.boundaryCount} 边界</span>
+                        </div>
+                        <div className="personal-archive-chips">
+                          {session.featureSummary.dominantCategories.slice(0, 3).map((category) => (
+                            <span key={category}>{category}</span>
+                          ))}
+                          {session.featureSummary.dominantZones.slice(0, 3).map((zone) => (
+                            <span key={zone}>{zone}</span>
+                          ))}
+                        </div>
+                        <div className="personal-archive-actions">
+                          <button type="button" onClick={() => handleRestoreArchive(session)}>
+                            <RotateCcw size={14} />
+                            恢复到沙盘
+                          </button>
+                          <button type="button" onClick={() => handleExportSandtrayArchive(session)}>
+                            <Download size={14} />
+                            导出
+                          </button>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="personal-archive-empty">
+                      <FileArchive size={20} />
+                      <strong>暂无历史作品</strong>
+                      <p>保存当前沙盘后，会在这里形成可检索、可恢复的个人沙盘档案。</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="personal-archive-pager" aria-label="历史作品分页">
+                  <button
+                    type="button"
+                    onClick={() => setArchivePage((current) => Math.max(1, current - 1))}
+                    disabled={currentArchivePage <= 1}
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  <span>
+                    {currentArchivePage} / {totalArchivePages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setArchivePage((current) => Math.min(totalArchivePages, current + 1))}
+                    disabled={currentArchivePage >= totalArchivePages}
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+              </section>
+            </div>
+          </section>
 
           <section className="admin-card personal-profile-card" aria-label="基础资料">
             <div className="admin-card-header">

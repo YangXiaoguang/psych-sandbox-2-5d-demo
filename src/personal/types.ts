@@ -1,3 +1,11 @@
+import type {
+  RiskTag,
+  SandboxAnalysis,
+  SandboxEnvironment,
+  SandboxEvent,
+  SandboxObject,
+} from "../types";
+
 export const PERSONAL_MEMORY_SCHEMA = "psych-sandbox-personal-memory-os";
 export const PERSONAL_MEMORY_VERSION = 1;
 export const DEFAULT_PERSONAL_USER_ID = "local_user_default";
@@ -21,8 +29,11 @@ export type AuditResourceType =
   | "consent"
   | "workspace"
   | "scene"
+  | "sandtray_session"
   | "conversation"
   | "archive";
+export type SandtrayArchiveMode = "free_creation" | "guided_theme" | "assessment" | "review";
+export type SandtrayArchiveStatus = "draft" | "archived" | "restored";
 
 export interface PersonalAccount {
   userId: string;
@@ -99,6 +110,51 @@ export interface PersonalAuditLog {
   createdAt: string;
 }
 
+export interface SandtrayFeatureSummary {
+  objectCount: number;
+  eventCount: number;
+  categoryDistribution: Record<string, number>;
+  riskDistribution: Record<RiskTag, number>;
+  zoneDistribution: Record<string, number>;
+  centerCount: number;
+  boundaryCount: number;
+  firstPlacedAsset?: string;
+  lastChangedObject?: string;
+  dominantCategories: string[];
+  dominantZones: string[];
+}
+
+export interface SandtrayArchivedSnapshot {
+  snapshotId: string;
+  capturedAt: string;
+  environment: SandboxEnvironment;
+  canvas: {
+    width: number;
+    height: number;
+    coordinateSystem: "konva-stage";
+    zoneSystem: "3x3-center-boundary";
+  };
+  objects: SandboxObject[];
+  events: SandboxEvent[];
+  analysis: SandboxAnalysis;
+}
+
+export interface SandtraySessionArchive {
+  sessionId: string;
+  userId: string;
+  workspaceId?: string;
+  title: string;
+  description: string;
+  mode: SandtrayArchiveMode;
+  status: SandtrayArchiveStatus;
+  snapshot: SandtrayArchivedSnapshot;
+  featureSummary: SandtrayFeatureSummary;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string;
+  restoredAt?: string;
+}
+
 export interface PersonalDataBundle {
   schema: typeof PERSONAL_MEMORY_SCHEMA;
   version: typeof PERSONAL_MEMORY_VERSION;
@@ -108,6 +164,7 @@ export interface PersonalDataBundle {
   preferences: CommunicationPreferences[];
   consents: ConsentRecord[];
   workspaces: UserWorkspace[];
+  sandtraySessions: SandtraySessionArchive[];
   auditLogs: PersonalAuditLog[];
   exportedAt?: string;
 }

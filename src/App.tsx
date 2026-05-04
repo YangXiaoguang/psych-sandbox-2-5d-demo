@@ -51,7 +51,7 @@ import {
   savePersonalData,
   switchActivePersonalUser,
 } from "./personal/localMemoryStore";
-import type { CreatePersonalUserInput } from "./personal/types";
+import type { CreatePersonalUserInput, SandtraySessionArchive } from "./personal/types";
 
 interface SceneState {
   objects: SandboxObject[];
@@ -415,6 +415,32 @@ export function App(): JSX.Element {
     [activeUserId, loadRuntimeStateForUser, persistRuntimeStateForUser, personalData],
   );
 
+  const handleRestoreSandtraySession = useCallback((session: SandtraySessionArchive) => {
+    const restoreEvent = createSandboxEvent({
+      type: "seed",
+      label: `恢复历史作品: ${session.title}`,
+      payload: {
+        archivedAt: session.archivedAt,
+        objectCount: session.featureSummary.objectCount,
+        sessionId: session.sessionId,
+      },
+    });
+
+    setObjects(session.snapshot.objects);
+    setEvents([...session.snapshot.events, restoreEvent].slice(-320));
+    setEnvironment(session.snapshot.environment);
+    setSelectedId(null);
+    setShowGuides(true);
+    setRightPanelTab("scene");
+    setLayoutPreferences((current) => ({
+      ...current,
+      focusMode: false,
+      assetDrawerOpen: false,
+      aiDrawerOpen: false,
+    }));
+    setActiveView("sandbox");
+  }, []);
+
   return (
     <div className={classNames("product-shell", environment.light === "night" && "night-mode", sandboxFocusMode && "focus-mode")}>
       {!sandboxFocusMode ? (
@@ -586,9 +612,11 @@ export function App(): JSX.Element {
           events={events}
           conversations={conversations}
           analysis={analysis}
+          environment={environment}
           onPersonalDataChange={setPersonalData}
           onCreateUser={handleCreatePersonalUser}
           onSwitchUser={handleSwitchPersonalUser}
+          onRestoreSandtraySession={handleRestoreSandtraySession}
         />
       ) : null}
     </div>

@@ -1192,6 +1192,11 @@ button {
 .product-shell.night-mode .personal-directory-pager,
 .product-shell.night-mode .personal-create-box,
 .product-shell.night-mode .personal-status-card,
+.product-shell.night-mode .personal-archive-composer,
+.product-shell.night-mode .personal-archive-list-panel,
+.product-shell.night-mode .personal-archive-item,
+.product-shell.night-mode .personal-archive-empty,
+.product-shell.night-mode .personal-archive-pager,
 .product-shell.night-mode .personal-consent-row,
 .product-shell.night-mode .personal-governance-body section,
 .product-shell.night-mode .personal-audit-list article,
@@ -1226,6 +1231,9 @@ button {
 .product-shell.night-mode .personal-directory-list button strong,
 .product-shell.night-mode .personal-directory-empty strong,
 .product-shell.night-mode .personal-status-card strong,
+.product-shell.night-mode .personal-archive-composer h4,
+.product-shell.night-mode .personal-archive-item-head strong,
+.product-shell.night-mode .personal-archive-empty strong,
 .product-shell.night-mode .panel-tabs button.active,
 .product-shell.night-mode .panel-tabs button:hover,
 .product-shell.night-mode .icon-button:hover,
@@ -1264,6 +1272,37 @@ button {
   border-color: #456066;
   background: #071018;
   color: #dff5ee;
+}
+
+.product-shell.night-mode .personal-archive-toolbar,
+.product-shell.night-mode .personal-archive-pager {
+  border-color: var(--line);
+  background: rgba(18, 32, 40, 0.72);
+}
+
+.product-shell.night-mode .personal-archive-toolbar label,
+.product-shell.night-mode .personal-archive-composer input,
+.product-shell.night-mode .personal-archive-composer textarea,
+.product-shell.night-mode .personal-archive-actions button,
+.product-shell.night-mode .personal-archive-pager button,
+.product-shell.night-mode .personal-archive-item-head > span,
+.product-shell.night-mode .personal-archive-metrics span {
+  border-color: var(--line);
+  background: rgba(10, 20, 26, 0.82);
+  color: var(--ink);
+}
+
+.product-shell.night-mode .personal-archive-chips span,
+.product-shell.night-mode .personal-pill {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.product-shell.night-mode .personal-archive-warning {
+  border-color: rgba(245, 188, 92, 0.42);
+  background: rgba(84, 61, 25, 0.72);
+  color: #f7d78c;
 }
 
 .ai-stage-companion:hover,
@@ -1946,7 +1985,7 @@ button {
 .personal-main-column {
   display: grid;
   min-height: 0;
-  grid-template-rows: auto minmax(0, 0.94fr) minmax(0, 1.06fr);
+  grid-template-rows: auto minmax(0, 1.18fr) minmax(0, 0.92fr) minmax(0, 1fr);
   gap: 14px;
   overflow: hidden;
 }
@@ -2389,7 +2428,7 @@ button {
 
 .personal-status-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   min-height: 0;
 }
@@ -2445,6 +2484,337 @@ button {
   font-size: 11px;
   font-weight: 740;
   line-height: 1.35;
+}
+
+.personal-sandtray-archive-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.personal-archive-body {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.74fr) minmax(380px, 1.26fr);
+  min-height: 0;
+  gap: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.personal-archive-composer,
+.personal-archive-list-panel,
+.personal-archive-item,
+.personal-archive-empty {
+  border: 1px solid #d2c3a8;
+  border-radius: var(--radius-xs);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48), transparent 90px),
+    #fff9ed;
+  box-shadow: var(--inner-highlight);
+}
+
+.personal-archive-composer {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  overflow: auto;
+}
+
+.personal-archive-composer h4 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.personal-archive-composer p {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.personal-archive-composer label {
+  display: grid;
+  gap: 6px;
+  color: #59645f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.personal-archive-composer input,
+.personal-archive-composer textarea {
+  min-width: 0;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: #243030;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.personal-archive-composer textarea {
+  min-height: 86px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.personal-archive-composer button,
+.personal-archive-actions button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-xs);
+  background: var(--accent);
+  color: #fffdf6;
+  font-weight: 900;
+}
+
+.personal-archive-composer button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+  opacity: 0.52;
+}
+
+.personal-archive-warning {
+  padding: 8px 9px;
+  border: 1px solid #e1c592;
+  border-radius: 8px;
+  background: #fff0ce;
+  color: #7a5a22;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.personal-archive-list-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.personal-archive-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.personal-archive-toolbar label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-muted);
+}
+
+.personal-archive-toolbar input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.personal-archive-toolbar span {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.personal-archive-list {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-height: 0;
+  padding: 10px;
+  overflow: auto;
+}
+
+.personal-archive-item {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.personal-archive-item-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.personal-archive-item-head strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-archive-item-head time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 780;
+}
+
+.personal-archive-item-head > span {
+  padding: 5px 7px;
+  border: 1px solid #d4c4aa;
+  border-radius: 999px;
+  background: #fbf1de;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.personal-archive-item > p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.personal-archive-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.personal-archive-metrics span {
+  min-width: 0;
+  padding: 7px 6px;
+  border: 1px solid #e1d1b4;
+  border-radius: 8px;
+  background: rgba(255, 253, 246, 0.62);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.personal-archive-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.personal-archive-chips span {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personal-archive-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.personal-archive-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  background: #fffdf6;
+  color: var(--accent-dark);
+}
+
+.personal-archive-actions button:hover,
+.personal-archive-actions button:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.personal-archive-empty {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 18px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.personal-archive-empty strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.personal-archive-empty p {
+  max-width: 340px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.personal-archive-pager {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 249, 237, 0.5);
+}
+
+.personal-archive-pager button {
+  display: grid;
+  width: 34px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-soft);
+}
+
+.personal-archive-pager button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.personal-archive-pager span {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
 }
 
 .personal-profile-card,

@@ -1,4 +1,5 @@
 import { createId } from "../utils/id";
+import { BOARD_HEIGHT, BOARD_WIDTH } from "../utils/analysis";
 import {
   CONSENT_DEFINITIONS,
   DEFAULT_PERSONAL_USER_ID,
@@ -14,8 +15,10 @@ import {
   type PersonalAuditLog,
   type PersonalDataBundle,
   type PersonalRole,
+  type SandtraySessionArchive,
   type UserWorkspace,
 } from "./types";
+import type { SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 
 const PERSONAL_DATA_KEY = "psych-sandbox-2-5d-demo.personal-memory-os.v1";
 
@@ -72,6 +75,7 @@ export function createDefaultPersonalData(): PersonalDataBundle {
     preferences: [preferences],
     consents,
     workspaces,
+    sandtraySessions: [],
     auditLogs,
   };
 }
@@ -104,6 +108,7 @@ export function createLocalPersonalUser(
     preferences: [...data.preferences, createCommunicationPreferences(userId, now)],
     consents: [...data.consents, ...createDefaultConsents(userId, now)],
     workspaces: [...data.workspaces, createUserWorkspace(userId, `${displayName}的沙盘工作区`, now)],
+    sandtraySessions: data.sandtraySessions,
     auditLogs: [
       createAuditLog({
         userId,
@@ -118,6 +123,66 @@ export function createLocalPersonalUser(
   });
 
   return { data: nextData, userId };
+}
+
+export function createSandtraySessionArchive(input: {
+  userId: string;
+  workspaceId?: string;
+  title: string;
+  description: string;
+  objects: SandboxObject[];
+  events: SandboxEvent[];
+  analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
+}): SandtraySessionArchive {
+  const now = new Date().toISOString();
+  return {
+    sessionId: createId("sandtray_session"),
+    userId: input.userId,
+    workspaceId: input.workspaceId,
+    title: input.title.trim() || `沙盘作品 ${new Date(now).toLocaleString("zh-CN")}`,
+    description: input.description.trim(),
+    mode: "free_creation",
+    status: "archived",
+    snapshot: {
+      snapshotId: createId("snapshot"),
+      capturedAt: now,
+      environment: input.environment,
+      canvas: {
+        width: BOARD_WIDTH,
+        height: BOARD_HEIGHT,
+        coordinateSystem: "konva-stage",
+        zoneSystem: "3x3-center-boundary",
+      },
+      objects: input.objects,
+      events: input.events,
+      analysis: input.analysis,
+    },
+    featureSummary: buildSandtrayFeatureSummary(input.objects, input.events, input.analysis),
+    createdAt: now,
+    updatedAt: now,
+    archivedAt: now,
+  };
+}
+
+export function markSandtrayArchiveRestored(
+  data: PersonalDataBundle,
+  sessionId: string,
+): PersonalDataBundle {
+  const now = new Date().toISOString();
+  return {
+    ...data,
+    sandtraySessions: data.sandtraySessions.map((session) =>
+      session.sessionId === sessionId
+        ? {
+            ...session,
+            status: "restored",
+            restoredAt: now,
+            updatedAt: now,
+          }
+        : session,
+    ),
+  };
 }
 
 export function getActiveAccount(data: PersonalDataBundle): PersonalAccount {
@@ -230,6 +295,7 @@ function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
   const preferences = [...data.preferences];
   const consents = [...data.consents];
   const workspaces = [...data.workspaces];
+  const sandtraySessions = Array.isArray(data.sandtraySessions) ? [...data.sandtraySessions] : [];
 
   data.accounts.forEach((account) => {
     if (!profiles.some((profile) => profile.userId === account.userId)) {
@@ -265,8 +331,49 @@ function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
     preferences: preferences.filter((preference) => userIds.has(preference.userId)),
     consents: consents.filter((consent) => userIds.has(consent.userId)),
     workspaces: workspaces.filter((workspace) => userIds.has(workspace.userId)),
+    sandtraySessions: sandtraySessions.filter((session) => userIds.has(session.userId)).slice(0, 1000),
     auditLogs: data.auditLogs.slice(0, 240),
     exportedAt: data.exportedAt,
+  };
+}
+
+function buildSandtrayFeatureSummary(
+  objects: SandboxObject[],
+  events: SandboxEvent[],
+  analysis: SandboxAnalysis,
+): SandtraySessionArchive["featureSummary"] {
+  const zoneDistribution = Object.fromEntries(analysis.grid.map((cell) => [cell.label, cell.count]));
+  const dominantCategories = Object.entries(analysis.categoryCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 4)
+    .map(([category]) => category);
+  const dominantZones = analysis.grid
+    .filter((cell) => cell.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 4)
+    .map((cell) => `${cell.label}${cell.count}`);
+  const addEvents = events.filter((event) => event.type === "add");
+  const changedEvent = [...events].reverse().find((event) => event.objectId);
+  const firstPlacedAssetId = addEvents[0]?.assetId;
+  const firstPlacedAsset = firstPlacedAssetId
+    ? objects.find((object) => object.assetId === firstPlacedAssetId)?.name
+    : undefined;
+  const lastChangedObject = changedEvent?.objectId
+    ? objects.find((object) => object.id === changedEvent.objectId)?.name
+    : undefined;
+
+  return {
+    objectCount: objects.length,
+    eventCount: events.length,
+    categoryDistribution: analysis.categoryCounts,
+    riskDistribution: analysis.riskCounts,
+    zoneDistribution,
+    centerCount: analysis.centerObjects.length,
+    boundaryCount: analysis.boundaryObjects.length,
+    firstPlacedAsset,
+    lastChangedObject,
+    dominantCategories,
+    dominantZones,
   };
 }
 
