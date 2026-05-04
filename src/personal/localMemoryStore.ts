@@ -14,6 +14,7 @@ import {
   type PersonalAgeGroup,
   type PersonalAuditLog,
   type PersonalDataBundle,
+  type PersonalMemoryCandidate,
   type PersonalRole,
   type SandtraySessionArchive,
   type UserWorkspace,
@@ -76,6 +77,7 @@ export function createDefaultPersonalData(): PersonalDataBundle {
     consents,
     workspaces,
     sandtraySessions: [],
+    memoryCandidates: [],
     auditLogs,
   };
 }
@@ -109,6 +111,7 @@ export function createLocalPersonalUser(
     consents: [...data.consents, ...createDefaultConsents(userId, now)],
     workspaces: [...data.workspaces, createUserWorkspace(userId, `${displayName}的沙盘工作区`, now)],
     sandtraySessions: data.sandtraySessions,
+    memoryCandidates: data.memoryCandidates,
     auditLogs: [
       createAuditLog({
         userId,
@@ -163,6 +166,67 @@ export function createSandtraySessionArchive(input: {
     updatedAt: now,
     archivedAt: now,
   };
+}
+
+export function extractMemoryCandidatesFromSandtraySession(
+  data: PersonalDataBundle,
+  session: SandtraySessionArchive,
+): { data: PersonalDataBundle; createdCount: number } {
+  const existingKeys = new Set(data.memoryCandidates.map((candidate) => buildMemoryCandidateKey(candidate)));
+  const candidates = buildMemoryCandidatesForSession(session).filter(
+    (candidate) => !existingKeys.has(buildMemoryCandidateKey(candidate)),
+  );
+
+  if (candidates.length === 0) {
+    return { data, createdCount: 0 };
+  }
+
+  return {
+    data: {
+      ...data,
+      memoryCandidates: [...candidates, ...data.memoryCandidates].slice(0, 2000),
+    },
+    createdCount: candidates.length,
+  };
+}
+
+export function updatePersonalMemoryCandidate(
+  data: PersonalDataBundle,
+  memoryId: string,
+  patch: Partial<Pick<PersonalMemoryCandidate, "status" | "includeInAgentContext">>,
+): PersonalDataBundle {
+  const now = new Date().toISOString();
+  return {
+    ...data,
+    memoryCandidates: data.memoryCandidates.map((candidate) => {
+      if (candidate.memoryId !== memoryId) {
+        return candidate;
+      }
+
+      const nextStatus = patch.status ?? candidate.status;
+      return {
+        ...candidate,
+        ...patch,
+        updatedAt: now,
+        confirmedAt: nextStatus === "confirmed" ? now : candidate.confirmedAt,
+        dismissedAt: nextStatus === "dismissed" ? now : nextStatus === "confirmed" ? undefined : candidate.dismissedAt,
+        retiredAt: nextStatus === "retired" ? now : nextStatus === "confirmed" ? undefined : candidate.retiredAt,
+      };
+    }),
+  };
+}
+
+export function getConfirmedMemoryContext(data: PersonalDataBundle, userId: string): string[] {
+  return data.memoryCandidates
+    .filter(
+      (candidate) =>
+        candidate.userId === userId &&
+        candidate.status === "confirmed" &&
+        candidate.includeInAgentContext,
+    )
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 8)
+    .map((candidate) => `${candidate.title}：${candidate.summary}`);
 }
 
 export function markSandtrayArchiveRestored(
@@ -296,6 +360,7 @@ function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
   const consents = [...data.consents];
   const workspaces = [...data.workspaces];
   const sandtraySessions = Array.isArray(data.sandtraySessions) ? [...data.sandtraySessions] : [];
+  const memoryCandidates = Array.isArray(data.memoryCandidates) ? [...data.memoryCandidates] : [];
 
   data.accounts.forEach((account) => {
     if (!profiles.some((profile) => profile.userId === account.userId)) {
@@ -332,9 +397,107 @@ function normalizePersonalData(data: PersonalDataBundle): PersonalDataBundle {
     consents: consents.filter((consent) => userIds.has(consent.userId)),
     workspaces: workspaces.filter((workspace) => userIds.has(workspace.userId)),
     sandtraySessions: sandtraySessions.filter((session) => userIds.has(session.userId)).slice(0, 1000),
+    memoryCandidates: memoryCandidates
+      .filter((candidate) => userIds.has(candidate.userId))
+      .slice(0, 2000),
     auditLogs: data.auditLogs.slice(0, 240),
     exportedAt: data.exportedAt,
   };
+}
+
+function buildMemoryCandidatesForSession(session: SandtraySessionArchive): PersonalMemoryCandidate[] {
+  const now = new Date().toISOString();
+  const base = {
+    userId: session.userId,
+    sourceSessionId: session.sessionId,
+    sourceSnapshotId: session.snapshot.snapshotId,
+    status: "candidate" as const,
+    includeInAgentContext: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const summary = session.featureSummary;
+  const objectNames = session.snapshot.objects.map((object) => object.name);
+  const topCategories = summary.dominantCategories.slice(0, 3);
+  const topZones = summary.dominantZones.slice(0, 3);
+  const riskText = Object.entries(summary.riskDistribution)
+    .filter(([, count]) => count > 0)
+    .map(([risk, count]) => `${risk}:${count}`)
+    .join("、");
+  const recentEvents = session.snapshot.events.slice(-4).map((event) => event.label);
+  const environmentText = `${session.snapshot.environment.weather === "rainy" ? "雨天" : session.snapshot.environment.weather === "cloudy" ? "阴天" : "晴天"} · ${session.snapshot.environment.light === "night" ? "黑夜" : "白天"}`;
+  const candidates: PersonalMemoryCandidate[] = [];
+
+  candidates.push({
+    ...base,
+    memoryId: createId("memory"),
+    kind: "session_summary",
+    title: `作品回顾：${session.title}`,
+    summary: `这次作品包含 ${summary.objectCount} 个沙具，主要对象有 ${objectNames.slice(0, 8).join("、") || "暂无"}；中心 ${summary.centerCount} 个，边界 ${summary.boundaryCount} 个。`,
+    evidence: [
+      `档案时间：${new Date(session.archivedAt).toLocaleString("zh-CN")}`,
+      `环境：${environmentText}`,
+      `风险分布：${riskText || "以常规标签为主"}`,
+    ],
+    tags: ["作品摘要", "沙盘档案"],
+    confidence: 0.72,
+  });
+
+  if (topCategories.length > 0) {
+    candidates.push({
+      ...base,
+      memoryId: createId("memory"),
+      kind: "theme_pattern",
+      title: "可能反复出现的沙具主题",
+      summary: `本次作品中较突出的类别是 ${topCategories.join("、")}。这只是观察线索，需由用户确认是否具有个人意义。`,
+      evidence: topCategories.map((category) => `${category}：${summary.categoryDistribution[category] ?? 0} 个`),
+      tags: ["主题线索", ...topCategories],
+      confidence: 0.62,
+    });
+  }
+
+  if (topZones.length > 0) {
+    candidates.push({
+      ...base,
+      memoryId: createId("memory"),
+      kind: "spatial_pattern",
+      title: "空间摆放线索",
+      summary: `对象集中出现在 ${topZones.join("、")}，中心区域有 ${summary.centerCount} 个对象。此线索只用于后续提问，不代表固定解释。`,
+      evidence: topZones,
+      tags: ["空间分布", "九宫格"],
+      confidence: 0.58,
+    });
+  }
+
+  if (summary.firstPlacedAsset || summary.lastChangedObject || recentEvents.length > 0) {
+    candidates.push({
+      ...base,
+      memoryId: createId("memory"),
+      kind: "process_note",
+      title: "创作过程线索",
+      summary: `创作可从“最先放置：${summary.firstPlacedAsset ?? "未记录"}”和“最近变化：${summary.lastChangedObject ?? "未记录"}”继续回看。`,
+      evidence: recentEvents.length > 0 ? recentEvents : ["暂无详细事件"],
+      tags: ["过程回顾", "事件流"],
+      confidence: 0.56,
+    });
+  }
+
+  candidates.push({
+    ...base,
+    memoryId: createId("memory"),
+    kind: "environment_note",
+    title: "环境选择线索",
+    summary: `该作品保存在 ${environmentText} 环境下。后续可询问用户这种天气和光照是否贴合当时感受。`,
+    evidence: [`天气光照：${environmentText}`],
+    tags: ["环境", session.snapshot.environment.weather, session.snapshot.environment.light],
+    confidence: 0.48,
+  });
+
+  return candidates;
+}
+
+function buildMemoryCandidateKey(candidate: PersonalMemoryCandidate): string {
+  return [candidate.userId, candidate.sourceSessionId ?? "", candidate.kind, candidate.title].join("::");
 }
 
 function buildSandtrayFeatureSummary(

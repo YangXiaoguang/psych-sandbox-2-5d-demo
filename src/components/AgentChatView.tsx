@@ -22,6 +22,7 @@ interface AgentChatViewProps {
   objects: SandboxObject[];
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
+  personalMemoryContext: string[];
   onConversationsChange: Dispatch<SetStateAction<AgentConversation[]>>;
 }
 
@@ -32,6 +33,7 @@ export function AgentChatView({
   objects,
   events,
   analysis,
+  personalMemoryContext,
   onConversationsChange,
 }: AgentChatViewProps): JSX.Element {
   const enabledAgents = useMemo(() => agents.filter((agent) => agent.enabled), [agents]);
@@ -139,7 +141,7 @@ export function AgentChatView({
     const userMessage: AgentMessage = { id: createId("message"), role: "user", text, createdAt: now };
     const assistantMessage: AgentMessage = { id: createId("message"), role: "assistant", text: "", createdAt: now };
     const targetConversationId = conversation.id;
-    const requestMessages = buildAgentMessages(agent, conversation.messages, text, sceneSummary);
+    const requestMessages = buildAgentMessages(agent, conversation.messages, text, sceneSummary, personalMemoryContext);
 
     setDraft("");
     setStreamingMessageId(assistantMessage.id);
@@ -184,7 +186,7 @@ export function AgentChatView({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const fallback = createAgentReply(agent, text, sceneSummary);
+      const fallback = createAgentReply(agent, text, sceneSummary, personalMemoryContext);
       setStreamStatus(`真实 LLM 不可用，已回退本地模拟：${message}`);
       streamLocalFallback(targetConversationId, assistantMessage.id, fallback);
       return;
@@ -383,12 +385,18 @@ function buildAgentMessages(
   history: AgentMessage[],
   userInput: string,
   sceneSummary: string,
+  personalMemoryContext: string[],
 ): LlmChatMessage[] {
+  const memoryText =
+    personalMemoryContext.length > 0
+      ? `已确认的个人记忆上下文：${personalMemoryContext.join("；")}`
+      : "已确认的个人记忆上下文：暂无。";
   const system = [
     agent.systemPrompt,
     `当前沙盘摘要：${sceneSummary}`,
+    memoryText,
     "重要边界：你是心理沙盘对话伙伴，不做诊断，不替代专业心理咨询或医疗建议。不要声称自己是真实历史人物本人，只能作为理论取向角色进行温和交流。",
-    "回答风格：中文，温暖、简洁、开放式提问优先。每次回复先回应用户，再提出一个可继续探索的问题。",
+    "回答风格：中文，温暖、简洁、开放式提问优先。引用记忆时必须用“你曾经确认过的线索里...”这类不武断表达。每次回复先回应用户，再提出一个可继续探索的问题。",
   ].join("\n\n");
   const historyMessages: LlmChatMessage[] = history
     .filter((message) => message.text.trim())
@@ -405,22 +413,31 @@ function buildAgentMessages(
   ];
 }
 
-function createAgentReply(agent: PsychAgentProfile, input: string, sceneSummary: string): string {
+function createAgentReply(
+  agent: PsychAgentProfile,
+  input: string,
+  sceneSummary: string,
+  personalMemoryContext: string[],
+): string {
   const isDreamLike = /梦|象征|意象|画面/.test(input) || agent.avatarStyle === "dream";
   const isProcess = /过程|刚才|顺序|回顾/.test(input);
   const isFeeling = /感受|情绪|难受|害怕|开心|压力/.test(input);
+  const memorySentence =
+    personalMemoryContext.length > 0
+      ? `你曾经确认过的线索里有：${personalMemoryContext.slice(0, 2).join("；")}。我会把它当作参考，而不是结论。`
+      : "";
 
   if (isDreamLike) {
-    return `我会先把它当作一个意象来陪你看，而不是急着解释。${sceneSummary} 如果这个画面像一场梦，你觉得最有生命力的部分在哪里？也许我们可以从那里开始，看看它想靠近什么，或正在守护什么。`;
+    return `我会先把它当作一个意象来陪你看，而不是急着解释。${memorySentence}${sceneSummary} 如果这个画面像一场梦，你觉得最有生命力的部分在哪里？也许我们可以从那里开始，看看它想靠近什么，或正在守护什么。`;
   }
 
   if (isProcess) {
-    return `我们可以温柔地回看创作过程。${sceneSummary} 我会建议先找一个“转折点”：哪一步之后，沙盘的气氛变了？这个变化不需要马上被解释，只要先被看见。`;
+    return `我们可以温柔地回看创作过程。${memorySentence}${sceneSummary} 我会建议先找一个“转折点”：哪一步之后，沙盘的气氛变了？这个变化不需要马上被解释，只要先被看见。`;
   }
 
   if (isFeeling) {
-    return `谢谢你把感受带进来。${agent.name} 会先陪你停一下：这种感受更像靠近、躲开、紧绷，还是松了一点？${sceneSummary} 你也可以只选一个沙具，让它替你说一小句话。`;
+    return `谢谢你把感受带进来。${memorySentence}${agent.name} 会先陪你停一下：这种感受更像靠近、躲开、紧绷，还是松了一点？${sceneSummary} 你也可以只选一个沙具，让它替你说一小句话。`;
   }
 
-  return `我听见了。以${agent.school}的方式，我们可以先保持开放，不把沙具固定成某个含义。${sceneSummary} 如果你愿意，下一步可以说说：这里哪个位置最吸引你，哪个位置又让你有一点距离感？`;
+  return `我听见了。以${agent.school}的方式，我们可以先保持开放，不把沙具固定成某个含义。${memorySentence}${sceneSummary} 如果你愿意，下一步可以说说：这里哪个位置最吸引你，哪个位置又让你有一点距离感？`;
 }

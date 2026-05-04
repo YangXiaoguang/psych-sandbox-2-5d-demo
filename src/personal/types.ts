@@ -30,10 +30,19 @@ export type AuditResourceType =
   | "workspace"
   | "scene"
   | "sandtray_session"
+  | "memory_candidate"
   | "conversation"
   | "archive";
 export type SandtrayArchiveMode = "free_creation" | "guided_theme" | "assessment" | "review";
 export type SandtrayArchiveStatus = "draft" | "archived" | "restored";
+export type MemoryCandidateKind =
+  | "session_summary"
+  | "theme_pattern"
+  | "symbol_preference"
+  | "spatial_pattern"
+  | "process_note"
+  | "environment_note";
+export type MemoryCandidateStatus = "candidate" | "confirmed" | "dismissed" | "retired";
 
 export interface PersonalAccount {
   userId: string;
@@ -155,6 +164,26 @@ export interface SandtraySessionArchive {
   restoredAt?: string;
 }
 
+export interface PersonalMemoryCandidate {
+  memoryId: string;
+  userId: string;
+  sourceSessionId?: string;
+  sourceSnapshotId?: string;
+  kind: MemoryCandidateKind;
+  status: MemoryCandidateStatus;
+  title: string;
+  summary: string;
+  evidence: string[];
+  tags: string[];
+  confidence: number;
+  includeInAgentContext: boolean;
+  createdAt: string;
+  updatedAt: string;
+  confirmedAt?: string;
+  dismissedAt?: string;
+  retiredAt?: string;
+}
+
 export interface PersonalDataBundle {
   schema: typeof PERSONAL_MEMORY_SCHEMA;
   version: typeof PERSONAL_MEMORY_VERSION;
@@ -165,6 +194,7 @@ export interface PersonalDataBundle {
   consents: ConsentRecord[];
   workspaces: UserWorkspace[];
   sandtraySessions: SandtraySessionArchive[];
+  memoryCandidates: PersonalMemoryCandidate[];
   auditLogs: PersonalAuditLog[];
   exportedAt?: string;
 }

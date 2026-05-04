@@ -14,6 +14,7 @@ interface RightPanelProps {
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
   llmProviders: LlmProviderConfig[];
+  personalMemoryContext: string[];
   activeTab: RightPanelTab;
   collapsed: boolean;
   onTabChange: (tab: RightPanelTab) => void;
@@ -28,6 +29,7 @@ export function RightPanel({
   events,
   analysis,
   llmProviders,
+  personalMemoryContext,
   activeTab,
   collapsed,
   onTabChange,
@@ -131,6 +133,7 @@ export function RightPanel({
           events={events}
           analysis={analysis}
           llmProviders={llmProviders}
+          personalMemoryContext={personalMemoryContext}
         />
       )}
     </aside>

@@ -47,6 +47,7 @@ import {
 import {
   createLocalPersonalUser,
   getActiveProfile,
+  getConfirmedMemoryContext,
   loadPersonalData,
   savePersonalData,
   switchActivePersonalUser,
@@ -92,6 +93,10 @@ export function App(): JSX.Element {
   const sandboxFocusMode = activeView === "sandbox" && layoutPreferences.focusMode;
   const rightPanelCollapsed = layoutPreferences.rightPanelCollapsed;
   const activeProfile = useMemo(() => getActiveProfile(personalData), [personalData]);
+  const personalMemoryContext = useMemo(
+    () => getConfirmedMemoryContext(personalData, activeUserId),
+    [activeUserId, personalData],
+  );
 
   useEffect(() => {
     saveSceneForUser(activeUserId, { objects, events });
@@ -515,6 +520,7 @@ export function App(): JSX.Element {
                   events={events}
                   analysis={analysis}
                   llmProviders={llmProviders}
+                  personalMemoryContext={personalMemoryContext}
                   onClose={() => patchLayoutPreferences({ aiDrawerOpen: false })}
                 />
               ) : null}
@@ -570,6 +576,7 @@ export function App(): JSX.Element {
               events={events}
               analysis={analysis}
               llmProviders={llmProviders}
+              personalMemoryContext={personalMemoryContext}
               activeTab={rightPanelTab}
               collapsed={rightPanelCollapsed}
               onTabChange={setRightPanelTab}
@@ -589,6 +596,7 @@ export function App(): JSX.Element {
           objects={objects}
           events={events}
           analysis={analysis}
+          personalMemoryContext={personalMemoryContext}
           onConversationsChange={setConversations}
         />
       ) : null}
@@ -629,6 +637,7 @@ function FocusAiCompanionDrawer({
   events,
   analysis,
   llmProviders,
+  personalMemoryContext,
   onClose,
 }: {
   objects: SandboxObject[];
@@ -636,6 +645,7 @@ function FocusAiCompanionDrawer({
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
   llmProviders: LlmProviderConfig[];
+  personalMemoryContext: string[];
   onClose: () => void;
 }): JSX.Element {
   return (
@@ -659,6 +669,7 @@ function FocusAiCompanionDrawer({
           events={events}
           analysis={analysis}
           llmProviders={llmProviders}
+          personalMemoryContext={personalMemoryContext}
         />
       </div>
     </aside>

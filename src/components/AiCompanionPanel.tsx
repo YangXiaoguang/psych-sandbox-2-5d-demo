@@ -11,6 +11,7 @@ interface AiCompanionPanelProps {
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
   llmProviders: LlmProviderConfig[];
+  personalMemoryContext: string[];
 }
 
 interface CompanionMessage {
@@ -34,6 +35,7 @@ interface CompanionContext {
   objectNames: string[];
   selectedName: string | null;
   centerObjectNames: string[];
+  memoryNotes: string[];
 }
 
 const QUICK_PROMPTS: QuickPrompt[] = [
@@ -70,6 +72,7 @@ export function AiCompanionPanel({
   events,
   analysis,
   llmProviders,
+  personalMemoryContext,
 }: AiCompanionPanelProps): JSX.Element {
   const [messages, setMessages] = useState<CompanionMessage[]>(() => [
     {
@@ -86,8 +89,8 @@ export function AiCompanionPanel({
   const abortRef = useRef<AbortController | null>(null);
 
   const contextSummary = useMemo(
-    () => buildContextSummary(objects, selectedObject, events, analysis),
-    [analysis, events, objects, selectedObject],
+    () => buildContextSummary(objects, selectedObject, events, analysis, personalMemoryContext),
+    [analysis, events, objects, personalMemoryContext, selectedObject],
   );
 
   useEffect(() => {
@@ -297,6 +300,7 @@ function buildContextSummary(
   selectedObject: SandboxObject | null,
   events: SandboxEvent[],
   analysis: SandboxAnalysis,
+  personalMemoryContext: string[],
 ): CompanionContext {
   const activeCells = analysis.grid
     .filter((cell) => cell.count > 0)
@@ -308,6 +312,7 @@ function buildContextSummary(
     selectedObject ? `正在引用: ${selectedObject.name}` : "未选中沙具",
     objects.length > 0 ? `对象: ${objectNames.slice(0, 4).join("、")}` : "空沙盘",
     activeCells.length > 0 ? `区域: ${activeCells.slice(0, 3).join(" / ")}` : "区域未形成集中",
+    personalMemoryContext.length > 0 ? `确认记忆: ${personalMemoryContext.length}` : "暂无确认记忆",
     events.length > 0 ? `最近事件: ${events[events.length - 1]?.label ?? "无"}` : "暂无事件",
   ];
 
@@ -318,6 +323,7 @@ function buildContextSummary(
     objectNames,
     selectedName: selectedObject?.name ?? null,
     centerObjectNames,
+    memoryNotes: personalMemoryContext,
   };
 }
 
@@ -328,7 +334,7 @@ function buildCompanionMessages(
 ): LlmChatMessage[] {
   const system = [
     "你是数字心理沙盘 Demo 中的 AI 沙盘伙伴。你要温暖、简洁、非评判地陪用户整理体验。",
-    "你不能做诊断，不能替代专业心理咨询或医疗建议。不要给出固定象征解释，要用开放式问题帮助用户表达。",
+    "你不能做诊断，不能替代专业心理咨询或医疗建议。不要给出固定象征解释，要用开放式问题帮助用户表达。引用已确认记忆时必须说明它只是用户确认过的参考线索。",
     `当前沙盘上下文：${contextToText(context)}`,
   ].join("\n\n");
   const historyMessages: LlmChatMessage[] = history
@@ -354,7 +360,11 @@ function contextToText(context: CompanionContext): string {
     context.centerObjectNames.length > 0 ? context.centerObjectNames.join("、") : "中心区域暂时没有明显对象";
   const recentText =
     context.recentEvents.length > 0 ? context.recentEvents.map((event) => event.label).join("；") : "暂无事件";
-  return `对象：${objectText}。区域：${regionText}。中心：${centerText}。最近事件：${recentText}。`;
+  const memoryText =
+    context.memoryNotes.length > 0
+      ? `已确认个人记忆：${context.memoryNotes.join("；")}。`
+      : "已确认个人记忆：暂无。";
+  return `对象：${objectText}。区域：${regionText}。中心：${centerText}。最近事件：${recentText}。${memoryText}`;
 }
 
 function createCompanionReply(prompt: string, context: CompanionContext): string {
@@ -368,6 +378,10 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
     context.objectNames.length > 0 ? context.objectNames.slice(0, 8).join("、") : "现在沙盘里还没有放入沙具";
   const centerText =
     context.centerObjectNames.length > 0 ? context.centerObjectNames.join("、") : "中心区域暂时没有明显对象";
+  const memoryText =
+    context.memoryNotes.length > 0
+      ? `你确认过的一些线索包括：${context.memoryNotes.slice(0, 2).join("；")}。我会把它当作参考，不当作结论。`
+      : "";
 
   if (normalized.includes("不要分析") || normalized.includes("陪我聊")) {
     return "好，我们先不急着解释。你可以只说一个很小的感觉，比如这个沙盘让你更靠近、想躲开，还是只是有点说不清。我会跟着你的节奏来。";
@@ -386,7 +400,7 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
   }
 
   if (normalized.includes("整理") || normalized.includes("文字") || normalized.includes("总结")) {
-    return `我整理一版中性草稿：当前作品里包含${objectText}，沙具分布主要出现在${regionText}，中心附近有${centerText}。这些位置和对象可以作为继续讨论的线索，但不代表固定含义。你可以在这个基础上补充：哪些沙具让你感觉亲近，哪些让你感觉有距离。`;
+    return `我整理一版中性草稿：当前作品里包含${objectText}，沙具分布主要出现在${regionText}，中心附近有${centerText}。${memoryText}这些位置和对象可以作为继续讨论的线索，但不代表固定含义。你可以在这个基础上补充：哪些沙具让你感觉亲近，哪些让你感觉有距离。`;
   }
 
   if (normalized.includes("选中") || normalized.includes("沙具")) {
@@ -395,5 +409,5 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
       : "现在还没有选中具体沙具。你可以点一下画布里的某个沙具，我会把它作为当前话题；也可以直接告诉我你最在意哪一个。";
   }
 
-  return `我在这里。当前作品的一个温和线索是：${regionText}。我们可以先从你的感受开始，而不是从解释开始。看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？`;
+  return `我在这里。${memoryText}当前作品的一个温和线索是：${regionText}。我们可以先从你的感受开始，而不是从解释开始。看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？`;
 }

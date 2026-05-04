@@ -15,7 +15,9 @@ import {
   Search,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   UserRound,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getEnvironmentLabel } from "../data/environment";
@@ -27,13 +29,16 @@ import {
   type ConsentType,
   type CreatePersonalUserInput,
   type IdentityProfile,
+  type MemoryCandidateStatus,
   type PersonalAgeGroup,
   type PersonalDataBundle,
+  type PersonalMemoryCandidate,
   type PersonalRole,
   type SandtraySessionArchive,
 } from "../personal/types";
 import {
   createSandtraySessionArchive,
+  extractMemoryCandidatesFromSandtraySession,
   exportPersonalArchive,
   getActiveAccount,
   getActivePreferences,
@@ -41,6 +46,7 @@ import {
   getUserConsents,
   markSandtrayArchiveRestored,
   recordPersonalAudit,
+  updatePersonalMemoryCandidate,
 } from "../personal/localMemoryStore";
 
 interface PersonalCenterProps {
@@ -89,6 +95,13 @@ const REPLY_LENGTH_LABELS: Record<CommunicationPreferences["replyLength"], strin
 const USER_DIRECTORY_PAGE_SIZE = 12;
 const SANDTRAY_ARCHIVE_PAGE_SIZE = 4;
 
+const MEMORY_STATUS_LABELS: Record<MemoryCandidateStatus, string> = {
+  candidate: "待确认",
+  confirmed: "已确认",
+  dismissed: "已忽略",
+  retired: "已撤回",
+};
+
 export function PersonalCenter({
   personalData,
   objects,
@@ -107,6 +120,8 @@ export function PersonalCenter({
   const consents = getUserConsents(personalData, activeAccount.userId);
   const activeWorkspace = personalData.workspaces.find((workspace) => workspace.userId === activeAccount.userId);
   const canArchiveSandtray = consents.some((consent) => consent.consentType === "sandtray_archive" && consent.granted);
+  const canConfirmLongTermMemory = consents.some((consent) => consent.consentType === "long_term_memory" && consent.granted);
+  const canUseMemoryInAgent = consents.some((consent) => consent.consentType === "ai_personalization" && consent.granted);
   const activeAuditLogs = personalData.auditLogs.filter((log) => log.userId === activeAccount.userId).slice(0, 8);
   const grantedCount = consents.filter((consent) => consent.granted).length;
   const [newUserName, setNewUserName] = useState("");
@@ -121,6 +136,7 @@ export function PersonalCenter({
   const [archiveDescription, setArchiveDescription] = useState("");
   const [archiveQuery, setArchiveQuery] = useState("");
   const [archivePage, setArchivePage] = useState(1);
+  const [memoryQuery, setMemoryQuery] = useState("");
 
   const directoryUsers = useMemo(
     () =>
@@ -203,6 +219,35 @@ export function PersonalCenter({
     (currentArchivePage - 1) * SANDTRAY_ARCHIVE_PAGE_SIZE,
     currentArchivePage * SANDTRAY_ARCHIVE_PAGE_SIZE,
   );
+  const activeMemoryCandidates = useMemo(
+    () =>
+      personalData.memoryCandidates
+        .filter((candidate) => candidate.userId === activeAccount.userId)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [activeAccount.userId, personalData.memoryCandidates],
+  );
+  const confirmedMemoryCount = activeMemoryCandidates.filter((candidate) => candidate.status === "confirmed").length;
+  const agentContextMemoryCount = activeMemoryCandidates.filter(
+    (candidate) => candidate.status === "confirmed" && candidate.includeInAgentContext,
+  ).length;
+  const filteredMemoryCandidates = useMemo(() => {
+    const normalizedQuery = memoryQuery.trim().toLowerCase();
+    return activeMemoryCandidates.filter((candidate) => {
+      if (!normalizedQuery) {
+        return true;
+      }
+      return [
+        candidate.title,
+        candidate.summary,
+        MEMORY_STATUS_LABELS[candidate.status],
+        ...candidate.tags,
+        ...candidate.evidence,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery);
+    });
+  }, [activeMemoryCandidates, memoryQuery]);
 
   useEffect(() => {
     setArchivePage(1);
@@ -224,12 +269,18 @@ export function PersonalCenter({
       },
       {
         icon: <Brain size={18} />,
+        label: "记忆候选",
+        value: `${confirmedMemoryCount}/${activeMemoryCandidates.length}`,
+        detail: `${agentContextMemoryCount} 条已允许注入 Agent 上下文`,
+      },
+      {
+        icon: <ShieldCheck size={18} />,
         label: "AI 会话",
         value: `${conversations.length}`,
         detail: "Agent 对话按当前用户隔离保存",
       },
       {
-        icon: <ShieldCheck size={18} />,
+        icon: <CheckCircle2 size={18} />,
         label: "授权项",
         value: `${grantedCount}/${consents.length}`,
         detail: "长期记忆默认需要额外确认",
@@ -243,9 +294,12 @@ export function PersonalCenter({
     ],
     [
       analysis.centerObjects.length,
+      activeMemoryCandidates.length,
       consents.length,
       conversations.length,
       events.length,
+      agentContextMemoryCount,
+      confirmedMemoryCount,
       grantedCount,
       objects.length,
       sandtrayArchives.length,
@@ -380,6 +434,36 @@ export function PersonalCenter({
     link.download = `psych-sandtray-session-${session.archivedAt.slice(0, 10)}-${session.sessionId}.json`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExtractMemoryCandidates = (session: SandtraySessionArchive) => {
+    const result = extractMemoryCandidatesFromSandtraySession(personalData, session);
+    onPersonalDataChange(
+      recordPersonalAudit(result.data, {
+        action: "memory_candidates_extracted",
+        resourceType: "memory_candidate",
+        resourceId: session.sessionId,
+        detail:
+          result.createdCount > 0
+            ? `已从历史作品提取 ${result.createdCount} 条候选记忆：${session.title}`
+            : `该历史作品暂无新的候选记忆：${session.title}`,
+      }),
+    );
+  };
+
+  const handleUpdateMemoryCandidate = (
+    candidate: PersonalMemoryCandidate,
+    patch: Partial<Pick<PersonalMemoryCandidate, "status" | "includeInAgentContext">>,
+    detail: string,
+  ) => {
+    onPersonalDataChange(
+      recordPersonalAudit(updatePersonalMemoryCandidate(personalData, candidate.memoryId, patch), {
+        action: "memory_candidate_updated",
+        resourceType: "memory_candidate",
+        resourceId: candidate.memoryId,
+        detail,
+      }),
+    );
   };
 
   return (
@@ -689,6 +773,10 @@ export function PersonalCenter({
                           ))}
                         </div>
                         <div className="personal-archive-actions">
+                          <button type="button" onClick={() => handleExtractMemoryCandidates(session)}>
+                            <Sparkles size={14} />
+                            提取候选
+                          </button>
                           <button type="button" onClick={() => handleRestoreArchive(session)}>
                             <RotateCcw size={14} />
                             恢复到沙盘
@@ -882,16 +970,134 @@ export function PersonalCenter({
                 <li>授权项与审计日志可见</li>
               </ul>
             </section>
+            <section className="personal-memory-candidates-card">
+              <div className="personal-memory-header">
+                <h4>
+                  <Brain size={15} />
+                  记忆候选
+                </h4>
+                <span>
+                  {confirmedMemoryCount} / {activeMemoryCandidates.length}
+                </span>
+              </div>
+              <p>
+                候选记忆只来自已保存的沙盘档案。确认前不会进入长期记忆；开启 AI 个性化后，才可选择注入 Agent 上下文。
+              </p>
+              <label className="personal-memory-search">
+                <Search size={14} />
+                <input
+                  value={memoryQuery}
+                  onChange={(event) => setMemoryQuery(event.target.value)}
+                  placeholder="搜索候选、标签、证据..."
+                />
+              </label>
+              {!canConfirmLongTermMemory ? (
+                <p className="personal-memory-warning">要确认长期记忆，请先开启“长期记忆候选”授权。</p>
+              ) : null}
+              {!canUseMemoryInAgent ? (
+                <p className="personal-memory-warning">要注入 Agent，请先开启“AI 个性化上下文”授权。</p>
+              ) : null}
+              <div className="personal-memory-candidate-list">
+                {filteredMemoryCandidates.length > 0 ? (
+                  filteredMemoryCandidates.slice(0, 8).map((candidate) => (
+                    <article key={candidate.memoryId} className={`personal-memory-candidate ${candidate.status}`}>
+                      <div>
+                        <strong>{candidate.title}</strong>
+                        <span>{MEMORY_STATUS_LABELS[candidate.status]}</span>
+                      </div>
+                      <p>{candidate.summary}</p>
+                      <div className="personal-memory-evidence">
+                        {candidate.evidence.slice(0, 2).map((item) => (
+                          <em key={item}>{item}</em>
+                        ))}
+                      </div>
+                      <div className="personal-memory-tags">
+                        {candidate.tags.slice(0, 4).map((tag) => (
+                          <span key={tag}>{tag}</span>
+                        ))}
+                      </div>
+                      <div className="personal-memory-actions">
+                        {candidate.status !== "confirmed" ? (
+                          <button
+                            type="button"
+                            disabled={!canConfirmLongTermMemory}
+                            onClick={() =>
+                              handleUpdateMemoryCandidate(
+                                candidate,
+                                { status: "confirmed", includeInAgentContext: canUseMemoryInAgent },
+                                `已确认候选记忆：${candidate.title}`,
+                              )
+                            }
+                          >
+                            <CheckCircle2 size={14} />
+                            确认
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateMemoryCandidate(
+                                candidate,
+                                { status: "retired", includeInAgentContext: false },
+                                `已撤回长期记忆：${candidate.title}`,
+                              )
+                            }
+                          >
+                            <RotateCcw size={14} />
+                            撤回
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={candidate.status === "confirmed" || candidate.status === "retired"}
+                          onClick={() =>
+                            handleUpdateMemoryCandidate(
+                              candidate,
+                              { status: "dismissed", includeInAgentContext: false },
+                              `已忽略候选记忆：${candidate.title}`,
+                            )
+                          }
+                        >
+                          <XCircle size={14} />
+                          忽略
+                        </button>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={candidate.status === "confirmed" && candidate.includeInAgentContext}
+                            disabled={candidate.status !== "confirmed" || !canUseMemoryInAgent}
+                            onChange={(event) =>
+                              handleUpdateMemoryCandidate(
+                                candidate,
+                                { includeInAgentContext: event.target.checked },
+                                `${event.target.checked ? "已允许" : "已停止"}注入 Agent 上下文：${candidate.title}`,
+                              )
+                            }
+                          />
+                          Agent
+                        </label>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="personal-memory-empty">
+                    <Sparkles size={17} />
+                    <strong>暂无候选记忆</strong>
+                    <span>先保存一个历史作品，再在档案卡片中点击“提取候选”。</span>
+                  </div>
+                )}
+              </div>
+            </section>
             <section>
               <h4>
                 <Brain size={15} />
                 下一阶段
               </h4>
               <ul>
-                <li>沙盘会话档案与历史作品</li>
-                <li>候选记忆提取与用户确认</li>
-                <li>Context Packet 注入 Agent</li>
-                <li>我的记忆 Dashboard</li>
+                <li>跨会话记忆聚合与冲突提示</li>
+                <li>用户可编辑的记忆 Dashboard</li>
+                <li>Context Packet 可视化预览</li>
+                <li>服务端同步和权限策略</li>
               </ul>
             </section>
             <section className="personal-workspace-card">
