@@ -19,6 +19,7 @@ import {
   type PersonalArchiveDiffReport,
   type PersonalArchiveImportMode,
   type PersonalArchiveImportResult,
+  type PersonalArchiveRestorePoint,
   type PersonalArchiveValidationReport,
   type PersonalArchiveValidationSummary,
   type PersonalAgeGroup,
@@ -34,6 +35,8 @@ import {
 import type { SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 
 const PERSONAL_DATA_KEY = "psych-sandbox-2-5d-demo.personal-memory-os.v1";
+const PERSONAL_RESTORE_POINTS_KEY = "psych-sandbox-2-5d-demo.personal-memory-os.restore-points.v1";
+const RESTORE_POINT_LIMIT = 5;
 
 export function loadPersonalData(): PersonalDataBundle {
   const parsed = readJson<PersonalDataBundle>(PERSONAL_DATA_KEY);
@@ -831,6 +834,73 @@ export function importPersonalArchive(
   };
 }
 
+export function loadPersonalArchiveRestorePoints(): PersonalArchiveRestorePoint[] {
+  const parsed = readJson<PersonalArchiveRestorePoint[]>(PERSONAL_RESTORE_POINTS_KEY);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed
+    .filter(isPersonalArchiveRestorePoint)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, RESTORE_POINT_LIMIT);
+}
+
+export function createPersonalArchiveRestorePoint(
+  data: PersonalDataBundle,
+  input: {
+    importMode: PersonalArchiveImportMode;
+    sourceFileName?: string;
+    reason?: string;
+  },
+): PersonalArchiveRestorePoint {
+  const now = new Date().toISOString();
+  const snapshot = normalizePersonalData(data);
+  return {
+    restorePointId: createId("restore_point"),
+    label: `导入前快照 ${new Date(now).toLocaleString("zh-CN")}`,
+    reason: input.reason ?? "执行个人档案导入前自动创建，便于误导入后恢复。",
+    sourceFileName: input.sourceFileName,
+    importMode: input.importMode,
+    createdAt: now,
+    summary: summarizePersonalData(snapshot),
+    snapshot,
+  };
+}
+
+export function savePersonalArchiveRestorePoint(point: PersonalArchiveRestorePoint): PersonalArchiveRestorePoint[] {
+  const nextPoints = [
+    point,
+    ...loadPersonalArchiveRestorePoints().filter((item) => item.restorePointId !== point.restorePointId),
+  ].slice(0, RESTORE_POINT_LIMIT);
+  writeJson(PERSONAL_RESTORE_POINTS_KEY, nextPoints);
+  return nextPoints;
+}
+
+export function deletePersonalArchiveRestorePoint(restorePointId: string): PersonalArchiveRestorePoint[] {
+  const nextPoints = loadPersonalArchiveRestorePoints().filter((point) => point.restorePointId !== restorePointId);
+  writeJson(PERSONAL_RESTORE_POINTS_KEY, nextPoints);
+  return nextPoints;
+}
+
+export function restorePersonalArchiveRestorePoint(
+  restorePointId: string,
+): { data: PersonalDataBundle; point: PersonalArchiveRestorePoint } | null {
+  const point = loadPersonalArchiveRestorePoints().find((item) => item.restorePointId === restorePointId);
+  if (!point) {
+    return null;
+  }
+
+  const restoredData = recordPersonalAudit(normalizePersonalData(point.snapshot), {
+    userId: point.snapshot.activeUserId,
+    action: "personal_archive_restore_point_restored",
+    resourceType: "archive",
+    resourceId: point.restorePointId,
+    detail: `已恢复导入前快照：${point.label}`,
+  });
+  return { data: restoredData, point };
+}
+
 interface ArchiveCollectionConfig {
   key: PersonalArchiveDiffDomainKey;
   label: string;
@@ -1506,6 +1576,21 @@ function isPersonalDataBundle(value: unknown): value is PersonalDataBundle {
     Array.isArray(data.consents) &&
     Array.isArray(data.workspaces) &&
     Array.isArray(data.auditLogs)
+  );
+}
+
+function isPersonalArchiveRestorePoint(value: unknown): value is PersonalArchiveRestorePoint {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const point = value as Partial<PersonalArchiveRestorePoint>;
+  return (
+    typeof point.restorePointId === "string" &&
+    typeof point.label === "string" &&
+    typeof point.createdAt === "string" &&
+    (point.importMode === "merge" || point.importMode === "replace") &&
+    Boolean(point.snapshot) &&
+    isPersonalDataBundle(point.snapshot)
   );
 }
 

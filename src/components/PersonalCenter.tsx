@@ -39,6 +39,7 @@ import {
   type PersonalArchiveConflictPolicy,
   type PersonalArchiveDiffDomainKey,
   type PersonalArchiveImportMode,
+  type PersonalArchiveRestorePoint,
   type PersonalArchiveValidationReport,
   type PersonalAgeGroup,
   type PersonalDataBundle,
@@ -50,7 +51,9 @@ import {
   buildPersonalArchiveDiffReport,
   buildPersonalContextPacket,
   createMemoryBlockRuleFromCandidate,
+  createPersonalArchiveRestorePoint,
   createSandtraySessionArchive,
+  deletePersonalArchiveRestorePoint,
   extractMemoryCandidatesFromSandtraySession,
   exportPersonalArchive,
   getActiveAccount,
@@ -58,9 +61,12 @@ import {
   getActiveProfile,
   getUserConsents,
   importPersonalArchive,
+  loadPersonalArchiveRestorePoints,
   mergePersonalMemoryCandidates,
   markSandtrayArchiveRestored,
   recordPersonalAudit,
+  restorePersonalArchiveRestorePoint,
+  savePersonalArchiveRestorePoint,
   updateMemoryBlockRule,
   updatePersonalMemoryCandidate,
   validatePersonalArchivePayload,
@@ -192,6 +198,9 @@ export function PersonalCenter({
   const [archiveImportReport, setArchiveImportReport] = useState<PersonalArchiveValidationReport | null>(null);
   const [archiveImportMessage, setArchiveImportMessage] = useState("");
   const [archiveConflictPolicies, setArchiveConflictPolicies] = useState<PersonalArchiveConflictPolicies>({});
+  const [archiveRestorePoints, setArchiveRestorePoints] = useState<PersonalArchiveRestorePoint[]>(() =>
+    loadPersonalArchiveRestorePoints(),
+  );
 
   const directoryUsers = useMemo(
     () =>
@@ -518,12 +527,18 @@ export function PersonalCenter({
       return;
     }
 
+    const restorePoint = createPersonalArchiveRestorePoint(personalData, {
+      importMode: archiveImportMode,
+      sourceFileName: archiveImportFileName || undefined,
+    });
+    setArchiveRestorePoints(savePersonalArchiveRestorePoint(restorePoint));
+
     const result = importPersonalArchive(personalData, archiveImportCandidate, archiveImportMode, archiveConflictPolicies);
     onPersonalDataChange(result.data);
     setArchiveImportCandidate(null);
     setArchiveImportReport(result.report);
     setArchiveImportMessage(
-      `${archiveImportMode === "replace" ? "替换" : "合并"}导入完成：当前共有 ${result.report.summary.accounts} 个用户、${result.report.summary.sandtraySessions} 个历史作品、${result.report.summary.memoryCandidates} 条记忆候选。`,
+      `${archiveImportMode === "replace" ? "替换" : "合并"}导入完成：已自动创建导入前恢复点。当前共有 ${result.report.summary.accounts} 个用户、${result.report.summary.sandtraySessions} 个历史作品、${result.report.summary.memoryCandidates} 条记忆候选。`,
     );
   };
 
@@ -535,6 +550,35 @@ export function PersonalCenter({
       ...current,
       [domainKey]: policy,
     }));
+  };
+
+  const handleRestoreImportSnapshot = (point: PersonalArchiveRestorePoint) => {
+    if (
+      !window.confirm(
+        `将 Personal Memory OS 恢复到“${point.label}”。当前未导出的个人中心改动会被该快照覆盖。确认恢复吗？`,
+      )
+    ) {
+      return;
+    }
+
+    const result = restorePersonalArchiveRestorePoint(point.restorePointId);
+    if (!result) {
+      setArchiveRestorePoints(loadPersonalArchiveRestorePoints());
+      setArchiveImportMessage("恢复点不存在或已经被清理。");
+      return;
+    }
+
+    onPersonalDataChange(result.data);
+    setArchiveImportMessage(`已恢复到导入前快照：${result.point.label}`);
+    setArchiveImportCandidate(null);
+    setArchiveImportReport(null);
+    setArchiveImportFileName("");
+    setArchiveConflictPolicies({});
+  };
+
+  const handleDeleteImportSnapshot = (restorePointId: string) => {
+    setArchiveRestorePoints(deletePersonalArchiveRestorePoint(restorePointId));
+    setArchiveImportMessage("已移除该本地恢复点。");
   };
 
   const handleSaveCurrentSandtrayArchive = () => {
@@ -1465,6 +1509,47 @@ export function PersonalCenter({
                   </div>
                 </div>
               ) : null}
+              <div className="personal-restore-points">
+                <div className="personal-restore-head">
+                  <div>
+                    <strong>导入恢复点</strong>
+                    <span>最多保留最近 5 个导入前快照，便于误导入后回退。</span>
+                  </div>
+                  <em>{archiveRestorePoints.length} 个</em>
+                </div>
+                {archiveRestorePoints.length > 0 ? (
+                  <div className="personal-restore-list">
+                    {archiveRestorePoints.map((point) => (
+                      <article key={point.restorePointId} className="personal-restore-item">
+                        <div>
+                          <strong>{point.label}</strong>
+                          <span>
+                            {point.importMode === "replace" ? "替换导入前" : "合并导入前"}
+                            {point.sourceFileName ? ` · ${point.sourceFileName}` : ""}
+                          </span>
+                        </div>
+                        <div className="personal-restore-summary">
+                          <span>{point.summary.accounts} 用户</span>
+                          <span>{point.summary.sandtraySessions} 作品</span>
+                          <span>{point.summary.memoryCandidates} 记忆</span>
+                        </div>
+                        <div className="personal-restore-actions">
+                          <button type="button" onClick={() => handleRestoreImportSnapshot(point)}>
+                            <RotateCcw size={13} />
+                            恢复
+                          </button>
+                          <button type="button" onClick={() => handleDeleteImportSnapshot(point.restorePointId)}>
+                            <XCircle size={13} />
+                            移除
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="personal-restore-empty">还没有恢复点。每次应用导入前，系统会自动保存一个导入前快照。</p>
+                )}
+              </div>
               {archiveImportMessage ? <p className="personal-import-message">{archiveImportMessage}</p> : null}
               <button
                 className="personal-import-apply"

@@ -284,6 +284,17 @@ export interface PersonalArchiveImportResult {
   diffReport: PersonalArchiveDiffReport;
 }
 
+export interface PersonalArchiveRestorePoint {
+  restorePointId: string;
+  label: string;
+  reason: string;
+  sourceFileName?: string;
+  importMode: PersonalArchiveImportMode;
+  createdAt: string;
+  summary: PersonalArchiveValidationSummary;
+  snapshot: PersonalDataBundle;
+}
+
 export interface PersonalArchiveDiffItem {
   id: string;
   label: string;

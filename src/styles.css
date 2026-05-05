@@ -1208,6 +1208,9 @@ button {
 .product-shell.night-mode .personal-import-diff,
 .product-shell.night-mode .personal-import-domain-card,
 .product-shell.night-mode .personal-import-diff-item,
+.product-shell.night-mode .personal-restore-points,
+.product-shell.night-mode .personal-restore-item,
+.product-shell.night-mode .personal-restore-empty,
 .product-shell.night-mode .personal-audit-list article,
 .product-shell.night-mode .personal-local-note,
 .product-shell.night-mode .category-panel,
@@ -1335,6 +1338,8 @@ button {
 .product-shell.night-mode .personal-import-summary-grid span,
 .product-shell.night-mode .personal-import-diff-totals span,
 .product-shell.night-mode .personal-domain-policy button,
+.product-shell.night-mode .personal-restore-summary span,
+.product-shell.night-mode .personal-restore-actions button,
 .product-shell.night-mode .personal-context-source button,
 .product-shell.night-mode .personal-memory-candidate > div:first-child span,
 .product-shell.night-mode .personal-memory-evidence em {
@@ -3559,6 +3564,135 @@ button {
   font-size: 10px;
   font-style: normal;
   font-weight: 820;
+}
+
+.personal-restore-points {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #d2c3a8;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 86px),
+    rgba(255, 249, 237, 0.78);
+}
+
+.personal-restore-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.personal-restore-head > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.personal-restore-head strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.personal-restore-head span {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 820;
+  line-height: 1.35;
+}
+
+.personal-restore-head > em {
+  padding: 4px 7px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.personal-restore-list {
+  display: grid;
+  gap: 7px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.personal-restore-item,
+.personal-restore-empty {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 9px;
+  border: 1px solid #e1d1b4;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.4;
+}
+
+.personal-restore-item > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.personal-restore-item strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.personal-restore-item > div:first-child span {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 820;
+}
+
+.personal-restore-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.personal-restore-summary span {
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #f7edd9;
+  color: #6e6251;
+  font-size: 10px;
+  font-weight: 860;
+}
+
+.personal-restore-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.personal-restore-actions button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personal-restore-actions button:hover,
+.personal-restore-actions button:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
 }
 
 .personal-import-apply {
