@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Boxes, MessageCircle, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { AuthScreen } from "./components/AuthScreen";
 import { AiCompanionPanel } from "./components/AiCompanionPanel";
 import { AgentChatView } from "./components/AgentChatView";
 import { AppNavigation, type AppView } from "./components/AppNavigation";
@@ -53,6 +54,16 @@ import {
   switchActivePersonalUser,
 } from "./personal/localMemoryStore";
 import type { CreatePersonalUserInput, SandtraySessionArchive } from "./personal/types";
+import {
+  clearLocalAuthSession,
+  createGuestAuthSession,
+  createLocalPasswordResetPreview,
+  isLocalAuthEmailAvailable,
+  loadLocalAuthSession,
+  loginLocalAuthIdentity,
+  registerLocalAuthIdentity,
+} from "./auth/localAuth";
+import type { LocalAuthSession } from "./auth/types";
 
 interface SceneState {
   objects: SandboxObject[];
@@ -61,6 +72,7 @@ interface SceneState {
 
 export function App(): JSX.Element {
   const [initialPersonalData] = useState(() => loadPersonalData());
+  const [initialAuthSession] = useState<LocalAuthSession | null>(() => loadLocalAuthSession());
   const [personalData, setPersonalData] = useState(initialPersonalData);
   const [initialScene] = useState<SceneState>(() => loadSceneForUser(initialPersonalData.activeUserId) ?? loadScene() ?? createInitialScene());
   const [objects, setObjects] = useState<SandboxObject[]>(initialScene.objects);
@@ -70,7 +82,8 @@ export function App(): JSX.Element {
   const [environment, setEnvironment] = useState(() => loadSandboxEnvironmentForUser(initialPersonalData.activeUserId));
   const [layoutPreferences, setLayoutPreferences] = useState(() => loadSandboxLayoutPreferencesForUser(initialPersonalData.activeUserId));
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("scene");
-  const [activeView, setActiveView] = useState<AppView>("sandbox");
+  const [activeView, setActiveView] = useState<AppView>(() => (initialAuthSession ? "sandbox" : "auth"));
+  const [authSession, setAuthSession] = useState<LocalAuthSession | null>(initialAuthSession);
   const [managedAssets, setManagedAssets] = useState(() => loadManagedAssets());
   const [llmProviders, setLlmProviders] = useState(() => loadLlmProviders());
   const [agents, setAgents] = useState(() => loadPsychAgents());
@@ -98,6 +111,12 @@ export function App(): JSX.Element {
     [activeUserId, personalData],
   );
   const personalMemoryContext = personalContextPacket.promptLines;
+
+  useEffect(() => {
+    if (!authSession && activeView !== "auth") {
+      setActiveView("auth");
+    }
+  }, [activeView, authSession]);
 
   useEffect(() => {
     saveSceneForUser(activeUserId, { objects, events });
@@ -421,6 +440,75 @@ export function App(): JSX.Element {
     [activeUserId, loadRuntimeStateForUser, persistRuntimeStateForUser, personalData],
   );
 
+  const handleLogin = useCallback(
+    async (input: { email: string; password: string }) => {
+      const session = await loginLocalAuthIdentity(input);
+      if (!personalData.accounts.some((account) => account.userId === session.userId)) {
+        clearLocalAuthSession();
+        throw new Error("该登录身份没有匹配的个人档案，请使用导入档案或重新注册。");
+      }
+
+      persistRuntimeStateForUser(activeUserId);
+      setAuthSession(session);
+      setPersonalData((current) => switchActivePersonalUser(current, session.userId));
+      loadRuntimeStateForUser(session.userId);
+      setActiveView("sandbox");
+    },
+    [activeUserId, loadRuntimeStateForUser, persistRuntimeStateForUser, personalData.accounts],
+  );
+
+  const handleRegister = useCallback(
+    async (input: {
+      displayName: string;
+      email: string;
+      password: string;
+      ageGroup: CreatePersonalUserInput["ageGroup"];
+      role: CreatePersonalUserInput["role"];
+    }) => {
+      if (!isLocalAuthEmailAvailable(input.email)) {
+        throw new Error("该邮箱已经注册，请直接登录。");
+      }
+
+      persistRuntimeStateForUser(activeUserId);
+      const { data, userId } = createLocalPersonalUser(personalData, {
+        displayName: input.displayName,
+        ageGroup: input.ageGroup,
+        role: input.role,
+      });
+      const session = await registerLocalAuthIdentity({
+        ...input,
+        userId,
+      });
+      setAuthSession(session);
+      setPersonalData(data);
+      loadRuntimeStateForUser(userId);
+      setActiveView("sandbox");
+    },
+    [activeUserId, loadRuntimeStateForUser, persistRuntimeStateForUser, personalData],
+  );
+
+  const handleContinueAsGuest = useCallback(() => {
+    const session = createGuestAuthSession({
+      userId: activeUserId,
+      displayName: activeProfile.displayName,
+    });
+    setAuthSession(session);
+    setActiveView("sandbox");
+  }, [activeProfile.displayName, activeUserId]);
+
+  const handleLogout = useCallback(() => {
+    persistRuntimeStateForUser(activeUserId);
+    clearLocalAuthSession();
+    setAuthSession(null);
+    setLayoutPreferences((current) => ({
+      ...current,
+      focusMode: false,
+      assetDrawerOpen: false,
+      aiDrawerOpen: false,
+    }));
+    setActiveView("auth");
+  }, [activeUserId, persistRuntimeStateForUser]);
+
   const handleRestoreSandtraySession = useCallback((session: SandtraySessionArchive) => {
     const restoreEvent = createSandboxEvent({
       type: "seed",
@@ -448,9 +536,32 @@ export function App(): JSX.Element {
   }, []);
 
   return (
-    <div className={classNames("product-shell", environment.light === "night" && "night-mode", sandboxFocusMode && "focus-mode")}>
-      {!sandboxFocusMode ? (
-        <AppNavigation activeView={activeView} onViewChange={setActiveView} activeUserName={activeProfile.displayName} />
+    <div
+      className={classNames(
+        "product-shell",
+        environment.light === "night" && "night-mode",
+        sandboxFocusMode && "focus-mode",
+        activeView === "auth" && "auth-mode",
+      )}
+    >
+      {!sandboxFocusMode && activeView !== "auth" ? (
+        <AppNavigation
+          activeView={activeView}
+          onViewChange={setActiveView}
+          activeUserName={activeProfile.displayName}
+          authSession={authSession}
+          onLogout={handleLogout}
+        />
+      ) : null}
+
+      {activeView === "auth" ? (
+        <AuthScreen
+          defaultDisplayName={activeProfile.displayName}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+          onRecover={createLocalPasswordResetPreview}
+          onContinueAsGuest={handleContinueAsGuest}
+        />
       ) : null}
 
       {activeView === "sandbox" ? (
