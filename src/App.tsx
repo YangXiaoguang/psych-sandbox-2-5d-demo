@@ -715,9 +715,11 @@ export function App(): JSX.Element {
 
       {activeView === "admin" ? (
         <AdminDashboard
+          personalData={personalData}
           managedAssets={managedAssets}
           llmProviders={llmProviders}
           agents={agents}
+          onPersonalDataChange={setPersonalData}
           onManagedAssetsChange={setManagedAssets}
           onLlmProvidersChange={setLlmProviders}
           onAgentsChange={setAgents}

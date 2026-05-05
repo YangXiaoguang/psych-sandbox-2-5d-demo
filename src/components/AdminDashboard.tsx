@@ -1,21 +1,41 @@
 import {
+  Archive,
   Bot,
   Boxes,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Database,
   Download,
   KeyRound,
   Plus,
   RefreshCcw,
+  Search,
   ShieldCheck,
   Sparkles,
   Trash2,
   Undo2,
   Upload,
+  UserCheck,
+  UserRound,
+  Users,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { loadLocalAuthIdentities } from "../auth/localAuth";
 import { ASSET_CATEGORIES, RISK_LABELS } from "../data/assets";
 import { createDefaultLlmProviders, createDefaultPsychAgents } from "../data/defaultAgents";
 import { getToyAssetSpec } from "../data/toyAssetSpecs";
 import { getProviderLabel, getProviderPreset, PROVIDER_PRESETS } from "../llm/providerPresets";
+import { getUserConsents, recordPersonalAudit } from "../personal/localMemoryStore";
+import type {
+  ConsentType,
+  IdentityProfile,
+  PersonalAccount,
+  PersonalAccountStatus,
+  PersonalAgeGroup,
+  PersonalDataBundle,
+  PersonalRole,
+} from "../personal/types";
 import type {
   AgentAvatarStyle,
   LlmProviderConfig,
@@ -30,8 +50,10 @@ import { AgentPortrait } from "./AgentPortrait";
 import { AssetPreview } from "./AssetPreview";
 import { RiskTagBadge } from "./RiskTagBadge";
 
-type AdminTab = "assets" | "llm" | "agents";
+type AdminTab = "users" | "assets" | "llm" | "agents";
 type ToyRecipeKind = ToyModelRecipe["kind"];
+type UserAuthFilter = "all" | "bound" | "guest";
+type UserStatusFilter = "all" | PersonalAccountStatus;
 type AssetStatusFilter = "all" | "enabled" | "disabled" | "deleted";
 type AssetOriginFilter = "all" | "builtin" | "custom";
 type AssetViewMode = "table" | "grid";
@@ -39,9 +61,11 @@ type AssetSortKey = "updatedAt" | "name" | "category" | "riskTag" | "status";
 type ConfigStatusTone = "ok" | "warn" | "error";
 
 interface AdminDashboardProps {
+  personalData: PersonalDataBundle;
   managedAssets: ManagedAsset[];
   llmProviders: LlmProviderConfig[];
   agents: PsychAgentProfile[];
+  onPersonalDataChange: (data: PersonalDataBundle) => void;
   onManagedAssetsChange: (assets: ManagedAsset[]) => void;
   onLlmProvidersChange: (providers: LlmProviderConfig[]) => void;
   onAgentsChange: (agents: PsychAgentProfile[]) => void;
@@ -80,17 +104,65 @@ const MODEL_KINDS: ToyRecipeKind[] = [
 ];
 const PROVIDER_KINDS = Object.keys(PROVIDER_PRESETS) as LlmProviderKind[];
 const AVATAR_STYLES: AgentAvatarStyle[] = ["warm", "dream", "analyst", "sage", "mentor"];
+const USER_PAGE_SIZE = 50;
+
+const AGE_GROUP_LABELS: Record<PersonalAgeGroup, string> = {
+  child: "儿童",
+  teen: "青少年",
+  adult: "成人",
+  elder: "长者",
+  unknown: "未指定",
+};
+
+const ROLE_LABELS: Record<PersonalRole, string> = {
+  client: "来访者",
+  student: "学生",
+  parent: "家长",
+  clinician: "咨询师",
+  researcher: "研究者",
+  demo: "本地原型",
+};
+
+const ACCOUNT_STATUS_LABELS: Record<PersonalAccountStatus, string> = {
+  active: "正常",
+  archived: "归档",
+};
+
+const CONSENT_LABELS: Record<ConsentType, string> = {
+  service_usage: "使用本地沙盘服务",
+  sandtray_archive: "保存沙盘作品",
+  conversation_archive: "保存 AI 对话记录",
+  long_term_memory: "长期记忆候选",
+  ai_personalization: "AI 个性化上下文",
+  export_archive: "导出个人档案",
+};
+
+interface UserAdminRow {
+  account: PersonalAccount;
+  profile: IdentityProfile | null;
+  authEmail?: string;
+  authStatus: "bound" | "guest";
+  workspaceCount: number;
+  sessionCount: number;
+  memoryCount: number;
+  confirmedMemoryCount: number;
+  consentGranted: number;
+  consentTotal: number;
+  lastAuditAt?: string;
+}
 
 export function AdminDashboard({
+  personalData,
   managedAssets,
   llmProviders,
   agents,
+  onPersonalDataChange,
   onManagedAssetsChange,
   onLlmProvidersChange,
   onAgentsChange,
   onResetAssets,
 }: AdminDashboardProps): JSX.Element {
-  const [activeTab, setActiveTab] = useState<AdminTab>("assets");
+  const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const [configStatus, setConfigStatus] = useState<{ tone: ConfigStatusTone; text: string } | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -147,7 +219,7 @@ export function AdminDashboard({
         <div>
           <p className="eyebrow">Local Admin Console</p>
           <h2>管理后台</h2>
-          <p>本地管理沙具资产、LLM 厂商配置和心理学家 Agent。当前 Demo 不会向第三方发送任何密钥或对话。</p>
+          <p>面向个人沙盘系统的本地管理控制台：用户目录、沙具资产、LLM 厂商配置和心理学家 Agent。当前 Demo 不会向第三方发送任何密钥或对话。</p>
         </div>
         <div className="admin-hero-controls">
           <div className="admin-config-actions" aria-label="本地配置导入导出">
@@ -179,6 +251,7 @@ export function AdminDashboard({
             </p>
           ) : null}
           <div className="admin-tabbar" role="tablist" aria-label="管理类型">
+            <TabButton id="users" label="用户管理" activeTab={activeTab} onSelect={setActiveTab} icon={<Users size={16} />} />
             <TabButton id="assets" label="沙具资产" activeTab={activeTab} onSelect={setActiveTab} icon={<Boxes size={16} />} />
             <TabButton id="llm" label="LLM 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<KeyRound size={16} />} />
             <TabButton id="agents" label="Agent 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<Bot size={16} />} />
@@ -186,6 +259,9 @@ export function AdminDashboard({
         </div>
       </section>
 
+      {activeTab === "users" ? (
+        <UserAdminPanel personalData={personalData} onPersonalDataChange={onPersonalDataChange} />
+      ) : null}
       {activeTab === "assets" ? (
         <AssetAdminPanel
           assets={managedAssets}
@@ -225,6 +301,450 @@ function TabButton({
       {icon}
       {label}
     </button>
+  );
+}
+
+function UserAdminPanel({
+  personalData,
+  onPersonalDataChange,
+}: {
+  personalData: PersonalDataBundle;
+  onPersonalDataChange: (data: PersonalDataBundle) => void;
+}): JSX.Element {
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<PersonalRole | "all">("all");
+  const [ageFilter, setAgeFilter] = useState<PersonalAgeGroup | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<UserStatusFilter>("all");
+  const [authFilter, setAuthFilter] = useState<UserAuthFilter>("all");
+  const [page, setPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState(() => personalData.activeUserId);
+
+  const authIdentities = useMemo(() => loadLocalAuthIdentities(), [personalData.accounts.length, personalData.activeUserId]);
+  const authByUserId = useMemo(
+    () => new Map(authIdentities.map((identity) => [identity.userId, identity])),
+    [authIdentities],
+  );
+
+  const directoryRows = useMemo<UserAdminRow[]>(() => {
+    const profileByUserId = new Map(personalData.profiles.map((profile) => [profile.userId, profile]));
+    const sessionsByUserId = countByUser(personalData.sandtraySessions);
+    const workspacesByUserId = countByUser(personalData.workspaces);
+    const memoriesByUserId = countByUser(personalData.memoryCandidates);
+    const confirmedMemoriesByUserId = countByUser(
+      personalData.memoryCandidates.filter((candidate) => candidate.status === "confirmed"),
+    );
+    const lastAuditByUserId = new Map<string, string>();
+    personalData.auditLogs.forEach((log) => {
+      if (!lastAuditByUserId.has(log.userId)) {
+        lastAuditByUserId.set(log.userId, log.createdAt);
+      }
+    });
+
+    return personalData.accounts
+      .map((account) => {
+        const profile = profileByUserId.get(account.userId) ?? null;
+        const authIdentity = authByUserId.get(account.userId);
+        const consents = getUserConsents(personalData, account.userId);
+        return {
+          account,
+          profile,
+          authEmail: authIdentity?.email,
+          authStatus: authIdentity ? ("bound" as const) : ("guest" as const),
+          workspaceCount: workspacesByUserId.get(account.userId) ?? 0,
+          sessionCount: sessionsByUserId.get(account.userId) ?? 0,
+          memoryCount: memoriesByUserId.get(account.userId) ?? 0,
+          confirmedMemoryCount: confirmedMemoriesByUserId.get(account.userId) ?? 0,
+          consentGranted: consents.filter((consent) => consent.granted).length,
+          consentTotal: consents.length,
+          lastAuditAt: lastAuditByUserId.get(account.userId),
+        };
+      })
+      .sort((a, b) => new Date(b.account.lastActiveAt).getTime() - new Date(a.account.lastActiveAt).getTime());
+  }, [authByUserId, personalData]);
+
+  const filteredRows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return directoryRows.filter((row) => {
+      const profile = row.profile;
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        [
+          row.account.displayName,
+          row.account.localHandle,
+          row.account.userId,
+          row.authEmail ?? "",
+          profile?.displayName ?? "",
+          profile ? ROLE_LABELS[profile.role] : "",
+          profile ? AGE_GROUP_LABELS[profile.ageGroup] : "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+      const matchesRole = roleFilter === "all" || profile?.role === roleFilter;
+      const matchesAge = ageFilter === "all" || profile?.ageGroup === ageFilter;
+      const matchesStatus = statusFilter === "all" || row.account.status === statusFilter;
+      const matchesAuth = authFilter === "all" || row.authStatus === authFilter;
+      return matchesQuery && matchesRole && matchesAge && matchesStatus && matchesAuth;
+    });
+  }, [ageFilter, authFilter, directoryRows, query, roleFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / USER_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedRows = filteredRows.slice((currentPage - 1) * USER_PAGE_SIZE, currentPage * USER_PAGE_SIZE);
+  const selectedRow =
+    directoryRows.find((row) => row.account.userId === selectedUserId) ??
+    filteredRows[0] ??
+    directoryRows[0] ??
+    null;
+  const selectedConsents = selectedRow ? getUserConsents(personalData, selectedRow.account.userId) : [];
+  const selectedAudits = selectedRow
+    ? personalData.auditLogs.filter((log) => log.userId === selectedRow.account.userId).slice(0, 6)
+    : [];
+  const activeCount = directoryRows.filter((row) => row.account.status === "active").length;
+  const archivedCount = directoryRows.filter((row) => row.account.status === "archived").length;
+  const authBoundCount = directoryRows.filter((row) => row.authStatus === "bound").length;
+  const totalSessionCount = directoryRows.reduce((total, row) => total + row.sessionCount, 0);
+
+  useEffect(() => {
+    setPage(1);
+  }, [ageFilter, authFilter, query, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    if (directoryRows.length > 0 && !directoryRows.some((row) => row.account.userId === selectedUserId)) {
+      setSelectedUserId(directoryRows[0].account.userId);
+    }
+  }, [directoryRows, selectedUserId]);
+
+  const updateAccountStatus = (userId: string, status: PersonalAccountStatus) => {
+    const now = new Date().toISOString();
+    const target = personalData.accounts.find((account) => account.userId === userId);
+    if (!target || target.status === status) {
+      return;
+    }
+
+    const nextData = recordPersonalAudit(
+      {
+        ...personalData,
+        accounts: personalData.accounts.map((account) =>
+          account.userId === userId ? { ...account, status, lastActiveAt: now } : account,
+        ),
+      },
+      {
+        userId,
+        action: status === "archived" ? "admin_user_archived" : "admin_user_activated",
+        resourceType: "account",
+        resourceId: userId,
+        detail: `管理后台已将用户状态调整为：${ACCOUNT_STATUS_LABELS[status]}。`,
+      },
+    );
+    onPersonalDataChange(nextData);
+  };
+
+  const updateProfile = (userId: string, patch: Partial<Pick<IdentityProfile, "role" | "ageGroup">>) => {
+    const now = new Date().toISOString();
+    const nextData = recordPersonalAudit(
+      {
+        ...personalData,
+        profiles: personalData.profiles.map((profile) =>
+          profile.userId === userId ? { ...profile, ...patch, updatedAt: now } : profile,
+        ),
+      },
+      {
+        userId,
+        action: "admin_profile_updated",
+        resourceType: "profile",
+        resourceId: userId,
+        detail: "管理后台更新了用户画像字段。",
+      },
+    );
+    onPersonalDataChange(nextData);
+  };
+
+  return (
+    <section className="user-admin-layout" aria-label="用户管理">
+      <aside className="admin-card user-filter-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">User Directory</p>
+            <h3>用户检索</h3>
+          </div>
+          <span className="user-directory-total">{directoryRows.length}</span>
+        </header>
+        <div className="user-filter-body">
+          <label className="user-search-field" aria-label="搜索用户">
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="姓名、邮箱、handle、userId..."
+            />
+          </label>
+          <div className="user-filter-grid">
+            <label>
+              <span>角色</span>
+              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value as PersonalRole | "all")}>
+                <option value="all">全部角色</option>
+                {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>年龄段</span>
+              <select value={ageFilter} onChange={(event) => setAgeFilter(event.target.value as PersonalAgeGroup | "all")}>
+                <option value="all">全部年龄段</option>
+                {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>状态</span>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as UserStatusFilter)}>
+                <option value="all">全部状态</option>
+                <option value="active">正常</option>
+                <option value="archived">归档</option>
+              </select>
+            </label>
+            <label>
+              <span>登录绑定</span>
+              <select value={authFilter} onChange={(event) => setAuthFilter(event.target.value as UserAuthFilter)}>
+                <option value="all">全部账号</option>
+                <option value="bound">已绑定邮箱</option>
+                <option value="guest">本地/未绑定</option>
+              </select>
+            </label>
+          </div>
+          <div className="user-admin-note">
+            <Database size={15} />
+            <span>按万级用户目录设计：列表分页、条件过滤、详情侧栏分离；当前数据仍保存在 localStorage，后续可替换为服务端查询接口。</span>
+          </div>
+        </div>
+      </aside>
+
+      <section className="admin-card user-directory-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Account Control</p>
+            <h3>用户目录</h3>
+          </div>
+          <span className="user-result-count">
+            {filteredRows.length} / {directoryRows.length}
+          </span>
+        </header>
+        <div className="user-stat-grid" aria-label="用户统计">
+          <StatTile icon={<Users size={18} />} value={directoryRows.length} label="总用户" />
+          <StatTile icon={<UserCheck size={18} />} value={activeCount} label="正常用户" />
+          <StatTile icon={<Archive size={18} />} value={archivedCount} label="归档用户" />
+          <StatTile icon={<KeyRound size={18} />} value={authBoundCount} label="邮箱绑定" />
+          <StatTile icon={<Boxes size={18} />} value={totalSessionCount} label="沙盘档案" />
+        </div>
+        <div className="user-table-wrap">
+          <table className="user-table">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>身份</th>
+                <th>状态</th>
+                <th>登录</th>
+                <th>沙盘</th>
+                <th>记忆</th>
+                <th>最近活跃</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="user-empty-state">没有匹配的用户，请调整筛选条件。</div>
+                  </td>
+                </tr>
+              ) : (
+                pagedRows.map((row) => (
+                  <tr key={row.account.userId} className={selectedRow?.account.userId === row.account.userId ? "selected" : ""}>
+                    <td>
+                      <button type="button" className="user-name-button" onClick={() => setSelectedUserId(row.account.userId)}>
+                        <span>{getUserInitial(row.account.displayName)}</span>
+                        <strong>{row.account.displayName}</strong>
+                        <em>{row.authEmail ?? row.account.localHandle}</em>
+                      </button>
+                    </td>
+                    <td>
+                      {row.profile ? (
+                        <span className="user-identity-stack">
+                          <strong>{ROLE_LABELS[row.profile.role]}</strong>
+                          <em>{AGE_GROUP_LABELS[row.profile.ageGroup]}</em>
+                        </span>
+                      ) : (
+                        <span className="user-muted">未补齐</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`user-status-pill ${row.account.status}`}>{ACCOUNT_STATUS_LABELS[row.account.status]}</span>
+                    </td>
+                    <td>
+                      <span className={`user-auth-pill ${row.authStatus}`}>{row.authStatus === "bound" ? "邮箱" : "本地"}</span>
+                    </td>
+                    <td>{row.sessionCount}</td>
+                    <td>
+                      {row.confirmedMemoryCount}/{row.memoryCount}
+                    </td>
+                    <td>{formatDateTime(row.account.lastActiveAt)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <footer className="user-pagination">
+          <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage <= 1}>
+            <ChevronLeft size={16} />
+          </button>
+          <span>
+            第 {currentPage} / {totalPages} 页 · 每页 {USER_PAGE_SIZE}
+          </span>
+          <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={currentPage >= totalPages}>
+            <ChevronRight size={16} />
+          </button>
+        </footer>
+      </section>
+
+      <aside className="admin-card user-detail-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Profile Detail</p>
+            <h3>用户详情</h3>
+          </div>
+          {selectedRow ? (
+            <span className={`user-status-pill ${selectedRow.account.status}`}>
+              {ACCOUNT_STATUS_LABELS[selectedRow.account.status]}
+            </span>
+          ) : null}
+        </header>
+        {selectedRow ? (
+          <div className="user-detail-body">
+            <section className="user-detail-hero">
+              <span>
+                <UserRound size={23} />
+              </span>
+              <div>
+                <strong>{selectedRow.account.displayName}</strong>
+                <em>{selectedRow.authEmail ?? selectedRow.account.localHandle}</em>
+                <code>{selectedRow.account.userId}</code>
+              </div>
+            </section>
+
+            <section className="user-detail-metrics">
+              <span>
+                <strong>{selectedRow.sessionCount}</strong>
+                沙盘档案
+              </span>
+              <span>
+                <strong>{selectedRow.memoryCount}</strong>
+                记忆候选
+              </span>
+              <span>
+                <strong>{selectedRow.consentGranted}/{selectedRow.consentTotal}</strong>
+                授权项
+              </span>
+            </section>
+
+            <section className="user-detail-form">
+              <label>
+                <span>用户状态</span>
+                <select
+                  value={selectedRow.account.status}
+                  onChange={(event) =>
+                    updateAccountStatus(selectedRow.account.userId, event.target.value as PersonalAccountStatus)
+                  }
+                >
+                  <option value="active">正常</option>
+                  <option value="archived">归档</option>
+                </select>
+              </label>
+              <label>
+                <span>角色</span>
+                <select
+                  value={selectedRow.profile?.role ?? "demo"}
+                  onChange={(event) => updateProfile(selectedRow.account.userId, { role: event.target.value as PersonalRole })}
+                >
+                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>年龄段</span>
+                <select
+                  value={selectedRow.profile?.ageGroup ?? "unknown"}
+                  onChange={(event) =>
+                    updateProfile(selectedRow.account.userId, { ageGroup: event.target.value as PersonalAgeGroup })
+                  }
+                >
+                  {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
+
+            <section className="user-detail-card">
+              <h4>
+                <ShieldCheck size={15} />
+                授权边界
+              </h4>
+              <ul className="user-consent-list">
+                {selectedConsents.map((consent) => (
+                  <li key={consent.consentId}>
+                    <span className={consent.granted ? "granted" : "revoked"}>{consent.granted ? "开启" : "关闭"}</span>
+                    <strong>{CONSENT_LABELS[consent.consentType]}</strong>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="user-detail-card">
+              <h4>
+                <Clock3 size={15} />
+                最近审计
+              </h4>
+              <div className="user-audit-mini">
+                {selectedAudits.length === 0 ? (
+                  <p>暂无审计记录。</p>
+                ) : (
+                  selectedAudits.map((log) => (
+                    <article key={log.id}>
+                      <strong>{log.detail}</strong>
+                      <time>{formatDateTime(log.createdAt)}</time>
+                    </article>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="user-empty-state">暂无用户数据。</div>
+        )}
+      </aside>
+    </section>
+  );
+}
+
+function StatTile({ icon, value, label }: { icon: JSX.Element; value: number; label: string }): JSX.Element {
+  return (
+    <span>
+      {icon}
+      <strong>{value}</strong>
+      <em>{label}</em>
+    </span>
   );
 }
 
@@ -928,6 +1448,17 @@ function getAssetIssues(asset: ManagedAsset, allAssets: ManagedAsset[]): string[
     issues.push("缺少模型模板");
   }
   return issues;
+}
+
+function countByUser<T extends { userId: string }>(items: T[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  items.forEach((item) => counts.set(item.userId, (counts.get(item.userId) ?? 0) + 1));
+  return counts;
+}
+
+function getUserInitial(displayName: string): string {
+  const trimmed = displayName.trim();
+  return trimmed ? trimmed.slice(0, 1).toUpperCase() : "人";
 }
 
 function formatDateTime(value: string): string {
