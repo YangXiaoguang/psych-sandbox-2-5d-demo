@@ -1410,6 +1410,9 @@ function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport 
   const riskCount = report.domains.filter((domain) => domain.migrationRisk === "risk").length;
   const warnCount = report.domains.filter((domain) => domain.migrationRisk === "warn").length;
   const okCount = report.domains.filter((domain) => domain.migrationRisk === "ok").length;
+  const apiContract = report.apiContract;
+  const p0Endpoints = apiContract.endpoints.filter((endpoint) => endpoint.migrationPriority === "p0").length;
+  const paginatedEndpoints = apiContract.endpoints.filter((endpoint) => endpoint.paginated).length;
 
   return (
     <section className="system-architecture-layout" aria-label="系统架构与后端适配">
@@ -1443,6 +1446,28 @@ function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport 
             <strong>{riskCount}</strong>
             高敏数据
           </span>
+        </div>
+        <div className="api-contract-strip" aria-label="真实后端前置契约状态">
+          <article>
+            <span>Contract</span>
+            <strong>{apiContract.version}</strong>
+            <p>{apiContract.adapterName}</p>
+          </article>
+          <article>
+            <span>Auth Context</span>
+            <strong>{apiContract.authContext.role}</strong>
+            <p>{apiContract.authContext.workspaceScope} · {apiContract.authContext.permissions.length} 项权限</p>
+          </article>
+          <article>
+            <span>Pagination</span>
+            <strong>{apiContract.pagination.defaultPageSize}/{apiContract.pagination.maxPageSize}</strong>
+            <p>{paginatedEndpoints} 个分页接口</p>
+          </article>
+          <article>
+            <span>Priority</span>
+            <strong>{p0Endpoints}</strong>
+            <p>P0 后端首批接口</p>
+          </article>
         </div>
         <div className="repository-domain-table-wrap">
           <table className="repository-domain-table">
@@ -1478,6 +1503,31 @@ function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport 
             </tbody>
           </table>
         </div>
+        <section className="api-contract-panel">
+          <header>
+            <div>
+              <p className="eyebrow">API DTO Contract</p>
+              <h4>真实后端前置契约</h4>
+            </div>
+            <span>{apiContract.errors.length} 个错误码</span>
+          </header>
+          <div className="api-endpoint-grid">
+            {apiContract.endpoints.map((endpoint) => (
+              <article key={`${endpoint.method}:${endpoint.path}`}>
+                <div className="api-endpoint-head">
+                  <span className={`api-endpoint-method ${endpoint.method.toLowerCase()}`}>{endpoint.method}</span>
+                  <strong className="api-endpoint-path">{endpoint.path}</strong>
+                </div>
+                <p>{endpoint.summary}</p>
+                <footer>
+                  <span>{endpoint.responseDto}</span>
+                  <span>{endpoint.auth}</span>
+                  <span>{endpoint.migrationPriority.toUpperCase()}</span>
+                </footer>
+              </article>
+            ))}
+          </div>
+        </section>
       </section>
 
       <aside className="admin-card workspace-directory-panel">
@@ -1528,7 +1578,7 @@ function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport 
           <h4>接口替换约定</h4>
           <p>
             当前 App 已通过 <code>localRepositoryAdapter</code> 读取个人档案、权限治理、沙盘草稿、环境、布局和 Agent 会话。
-            后续接入真实后端时，优先实现同名 API Adapter，并保持组件 props 不变。
+            本阶段新增 <code>FrontendMockApiAdapter</code> 和 DTO 契约，后续接入真实后端时优先实现同名 API Adapter，并保持组件 props 不变。
           </p>
           <time>报告生成：{formatDateTime(report.generatedAt)}</time>
         </section>

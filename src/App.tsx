@@ -108,8 +108,8 @@ export function App(): JSX.Element {
   );
   const personalMemoryContext = personalContextPacket.promptLines;
   const repositoryReport = useMemo<SystemArchitectureReport>(
-    () => localRepositoryAdapter.buildReport(personalData, adminGovernance),
-    [adminGovernance, personalData],
+    () => localRepositoryAdapter.buildReport(personalData, adminGovernance, { managedAssets, llmProviders, agents }),
+    [adminGovernance, agents, llmProviders, managedAssets, personalData],
   );
 
   useEffect(() => {

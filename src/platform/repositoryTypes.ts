@@ -1,7 +1,11 @@
 import type { AdminGovernanceData } from "../admin/types";
+import type { ApiContractReport } from "../api/contracts";
 import type { PersonalDataBundle } from "../personal/types";
 import type {
   AgentConversation,
+  LlmProviderConfig,
+  ManagedAsset,
+  PsychAgentProfile,
   SandboxEnvironment,
   SandboxLayoutPreferences,
   SandboxObject,
@@ -73,7 +77,14 @@ export interface SystemArchitectureReport {
   metrics: RepositoryHealthMetric[];
   domains: RepositoryDomainDefinition[];
   workspaces: WorkspaceDirectoryRow[];
+  apiContract: ApiContractReport;
   migrationSteps: string[];
+}
+
+export interface SystemRepositoryReportContext {
+  managedAssets?: ManagedAsset[];
+  llmProviders?: LlmProviderConfig[];
+  agents?: PsychAgentProfile[];
 }
 
 export interface PersonalMemoryRepositoryPort {
@@ -104,5 +115,9 @@ export interface SystemRepositoryAdapter {
   personal: PersonalMemoryRepositoryPort;
   admin: AdminGovernanceRepositoryPort;
   workspace: SandboxWorkspaceRepositoryPort;
-  buildReport(personalData: PersonalDataBundle, adminGovernance: AdminGovernanceData): SystemArchitectureReport;
+  buildReport(
+    personalData: PersonalDataBundle,
+    adminGovernance: AdminGovernanceData,
+    context?: SystemRepositoryReportContext,
+  ): SystemArchitectureReport;
 }

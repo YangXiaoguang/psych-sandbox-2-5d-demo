@@ -1894,6 +1894,10 @@ button {
 .product-shell.night-mode .system-health-grid article,
 .product-shell.night-mode .repository-risk-strip,
 .product-shell.night-mode .repository-risk-strip span,
+.product-shell.night-mode .api-contract-strip,
+.product-shell.night-mode .api-contract-strip article,
+.product-shell.night-mode .api-contract-panel,
+.product-shell.night-mode .api-endpoint-grid article,
 .product-shell.night-mode .repository-domain-table th,
 .product-shell.night-mode .repository-domain-table td,
 .product-shell.night-mode .workspace-directory-list article,
@@ -1910,6 +1914,9 @@ button {
 }
 
 .product-shell.night-mode .system-health-grid strong,
+.product-shell.night-mode .api-contract-strip strong,
+.product-shell.night-mode .api-contract-panel h4,
+.product-shell.night-mode .api-endpoint-path,
 .product-shell.night-mode .repository-domain-table strong,
 .product-shell.night-mode .workspace-directory-list strong,
 .product-shell.night-mode .system-contract-card h4 {
@@ -1917,6 +1924,10 @@ button {
 }
 
 .product-shell.night-mode .system-health-grid p,
+.product-shell.night-mode .api-contract-strip span,
+.product-shell.night-mode .api-contract-strip p,
+.product-shell.night-mode .api-contract-panel p,
+.product-shell.night-mode .api-endpoint-grid footer,
 .product-shell.night-mode .workspace-directory-list p,
 .product-shell.night-mode .migration-step-list p,
 .product-shell.night-mode .system-contract-card p,
@@ -3402,6 +3413,10 @@ button {
   overflow: hidden;
 }
 
+.system-map-panel {
+  grid-template-rows: auto auto auto auto minmax(220px, 1fr) auto;
+}
+
 .workspace-directory-panel,
 .migration-plan-panel {
   grid-template-rows: auto minmax(0, 1fr);
@@ -3503,6 +3518,55 @@ button {
   color: #a04534;
 }
 
+.api-contract-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(232, 248, 241, 0.32);
+}
+
+.api-contract-strip article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(112, 169, 157, 0.42);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), transparent),
+    #f8fffb;
+  box-shadow: var(--inner-highlight);
+}
+
+.api-contract-strip span {
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.api-contract-strip strong {
+  overflow: hidden;
+  color: var(--accent-dark);
+  font-size: 16px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-contract-strip p {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .repository-domain-table-wrap {
   min-height: 0;
   overflow: auto;
@@ -3577,6 +3641,140 @@ button {
   border: 1px solid #d7a094;
   background: #fff0ec;
   color: #a04534;
+}
+
+.api-contract-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid rgba(216, 199, 168, 0.72);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent),
+    rgba(255, 253, 246, 0.86);
+}
+
+.api-contract-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.api-contract-panel h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.api-contract-panel header > span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(112, 169, 157, 0.42);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.api-endpoint-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.api-endpoint-grid article {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+  box-shadow: var(--inner-highlight);
+}
+
+.api-endpoint-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-endpoint-method {
+  display: inline-flex;
+  min-width: 50px;
+  min-height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--accent-line);
+  border-radius: 7px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.api-endpoint-method.post {
+  border-color: rgba(151, 104, 54, 0.38);
+  background: #fff2dd;
+  color: #8f5524;
+}
+
+.api-endpoint-method.patch {
+  border-color: rgba(111, 91, 184, 0.36);
+  background: #f1eeff;
+  color: #5f4aa4;
+}
+
+.api-endpoint-method.delete {
+  border-color: rgba(170, 86, 70, 0.36);
+  background: #fff0ec;
+  color: #a04534;
+}
+
+.api-endpoint-path {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-endpoint-grid p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+.api-endpoint-grid footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.api-endpoint-grid footer span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(232, 248, 241, 0.74);
+  color: var(--accent-dark);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace-directory-list,

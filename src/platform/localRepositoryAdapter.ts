@@ -4,6 +4,7 @@ import {
   saveAdminGovernance,
 } from "../admin/localAdminGovernance";
 import type { AdminGovernanceData } from "../admin/types";
+import { buildMockApiContractReport } from "../api/mockApiAdapter";
 import {
   loadPersonalData,
   savePersonalData,
@@ -22,6 +23,7 @@ import {
 import type {
   RepositoryDomainDefinition,
   RepositoryHealthMetric,
+  SystemRepositoryReportContext,
   SystemArchitectureReport,
   SystemRepositoryAdapter,
   WorkspaceDirectoryRow,
@@ -130,6 +132,7 @@ export const localRepositoryAdapter: SystemRepositoryAdapter = {
 export function buildLocalRepositoryReport(
   personalData: PersonalDataBundle,
   adminGovernance: AdminGovernanceData,
+  context: SystemRepositoryReportContext = {},
 ): SystemArchitectureReport {
   const activeUsers = personalData.accounts.filter((account) => account.status === "active").length;
   const disabledPolicies = adminGovernance.accessPolicies.filter((policy) => policy.status === "disabled").length;
@@ -181,6 +184,14 @@ export function buildLocalRepositoryReport(
     metrics,
     domains: LOCAL_REPOSITORY_DOMAINS,
     workspaces: workspaceRows,
+    apiContract: buildMockApiContractReport({
+      personalData,
+      adminGovernance,
+      managedAssets: context.managedAssets,
+      llmProviders: context.llmProviders,
+      agents: context.agents,
+      activeUserId: personalData.activeUserId,
+    }),
     migrationSteps: [
       "将 PersonalDataBundle 拆分为 users / profiles / consents / workspaces / memories / audit_logs 表。",
       "将 AdminGovernanceData 迁移为 access_policies / admin_audit_logs，并保留 userId 外键。",
