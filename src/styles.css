@@ -1894,6 +1894,13 @@ button {
 .product-shell.night-mode .system-health-grid article,
 .product-shell.night-mode .repository-risk-strip,
 .product-shell.night-mode .repository-risk-strip span,
+.product-shell.night-mode .repository-mode-options,
+.product-shell.night-mode .repository-mode-options article,
+.product-shell.night-mode .backend-diagnostic-panel,
+.product-shell.night-mode .backend-diagnostic-summary span,
+.product-shell.night-mode .backend-check-grid article,
+.product-shell.night-mode .backend-base-url,
+.product-shell.night-mode .backend-next-steps li,
 .product-shell.night-mode .api-contract-strip,
 .product-shell.night-mode .api-contract-strip article,
 .product-shell.night-mode .api-contract-panel,
@@ -1914,6 +1921,11 @@ button {
 }
 
 .product-shell.night-mode .system-health-grid strong,
+.product-shell.night-mode .repository-mode-options strong,
+.product-shell.night-mode .backend-diagnostic-panel h4,
+.product-shell.night-mode .backend-diagnostic-summary strong,
+.product-shell.night-mode .backend-check-grid strong,
+.product-shell.night-mode .backend-base-url code,
 .product-shell.night-mode .api-contract-strip strong,
 .product-shell.night-mode .api-contract-panel h4,
 .product-shell.night-mode .api-endpoint-path,
@@ -1924,6 +1936,10 @@ button {
 }
 
 .product-shell.night-mode .system-health-grid p,
+.product-shell.night-mode .repository-mode-options p,
+.product-shell.night-mode .backend-check-grid p,
+.product-shell.night-mode .backend-base-url,
+.product-shell.night-mode .backend-next-steps p,
 .product-shell.night-mode .api-contract-strip span,
 .product-shell.night-mode .api-contract-strip p,
 .product-shell.night-mode .api-contract-panel p,
@@ -3435,6 +3451,71 @@ button {
   font-weight: 950;
 }
 
+.repository-mode-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.repository-mode-control select {
+  min-height: 32px;
+  min-width: 138px;
+  border: 1px solid #cbb995;
+  border-radius: 9px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), transparent),
+    #fffdf6;
+  color: var(--ink);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.repository-mode-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 249, 237, 0.38);
+}
+
+.repository-mode-options article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+  box-shadow: var(--inner-highlight);
+}
+
+.repository-mode-options article.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.repository-mode-options article.warn {
+  border-color: #dfc49c;
+}
+
+.repository-mode-options strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.repository-mode-options p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
 .system-health-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -3520,7 +3601,7 @@ button {
 
 .api-contract-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 9px;
   padding: 12px;
   border-bottom: 1px solid var(--line);
@@ -3565,6 +3646,166 @@ button {
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.backend-diagnostic-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), transparent),
+    rgba(232, 248, 241, 0.28);
+}
+
+.backend-diagnostic-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.backend-diagnostic-panel h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.backend-diagnostic-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.backend-diagnostic-summary span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #d8c7a8;
+  border-radius: 9px;
+  background: #fffdf6;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.backend-diagnostic-summary strong {
+  overflow: hidden;
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backend-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.backend-check-grid article {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+  box-shadow: var(--inner-highlight);
+}
+
+.backend-check-grid article.ok {
+  border-color: rgba(112, 169, 157, 0.42);
+}
+
+.backend-check-grid article.warn {
+  border-color: #dfc49c;
+  background: #fff7e9;
+}
+
+.backend-check-grid article.risk {
+  border-color: #d7a094;
+  background: #fff0ec;
+}
+
+.backend-check-grid strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.backend-check-grid p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.backend-base-url {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px;
+  border: 1px dashed rgba(112, 169, 157, 0.42);
+  border-radius: 10px;
+  background: rgba(255, 253, 246, 0.68);
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.backend-base-url code {
+  border: 1px solid rgba(112, 169, 157, 0.35);
+  border-radius: 7px;
+  background: rgba(232, 248, 241, 0.76);
+  color: var(--accent-dark);
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+.backend-next-steps {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.backend-next-steps li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid rgba(216, 199, 168, 0.72);
+  border-radius: 9px;
+  background: rgba(255, 253, 246, 0.72);
+}
+
+.backend-next-steps li > span {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.backend-next-steps p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.45;
 }
 
 .repository-domain-table-wrap {

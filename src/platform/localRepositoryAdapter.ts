@@ -4,6 +4,7 @@ import {
   saveAdminGovernance,
 } from "../admin/localAdminGovernance";
 import type { AdminGovernanceData } from "../admin/types";
+import { API_ENDPOINT_CONTRACTS } from "../api/contracts";
 import { buildMockApiContractReport } from "../api/mockApiAdapter";
 import {
   loadPersonalData,
@@ -21,6 +22,7 @@ import {
   saveSceneForUser,
 } from "../utils/storage";
 import type {
+  BackendAdapterReport,
   RepositoryDomainDefinition,
   RepositoryHealthMetric,
   SystemRepositoryReportContext,
@@ -192,12 +194,53 @@ export function buildLocalRepositoryReport(
       agents: context.agents,
       activeUserId: personalData.activeUserId,
     }),
+    backend: buildLocalBackendReport(personalData, adminGovernance),
     migrationSteps: [
       "将 PersonalDataBundle 拆分为 users / profiles / consents / workspaces / memories / audit_logs 表。",
       "将 AdminGovernanceData 迁移为 access_policies / admin_audit_logs，并保留 userId 外键。",
       "把沙盘草稿、环境、布局、Agent 会话改为按 userId + workspaceId 服务端分页查询。",
       "把 LLM API Key 从 localStorage 移到服务端加密存储，前端只保留 providerId 和模型选择。",
       "在仓储层实现同名 API Adapter，替换 localRepositoryAdapter 后保持组件调用不变。",
+    ],
+  };
+}
+
+function buildLocalBackendReport(
+  personalData: PersonalDataBundle,
+  adminGovernance: AdminGovernanceData,
+): BackendAdapterReport {
+  const p0EndpointCount = API_ENDPOINT_CONTRACTS.filter((endpoint) => endpoint.migrationPriority === "p0").length;
+  return {
+    activeMode: "localStorage",
+    modeLabel: "本地 LocalStorage",
+    transport: "localStorage",
+    baseUrl: "browser://localStorage",
+    authStrategy: "LocalAuthSession + AdminGovernanceData",
+    writeStrategy: "同步写入浏览器本地命名空间",
+    remoteReady: false,
+    mockRoundTrip: false,
+    p0EndpointCount,
+    checks: [
+      {
+        label: "本地数据边界",
+        status: "ok",
+        detail: `${personalData.accounts.length} 个用户、${personalData.workspaces.length} 个工作区仍在浏览器内保存。`,
+      },
+      {
+        label: "权限上下文",
+        status: "ok",
+        detail: `${adminGovernance.accessPolicies.length} 条访问策略可映射到服务端鉴权中间件。`,
+      },
+      {
+        label: "远程服务",
+        status: "warn",
+        detail: "尚未启用 HTTP Adapter；当前模式用于稳定本地原型。",
+      },
+    ],
+    nextSteps: [
+      "在 Mock API 模式下验证分页、错误码、认证上下文和 DTO 映射。",
+      "实现服务端 Session/JWT 鉴权后，把 LocalAuthSession 替换为后端 auth context。",
+      "把 LLM API Key 从 localStorage 移出，改由服务端加密保存。",
     ],
   };
 }

@@ -1,14 +1,27 @@
 import type { AdminAccessRole, AdminAccessStatus, AdminPermissionKey, AdminWorkspaceScope } from "../admin/types";
 import type {
+  CommunicationTone,
+  ConsentScope,
   MemoryCandidateKind,
   MemoryCandidateStatus,
   PersonalAccountStatus,
   PersonalAgeGroup,
   PersonalAuthMode,
   PersonalRole,
+  ReplyLengthPreference,
   SandtrayArchiveStatus,
 } from "../personal/types";
-import type { AgentAvatarStyle, LlmProviderKind, RiskTag, SandboxEnvironment } from "../types";
+import type {
+  AgentAvatarStyle,
+  LlmProviderConfig,
+  LlmProviderKind,
+  ManagedAsset,
+  RiskTag,
+  SandboxAnalysis,
+  SandboxEnvironment,
+  SandboxEvent,
+  SandboxObject,
+} from "../types";
 
 export const API_CONTRACT_VERSION = "2026-05-06.v1";
 
@@ -25,6 +38,7 @@ export type ApiErrorCode =
   | "RESOURCE_NOT_FOUND"
   | "RESOURCE_CONFLICT"
   | "PAGE_OUT_OF_RANGE"
+  | "REQUEST_TIMEOUT"
   | "RATE_LIMITED"
   | "TASK_ACCEPTED"
   | "LLM_PROVIDER_ERROR"
@@ -228,6 +242,102 @@ export interface PsychAgentSummaryDto {
   updatedAt: string;
 }
 
+export interface RegisterUserRequestDto {
+  displayName: string;
+  email: string;
+  password: string;
+  ageGroup: PersonalAgeGroup;
+  role: PersonalRole;
+  consentScope: ConsentScope;
+}
+
+export interface LoginRequestDto {
+  email: string;
+  password: string;
+  rememberSession: boolean;
+}
+
+export interface UpdateUserProfileRequestDto {
+  displayName?: string;
+  ageGroup?: PersonalAgeGroup;
+  role?: PersonalRole;
+  timezone?: string;
+  preferredLanguage?: "zh-CN" | "en-US";
+  notes?: string;
+  preferredTone?: CommunicationTone;
+  replyLength?: ReplyLengthPreference;
+}
+
+export interface UpsertAccessPolicyRequestDto {
+  userId: string;
+  role: AdminAccessRole;
+  status: AdminAccessStatus;
+  workspaceScope: AdminWorkspaceScope;
+  deniedPermissions: AdminPermissionKey[];
+  note: string;
+}
+
+export interface SaveSandtraySnapshotRequestDto {
+  sessionId?: string;
+  userId: string;
+  workspaceId?: string;
+  title: string;
+  description: string;
+  environment: SandboxEnvironment;
+  objects: SandboxObject[];
+  events: SandboxEvent[];
+  analysis: SandboxAnalysis;
+  capturedAt: string;
+}
+
+export interface UpdateMemoryCandidateRequestDto {
+  memoryId: string;
+  status?: MemoryCandidateStatus;
+  title?: string;
+  summary?: string;
+  tags?: string[];
+  includeInAgentContext?: boolean;
+}
+
+export interface UpsertAssetRequestDto {
+  asset: ManagedAsset;
+  changeReason: string;
+}
+
+export interface SaveLlmProviderRequestDto {
+  provider: Omit<LlmProviderConfig, "apiKey">;
+  apiKeySecret?: string;
+  rotateSecret: boolean;
+}
+
+export interface UpsertAgentRequestDto {
+  id?: string;
+  name: string;
+  school: string;
+  description: string;
+  avatarStyle: AgentAvatarStyle;
+  openingMessage: string;
+  systemPrompt: string;
+  providerId?: string;
+  temperature: number;
+  enabled: boolean;
+}
+
+export interface CreateTaskRequestDto {
+  taskType: "archive_export" | "archive_import" | "asset_bulk_update" | "memory_rebuild" | "llm_connection_test";
+  idempotencyKey: string;
+  payload: Record<string, unknown>;
+}
+
+export interface TaskStatusDto {
+  taskId: string;
+  status: "queued" | "running" | "succeeded" | "failed";
+  progress: number;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiEndpointContract {
   method: ApiHttpMethod;
   path: string;
@@ -324,6 +434,14 @@ export const API_ERROR_CATALOG: ApiErrorCatalogItem[] = [
     userMessage: "分页参数无效。",
   },
   {
+    code: "REQUEST_TIMEOUT",
+    httpStatus: 408,
+    label: "请求超时",
+    retryable: true,
+    description: "网络请求超过前端或服务端允许的等待时间。",
+    userMessage: "请求超时，请稍后重试。",
+  },
+  {
     code: "RATE_LIMITED",
     httpStatus: 429,
     label: "请求过快",
@@ -378,6 +496,17 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     migrationPriority: "p0",
   },
   {
+    method: "PATCH",
+    path: "/api/admin/users/:userId",
+    summary: "更新用户画像、沟通偏好和后台可见状态。",
+    auth: "admin",
+    requestDto: "UpdateUserProfileRequestDto",
+    responseDto: "ApiResponseDto<UserDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED", "RESOURCE_NOT_FOUND"],
+    migrationPriority: "p0",
+  },
+  {
     method: "POST",
     path: "/api/auth/register",
     summary: "注册个人账号并初始化默认工作区、同意记录与本地偏好。",
@@ -408,6 +537,17 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     responseDto: "ApiPageResponseDto<WorkspaceDto>",
     paginated: true,
     errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "PAGE_OUT_OF_RANGE"],
+    migrationPriority: "p0",
+  },
+  {
+    method: "PATCH",
+    path: "/api/admin/access-policies/:userId",
+    summary: "更新指定用户的后台角色、工作区范围、拒绝权限和复核备注。",
+    auth: "admin",
+    requestDto: "UpsertAccessPolicyRequestDto",
+    responseDto: "ApiResponseDto<AccessPolicyDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED", "RESOURCE_NOT_FOUND"],
     migrationPriority: "p0",
   },
   {
@@ -455,6 +595,17 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     migrationPriority: "p1",
   },
   {
+    method: "PATCH",
+    path: "/api/memory/candidates/:memoryId",
+    summary: "确认、驳回、屏蔽或编辑某条个人记忆候选。",
+    auth: "owner-or-admin",
+    requestDto: "UpdateMemoryCandidateRequestDto",
+    responseDto: "ApiResponseDto<MemoryCandidateDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED", "RESOURCE_NOT_FOUND"],
+    migrationPriority: "p1",
+  },
+  {
     method: "GET",
     path: "/api/assets",
     summary: "沙具资产目录分页查询，支撑 300+ 资产搜索、标签和健康检查。",
@@ -466,6 +617,17 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     migrationPriority: "p1",
   },
   {
+    method: "POST",
+    path: "/api/assets",
+    summary: "新增或更新沙具资产，服务端负责版本、标签和健康检查。",
+    auth: "admin",
+    requestDto: "UpsertAssetRequestDto",
+    responseDto: "ApiResponseDto<AssetSummaryDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED", "RESOURCE_CONFLICT"],
+    migrationPriority: "p1",
+  },
+  {
     method: "GET",
     path: "/api/admin/llm-providers",
     summary: "LLM 厂商配置分页查询，永不向前端回传明文 API Key。",
@@ -474,6 +636,17 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     responseDto: "ApiPageResponseDto<LlmProviderSummaryDto>",
     paginated: true,
     errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN"],
+    migrationPriority: "p1",
+  },
+  {
+    method: "PATCH",
+    path: "/api/admin/llm-providers/:providerId",
+    summary: "保存 LLM 配置并可选择轮换密钥；响应永不返回明文 API Key。",
+    auth: "admin",
+    requestDto: "SaveLlmProviderRequestDto",
+    responseDto: "ApiResponseDto<LlmProviderSummaryDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED", "RESOURCE_NOT_FOUND"],
     migrationPriority: "p1",
   },
   {
@@ -489,11 +662,22 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
   },
   {
     method: "POST",
+    path: "/api/admin/agents",
+    summary: "创建或更新心理学取向 Agent 的角色资料、提示词和 LLM 绑定。",
+    auth: "admin",
+    requestDto: "UpsertAgentRequestDto",
+    responseDto: "ApiResponseDto<PsychAgentSummaryDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED", "RESOURCE_CONFLICT"],
+    migrationPriority: "p1",
+  },
+  {
+    method: "POST",
     path: "/api/tasks",
     summary: "导入、导出、批量资产处理等长任务入口，返回可轮询 taskId。",
     auth: "admin",
     requestDto: "CreateTaskRequestDto",
-    responseDto: "ApiResponseDto<{ taskId: string; status: string }>",
+    responseDto: "ApiResponseDto<TaskStatusDto>",
     paginated: false,
     errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "TASK_ACCEPTED", "INTERNAL_ERROR"],
     migrationPriority: "p2",

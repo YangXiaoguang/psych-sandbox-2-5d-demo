@@ -12,7 +12,7 @@ import type {
   SandboxEvent,
 } from "../types";
 
-export type RepositoryMode = "localStorage" | "api-ready";
+export type RepositoryMode = "localStorage" | "mockApi" | "remoteApi";
 export type RepositoryHealthTone = "ok" | "warn" | "risk";
 export type RepositoryDomainKey =
   | "identity"
@@ -70,6 +70,26 @@ export interface WorkspaceDirectoryRow {
   updatedAt: string;
 }
 
+export interface BackendAdapterCheck {
+  label: string;
+  status: RepositoryHealthTone;
+  detail: string;
+}
+
+export interface BackendAdapterReport {
+  activeMode: RepositoryMode;
+  modeLabel: string;
+  transport: "localStorage" | "mock-api" | "http";
+  baseUrl: string;
+  authStrategy: string;
+  writeStrategy: string;
+  remoteReady: boolean;
+  mockRoundTrip: boolean;
+  p0EndpointCount: number;
+  checks: BackendAdapterCheck[];
+  nextSteps: string[];
+}
+
 export interface SystemArchitectureReport {
   adapterName: string;
   mode: RepositoryMode;
@@ -78,6 +98,7 @@ export interface SystemArchitectureReport {
   domains: RepositoryDomainDefinition[];
   workspaces: WorkspaceDirectoryRow[];
   apiContract: ApiContractReport;
+  backend: BackendAdapterReport;
   migrationSteps: string[];
 }
 

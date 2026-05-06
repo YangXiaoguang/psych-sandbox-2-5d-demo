@@ -53,7 +53,8 @@ import type {
   PersonalDataBundle,
   PersonalRole,
 } from "../personal/types";
-import type { SystemArchitectureReport } from "../platform/repositoryTypes";
+import { REPOSITORY_MODE_OPTIONS } from "../platform/repositoryAdapterRegistry";
+import type { RepositoryMode, SystemArchitectureReport } from "../platform/repositoryTypes";
 import type {
   AgentAvatarStyle,
   LlmProviderConfig,
@@ -82,11 +83,13 @@ interface AdminDashboardProps {
   personalData: PersonalDataBundle;
   adminGovernance: AdminGovernanceData;
   repositoryReport: SystemArchitectureReport;
+  repositoryMode: RepositoryMode;
   managedAssets: ManagedAsset[];
   llmProviders: LlmProviderConfig[];
   agents: PsychAgentProfile[];
   onPersonalDataChange: (data: PersonalDataBundle) => void;
   onAdminGovernanceChange: (data: AdminGovernanceData) => void;
+  onRepositoryModeChange: (mode: RepositoryMode) => void;
   onManagedAssetsChange: (assets: ManagedAsset[]) => void;
   onLlmProvidersChange: (providers: LlmProviderConfig[]) => void;
   onAgentsChange: (agents: PsychAgentProfile[]) => void;
@@ -209,11 +212,13 @@ export function AdminDashboard({
   personalData,
   adminGovernance,
   repositoryReport,
+  repositoryMode,
   managedAssets,
   llmProviders,
   agents,
   onPersonalDataChange,
   onAdminGovernanceChange,
+  onRepositoryModeChange,
   onManagedAssetsChange,
   onLlmProvidersChange,
   onAgentsChange,
@@ -339,7 +344,11 @@ export function AdminDashboard({
         />
       ) : null}
       {activeTab === "system" ? (
-        <SystemArchitecturePanel report={repositoryReport} />
+        <SystemArchitecturePanel
+          report={repositoryReport}
+          repositoryMode={repositoryMode}
+          onRepositoryModeChange={onRepositoryModeChange}
+        />
       ) : null}
       {activeTab === "assets" ? (
         <AssetAdminPanel
@@ -1406,13 +1415,22 @@ function AdminAccessPanel({
   );
 }
 
-function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport }): JSX.Element {
+function SystemArchitecturePanel({
+  report,
+  repositoryMode,
+  onRepositoryModeChange,
+}: {
+  report: SystemArchitectureReport;
+  repositoryMode: RepositoryMode;
+  onRepositoryModeChange: (mode: RepositoryMode) => void;
+}): JSX.Element {
   const riskCount = report.domains.filter((domain) => domain.migrationRisk === "risk").length;
   const warnCount = report.domains.filter((domain) => domain.migrationRisk === "warn").length;
   const okCount = report.domains.filter((domain) => domain.migrationRisk === "ok").length;
   const apiContract = report.apiContract;
   const p0Endpoints = apiContract.endpoints.filter((endpoint) => endpoint.migrationPriority === "p0").length;
   const paginatedEndpoints = apiContract.endpoints.filter((endpoint) => endpoint.paginated).length;
+  const writeEndpoints = apiContract.endpoints.filter((endpoint) => endpoint.method !== "GET").length;
 
   return (
     <section className="system-architecture-layout" aria-label="系统架构与后端适配">
@@ -1422,8 +1440,29 @@ function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport 
             <p className="eyebrow">Repository Adapter</p>
             <h3>后端适配边界</h3>
           </div>
-          <span className={`repository-mode-pill ${report.mode}`}>{report.adapterName}</span>
+          <div className="repository-mode-control">
+            <span className={`repository-mode-pill ${report.mode}`}>{report.adapterName}</span>
+            <select
+              value={repositoryMode}
+              onChange={(event) => onRepositoryModeChange(event.target.value as RepositoryMode)}
+              aria-label="切换仓储适配模式"
+            >
+              {REPOSITORY_MODE_OPTIONS.map((option) => (
+                <option key={option.mode} value={option.mode}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </header>
+        <div className="repository-mode-options" aria-label="仓储适配模式说明">
+          {REPOSITORY_MODE_OPTIONS.map((option) => (
+            <article key={option.mode} className={`${option.tone} ${repositoryMode === option.mode ? "active" : ""}`}>
+              <strong>{option.label}</strong>
+              <p>{option.description}</p>
+            </article>
+          ))}
+        </div>
         <div className="system-health-grid">
           {report.metrics.map((metric) => (
             <article key={metric.label} className={metric.tone}>
@@ -1468,7 +1507,63 @@ function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport 
             <strong>{p0Endpoints}</strong>
             <p>P0 后端首批接口</p>
           </article>
+          <article>
+            <span>Write DTO</span>
+            <strong>{writeEndpoints}</strong>
+            <p>写操作契约</p>
+          </article>
         </div>
+        <section className="backend-diagnostic-panel" aria-label="后端接入诊断">
+          <header>
+            <div>
+              <p className="eyebrow">Backend Adapter Diagnostic</p>
+              <h4>后端接入诊断</h4>
+            </div>
+            <span className={`repository-risk-pill ${report.backend.remoteReady ? "ok" : "warn"}`}>
+              {report.backend.remoteReady ? "Remote Ready" : "Local Fallback"}
+            </span>
+          </header>
+          <div className="backend-diagnostic-summary">
+            <span>
+              <strong>{report.backend.modeLabel}</strong>
+              当前模式
+            </span>
+            <span>
+              <strong>{report.backend.transport}</strong>
+              Transport
+            </span>
+            <span>
+              <strong>{report.backend.p0EndpointCount}</strong>
+              P0 接口
+            </span>
+            <span>
+              <strong>{report.backend.mockRoundTrip ? "通过" : "待测"}</strong>
+              Mock Roundtrip
+            </span>
+          </div>
+          <div className="backend-check-grid">
+            {report.backend.checks.map((check) => (
+              <article key={check.label} className={check.status}>
+                <strong>{check.label}</strong>
+                <p>{check.detail}</p>
+              </article>
+            ))}
+          </div>
+          <p className="backend-base-url">
+            <span>Base URL</span>
+            <code>{report.backend.baseUrl}</code>
+            <span>{report.backend.authStrategy}</span>
+            <span>{report.backend.writeStrategy}</span>
+          </p>
+          <ol className="backend-next-steps">
+            {report.backend.nextSteps.map((step, index) => (
+              <li key={step}>
+                <span>{index + 1}</span>
+                <p>{step}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
         <div className="repository-domain-table-wrap">
           <table className="repository-domain-table">
             <thead>

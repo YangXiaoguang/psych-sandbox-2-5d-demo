@@ -44,8 +44,8 @@ import {
   getActiveProfile,
   switchActivePersonalUser,
 } from "./personal/localMemoryStore";
-import { localRepositoryAdapter } from "./platform/localRepositoryAdapter";
-import type { SystemArchitectureReport } from "./platform/repositoryTypes";
+import { getSystemRepositoryAdapter, loadRepositoryMode, saveRepositoryMode } from "./platform/repositoryAdapterRegistry";
+import type { RepositoryMode, SystemArchitectureReport } from "./platform/repositoryTypes";
 import type { CreatePersonalUserInput, SandtraySessionArchive } from "./personal/types";
 import {
   clearLocalAuthSession,
@@ -64,26 +64,28 @@ interface SceneState {
 }
 
 export function App(): JSX.Element {
-  const [initialPersonalData] = useState(() => localRepositoryAdapter.personal.load());
+  const [repositoryMode, setRepositoryMode] = useState<RepositoryMode>(() => loadRepositoryMode());
+  const repositoryAdapter = useMemo(() => getSystemRepositoryAdapter(repositoryMode), [repositoryMode]);
+  const [initialPersonalData] = useState(() => repositoryAdapter.personal.load());
   const [initialAuthSession] = useState<LocalAuthSession | null>(() => loadLocalAuthSession());
   const [personalData, setPersonalData] = useState(initialPersonalData);
   const [initialScene] = useState<SceneState>(
-    () => localRepositoryAdapter.workspace.loadScene(initialPersonalData.activeUserId) ?? loadScene() ?? createInitialScene(),
+    () => repositoryAdapter.workspace.loadScene(initialPersonalData.activeUserId) ?? loadScene() ?? createInitialScene(),
   );
   const [objects, setObjects] = useState<SandboxObject[]>(initialScene.objects);
   const [events, setEvents] = useState<SandboxEvent[]>(initialScene.events);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showGuides, setShowGuides] = useState(false);
-  const [environment, setEnvironment] = useState(() => localRepositoryAdapter.workspace.loadEnvironment(initialPersonalData.activeUserId));
-  const [layoutPreferences, setLayoutPreferences] = useState(() => localRepositoryAdapter.workspace.loadLayout(initialPersonalData.activeUserId));
+  const [environment, setEnvironment] = useState(() => repositoryAdapter.workspace.loadEnvironment(initialPersonalData.activeUserId));
+  const [layoutPreferences, setLayoutPreferences] = useState(() => repositoryAdapter.workspace.loadLayout(initialPersonalData.activeUserId));
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("scene");
   const [activeView, setActiveView] = useState<AppView>(() => (initialAuthSession ? "sandbox" : "auth"));
   const [authSession, setAuthSession] = useState<LocalAuthSession | null>(initialAuthSession);
   const [managedAssets, setManagedAssets] = useState(() => loadManagedAssets());
   const [llmProviders, setLlmProviders] = useState(() => loadLlmProviders());
   const [agents, setAgents] = useState(() => loadPsychAgents());
-  const [adminGovernance, setAdminGovernance] = useState<AdminGovernanceData>(() => localRepositoryAdapter.admin.load(initialPersonalData));
-  const [conversations, setConversations] = useState(() => localRepositoryAdapter.workspace.loadAgentConversations(initialPersonalData.activeUserId));
+  const [adminGovernance, setAdminGovernance] = useState<AdminGovernanceData>(() => repositoryAdapter.admin.load(initialPersonalData));
+  const [conversations, setConversations] = useState(() => repositoryAdapter.workspace.loadAgentConversations(initialPersonalData.activeUserId));
   const editorRef = useRef<SandboxEditorHandle | null>(null);
   const activeUserId = personalData.activeUserId;
 
@@ -108,8 +110,8 @@ export function App(): JSX.Element {
   );
   const personalMemoryContext = personalContextPacket.promptLines;
   const repositoryReport = useMemo<SystemArchitectureReport>(
-    () => localRepositoryAdapter.buildReport(personalData, adminGovernance, { managedAssets, llmProviders, agents }),
-    [adminGovernance, agents, llmProviders, managedAssets, personalData],
+    () => repositoryAdapter.buildReport(personalData, adminGovernance, { managedAssets, llmProviders, agents }),
+    [adminGovernance, agents, llmProviders, managedAssets, personalData, repositoryAdapter],
   );
 
   useEffect(() => {
@@ -119,28 +121,28 @@ export function App(): JSX.Element {
   }, [activeView, authSession]);
 
   useEffect(() => {
-    localRepositoryAdapter.workspace.saveScene(activeUserId, { objects, events });
-  }, [activeUserId, events, objects]);
+    repositoryAdapter.workspace.saveScene(activeUserId, { objects, events });
+  }, [activeUserId, events, objects, repositoryAdapter]);
 
   useEffect(() => {
-    localRepositoryAdapter.workspace.saveEnvironment(activeUserId, environment);
-  }, [activeUserId, environment]);
+    repositoryAdapter.workspace.saveEnvironment(activeUserId, environment);
+  }, [activeUserId, environment, repositoryAdapter]);
 
   useEffect(() => {
-    localRepositoryAdapter.workspace.saveLayout(activeUserId, layoutPreferences);
-  }, [activeUserId, layoutPreferences]);
+    repositoryAdapter.workspace.saveLayout(activeUserId, layoutPreferences);
+  }, [activeUserId, layoutPreferences, repositoryAdapter]);
 
   useEffect(() => {
-    localRepositoryAdapter.personal.save(personalData);
-  }, [personalData]);
+    repositoryAdapter.personal.save(personalData);
+  }, [personalData, repositoryAdapter]);
 
   useEffect(() => {
-    setAdminGovernance((current) => localRepositoryAdapter.admin.normalize(current, personalData));
-  }, [personalData]);
+    setAdminGovernance((current) => repositoryAdapter.admin.normalize(current, personalData));
+  }, [personalData, repositoryAdapter]);
 
   useEffect(() => {
-    localRepositoryAdapter.admin.save(adminGovernance);
-  }, [adminGovernance]);
+    repositoryAdapter.admin.save(adminGovernance);
+  }, [adminGovernance, repositoryAdapter]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -211,8 +213,8 @@ export function App(): JSX.Element {
   }, [agents]);
 
   useEffect(() => {
-    localRepositoryAdapter.workspace.saveAgentConversations(activeUserId, conversations);
-  }, [activeUserId, conversations]);
+    repositoryAdapter.workspace.saveAgentConversations(activeUserId, conversations);
+  }, [activeUserId, conversations, repositoryAdapter]);
 
   const recordEvent = useCallback((draft: SandboxEventDraft) => {
     const event = createSandboxEvent(draft);
@@ -396,14 +398,19 @@ export function App(): JSX.Element {
     setLayoutPreferences((current) => ({ ...current, rightPanelCollapsed: false }));
   }, [sandboxFocusMode]);
 
+  const handleRepositoryModeChange = useCallback((mode: RepositoryMode) => {
+    saveRepositoryMode(mode);
+    setRepositoryMode(mode);
+  }, []);
+
   const loadRuntimeStateForUser = useCallback((userId: string) => {
-    const nextScene = localRepositoryAdapter.workspace.loadScene(userId) ?? createInitialScene();
+    const nextScene = repositoryAdapter.workspace.loadScene(userId) ?? createInitialScene();
     setObjects(nextScene.objects);
     setEvents(nextScene.events);
-    setConversations(localRepositoryAdapter.workspace.loadAgentConversations(userId));
-    setEnvironment(localRepositoryAdapter.workspace.loadEnvironment(userId));
+    setConversations(repositoryAdapter.workspace.loadAgentConversations(userId));
+    setEnvironment(repositoryAdapter.workspace.loadEnvironment(userId));
     setLayoutPreferences({
-      ...localRepositoryAdapter.workspace.loadLayout(userId),
+      ...repositoryAdapter.workspace.loadLayout(userId),
       focusMode: false,
       assetDrawerOpen: false,
       aiDrawerOpen: false,
@@ -411,16 +418,16 @@ export function App(): JSX.Element {
     setSelectedId(null);
     setShowGuides(false);
     setRightPanelTab("scene");
-  }, []);
+  }, [repositoryAdapter]);
 
   const persistRuntimeStateForUser = useCallback(
     (userId: string) => {
-      localRepositoryAdapter.workspace.saveScene(userId, { objects, events });
-      localRepositoryAdapter.workspace.saveAgentConversations(userId, conversations);
-      localRepositoryAdapter.workspace.saveEnvironment(userId, environment);
-      localRepositoryAdapter.workspace.saveLayout(userId, layoutPreferences);
+      repositoryAdapter.workspace.saveScene(userId, { objects, events });
+      repositoryAdapter.workspace.saveAgentConversations(userId, conversations);
+      repositoryAdapter.workspace.saveEnvironment(userId, environment);
+      repositoryAdapter.workspace.saveLayout(userId, layoutPreferences);
     },
-    [conversations, environment, events, layoutPreferences, objects],
+    [conversations, environment, events, layoutPreferences, objects, repositoryAdapter],
   );
 
   const handleSwitchPersonalUser = useCallback(
@@ -726,11 +733,13 @@ export function App(): JSX.Element {
           personalData={personalData}
           adminGovernance={adminGovernance}
           repositoryReport={repositoryReport}
+          repositoryMode={repositoryMode}
           managedAssets={managedAssets}
           llmProviders={llmProviders}
           agents={agents}
           onPersonalDataChange={setPersonalData}
           onAdminGovernanceChange={setAdminGovernance}
+          onRepositoryModeChange={handleRepositoryModeChange}
           onManagedAssetsChange={setManagedAssets}
           onLlmProvidersChange={setLlmProviders}
           onAgentsChange={setAgents}
