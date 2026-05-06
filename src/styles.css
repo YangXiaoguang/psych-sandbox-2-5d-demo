@@ -1889,6 +1889,49 @@ button {
   color: var(--ink);
 }
 
+.product-shell.night-mode .repository-mode-pill,
+.product-shell.night-mode .system-health-grid,
+.product-shell.night-mode .system-health-grid article,
+.product-shell.night-mode .repository-risk-strip,
+.product-shell.night-mode .repository-risk-strip span,
+.product-shell.night-mode .repository-domain-table th,
+.product-shell.night-mode .repository-domain-table td,
+.product-shell.night-mode .workspace-directory-list article,
+.product-shell.night-mode .workspace-directory-list span,
+.product-shell.night-mode .migration-step-list li,
+.product-shell.night-mode .system-contract-card,
+.product-shell.night-mode .repository-domain-table code,
+.product-shell.night-mode .system-contract-card code {
+  border-color: var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    rgba(10, 20, 26, 0.82);
+  color: var(--ink);
+}
+
+.product-shell.night-mode .system-health-grid strong,
+.product-shell.night-mode .repository-domain-table strong,
+.product-shell.night-mode .workspace-directory-list strong,
+.product-shell.night-mode .system-contract-card h4 {
+  color: var(--ink);
+}
+
+.product-shell.night-mode .system-health-grid p,
+.product-shell.night-mode .workspace-directory-list p,
+.product-shell.night-mode .migration-step-list p,
+.product-shell.night-mode .system-contract-card p,
+.product-shell.night-mode .system-contract-card time {
+  color: var(--ink-muted);
+}
+
+.product-shell.night-mode .repository-risk-pill.ok,
+.product-shell.night-mode .workspace-directory-list .active,
+.product-shell.night-mode .migration-step-list span {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
 .ai-stage-companion:hover,
 .ai-stage-companion:focus-visible,
 .ai-stage-companion.active {
@@ -3341,6 +3384,325 @@ button {
   margin-top: 4px;
   color: var(--ink-muted);
   font-size: 11px;
+}
+
+.system-architecture-layout {
+  display: grid;
+  grid-template-columns: minmax(720px, 1fr) 340px 340px;
+  min-height: 0;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.system-map-panel,
+.workspace-directory-panel,
+.migration-plan-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.workspace-directory-panel,
+.migration-plan-panel {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.repository-mode-pill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.system-health-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 249, 237, 0.42);
+}
+
+.system-health-grid article {
+  display: grid;
+  gap: 4px;
+  min-height: 94px;
+  align-content: start;
+  padding: 10px;
+  border: 1px solid #dccbaa;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent),
+    #fff9ed;
+  box-shadow: var(--inner-highlight);
+}
+
+.system-health-grid article.warn {
+  border-color: #dfc49c;
+  background: #fff7e9;
+}
+
+.system-health-grid article.risk {
+  border-color: #d7a094;
+  background: #fff0ec;
+}
+
+.system-health-grid strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.system-health-grid span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.system-health-grid p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.4;
+}
+
+.repository-risk-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.repository-risk-strip span {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid #d8c7a8;
+  border-radius: 9px;
+  background: #fffdf6;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.repository-risk-strip strong {
+  color: var(--accent-dark);
+  font-size: 17px;
+}
+
+.repository-risk-strip .risk strong {
+  color: #a04534;
+}
+
+.repository-domain-table-wrap {
+  min-height: 0;
+  overflow: auto;
+}
+
+.repository-domain-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.repository-domain-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 9px;
+  border-bottom: 1px solid #d8c7a8;
+  background: #fff9ed;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-align: left;
+}
+
+.repository-domain-table td {
+  padding: 9px;
+  border-bottom: 1px solid rgba(216, 199, 168, 0.72);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 780;
+  vertical-align: top;
+}
+
+.repository-domain-table strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.repository-domain-table code,
+.system-contract-card code {
+  border: 1px solid rgba(112, 169, 157, 0.35);
+  border-radius: 6px;
+  background: rgba(232, 248, 241, 0.76);
+  color: var(--accent-dark);
+  padding: 1px 5px;
+  font-size: 11px;
+}
+
+.repository-risk-pill {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.repository-risk-pill.ok {
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.repository-risk-pill.warn {
+  border: 1px solid #dfc49c;
+  background: #fff2dd;
+  color: #9b5a25;
+}
+
+.repository-risk-pill.risk {
+  border: 1px solid #d7a094;
+  background: #fff0ec;
+  color: #a04534;
+}
+
+.workspace-directory-list,
+.migration-step-list {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.workspace-directory-list article {
+  display: grid;
+  gap: 7px;
+  padding: 11px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+  box-shadow: var(--inner-highlight);
+}
+
+.workspace-directory-list article > div,
+.workspace-directory-list footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workspace-directory-list strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-directory-list p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.workspace-directory-list span {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid #d8c7a8;
+  border-radius: 999px;
+  background: #fbf1de;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.workspace-directory-list .active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.migration-step-list {
+  margin: 0;
+  list-style: none;
+  counter-reset: migration;
+}
+
+.migration-step-list li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+}
+
+.migration-step-list span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 950;
+}
+
+.migration-step-list p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.45;
+}
+
+.system-contract-card {
+  display: grid;
+  gap: 8px;
+  margin: 0 12px 12px;
+  padding: 12px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+}
+
+.system-contract-card h4,
+.system-contract-card p {
+  margin: 0;
+}
+
+.system-contract-card h4 {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.system-contract-card p,
+.system-contract-card time {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 780;
+  line-height: 1.5;
 }
 
 .asset-catalog-panel {

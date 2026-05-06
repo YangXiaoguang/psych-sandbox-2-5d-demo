@@ -16,6 +16,7 @@ import {
   Trash2,
   Undo2,
   Upload,
+  Workflow,
   UserCheck,
   UserRound,
   Users,
@@ -52,6 +53,7 @@ import type {
   PersonalDataBundle,
   PersonalRole,
 } from "../personal/types";
+import type { SystemArchitectureReport } from "../platform/repositoryTypes";
 import type {
   AgentAvatarStyle,
   LlmProviderConfig,
@@ -66,7 +68,7 @@ import { AgentPortrait } from "./AgentPortrait";
 import { AssetPreview } from "./AssetPreview";
 import { RiskTagBadge } from "./RiskTagBadge";
 
-type AdminTab = "users" | "access" | "assets" | "llm" | "agents";
+type AdminTab = "users" | "access" | "system" | "assets" | "llm" | "agents";
 type ToyRecipeKind = ToyModelRecipe["kind"];
 type UserAuthFilter = "all" | "bound" | "guest";
 type UserStatusFilter = "all" | PersonalAccountStatus;
@@ -79,6 +81,7 @@ type ConfigStatusTone = "ok" | "warn" | "error";
 interface AdminDashboardProps {
   personalData: PersonalDataBundle;
   adminGovernance: AdminGovernanceData;
+  repositoryReport: SystemArchitectureReport;
   managedAssets: ManagedAsset[];
   llmProviders: LlmProviderConfig[];
   agents: PsychAgentProfile[];
@@ -205,6 +208,7 @@ interface UserAdminRow {
 export function AdminDashboard({
   personalData,
   adminGovernance,
+  repositoryReport,
   managedAssets,
   llmProviders,
   agents,
@@ -311,6 +315,7 @@ export function AdminDashboard({
           <div className="admin-tabbar" role="tablist" aria-label="管理类型">
             <TabButton id="users" label="用户管理" activeTab={activeTab} onSelect={setActiveTab} icon={<Users size={16} />} />
             <TabButton id="access" label="权限审计" activeTab={activeTab} onSelect={setActiveTab} icon={<ShieldCheck size={16} />} />
+            <TabButton id="system" label="系统架构" activeTab={activeTab} onSelect={setActiveTab} icon={<Workflow size={16} />} />
             <TabButton id="assets" label="沙具资产" activeTab={activeTab} onSelect={setActiveTab} icon={<Boxes size={16} />} />
             <TabButton id="llm" label="LLM 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<KeyRound size={16} />} />
             <TabButton id="agents" label="Agent 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<Bot size={16} />} />
@@ -332,6 +337,9 @@ export function AdminDashboard({
           adminGovernance={adminGovernance}
           onAdminGovernanceChange={onAdminGovernanceChange}
         />
+      ) : null}
+      {activeTab === "system" ? (
+        <SystemArchitecturePanel report={repositoryReport} />
       ) : null}
       {activeTab === "assets" ? (
         <AssetAdminPanel
@@ -1392,6 +1400,137 @@ function AdminAccessPanel({
               </article>
             ))}
           </div>
+        </section>
+      </aside>
+    </section>
+  );
+}
+
+function SystemArchitecturePanel({ report }: { report: SystemArchitectureReport }): JSX.Element {
+  const riskCount = report.domains.filter((domain) => domain.migrationRisk === "risk").length;
+  const warnCount = report.domains.filter((domain) => domain.migrationRisk === "warn").length;
+  const okCount = report.domains.filter((domain) => domain.migrationRisk === "ok").length;
+
+  return (
+    <section className="system-architecture-layout" aria-label="系统架构与后端适配">
+      <section className="admin-card system-map-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Repository Adapter</p>
+            <h3>后端适配边界</h3>
+          </div>
+          <span className={`repository-mode-pill ${report.mode}`}>{report.adapterName}</span>
+        </header>
+        <div className="system-health-grid">
+          {report.metrics.map((metric) => (
+            <article key={metric.label} className={metric.tone}>
+              <strong>{metric.value}</strong>
+              <span>{metric.label}</span>
+              <p>{metric.detail}</p>
+            </article>
+          ))}
+        </div>
+        <div className="repository-risk-strip">
+          <span>
+            <strong>{okCount}</strong>
+            可直接迁移
+          </span>
+          <span>
+            <strong>{warnCount}</strong>
+            需服务端分页
+          </span>
+          <span className="risk">
+            <strong>{riskCount}</strong>
+            高敏数据
+          </span>
+        </div>
+        <div className="repository-domain-table-wrap">
+          <table className="repository-domain-table">
+            <thead>
+              <tr>
+                <th>数据域</th>
+                <th>当前存储</th>
+                <th>后端接口</th>
+                <th>读模型</th>
+                <th>写模型</th>
+                <th>风险</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.domains.map((domain) => (
+                <tr key={domain.key}>
+                  <td>
+                    <strong>{domain.label}</strong>
+                  </td>
+                  <td>{domain.currentStore}</td>
+                  <td>
+                    <code>{domain.futureApi}</code>
+                  </td>
+                  <td>{domain.readModel}</td>
+                  <td>{domain.writeModel}</td>
+                  <td>
+                    <span className={`repository-risk-pill ${domain.migrationRisk}`}>
+                      {domain.migrationRisk === "ok" ? "低" : domain.migrationRisk === "warn" ? "中" : "高"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside className="admin-card workspace-directory-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Workspace Registry</p>
+            <h3>组织 / 工作区</h3>
+          </div>
+          <span className="user-result-count">{report.workspaces.length}</span>
+        </header>
+        <div className="workspace-directory-list">
+          {report.workspaces.length === 0 ? (
+            <p className="user-empty-state">暂无工作区。</p>
+          ) : (
+            report.workspaces.map((workspace) => (
+              <article key={workspace.workspaceId}>
+                <div>
+                  <strong>{workspace.title}</strong>
+                  <span className={workspace.active ? "active" : "disabled"}>{workspace.active ? "启用" : "停用"}</span>
+                </div>
+                <p>{workspace.ownerName}</p>
+                <footer>
+                  <span>{workspace.sessionCount} 个沙盘档案</span>
+                  <span>{workspace.accessScopeSummary}</span>
+                </footer>
+              </article>
+            ))
+          )}
+        </div>
+      </aside>
+
+      <aside className="admin-card migration-plan-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Migration Plan</p>
+            <h3>服务端迁移步骤</h3>
+          </div>
+        </header>
+        <ol className="migration-step-list">
+          {report.migrationSteps.map((step, index) => (
+            <li key={step}>
+              <span>{index + 1}</span>
+              <p>{step}</p>
+            </li>
+          ))}
+        </ol>
+        <section className="system-contract-card">
+          <h4>接口替换约定</h4>
+          <p>
+            当前 App 已通过 <code>localRepositoryAdapter</code> 读取个人档案、权限治理、沙盘草稿、环境、布局和 Agent 会话。
+            后续接入真实后端时，优先实现同名 API Adapter，并保持组件 props 不变。
+          </p>
+          <time>报告生成：{formatDateTime(report.generatedAt)}</time>
         </section>
       </aside>
     </section>
