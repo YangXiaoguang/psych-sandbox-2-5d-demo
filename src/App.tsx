@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Boxes, MessageCircle, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { loadAdminGovernance, normalizeAdminGovernance, saveAdminGovernance } from "./admin/localAdminGovernance";
+import type { AdminGovernanceData } from "./admin/types";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { AiCompanionPanel } from "./components/AiCompanionPanel";
@@ -87,6 +89,7 @@ export function App(): JSX.Element {
   const [managedAssets, setManagedAssets] = useState(() => loadManagedAssets());
   const [llmProviders, setLlmProviders] = useState(() => loadLlmProviders());
   const [agents, setAgents] = useState(() => loadPsychAgents());
+  const [adminGovernance, setAdminGovernance] = useState<AdminGovernanceData>(() => loadAdminGovernance(initialPersonalData));
   const [conversations, setConversations] = useState(() => loadAgentConversationsForUser(initialPersonalData.activeUserId));
   const editorRef = useRef<SandboxEditorHandle | null>(null);
   const activeUserId = personalData.activeUserId;
@@ -133,6 +136,14 @@ export function App(): JSX.Element {
   useEffect(() => {
     savePersonalData(personalData);
   }, [personalData]);
+
+  useEffect(() => {
+    setAdminGovernance((current) => normalizeAdminGovernance(current, personalData));
+  }, [personalData]);
+
+  useEffect(() => {
+    saveAdminGovernance(adminGovernance);
+  }, [adminGovernance]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -716,10 +727,12 @@ export function App(): JSX.Element {
       {activeView === "admin" ? (
         <AdminDashboard
           personalData={personalData}
+          adminGovernance={adminGovernance}
           managedAssets={managedAssets}
           llmProviders={llmProviders}
           agents={agents}
           onPersonalDataChange={setPersonalData}
+          onAdminGovernanceChange={setAdminGovernance}
           onManagedAssetsChange={setManagedAssets}
           onLlmProvidersChange={setLlmProviders}
           onAgentsChange={setAgents}

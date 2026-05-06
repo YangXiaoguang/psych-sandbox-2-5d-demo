@@ -21,6 +21,22 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ADMIN_PERMISSION_DEFINITIONS,
+  ADMIN_ROLE_PERMISSIONS,
+  appendAdminGovernanceLog,
+  createDefaultAdminGovernance,
+  getEffectivePermissions,
+  upsertAdminAccessPolicy,
+} from "../admin/localAdminGovernance";
+import type {
+  AdminAccessPolicy,
+  AdminAccessRole,
+  AdminAccessStatus,
+  AdminGovernanceData,
+  AdminPermissionKey,
+  AdminWorkspaceScope,
+} from "../admin/types";
 import { loadLocalAuthIdentities } from "../auth/localAuth";
 import { ASSET_CATEGORIES, RISK_LABELS } from "../data/assets";
 import { createDefaultLlmProviders, createDefaultPsychAgents } from "../data/defaultAgents";
@@ -50,7 +66,7 @@ import { AgentPortrait } from "./AgentPortrait";
 import { AssetPreview } from "./AssetPreview";
 import { RiskTagBadge } from "./RiskTagBadge";
 
-type AdminTab = "users" | "assets" | "llm" | "agents";
+type AdminTab = "users" | "access" | "assets" | "llm" | "agents";
 type ToyRecipeKind = ToyModelRecipe["kind"];
 type UserAuthFilter = "all" | "bound" | "guest";
 type UserStatusFilter = "all" | PersonalAccountStatus;
@@ -62,10 +78,12 @@ type ConfigStatusTone = "ok" | "warn" | "error";
 
 interface AdminDashboardProps {
   personalData: PersonalDataBundle;
+  adminGovernance: AdminGovernanceData;
   managedAssets: ManagedAsset[];
   llmProviders: LlmProviderConfig[];
   agents: PsychAgentProfile[];
   onPersonalDataChange: (data: PersonalDataBundle) => void;
+  onAdminGovernanceChange: (data: AdminGovernanceData) => void;
   onManagedAssetsChange: (assets: ManagedAsset[]) => void;
   onLlmProvidersChange: (providers: LlmProviderConfig[]) => void;
   onAgentsChange: (agents: PsychAgentProfile[]) => void;
@@ -74,11 +92,22 @@ interface AdminDashboardProps {
 
 interface AdminConfigBackup {
   schema: "psych-sandbox-admin-config";
-  version: 1;
+  version: 1 | 2;
   exportedAt: string;
+  adminGovernance?: AdminGovernanceData;
   managedAssets: ManagedAsset[];
   llmProviders: LlmProviderConfig[];
   agents: PsychAgentProfile[];
+}
+
+interface AdminUserDirectoryExport {
+  schema: "psych-sandbox-admin-user-directory";
+  version: 1;
+  exportedAt: string;
+  accounts: Array<Pick<PersonalAccount, "userId" | "localHandle" | "displayName" | "status" | "createdAt" | "lastActiveAt">>;
+  profiles: IdentityProfile[];
+  accessPolicies: AdminAccessPolicy[];
+  authBindings: Array<{ userId: string; email: string; status: string; lastLoginAt?: string }>;
 }
 
 const RISK_OPTIONS: RiskTag[] = ["normal", "conflict", "death", "fantasy"];
@@ -137,9 +166,31 @@ const CONSENT_LABELS: Record<ConsentType, string> = {
   export_archive: "导出个人档案",
 };
 
+const ADMIN_ACCESS_ROLE_LABELS: Record<AdminAccessRole, string> = {
+  owner: "所有者",
+  admin: "管理员",
+  operator: "运营人员",
+  viewer: "只读观察",
+};
+
+const ADMIN_ACCESS_STATUS_LABELS: Record<AdminAccessStatus, string> = {
+  active: "可用",
+  disabled: "停用",
+  review_required: "待复核",
+};
+
+const ADMIN_WORKSPACE_SCOPE_LABELS: Record<AdminWorkspaceScope, string> = {
+  all: "全部工作区",
+  assigned: "指定工作区",
+  own: "仅本人工作区",
+};
+
+const ADMIN_ACCESS_ROLE_ORDER: AdminAccessRole[] = ["owner", "admin", "operator", "viewer"];
+
 interface UserAdminRow {
   account: PersonalAccount;
   profile: IdentityProfile | null;
+  accessPolicy: AdminAccessPolicy;
   authEmail?: string;
   authStatus: "bound" | "guest";
   workspaceCount: number;
@@ -153,10 +204,12 @@ interface UserAdminRow {
 
 export function AdminDashboard({
   personalData,
+  adminGovernance,
   managedAssets,
   llmProviders,
   agents,
   onPersonalDataChange,
+  onAdminGovernanceChange,
   onManagedAssetsChange,
   onLlmProvidersChange,
   onAgentsChange,
@@ -170,13 +223,14 @@ export function AdminDashboard({
     const exportedAt = new Date().toISOString();
     downloadJsonFile(`psych-sandbox-admin-config-${exportedAt.slice(0, 10)}.json`, {
       schema: "psych-sandbox-admin-config",
-      version: 1,
+      version: 2,
       exportedAt,
+      adminGovernance,
       managedAssets,
       llmProviders,
       agents,
     } satisfies AdminConfigBackup);
-    setConfigStatus({ tone: "ok", text: "已导出本地配置 JSON，包含沙具、LLM 与 Agent 配置。" });
+    setConfigStatus({ tone: "ok", text: "已导出本地配置 JSON，包含权限治理、沙具、LLM 与 Agent 配置。" });
   };
 
   const importAdminConfig = async (file: File | null) => {
@@ -187,14 +241,17 @@ export function AdminDashboard({
     try {
       const parsed = JSON.parse(await file.text()) as unknown;
       if (!isAdminConfigBackup(parsed)) {
-        throw new Error("文件结构不符合 psych-sandbox-admin-config v1。");
+        throw new Error("文件结构不符合 psych-sandbox-admin-config v1/v2。");
       }
       onManagedAssetsChange(parsed.managedAssets);
       onLlmProvidersChange(parsed.llmProviders);
       onAgentsChange(parsed.agents);
+      if (parsed.adminGovernance) {
+        onAdminGovernanceChange(parsed.adminGovernance);
+      }
       setConfigStatus({
         tone: "ok",
-        text: `已导入 ${parsed.managedAssets.length} 个沙具、${parsed.llmProviders.length} 个 LLM 配置和 ${parsed.agents.length} 个 Agent。`,
+        text: `已导入 ${parsed.managedAssets.length} 个沙具、${parsed.llmProviders.length} 个 LLM 配置、${parsed.agents.length} 个 Agent${parsed.adminGovernance ? "和权限治理配置" : ""}。`,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -210,7 +267,8 @@ export function AdminDashboard({
     onResetAssets();
     onLlmProvidersChange(createDefaultLlmProviders());
     onAgentsChange(createDefaultPsychAgents());
-    setConfigStatus({ tone: "warn", text: "已恢复本地默认沙具、LLM 与 Agent 配置。" });
+    onAdminGovernanceChange(createDefaultAdminGovernance(personalData));
+    setConfigStatus({ tone: "warn", text: "已恢复本地默认权限治理、沙具、LLM 与 Agent 配置。" });
   };
 
   return (
@@ -252,6 +310,7 @@ export function AdminDashboard({
           ) : null}
           <div className="admin-tabbar" role="tablist" aria-label="管理类型">
             <TabButton id="users" label="用户管理" activeTab={activeTab} onSelect={setActiveTab} icon={<Users size={16} />} />
+            <TabButton id="access" label="权限审计" activeTab={activeTab} onSelect={setActiveTab} icon={<ShieldCheck size={16} />} />
             <TabButton id="assets" label="沙具资产" activeTab={activeTab} onSelect={setActiveTab} icon={<Boxes size={16} />} />
             <TabButton id="llm" label="LLM 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<KeyRound size={16} />} />
             <TabButton id="agents" label="Agent 配置" activeTab={activeTab} onSelect={setActiveTab} icon={<Bot size={16} />} />
@@ -260,7 +319,19 @@ export function AdminDashboard({
       </section>
 
       {activeTab === "users" ? (
-        <UserAdminPanel personalData={personalData} onPersonalDataChange={onPersonalDataChange} />
+        <UserAdminPanel
+          personalData={personalData}
+          adminGovernance={adminGovernance}
+          onPersonalDataChange={onPersonalDataChange}
+          onAdminGovernanceChange={onAdminGovernanceChange}
+        />
+      ) : null}
+      {activeTab === "access" ? (
+        <AdminAccessPanel
+          personalData={personalData}
+          adminGovernance={adminGovernance}
+          onAdminGovernanceChange={onAdminGovernanceChange}
+        />
       ) : null}
       {activeTab === "assets" ? (
         <AssetAdminPanel
@@ -306,10 +377,14 @@ function TabButton({
 
 function UserAdminPanel({
   personalData,
+  adminGovernance,
   onPersonalDataChange,
+  onAdminGovernanceChange,
 }: {
   personalData: PersonalDataBundle;
+  adminGovernance: AdminGovernanceData;
   onPersonalDataChange: (data: PersonalDataBundle) => void;
+  onAdminGovernanceChange: (data: AdminGovernanceData) => void;
 }): JSX.Element {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<PersonalRole | "all">("all");
@@ -343,11 +418,13 @@ function UserAdminPanel({
     return personalData.accounts
       .map((account) => {
         const profile = profileByUserId.get(account.userId) ?? null;
+        const accessPolicy = getAccessPolicyForUser(adminGovernance, account.userId);
         const authIdentity = authByUserId.get(account.userId);
         const consents = getUserConsents(personalData, account.userId);
         return {
           account,
           profile,
+          accessPolicy,
           authEmail: authIdentity?.email,
           authStatus: authIdentity ? ("bound" as const) : ("guest" as const),
           workspaceCount: workspacesByUserId.get(account.userId) ?? 0,
@@ -360,7 +437,7 @@ function UserAdminPanel({
         };
       })
       .sort((a, b) => new Date(b.account.lastActiveAt).getTime() - new Date(a.account.lastActiveAt).getTime());
-  }, [authByUserId, personalData]);
+  }, [adminGovernance.accessPolicies, authByUserId, personalData]);
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -373,6 +450,8 @@ function UserAdminPanel({
           row.account.localHandle,
           row.account.userId,
           row.authEmail ?? "",
+          ADMIN_ACCESS_ROLE_LABELS[row.accessPolicy.role],
+          ADMIN_ACCESS_STATUS_LABELS[row.accessPolicy.status],
           profile?.displayName ?? "",
           profile ? ROLE_LABELS[profile.role] : "",
           profile ? AGE_GROUP_LABELS[profile.ageGroup] : "",
@@ -458,6 +537,21 @@ function UserAdminPanel({
       },
     );
     onPersonalDataChange(nextData);
+  };
+
+  const updateAccessPolicy = (
+    userId: string,
+    patch: Partial<Pick<AdminAccessPolicy, "role" | "status" | "workspaceScope" | "note" | "lastReviewedAt">>,
+    detail: string,
+  ) => {
+    onAdminGovernanceChange(
+      upsertAdminAccessPolicy(adminGovernance, {
+        actorUserId: personalData.activeUserId,
+        userId,
+        patch,
+        detail,
+      }),
+    );
   };
 
   return (
@@ -550,6 +644,7 @@ function UserAdminPanel({
                 <th>用户</th>
                 <th>身份</th>
                 <th>状态</th>
+                <th>后台权限</th>
                 <th>登录</th>
                 <th>沙盘</th>
                 <th>记忆</th>
@@ -559,7 +654,7 @@ function UserAdminPanel({
             <tbody>
               {pagedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className="user-empty-state">没有匹配的用户，请调整筛选条件。</div>
                   </td>
                 </tr>
@@ -585,6 +680,9 @@ function UserAdminPanel({
                     </td>
                     <td>
                       <span className={`user-status-pill ${row.account.status}`}>{ACCOUNT_STATUS_LABELS[row.account.status]}</span>
+                    </td>
+                    <td>
+                      <span className={`access-role-pill ${row.accessPolicy.role}`}>{ADMIN_ACCESS_ROLE_LABELS[row.accessPolicy.role]}</span>
                     </td>
                     <td>
                       <span className={`user-auth-pill ${row.authStatus}`}>{row.authStatus === "bound" ? "邮箱" : "本地"}</span>
@@ -654,6 +752,59 @@ function UserAdminPanel({
             </section>
 
             <section className="user-detail-form">
+              <label>
+                <span>后台角色</span>
+                <select
+                  value={selectedRow.accessPolicy.role}
+                  onChange={(event) =>
+                    updateAccessPolicy(
+                      selectedRow.account.userId,
+                      { role: event.target.value as AdminAccessRole },
+                      `用户后台角色调整为：${ADMIN_ACCESS_ROLE_LABELS[event.target.value as AdminAccessRole]}。`,
+                    )
+                  }
+                >
+                  {ADMIN_ACCESS_ROLE_ORDER.map((role) => (
+                    <option key={role} value={role}>
+                      {ADMIN_ACCESS_ROLE_LABELS[role]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>权限状态</span>
+                <select
+                  value={selectedRow.accessPolicy.status}
+                  onChange={(event) =>
+                    updateAccessPolicy(
+                      selectedRow.account.userId,
+                      { status: event.target.value as AdminAccessStatus },
+                      `用户权限状态调整为：${ADMIN_ACCESS_STATUS_LABELS[event.target.value as AdminAccessStatus]}。`,
+                    )
+                  }
+                >
+                  <option value="active">可用</option>
+                  <option value="review_required">待复核</option>
+                  <option value="disabled">停用</option>
+                </select>
+              </label>
+              <label>
+                <span>工作区范围</span>
+                <select
+                  value={selectedRow.accessPolicy.workspaceScope}
+                  onChange={(event) =>
+                    updateAccessPolicy(
+                      selectedRow.account.userId,
+                      { workspaceScope: event.target.value as AdminWorkspaceScope },
+                      `用户工作区范围调整为：${ADMIN_WORKSPACE_SCOPE_LABELS[event.target.value as AdminWorkspaceScope]}。`,
+                    )
+                  }
+                >
+                  <option value="all">全部工作区</option>
+                  <option value="assigned">指定工作区</option>
+                  <option value="own">仅本人工作区</option>
+                </select>
+              </label>
               <label>
                 <span>用户状态</span>
                 <select
@@ -745,6 +896,505 @@ function StatTile({ icon, value, label }: { icon: JSX.Element; value: number; la
       <strong>{value}</strong>
       <em>{label}</em>
     </span>
+  );
+}
+
+function AdminAccessPanel({
+  personalData,
+  adminGovernance,
+  onAdminGovernanceChange,
+}: {
+  personalData: PersonalDataBundle;
+  adminGovernance: AdminGovernanceData;
+  onAdminGovernanceChange: (data: AdminGovernanceData) => void;
+}): JSX.Element {
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<AdminAccessRole | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<AdminAccessStatus | "all">("all");
+  const [page, setPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState(() => personalData.activeUserId);
+  const [importStatus, setImportStatus] = useState<{ tone: ConfigStatusTone; text: string } | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+
+  const authIdentities = useMemo(() => loadLocalAuthIdentities(), [personalData.accounts.length, personalData.activeUserId]);
+  const authByUserId = useMemo(
+    () => new Map(authIdentities.map((identity) => [identity.userId, identity])),
+    [authIdentities],
+  );
+  const rows = useMemo(() => {
+    const profileByUserId = new Map(personalData.profiles.map((profile) => [profile.userId, profile]));
+    return personalData.accounts.map((account) => {
+      const accessPolicy = getAccessPolicyForUser(adminGovernance, account.userId);
+      const permissions = getEffectivePermissions(accessPolicy);
+      return {
+        account,
+        profile: profileByUserId.get(account.userId) ?? null,
+        accessPolicy,
+        authEmail: authByUserId.get(account.userId)?.email,
+        permissionCount: permissions.length,
+      };
+    });
+  }, [adminGovernance, authByUserId, personalData.accounts, personalData.profiles]);
+  const filteredRows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return rows.filter((row) => {
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        [
+          row.account.displayName,
+          row.account.localHandle,
+          row.account.userId,
+          row.authEmail ?? "",
+          row.profile?.displayName ?? "",
+          ADMIN_ACCESS_ROLE_LABELS[row.accessPolicy.role],
+          ADMIN_ACCESS_STATUS_LABELS[row.accessPolicy.status],
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+      const matchesRole = roleFilter === "all" || row.accessPolicy.role === roleFilter;
+      const matchesStatus = statusFilter === "all" || row.accessPolicy.status === statusFilter;
+      return matchesQuery && matchesRole && matchesStatus;
+    });
+  }, [query, roleFilter, rows, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / USER_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedRows = filteredRows.slice((currentPage - 1) * USER_PAGE_SIZE, currentPage * USER_PAGE_SIZE);
+  const selectedRow =
+    rows.find((row) => row.account.userId === selectedUserId) ??
+    filteredRows[0] ??
+    rows[0] ??
+    null;
+  const roleCounts = ADMIN_ACCESS_ROLE_ORDER.map((role) => ({
+    role,
+    count: rows.filter((row) => row.accessPolicy.role === role).length,
+  }));
+  const reviewCount = rows.filter((row) => row.accessPolicy.status === "review_required").length;
+  const disabledCount = rows.filter((row) => row.accessPolicy.status === "disabled").length;
+  const selectedPermissions = selectedRow ? getEffectivePermissions(selectedRow.accessPolicy) : [];
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    if (rows.length > 0 && !rows.some((row) => row.account.userId === selectedUserId)) {
+      setSelectedUserId(rows[0].account.userId);
+    }
+  }, [rows, selectedUserId]);
+
+  const updatePolicy = (
+    userId: string,
+    patch: Partial<Pick<AdminAccessPolicy, "role" | "status" | "workspaceScope" | "deniedPermissions" | "note" | "lastReviewedAt">>,
+    detail: string,
+  ) => {
+    onAdminGovernanceChange(
+      upsertAdminAccessPolicy(adminGovernance, {
+        actorUserId: personalData.activeUserId,
+        userId,
+        patch,
+        detail,
+      }),
+    );
+  };
+
+  const bulkPatchPolicies = (
+    patch: Partial<Pick<AdminAccessPolicy, "role" | "status" | "workspaceScope" | "deniedPermissions" | "lastReviewedAt">>,
+    detail: string,
+  ) => {
+    const targetIds = new Set(filteredRows.map((row) => row.account.userId));
+    if (targetIds.size === 0) {
+      setImportStatus({ tone: "warn", text: "当前筛选结果为空，未执行批量操作。" });
+      return;
+    }
+    const now = new Date().toISOString();
+    const nextGovernance = appendAdminGovernanceLog(
+      {
+        ...adminGovernance,
+        accessPolicies: adminGovernance.accessPolicies.map((policy) =>
+          targetIds.has(policy.userId) ? { ...policy, ...patch, updatedAt: now } : policy,
+        ),
+      },
+      {
+        actorUserId: personalData.activeUserId,
+        action: "access_policy_bulk_updated",
+        resourceType: "access_policy",
+        detail,
+        severity: "warning",
+      },
+    );
+    onAdminGovernanceChange(nextGovernance);
+    setImportStatus({ tone: "ok", text: detail });
+  };
+
+  const exportUserDirectory = () => {
+    const exportedAt = new Date().toISOString();
+    const payload: AdminUserDirectoryExport = {
+      schema: "psych-sandbox-admin-user-directory",
+      version: 1,
+      exportedAt,
+      accounts: personalData.accounts.map(({ userId, localHandle, displayName, status, createdAt, lastActiveAt }) => ({
+        userId,
+        localHandle,
+        displayName,
+        status,
+        createdAt,
+        lastActiveAt,
+      })),
+      profiles: personalData.profiles,
+      accessPolicies: adminGovernance.accessPolicies,
+      authBindings: authIdentities.map(({ userId, email, status, lastLoginAt }) => ({ userId, email, status, lastLoginAt })),
+    };
+    downloadJsonFile(`psych-sandbox-user-directory-${exportedAt.slice(0, 10)}.json`, payload);
+    onAdminGovernanceChange(
+      appendAdminGovernanceLog(adminGovernance, {
+        actorUserId: personalData.activeUserId,
+        action: "user_directory_exported",
+        resourceType: "bulk_export",
+        detail: `已导出 ${payload.accounts.length} 个用户和 ${payload.accessPolicies.length} 条权限策略。`,
+        severity: "info",
+      }),
+    );
+    setImportStatus({ tone: "ok", text: "已导出用户目录 JSON，不包含密码哈希。" });
+  };
+
+  const importAccessPolicies = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      if (!isAdminUserDirectoryExport(parsed)) {
+        throw new Error("文件不是 psych-sandbox-admin-user-directory v1。");
+      }
+      const knownUserIds = new Set(personalData.accounts.map((account) => account.userId));
+      let imported = 0;
+      let skipped = 0;
+      const now = new Date().toISOString();
+      const incomingByUserId = new Map(parsed.accessPolicies.map((policy) => [policy.userId, policy]));
+      const nextPolicies = adminGovernance.accessPolicies.map((policy) => {
+        const incoming = incomingByUserId.get(policy.userId);
+        if (!incoming || !knownUserIds.has(policy.userId)) {
+          return policy;
+        }
+        imported += 1;
+        return {
+          ...policy,
+          role: incoming.role,
+          status: incoming.status,
+          workspaceScope: incoming.workspaceScope,
+          deniedPermissions: incoming.deniedPermissions,
+          note: incoming.note,
+          updatedAt: now,
+          lastReviewedAt: incoming.lastReviewedAt,
+        };
+      });
+      skipped = parsed.accessPolicies.length - imported;
+      onAdminGovernanceChange(
+        appendAdminGovernanceLog(
+          {
+            ...adminGovernance,
+            accessPolicies: nextPolicies,
+          },
+          {
+            actorUserId: personalData.activeUserId,
+            action: "access_policy_imported",
+            resourceType: "bulk_import",
+            detail: `已导入 ${imported} 条权限策略，跳过 ${skipped} 条未知用户策略。`,
+            severity: "warning",
+          },
+        ),
+      );
+      setImportStatus({ tone: "ok", text: `已导入 ${imported} 条权限策略，跳过 ${skipped} 条未知用户策略。` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setImportStatus({ tone: "error", text: `导入失败：${message}` });
+    } finally {
+      if (importInputRef.current) {
+        importInputRef.current.value = "";
+      }
+    }
+  };
+
+  return (
+    <section className="access-admin-layout" aria-label="权限审计">
+      <section className="admin-card access-policy-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Access Control</p>
+            <h3>权限策略</h3>
+          </div>
+          <span className="user-result-count">{filteredRows.length}</span>
+        </header>
+        <div className="access-toolbar">
+          <label className="user-search-field" aria-label="搜索权限策略">
+            <Search size={16} />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索用户、邮箱、角色..." />
+          </label>
+          <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value as AdminAccessRole | "all")}>
+            <option value="all">全部角色</option>
+            {ADMIN_ACCESS_ROLE_ORDER.map((role) => (
+              <option key={role} value={role}>
+                {ADMIN_ACCESS_ROLE_LABELS[role]}
+              </option>
+            ))}
+          </select>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AdminAccessStatus | "all")}>
+            <option value="all">全部状态</option>
+            <option value="active">可用</option>
+            <option value="review_required">待复核</option>
+            <option value="disabled">停用</option>
+          </select>
+        </div>
+        <div className="access-summary-grid">
+          {roleCounts.map(({ role, count }) => (
+            <span key={role}>
+              <strong>{count}</strong>
+              {ADMIN_ACCESS_ROLE_LABELS[role]}
+            </span>
+          ))}
+          <span className="warn">
+            <strong>{reviewCount}</strong>
+            待复核
+          </span>
+          <span className="warn">
+            <strong>{disabledCount}</strong>
+            已停用
+          </span>
+        </div>
+        <div className="access-bulk-actions">
+          <button
+            type="button"
+            onClick={() => bulkPatchPolicies({ status: "review_required" }, `已将当前筛选的 ${filteredRows.length} 个用户标记为待复核。`)}
+          >
+            标记待复核
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              bulkPatchPolicies(
+                { role: "viewer", workspaceScope: "own", deniedPermissions: [] },
+                `已将当前筛选的 ${filteredRows.length} 个用户调整为只读观察。`,
+              )
+            }
+          >
+            批量只读
+          </button>
+          <button type="button" onClick={exportUserDirectory}>
+            <Download size={14} />
+            导出用户目录
+          </button>
+          <button type="button" onClick={() => importInputRef.current?.click()}>
+            <Upload size={14} />
+            导入权限策略
+          </button>
+          <input
+            ref={importInputRef}
+            className="visually-hidden"
+            type="file"
+            accept="application/json"
+            onChange={(event) => {
+              void importAccessPolicies(event.target.files?.[0] ?? null);
+            }}
+          />
+        </div>
+        {importStatus ? <p className={`admin-config-status ${importStatus.tone}`}>{importStatus.text}</p> : null}
+        <div className="user-table-wrap">
+          <table className="user-table">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>后台角色</th>
+                <th>范围</th>
+                <th>状态</th>
+                <th>权限数</th>
+                <th>复核</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedRows.map((row) => (
+                <tr key={row.account.userId} className={selectedRow?.account.userId === row.account.userId ? "selected" : ""}>
+                  <td>
+                    <button type="button" className="user-name-button" onClick={() => setSelectedUserId(row.account.userId)}>
+                      <span>{getUserInitial(row.account.displayName)}</span>
+                      <strong>{row.account.displayName}</strong>
+                      <em>{row.authEmail ?? row.account.localHandle}</em>
+                    </button>
+                  </td>
+                  <td>
+                    <span className={`access-role-pill ${row.accessPolicy.role}`}>{ADMIN_ACCESS_ROLE_LABELS[row.accessPolicy.role]}</span>
+                  </td>
+                  <td>{ADMIN_WORKSPACE_SCOPE_LABELS[row.accessPolicy.workspaceScope]}</td>
+                  <td>
+                    <span className={`access-status-pill ${row.accessPolicy.status}`}>
+                      {ADMIN_ACCESS_STATUS_LABELS[row.accessPolicy.status]}
+                    </span>
+                  </td>
+                  <td>{row.permissionCount}</td>
+                  <td>{row.accessPolicy.lastReviewedAt ? formatDateTime(row.accessPolicy.lastReviewedAt) : "未复核"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <footer className="user-pagination">
+          <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage <= 1}>
+            <ChevronLeft size={16} />
+          </button>
+          <span>
+            第 {currentPage} / {totalPages} 页 · 每页 {USER_PAGE_SIZE}
+          </span>
+          <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={currentPage >= totalPages}>
+            <ChevronRight size={16} />
+          </button>
+        </footer>
+      </section>
+
+      <aside className="admin-card access-detail-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Selected Policy</p>
+            <h3>策略详情</h3>
+          </div>
+        </header>
+        {selectedRow ? (
+          <div className="user-detail-body">
+            <section className="user-detail-hero">
+              <span>
+                <ShieldCheck size={22} />
+              </span>
+              <div>
+                <strong>{selectedRow.account.displayName}</strong>
+                <em>{selectedRow.authEmail ?? selectedRow.account.localHandle}</em>
+                <code>{selectedRow.account.userId}</code>
+              </div>
+            </section>
+            <section className="user-detail-form">
+              <label>
+                <span>后台角色</span>
+                <select
+                  value={selectedRow.accessPolicy.role}
+                  onChange={(event) =>
+                    updatePolicy(
+                      selectedRow.account.userId,
+                      { role: event.target.value as AdminAccessRole },
+                      `后台角色调整为：${ADMIN_ACCESS_ROLE_LABELS[event.target.value as AdminAccessRole]}。`,
+                    )
+                  }
+                >
+                  {ADMIN_ACCESS_ROLE_ORDER.map((role) => (
+                    <option key={role} value={role}>
+                      {ADMIN_ACCESS_ROLE_LABELS[role]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>策略状态</span>
+                <select
+                  value={selectedRow.accessPolicy.status}
+                  onChange={(event) =>
+                    updatePolicy(
+                      selectedRow.account.userId,
+                      { status: event.target.value as AdminAccessStatus },
+                      `权限策略状态调整为：${ADMIN_ACCESS_STATUS_LABELS[event.target.value as AdminAccessStatus]}。`,
+                    )
+                  }
+                >
+                  <option value="active">可用</option>
+                  <option value="review_required">待复核</option>
+                  <option value="disabled">停用</option>
+                </select>
+              </label>
+              <label>
+                <span>工作区范围</span>
+                <select
+                  value={selectedRow.accessPolicy.workspaceScope}
+                  onChange={(event) =>
+                    updatePolicy(
+                      selectedRow.account.userId,
+                      { workspaceScope: event.target.value as AdminWorkspaceScope },
+                      `工作区范围调整为：${ADMIN_WORKSPACE_SCOPE_LABELS[event.target.value as AdminWorkspaceScope]}。`,
+                    )
+                  }
+                >
+                  <option value="all">全部工作区</option>
+                  <option value="assigned">指定工作区</option>
+                  <option value="own">仅本人工作区</option>
+                </select>
+              </label>
+              <label>
+                <span>管理备注</span>
+                <textarea
+                  value={selectedRow.accessPolicy.note}
+                  onChange={(event) =>
+                    updatePolicy(selectedRow.account.userId, { note: event.target.value }, "更新权限策略备注。")
+                  }
+                  rows={3}
+                  placeholder="记录授权原因、复核结论或服务边界..."
+                />
+              </label>
+              <button
+                type="button"
+                className="access-review-button"
+                onClick={() =>
+                  updatePolicy(selectedRow.account.userId, { status: "active", lastReviewedAt: new Date().toISOString() }, "已完成权限策略复核。")
+                }
+              >
+                <ShieldCheck size={15} />
+                标记已复核
+              </button>
+            </section>
+            <section className="user-detail-card">
+              <h4>有效权限</h4>
+              <div className="permission-chip-list">
+                {selectedPermissions.map((permission) => (
+                  <span key={permission}>{getPermissionLabel(permission)}</span>
+                ))}
+                {selectedPermissions.length === 0 ? <em>当前策略无可用后台权限。</em> : null}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="user-empty-state">暂无权限策略。</div>
+        )}
+      </aside>
+
+      <aside className="admin-card access-matrix-panel">
+        <header className="admin-card-header">
+          <div>
+            <p className="eyebrow">Permission Matrix</p>
+            <h3>权限矩阵</h3>
+          </div>
+        </header>
+        <div className="permission-matrix">
+          {ADMIN_ACCESS_ROLE_ORDER.map((role) => (
+            <article key={role}>
+              <h4>{ADMIN_ACCESS_ROLE_LABELS[role]}</h4>
+              <div>
+                {ADMIN_ROLE_PERMISSIONS[role].map((permission) => (
+                  <span key={permission}>{getPermissionLabel(permission)}</span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+        <section className="user-detail-card">
+          <h4>
+            <Clock3 size={15} />
+            管理员审计
+          </h4>
+          <div className="governance-log-list">
+            {adminGovernance.logs.slice(0, 8).map((log) => (
+              <article key={log.id} className={log.severity}>
+                <strong>{log.detail}</strong>
+                <time>{formatDateTime(log.createdAt)}</time>
+              </article>
+            ))}
+          </div>
+        </section>
+      </aside>
+    </section>
   );
 }
 
@@ -1456,6 +2106,28 @@ function countByUser<T extends { userId: string }>(items: T[]): Map<string, numb
   return counts;
 }
 
+function getAccessPolicyForUser(adminGovernance: AdminGovernanceData, userId: string): AdminAccessPolicy {
+  const existing = adminGovernance.accessPolicies.find((policy) => policy.userId === userId);
+  if (existing) {
+    return existing;
+  }
+  const now = new Date().toISOString();
+  return {
+    userId,
+    role: "viewer",
+    status: "review_required",
+    workspaceScope: "own",
+    deniedPermissions: [],
+    note: "系统自动补齐的临时权限策略，请复核。",
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function getPermissionLabel(permission: AdminPermissionKey): string {
+  return ADMIN_PERMISSION_DEFINITIONS.find((definition) => definition.key === permission)?.label ?? permission;
+}
+
 function getUserInitial(displayName: string): string {
   const trimmed = displayName.trim();
   return trimmed ? trimmed.slice(0, 1).toUpperCase() : "人";
@@ -2020,11 +2692,53 @@ function isAdminConfigBackup(value: unknown): value is AdminConfigBackup {
   }
   return (
     value.schema === "psych-sandbox-admin-config" &&
-    value.version === 1 &&
+    (value.version === 1 || value.version === 2) &&
     typeof value.exportedAt === "string" &&
     Array.isArray(value.managedAssets) &&
     Array.isArray(value.llmProviders) &&
-    Array.isArray(value.agents)
+    Array.isArray(value.agents) &&
+    (value.adminGovernance === undefined || isAdminGovernanceBackup(value.adminGovernance))
+  );
+}
+
+function isAdminGovernanceBackup(value: unknown): value is AdminGovernanceData {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    value.schema === "psych-sandbox-admin-governance" &&
+    value.version === 1 &&
+    Array.isArray(value.accessPolicies) &&
+    Array.isArray(value.logs)
+  );
+}
+
+function isAdminUserDirectoryExport(value: unknown): value is AdminUserDirectoryExport {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    value.schema === "psych-sandbox-admin-user-directory" &&
+    value.version === 1 &&
+    typeof value.exportedAt === "string" &&
+    Array.isArray(value.accounts) &&
+    Array.isArray(value.profiles) &&
+    Array.isArray(value.authBindings) &&
+    Array.isArray(value.accessPolicies) &&
+    value.accessPolicies.every(isAdminAccessPolicyExport)
+  );
+}
+
+function isAdminAccessPolicyExport(value: unknown): value is AdminAccessPolicy {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.userId === "string" &&
+    (value.role === "owner" || value.role === "admin" || value.role === "operator" || value.role === "viewer") &&
+    (value.status === "active" || value.status === "disabled" || value.status === "review_required") &&
+    (value.workspaceScope === "all" || value.workspaceScope === "assigned" || value.workspaceScope === "own") &&
+    Array.isArray(value.deniedPermissions)
   );
 }
 

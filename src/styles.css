@@ -1851,6 +1851,44 @@ button {
   color: var(--accent-dark);
 }
 
+.product-shell.night-mode .access-toolbar,
+.product-shell.night-mode .access-toolbar select,
+.product-shell.night-mode .access-summary-grid,
+.product-shell.night-mode .access-summary-grid span,
+.product-shell.night-mode .access-bulk-actions,
+.product-shell.night-mode .access-bulk-actions button,
+.product-shell.night-mode .access-review-button,
+.product-shell.night-mode .permission-matrix article,
+.product-shell.night-mode .governance-log-list article {
+  border-color: var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    rgba(10, 20, 26, 0.82);
+  color: var(--ink);
+}
+
+.product-shell.night-mode .access-role-pill,
+.product-shell.night-mode .access-status-pill {
+  border-color: var(--line);
+  background: rgba(10, 20, 26, 0.82);
+  color: var(--ink-soft);
+}
+
+.product-shell.night-mode .access-role-pill.owner,
+.product-shell.night-mode .access-role-pill.admin,
+.product-shell.night-mode .access-status-pill.active,
+.product-shell.night-mode .permission-chip-list span,
+.product-shell.night-mode .permission-matrix article span {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.product-shell.night-mode .permission-matrix h4,
+.product-shell.night-mode .governance-log-list strong {
+  color: var(--ink);
+}
+
 .ai-stage-companion:hover,
 .ai-stage-companion:focus-visible,
 .ai-stage-companion.active {
@@ -3059,6 +3097,247 @@ button {
 }
 
 .user-audit-mini time {
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.access-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) 340px 340px;
+  min-height: 0;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.access-policy-panel,
+.access-detail-panel,
+.access-matrix-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, auto) minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.access-detail-panel,
+.access-matrix-panel {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.access-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px 150px;
+  gap: 9px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.access-toolbar select {
+  min-height: 40px;
+  border: 1px solid #c5b89f;
+  border-radius: 9px;
+  background: #fffdf6;
+  color: #243030;
+  padding: 0 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.access-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 249, 237, 0.42);
+}
+
+.access-summary-grid span {
+  display: grid;
+  gap: 3px;
+  min-height: 56px;
+  align-content: center;
+  padding: 8px;
+  border: 1px solid #dccbaa;
+  border-radius: 9px;
+  background: #fff9ed;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  box-shadow: var(--inner-highlight);
+}
+
+.access-summary-grid strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.access-summary-grid .warn strong {
+  color: #9b5a25;
+}
+
+.access-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.access-bulk-actions button,
+.access-review-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid #c5b89f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: var(--inner-highlight);
+}
+
+.access-bulk-actions button:hover,
+.access-bulk-actions button:focus-visible,
+.access-review-button:hover,
+.access-review-button:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.access-role-pill,
+.access-status-pill {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid #d6c5a8;
+  border-radius: 999px;
+  background: #fff9ed;
+  color: #6b6255;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.access-role-pill.owner,
+.access-role-pill.admin,
+.access-status-pill.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.access-role-pill.operator {
+  border-color: #c8b4dc;
+  background: #f4edff;
+  color: #7049a8;
+}
+
+.access-status-pill.review_required,
+.access-role-pill.viewer {
+  border-color: #d6b48f;
+  background: #fff0df;
+  color: #9b5a25;
+}
+
+.access-status-pill.disabled {
+  border-color: #d9b6ae;
+  background: #fff0ee;
+  color: #a04534;
+}
+
+.permission-chip-list,
+.permission-matrix article div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.permission-chip-list span,
+.permission-matrix article span {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.permission-chip-list em {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 820;
+}
+
+.permission-matrix {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.permission-matrix article {
+  display: grid;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid #d8c7a8;
+  border-radius: 10px;
+  background: #fffdf6;
+  box-shadow: var(--inner-highlight);
+}
+
+.permission-matrix h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.governance-log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.governance-log-list article {
+  padding: 9px;
+  border: 1px solid rgba(216, 199, 168, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 249, 237, 0.58);
+}
+
+.governance-log-list article.warning {
+  border-color: #dfc49c;
+  background: #fff2dd;
+}
+
+.governance-log-list article.critical {
+  border-color: #d7a094;
+  background: #fff0ec;
+}
+
+.governance-log-list strong,
+.governance-log-list time {
+  display: block;
+}
+
+.governance-log-list strong {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.governance-log-list time {
   margin-top: 4px;
   color: var(--ink-muted);
   font-size: 11px;
