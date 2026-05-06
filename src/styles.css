@@ -7776,6 +7776,433 @@ button:disabled {
   line-height: 1.45;
 }
 
+/* Night mode readability polish: this section intentionally lives after component styles
+   so it wins over light-mode card/form defaults. */
+.product-shell.night-mode {
+  --ink-muted: #b7c8c2;
+  --night-field-bg: #0f1b23;
+  --night-field-bg-focus: #102630;
+  --night-field-line: #536a70;
+  --night-field-text: #eef8f3;
+  --night-field-muted: #9db3ad;
+  --night-warm-card: #fff8ea;
+  --night-warm-card-text: #243030;
+  --night-warm-card-muted: #58665f;
+}
+
+.product-shell.night-mode input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.product-shell.night-mode select,
+.product-shell.night-mode textarea {
+  border-color: var(--night-field-line);
+  background: var(--night-field-bg);
+  color: var(--night-field-text);
+  caret-color: var(--accent-dark);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 0 rgba(105, 202, 185, 0);
+}
+
+.product-shell.night-mode input:not([type="range"]):not([type="checkbox"]):not([type="radio"])::placeholder,
+.product-shell.night-mode textarea::placeholder {
+  color: var(--night-field-muted);
+  opacity: 1;
+}
+
+.product-shell.night-mode input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):focus,
+.product-shell.night-mode select:focus,
+.product-shell.night-mode textarea:focus {
+  border-color: var(--accent-line);
+  background: var(--night-field-bg-focus);
+  outline: 2px solid rgba(105, 202, 185, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 4px rgba(105, 202, 185, 0.08);
+}
+
+.product-shell.night-mode option {
+  background: var(--night-field-bg);
+  color: var(--night-field-text);
+}
+
+.product-shell.night-mode input[type="checkbox"],
+.product-shell.night-mode input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+.product-shell.night-mode input[type="range"] {
+  accent-color: var(--accent);
+}
+
+.product-shell.night-mode label,
+.product-shell.night-mode .admin-form label,
+.product-shell.night-mode .property-grid label,
+.product-shell.night-mode .range-row,
+.product-shell.night-mode .auth-form label > span,
+.product-shell.night-mode .user-filter-grid label,
+.product-shell.night-mode .user-detail-form label,
+.product-shell.night-mode .environment-controls label {
+  color: #dbe9e2;
+}
+
+.product-shell.night-mode .app-brand h1,
+.product-shell.night-mode .topbar h2,
+.product-shell.night-mode .panel-header h1,
+.product-shell.night-mode .admin-hero h2,
+.product-shell.night-mode .personal-hero h2,
+.product-shell.night-mode .agent-title-card h2,
+.product-shell.night-mode .section-title-row h3,
+.product-shell.night-mode .object-inspector h3,
+.product-shell.night-mode .analysis-panel h3,
+.product-shell.night-mode .category-distribution h3,
+.product-shell.night-mode .depth-list h3 {
+  color: #f2faf6;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.product-shell.night-mode .app-brand span,
+.product-shell.night-mode .eyebrow,
+.product-shell.night-mode .admin-hero p:last-child,
+.product-shell.night-mode .personal-hero p:last-child,
+.product-shell.night-mode .empty-state,
+.product-shell.night-mode .empty-inspector p,
+.product-shell.night-mode .agent-empty-chat,
+.product-shell.night-mode .agent-empty-chat p,
+.product-shell.night-mode .agent-title-card p,
+.product-shell.night-mode .ai-hero p:last-child,
+.product-shell.night-mode .admin-list-row em,
+.product-shell.night-mode .conversation-list span,
+.product-shell.night-mode .conversation-list em,
+.product-shell.night-mode .agent-message-speaker {
+  color: #c8d8d1;
+}
+
+.product-shell.night-mode .app-nav-tabs button,
+.product-shell.night-mode .admin-tabbar button,
+.product-shell.night-mode .panel-tabs button,
+.product-shell.night-mode .asset-tool-toggle,
+.product-shell.night-mode .segmented-mini button,
+.product-shell.night-mode .agent-compose-actions button,
+.product-shell.night-mode .model-hint-grid button,
+.product-shell.night-mode .icon-button,
+.product-shell.night-mode .small-icon-button,
+.product-shell.night-mode .rail-toggle,
+.product-shell.night-mode .rail-tab {
+  border-color: #52666d;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    #13232c;
+  color: #dcebe5;
+}
+
+.product-shell.night-mode .app-nav-tabs button.active,
+.product-shell.night-mode .admin-tabbar button.active,
+.product-shell.night-mode .panel-tabs button.active,
+.product-shell.night-mode .asset-tool-toggle.active,
+.product-shell.night-mode .segmented-mini button.active,
+.product-shell.night-mode .app-nav-tabs button:hover,
+.product-shell.night-mode .admin-tabbar button:hover,
+.product-shell.night-mode .panel-tabs button:hover,
+.product-shell.night-mode .asset-tool-toggle:hover,
+.product-shell.night-mode .segmented-mini button:hover,
+.product-shell.night-mode .agent-compose-actions button:hover,
+.product-shell.night-mode .model-hint-grid button:hover,
+.product-shell.night-mode .icon-button:hover,
+.product-shell.night-mode .small-icon-button:hover,
+.product-shell.night-mode .rail-toggle:hover,
+.product-shell.night-mode .rail-tab:hover,
+.product-shell.night-mode .rail-tab.active {
+  border-color: var(--accent-line);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.24), rgba(105, 202, 185, 0.08)),
+    #123b3a;
+  color: #dffdf6;
+}
+
+.product-shell.night-mode button:disabled,
+.product-shell.night-mode .app-nav-tabs button:disabled,
+.product-shell.night-mode .admin-tabbar button:disabled,
+.product-shell.night-mode .panel-tabs button:disabled {
+  color: #758983;
+  opacity: 0.52;
+}
+
+.product-shell.night-mode .asset-search svg {
+  color: #b9cbc4;
+}
+
+.product-shell.night-mode .asset-search input {
+  border: 0;
+  background: transparent;
+  color: #edf8f3;
+  box-shadow: none;
+}
+
+.product-shell.night-mode .asset-count,
+.product-shell.night-mode .asset-category-header em,
+.product-shell.night-mode .user-directory-total,
+.product-shell.night-mode .user-result-count {
+  border-color: #6a7c7d;
+  background: #21323b;
+  color: #f3fbf7;
+}
+
+.product-shell.night-mode .asset-category-header button,
+.product-shell.night-mode .asset-category-header strong,
+.product-shell.night-mode .asset-card-name,
+.product-shell.night-mode .admin-list-row strong,
+.product-shell.night-mode .conversation-list strong {
+  color: #eaf8f3;
+}
+
+.product-shell.night-mode .asset-card,
+.product-shell.night-mode .conversation-list button,
+.product-shell.night-mode .agent-picker button {
+  border-color: #51646a;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    #14242d;
+  color: #eaf8f3;
+}
+
+.product-shell.night-mode .asset-card:hover,
+.product-shell.night-mode .conversation-list button:hover,
+.product-shell.night-mode .conversation-list button.active,
+.product-shell.night-mode .agent-picker button:hover,
+.product-shell.night-mode .agent-picker button.active {
+  border-color: var(--accent-line);
+  background:
+    radial-gradient(circle at 12% 4%, rgba(105, 202, 185, 0.18), transparent 36%),
+    #173b3a;
+}
+
+.product-shell.night-mode .selected-object-card,
+.product-shell.night-mode .ai-context-card,
+.product-shell.night-mode .ai-quick-section,
+.product-shell.night-mode .ai-chat-log {
+  border-color: rgba(207, 189, 156, 0.76);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.2)),
+    var(--night-warm-card);
+  color: var(--night-warm-card-text);
+}
+
+.product-shell.night-mode .selected-object-card strong,
+.product-shell.night-mode .ai-context-card h2,
+.product-shell.night-mode .ai-quick-section h2,
+.product-shell.night-mode .ai-chat-log strong,
+.product-shell.night-mode .ai-context-metric strong {
+  color: #243030;
+}
+
+.product-shell.night-mode .selected-object-card span,
+.product-shell.night-mode .ai-context-card .section-title-row span,
+.product-shell.night-mode .ai-context-metric em {
+  color: var(--night-warm-card-muted);
+}
+
+.product-shell.night-mode .ai-context-metric {
+  border-color: #d7c9b0;
+  background: #fbf1de;
+  color: #243030;
+}
+
+.product-shell.night-mode .property-grid input,
+.product-shell.night-mode .agent-composer textarea {
+  border-color: var(--night-field-line);
+  background: #fffdf8;
+  color: #243030;
+  caret-color: #2f8f83;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    0 0 0 0 rgba(105, 202, 185, 0);
+}
+
+.product-shell.night-mode .property-grid input::placeholder,
+.product-shell.night-mode .agent-composer textarea::placeholder {
+  color: #7b887f;
+}
+
+.product-shell.night-mode .property-grid input:focus,
+.product-shell.night-mode .agent-composer textarea:focus {
+  border-color: var(--accent-line);
+  background: #fffdf8;
+  outline: 2px solid rgba(105, 202, 185, 0.24);
+}
+
+.product-shell.night-mode .range-row output,
+.product-shell.night-mode .risk-bar strong,
+.product-shell.night-mode .category-row strong {
+  color: #f0fbf7;
+}
+
+.product-shell.night-mode .symbolic-list span,
+.product-shell.night-mode .semantic-chip-list span,
+.product-shell.night-mode .insight-pill,
+.product-shell.night-mode .ai-context-chips span,
+.product-shell.night-mode .status-pill.enabled,
+.product-shell.night-mode .status-pill.ok {
+  border-color: rgba(105, 202, 185, 0.62);
+  background: rgba(105, 202, 185, 0.16);
+  color: #dffdf6;
+}
+
+.product-shell.night-mode .metric,
+.product-shell.night-mode .mini-grid-cell,
+.product-shell.night-mode .category-distribution,
+.product-shell.night-mode .event-item,
+.product-shell.night-mode .object-meta-grid div {
+  border-color: #4d636b;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    #111f27;
+  color: #eef8f3;
+}
+
+.product-shell.night-mode .metric strong,
+.product-shell.night-mode .mini-grid-cell strong,
+.product-shell.night-mode .object-meta-grid strong,
+.product-shell.night-mode .event-item strong {
+  color: #f4fbf8;
+}
+
+.product-shell.night-mode .metric span,
+.product-shell.night-mode .mini-grid-cell span,
+.product-shell.night-mode .object-meta-grid span,
+.product-shell.night-mode .object-meta-grid em,
+.product-shell.night-mode .event-item time,
+.product-shell.night-mode .event-item span,
+.product-shell.night-mode .risk-bar span,
+.product-shell.night-mode .category-row {
+  color: #c5d5cf;
+}
+
+.product-shell.night-mode .risk-track,
+.product-shell.night-mode .category-row div {
+  background: #29363b;
+}
+
+.product-shell.night-mode .mini-grid-cell.center {
+  border-color: var(--accent-line);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.18), rgba(105, 202, 185, 0.06)),
+    #122d31;
+}
+
+.product-shell.night-mode .event-item::before {
+  border-color: #111f27;
+}
+
+.product-shell.night-mode .conversation-rail,
+.product-shell.night-mode .agent-stage {
+  border-color: #41575f;
+  background:
+    radial-gradient(circle at 17% 8%, rgba(105, 202, 185, 0.1), transparent 32%),
+    linear-gradient(180deg, #172832 0%, #101c24 64%, #0d171f 100%);
+  color: #edf8f3;
+}
+
+.product-shell.night-mode .agent-picker {
+  border-color: #41575f;
+  background: #14232c;
+}
+
+.product-shell.night-mode .agent-stage-hero {
+  border-color: #41575f;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 229, 180, 0.12), transparent 26%),
+    radial-gradient(circle at 72% 8%, rgba(105, 202, 185, 0.16), transparent 26%),
+    linear-gradient(90deg, rgba(18, 35, 44, 0.94), rgba(12, 23, 31, 0.74));
+}
+
+.product-shell.night-mode .agent-title-card span {
+  border-color: rgba(105, 202, 185, 0.7);
+  background: rgba(105, 202, 185, 0.14);
+  color: #dffdf6;
+}
+
+.product-shell.night-mode .agent-chat-log {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 239, 205, 0.06), transparent 28%),
+    linear-gradient(180deg, rgba(14, 26, 34, 0.92), rgba(10, 20, 27, 0.98));
+}
+
+.product-shell.night-mode .agent-message > p,
+.product-shell.night-mode .agent-message .message-content {
+  border-color: rgba(205, 170, 130, 0.58);
+  background:
+    linear-gradient(180deg, #fff9ef 0%, #f6ead9 100%);
+  color: #3f2f25;
+}
+
+.product-shell.night-mode .agent-message.assistant .message-content::before {
+  border-color: rgba(205, 170, 130, 0.5);
+  background: #fff6ea;
+}
+
+.product-shell.night-mode .agent-message.user > p,
+.product-shell.night-mode .agent-message.user .message-content {
+  border-color: rgba(122, 205, 191, 0.7);
+  background:
+    linear-gradient(180deg, #f5fffb 0%, #e8f8f3 100%);
+  color: #264c47;
+}
+
+.product-shell.night-mode .agent-message.user .message-content::after {
+  border-color: rgba(122, 205, 191, 0.66);
+  background: #edf9f5;
+}
+
+.product-shell.night-mode .markdown-text h2,
+.product-shell.night-mode .markdown-text h3,
+.product-shell.night-mode .markdown-text h4,
+.product-shell.night-mode .markdown-text strong {
+  color: #223b37;
+}
+
+.product-shell.night-mode .markdown-text em,
+.product-shell.night-mode .markdown-text blockquote {
+  color: #375c55;
+}
+
+.product-shell.night-mode .agent-stream-status {
+  color: #c9d8d2;
+}
+
+.product-shell.night-mode .agent-composer,
+.product-shell.night-mode .agent-compose-actions {
+  border-color: #41575f;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    #101d25;
+}
+
+.product-shell.night-mode .admin-note,
+.product-shell.night-mode .provider-readiness-card,
+.product-shell.night-mode .draft-output,
+.product-shell.night-mode .admin-config-status {
+  border-color: #51646a;
+  background: #111f27;
+  color: #dcebe5;
+}
+
+.product-shell.night-mode .status-pill {
+  border-color: #51646a;
+  background: #102029;
+  color: #dcebe5;
+}
+
+.product-shell.night-mode .status-pill.warn {
+  border-color: rgba(240, 179, 111, 0.65);
+  background: rgba(92, 57, 23, 0.48);
+  color: #ffd89d;
+}
+
+.product-shell.night-mode .status-pill.error {
+  border-color: rgba(255, 140, 121, 0.65);
+  background: rgba(92, 35, 26, 0.5);
+  color: #ffc1b5;
+}
+
 @keyframes ai-avatar-breathe {
   0%,
   100% {
