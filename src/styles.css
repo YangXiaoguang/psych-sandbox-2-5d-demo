@@ -1029,7 +1029,114 @@ button {
   color: var(--accent-dark);
 }
 
+.asset-backpack {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 44px minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.asset-shelf-rail {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 6px;
+  border-right: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 42%),
+    rgba(238, 229, 210, 0.64);
+}
+
+.asset-shelf-rail button {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #c7bba4;
+  border-radius: 9px;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.82), transparent 38%),
+    var(--surface-warm);
+  color: var(--ink-soft);
+  box-shadow:
+    var(--inner-highlight),
+    0 6px 12px rgba(92, 67, 35, 0.07);
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.asset-shelf-rail button:hover,
+.asset-shelf-rail button:focus-visible,
+.asset-shelf-rail button.active {
+  border-color: var(--accent-line);
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 244, 201, 0.72), transparent 36%),
+    linear-gradient(145deg, rgba(237, 248, 243, 0.98), rgba(202, 235, 226, 0.9));
+  color: var(--accent-dark);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.asset-shelf-rail button em {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  display: inline-flex;
+  min-width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1px solid rgba(178, 145, 86, 0.5);
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #7a6130;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.asset-shelf-status {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 10px 2px;
+  padding: 7px 2px 6px;
+  border-bottom: 1px solid rgba(207, 197, 178, 0.56);
+  background: linear-gradient(180deg, rgba(247, 244, 235, 0.98), rgba(247, 244, 235, 0.88));
+  color: var(--ink-soft);
+}
+
+.asset-shelf-status strong {
+  overflow: hidden;
+  font-size: var(--font-body);
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-shelf-status span {
+  flex: 0 0 auto;
+  color: var(--ink-muted);
+  font-size: var(--font-xs);
+  font-weight: 850;
+}
+
 .asset-category-list {
+  min-height: 0;
   overflow: auto;
 }
 
@@ -1064,6 +1171,10 @@ button {
   color: var(--ink-soft);
   padding: 0 2px;
   text-align: left;
+}
+
+.asset-category-header.fixed {
+  cursor: default;
 }
 
 .asset-category-header span {
@@ -1132,6 +1243,7 @@ button {
     linear-gradient(180deg, rgba(255, 247, 225, 0.98), rgba(245, 223, 187, 0.92)),
     #fff2d5;
   color: #273333;
+  cursor: grab;
   text-align: center;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.88),
@@ -1159,6 +1271,7 @@ button {
   border: 0;
   background: transparent;
   color: inherit;
+  cursor: inherit;
   padding: 0;
   text-align: center;
 }
@@ -1188,6 +1301,7 @@ button {
 }
 
 .asset-card:active {
+  cursor: grabbing;
   transform: translateY(1px) scale(0.985);
 }
 
@@ -1785,6 +1899,7 @@ button {
 }
 
 .product-shell.night-mode .asset-library-tools,
+.product-shell.night-mode .asset-shelf-rail,
 .product-shell.night-mode .panel-tabs,
 .product-shell.night-mode .panel-header,
 .product-shell.night-mode .admin-card-header,
@@ -1793,6 +1908,37 @@ button {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
     #182730;
+}
+
+.product-shell.night-mode .asset-shelf-status {
+  border-bottom-color: rgba(81, 100, 106, 0.74);
+  background:
+    linear-gradient(180deg, rgba(23, 35, 44, 0.98), rgba(23, 35, 44, 0.86));
+  color: var(--ink-soft);
+}
+
+.product-shell.night-mode .asset-shelf-rail button {
+  border-color: #52666d;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    #13232c;
+  color: #dcebe5;
+}
+
+.product-shell.night-mode .asset-shelf-rail button.active,
+.product-shell.night-mode .asset-shelf-rail button:hover,
+.product-shell.night-mode .asset-shelf-rail button:focus-visible {
+  border-color: var(--accent-line);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.24), rgba(105, 202, 185, 0.08)),
+    #123b3a;
+  color: #dffdf6;
+}
+
+.product-shell.night-mode .asset-shelf-rail button em {
+  border-color: rgba(105, 202, 185, 0.42);
+  background: #123b3a;
+  color: #dffdf6;
 }
 
 .product-shell.night-mode input,

@@ -1,4 +1,17 @@
-import { ChevronDown, ChevronRight, Search, Star } from "lucide-react";
+import {
+  Boxes,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+  Home,
+  PawPrint,
+  Search,
+  Sparkles,
+  Star,
+  Trees,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ASSET_CATEGORIES, RISK_LABELS } from "../data/assets";
 import type { RiskTag, SandboxAsset } from "../types";
@@ -17,11 +30,34 @@ const COLLAPSED_KEY = "psych-sandbox:collapsed-asset-categories";
 const VIEW_MODE_KEY = "psych-sandbox:asset-library-view-mode";
 const RISK_OPTIONS: Array<RiskTag | "all"> = ["all", "normal", "conflict", "death", "fantasy"];
 type AssetLibraryViewMode = "large" | "compact";
+type AssetShelfId = "all" | "recent" | "favorites" | string;
+
+interface AssetSection {
+  id: string;
+  title: string;
+  assets: SandboxAsset[];
+  collapsible: boolean;
+}
+
+interface ShelfItem {
+  id: AssetShelfId;
+  label: string;
+  count: number;
+  icon: LucideIcon;
+}
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  人物: UserRound,
+  动物: PawPrint,
+  建筑与环境: Home,
+  自然元素: Trees,
+  特殊象征: Sparkles,
+};
 
 export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Element {
   const [query, setQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<RiskTag | "all">("all");
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [activeShelf, setActiveShelf] = useState<AssetShelfId>("all");
   const [viewMode, setViewMode] = useState<AssetLibraryViewMode>(() => loadViewMode());
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => loadStringList(FAVORITES_KEY));
   const [recentIds, setRecentIds] = useState<string[]>(() => loadStringList(RECENT_KEY));
@@ -39,10 +75,9 @@ export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Ele
             .toLowerCase()
             .includes(keyword);
         const matchesRisk = riskFilter === "all" || asset.riskTag === riskFilter;
-        const matchesFavorite = !favoritesOnly || favoriteIdSet.has(asset.assetId);
-        return matchesQuery && matchesRisk && matchesFavorite;
+        return matchesQuery && matchesRisk;
       }),
-    [assets, favoriteIdSet, favoritesOnly, query, riskFilter],
+    [assets, query, riskFilter],
   );
   const categories = useMemo(
     () =>
@@ -57,6 +92,52 @@ export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Ele
         .slice(0, 8),
     [filteredAssets, recentIds],
   );
+  const favoriteAssets = useMemo(
+    () => filteredAssets.filter((asset) => favoriteIdSet.has(asset.assetId)),
+    [favoriteIdSet, filteredAssets],
+  );
+  const shelfItems = useMemo<ShelfItem[]>(
+    () => [
+      { id: "all", label: "全部", count: filteredAssets.length, icon: Boxes },
+      { id: "recent", label: "最近", count: recentAssets.length, icon: Clock3 },
+      { id: "favorites", label: "收藏", count: favoriteAssets.length, icon: Star },
+      ...categories.map((category) => ({
+        id: category,
+        label: category,
+        count: filteredAssets.filter((asset) => asset.category === category).length,
+        icon: CATEGORY_ICONS[category] ?? Boxes,
+      })),
+    ],
+    [categories, favoriteAssets.length, filteredAssets, recentAssets.length],
+  );
+  const activeSections = useMemo<AssetSection[]>(() => {
+    if (activeShelf === "recent") {
+      return [{ id: "最近使用", title: "最近使用", assets: recentAssets, collapsible: false }];
+    }
+
+    if (activeShelf === "favorites") {
+      return [{ id: "收藏", title: "收藏", assets: favoriteAssets, collapsible: false }];
+    }
+
+    const categorySections = categories.map((category) => ({
+      id: category,
+      title: category,
+      assets: filteredAssets.filter((asset) => asset.category === category),
+      collapsible: true,
+    }));
+
+    if (activeShelf !== "all") {
+      return categorySections.filter((section) => section.id === activeShelf);
+    }
+
+    return [
+      ...(recentAssets.length > 0
+        ? [{ id: "最近使用", title: "最近使用", assets: recentAssets, collapsible: true }]
+        : []),
+      ...categorySections,
+    ];
+  }, [activeShelf, categories, favoriteAssets, filteredAssets, recentAssets]);
+  const visibleAssetCount = activeSections.reduce((sum, section) => sum + section.assets.length, 0);
 
   useEffect(() => saveStringList(FAVORITES_KEY, favoriteIds), [favoriteIds]);
   useEffect(() => saveStringList(RECENT_KEY, recentIds), [recentIds]);
@@ -113,8 +194,8 @@ export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Ele
           </select>
           <button
             type="button"
-            className={favoritesOnly ? "asset-tool-toggle active" : "asset-tool-toggle"}
-            onClick={() => setFavoritesOnly((current) => !current)}
+            className={activeShelf === "favorites" ? "asset-tool-toggle active" : "asset-tool-toggle"}
+            onClick={() => setActiveShelf((current) => (current === "favorites" ? "all" : "favorites"))}
           >
             <Star size={13} />
             收藏
@@ -130,54 +211,82 @@ export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Ele
         </div>
       </div>
 
-      <div className={`asset-category-list ${viewMode === "compact" ? "compact" : ""}`}>
-        {recentAssets.length > 0 ? (
-          <section className="asset-category recent" aria-labelledby="asset-category-recent">
-            <AssetCategoryHeader
-              id="asset-category-recent"
-              title="最近使用"
-              count={recentAssets.length}
-              collapsed={collapsedSet.has("最近使用")}
-              onToggle={() => toggleCategory("最近使用")}
-            />
-            {!collapsedSet.has("最近使用") ? (
-              <AssetGrid
-                assets={recentAssets}
-                favoriteIds={favoriteIdSet}
-                onAddAsset={handleAddAsset}
-                onToggleFavorite={toggleFavorite}
-              />
-            ) : null}
-          </section>
-        ) : null}
-
-        {categories.map((category) => {
-          const categoryAssets = filteredAssets.filter((asset) => asset.category === category);
-          const collapsed = collapsedSet.has(category);
-          return (
-            <section key={category} className="asset-category" aria-labelledby={`asset-category-${category}`}>
-              <AssetCategoryHeader
-                id={`asset-category-${category}`}
-                title={category}
-                count={categoryAssets.length}
-                collapsed={collapsed}
-                onToggle={() => toggleCategory(category)}
-              />
-              {!collapsed ? (
-                <AssetGrid
-                  assets={categoryAssets}
-                  favoriteIds={favoriteIdSet}
-                  onAddAsset={handleAddAsset}
-                  onToggleFavorite={toggleFavorite}
+      <div className="asset-backpack">
+        <AssetShelfRail items={shelfItems} activeShelf={activeShelf} onChange={setActiveShelf} />
+        <div className={`asset-category-list ${viewMode === "compact" ? "compact" : ""}`}>
+          <div className="asset-shelf-status" aria-live="polite">
+            <strong>{getShelfLabel(activeShelf, shelfItems)}</strong>
+            <span>{visibleAssetCount} 个可用沙具</span>
+          </div>
+          {activeSections.map((section) => {
+            const collapsed = section.collapsible && collapsedSet.has(section.id);
+            return (
+              <section
+                key={section.id}
+                className={section.id === "最近使用" ? "asset-category recent" : "asset-category"}
+                aria-labelledby={`asset-category-${section.id}`}
+              >
+                <AssetCategoryHeader
+                  id={`asset-category-${section.id}`}
+                  title={section.title}
+                  count={section.assets.length}
+                  collapsed={collapsed}
+                  collapsible={section.collapsible}
+                  onToggle={() => section.collapsible && toggleCategory(section.id)}
                 />
-              ) : null}
-            </section>
-          );
-        })}
-        {filteredAssets.length === 0 ? <p className="empty-state">没有匹配的沙具，试试清空搜索或切换标签。</p> : null}
+                {!collapsed ? (
+                  <AssetGrid
+                    assets={section.assets}
+                    favoriteIds={favoriteIdSet}
+                    onAddAsset={handleAddAsset}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ) : null}
+              </section>
+            );
+          })}
+          {visibleAssetCount === 0 ? (
+            <p className="empty-state">没有匹配的沙具，试试清空搜索、切换分类或标签。</p>
+          ) : null}
+        </div>
       </div>
     </aside>
   );
+}
+
+function AssetShelfRail({
+  items,
+  activeShelf,
+  onChange,
+}: {
+  items: ShelfItem[];
+  activeShelf: AssetShelfId;
+  onChange: (id: AssetShelfId) => void;
+}): JSX.Element {
+  return (
+    <nav className="asset-shelf-rail" aria-label="沙具背包分类">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            className={activeShelf === item.id ? "active" : ""}
+            onClick={() => onChange(item.id)}
+            aria-label={`${item.label}，${item.count} 个沙具`}
+            title={`${item.label} · ${item.count}`}
+          >
+            <Icon size={16} />
+            <em>{item.count}</em>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function getShelfLabel(activeShelf: AssetShelfId, items: ShelfItem[]): string {
+  return items.find((item) => item.id === activeShelf)?.label ?? "全部";
 }
 
 function AssetCategoryHeader({
@@ -185,17 +294,24 @@ function AssetCategoryHeader({
   title,
   count,
   collapsed,
+  collapsible,
   onToggle,
 }: {
   id: string;
   title: string;
   count: number;
   collapsed: boolean;
+  collapsible: boolean;
   onToggle: () => void;
 }): JSX.Element {
-  const Icon = collapsed ? ChevronRight : ChevronDown;
+  const Icon = !collapsible ? Boxes : collapsed ? ChevronRight : ChevronDown;
   return (
-    <button type="button" className="asset-category-header" onClick={onToggle} aria-expanded={!collapsed}>
+    <button
+      type="button"
+      className={!collapsible ? "asset-category-header fixed" : "asset-category-header"}
+      onClick={onToggle}
+      aria-expanded={!collapsed}
+    >
       <span>
         <Icon size={14} />
         <strong id={id}>{title}</strong>
@@ -226,6 +342,7 @@ function AssetGrid({
           onDragStart={(event) => {
             event.dataTransfer.setData(DRAG_MIME, asset.assetId);
             event.dataTransfer.effectAllowed = "copy";
+            event.dataTransfer.setDragImage(event.currentTarget, event.currentTarget.clientWidth / 2, 42);
           }}
           title={`${asset.name} · ${RISK_LABELS[asset.riskTag]}`}
         >
