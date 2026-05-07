@@ -7,6 +7,7 @@ import {
   Clock3,
   Database,
   Download,
+  Info,
   KeyRound,
   Plus,
   RefreshCcw,
@@ -226,6 +227,7 @@ export function AdminDashboard({
 }: AdminDashboardProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const [configStatus, setConfigStatus] = useState<{ tone: ConfigStatusTone; text: string } | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const exportAdminConfig = () => {
@@ -283,10 +285,35 @@ export function AdminDashboard({
   return (
     <main className="admin-shell" aria-label="管理后台">
       <section className="admin-hero">
-        <div>
-          <p className="eyebrow">Local Admin Console</p>
-          <h2>管理后台</h2>
-          <p>面向个人沙盘系统的本地管理控制台：用户目录、沙具资产、LLM 厂商配置和心理学家 Agent。当前 Demo 不会向第三方发送任何密钥或对话。</p>
+        <div className="admin-hero-copy">
+          <div className="admin-title-line">
+            <div>
+              <p className="eyebrow">Local Admin Console</p>
+              <h2>管理后台</h2>
+            </div>
+            <button
+              type="button"
+              className="admin-help-toggle"
+              aria-expanded={isHelpOpen}
+              onClick={() => setIsHelpOpen((value) => !value)}
+            >
+              <Info size={14} />
+              说明
+            </button>
+          </div>
+          <div className="admin-summary-chips" aria-label="管理后台状态">
+            <span>本地 Demo</span>
+            <span>用户目录</span>
+            <span>沙具资产</span>
+            <span>LLM / Agent 配置</span>
+            <span>不发送密钥</span>
+          </div>
+          {isHelpOpen ? (
+            <div className="admin-help-popover" role="note">
+              <strong>本地管理控制台</strong>
+              <p>用于管理用户目录、沙具资产、权限审计、LLM 厂商配置和心理学家 Agent。当前 Demo 只保存到浏览器本地，不会向第三方发送 API Key、沙盘内容或对话内容。</p>
+            </div>
+          ) : null}
         </div>
         <div className="admin-hero-controls">
           <div className="admin-config-actions" aria-label="本地配置导入导出">

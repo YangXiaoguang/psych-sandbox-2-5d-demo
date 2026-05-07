@@ -159,11 +159,11 @@ button {
 
 .app-navigation {
   display: flex;
-  min-height: 78px;
+  min-height: 68px;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 13px 16px;
+  padding: 10px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background:
@@ -177,19 +177,41 @@ button {
 
 .app-brand {
   display: grid;
-  gap: 2px;
+  min-width: 280px;
+  max-width: 440px;
+  gap: 4px;
 }
 
 .app-brand h1 {
   margin: 0;
-  font-size: 21px;
+  font-size: 20px;
+  line-height: 1.12;
   letter-spacing: 0;
 }
 
-.app-brand span {
+.app-brand-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.app-brand-meta span {
+  display: inline-flex;
+  min-height: 20px;
+  max-width: 132px;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 7px;
+  border: 1px solid rgba(112, 169, 157, 0.22);
+  border-radius: var(--radius-xs);
+  background: rgba(239, 248, 243, 0.6);
   color: #718078;
   font-size: var(--font-xs);
-  font-weight: 820;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-nav-tabs {
@@ -2423,11 +2445,12 @@ button {
 
 .admin-hero,
 .personal-hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 16px;
+  gap: 14px;
+  padding: 12px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background:
@@ -2437,7 +2460,14 @@ button {
   box-shadow: var(--shadow-sm);
 }
 
+.admin-hero {
+  position: relative;
+  min-height: 86px;
+}
+
 .personal-hero {
+  display: flex;
+  padding: 16px;
   background:
     radial-gradient(circle at 10% 10%, rgba(123, 188, 172, 0.24), transparent 42%),
     radial-gradient(circle at 86% 12%, rgba(255, 220, 165, 0.44), transparent 36%),
@@ -2445,10 +2475,101 @@ button {
     var(--panel-strong);
 }
 
+.admin-hero-copy {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.admin-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-summary-chips {
+  display: flex;
+  max-width: 760px;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.admin-summary-chips span {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 8px;
+  border: 1px solid rgba(112, 169, 157, 0.3);
+  border-radius: var(--radius-xs);
+  background: rgba(237, 248, 243, 0.72);
+  color: var(--accent-dark);
+  font-size: var(--font-xs);
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-help-toggle {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid #c5b89f;
+  border-radius: var(--radius-xs);
+  background: var(--surface-warm);
+  color: var(--ink-soft);
+  font-size: var(--font-xs);
+  font-weight: 900;
+  box-shadow: var(--inner-highlight);
+}
+
+.admin-help-toggle:hover,
+.admin-help-toggle[aria-expanded="true"],
+.admin-help-toggle:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.admin-help-popover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  left: 16px;
+  width: min(460px, calc(100vw - 44px));
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.82), transparent 36%),
+    var(--panel-strong);
+  color: var(--ink-soft);
+  box-shadow: var(--shadow);
+}
+
+.admin-help-popover strong {
+  display: block;
+  color: var(--ink);
+  font-size: var(--font-md);
+}
+
+.admin-help-popover p {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: var(--font-sm);
+  font-weight: 760;
+  line-height: 1.55;
+}
+
 .admin-hero-controls {
   display: grid;
   justify-items: end;
-  gap: 8px;
+  gap: 7px;
 }
 
 .admin-config-actions {
@@ -2460,7 +2581,7 @@ button {
 
 .admin-config-actions button {
   display: inline-flex;
-  min-height: 34px;
+  min-height: 32px;
   align-items: center;
   gap: 6px;
   padding: 0 10px;
@@ -2484,15 +2605,18 @@ button {
 .admin-config-status {
   max-width: 540px;
   margin: 0;
-  padding: 6px 9px;
+  overflow: hidden;
+  padding: 5px 9px;
   border: 1px solid #d8c7a8;
   border-radius: var(--radius-xs);
   background: rgba(255, 249, 237, 0.88);
   color: #6e6658;
   font-size: var(--font-xs);
   font-weight: 850;
-  line-height: 1.4;
+  line-height: 1.35;
   text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-config-status.ok {
@@ -2516,7 +2640,8 @@ button {
 .admin-hero h2,
 .personal-hero h2 {
   margin: 0;
-  font-size: 21px;
+  font-size: 20px;
+  line-height: 1.12;
   letter-spacing: 0;
 }
 
@@ -2531,12 +2656,14 @@ button {
 
 .admin-tabbar {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
 }
 
 .admin-tabbar button {
   display: inline-flex;
-  min-height: 38px;
+  min-height: 34px;
   align-items: center;
   gap: 7px;
   padding: 0 12px;
@@ -2546,6 +2673,7 @@ button {
   color: #394340;
   font-size: 13px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .admin-tabbar button.active,
@@ -7878,6 +8006,7 @@ button:disabled {
 
 .product-shell.night-mode .app-nav-tabs button,
 .product-shell.night-mode .admin-tabbar button,
+.product-shell.night-mode .admin-help-toggle,
 .product-shell.night-mode .panel-tabs button,
 .product-shell.night-mode .asset-tool-toggle,
 .product-shell.night-mode .segmented-mini button,
@@ -7896,6 +8025,9 @@ button:disabled {
 
 .product-shell.night-mode .app-nav-tabs button.active,
 .product-shell.night-mode .admin-tabbar button.active,
+.product-shell.night-mode .admin-help-toggle:hover,
+.product-shell.night-mode .admin-help-toggle[aria-expanded="true"],
+.product-shell.night-mode .admin-help-toggle:focus-visible,
 .product-shell.night-mode .panel-tabs button.active,
 .product-shell.night-mode .asset-tool-toggle.active,
 .product-shell.night-mode .segmented-mini button.active,
@@ -7924,6 +8056,30 @@ button:disabled {
 .product-shell.night-mode .panel-tabs button:disabled {
   color: #758983;
   opacity: 0.52;
+}
+
+.product-shell.night-mode .app-brand-meta span,
+.product-shell.night-mode .admin-summary-chips span {
+  border-color: rgba(105, 202, 185, 0.36);
+  background: rgba(105, 202, 185, 0.12);
+  color: #d7f5ee;
+}
+
+.product-shell.night-mode .admin-help-popover {
+  border-color: #51646a;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(105, 202, 185, 0.1), transparent 36%),
+    #111f27;
+  color: #dcebe5;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.44);
+}
+
+.product-shell.night-mode .admin-help-popover strong {
+  color: #f2faf6;
+}
+
+.product-shell.night-mode .admin-help-popover p {
+  color: #c8d8d1;
 }
 
 .product-shell.night-mode .asset-search svg {
