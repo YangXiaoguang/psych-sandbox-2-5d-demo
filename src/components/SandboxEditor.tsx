@@ -45,6 +45,9 @@ interface TransformState {
   scale: number;
 }
 
+type ObjectGestureMode = "drag" | "transform";
+type SelectedObjectMode = ObjectGestureMode | "selected";
+
 export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>(function SandboxEditor(
   {
     objects,
@@ -66,6 +69,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const stageFrameRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
+  const interactionOverlayRef = useRef<Konva.Group | null>(null);
   const objectRefs = useRef<Record<string, Konva.Group | null>>({});
   const dragStartRef = useRef<Record<string, { x: number; y: number }>>({});
   const transformStartRef = useRef<Record<string, TransformState>>({});
@@ -73,8 +77,29 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [scale, setScale] = useState(1);
   const [dropPreview, setDropPreview] = useState<{ x: number; y: number } | null>(null);
   const [dropPulse, setDropPulse] = useState<{ x: number; y: number; id: number } | null>(null);
+  const [activeGesture, setActiveGesture] = useState<{ objectId: string; mode: ObjectGestureMode } | null>(null);
 
   const sortedObjects = useMemo(() => depthSortObjects(objects), [objects]);
+  const selectedObject = useMemo(
+    () => objects.find((object) => object.id === selectedId) ?? null,
+    [objects, selectedId],
+  );
+  const interactionPalette = getInteractionPalette(environment);
+  const selectedObjectMode: SelectedObjectMode | null =
+    activeGesture && selectedObject && activeGesture.objectId === selectedObject.id
+      ? activeGesture.mode
+      : selectedObject
+        ? "selected"
+        : null;
+  const stageFrameClassName = [
+    "stage-frame",
+    dropPreview ? "accepting-drop" : "",
+    selectedId ? "has-selection" : "",
+    activeGesture?.mode === "drag" ? "object-dragging" : "",
+    activeGesture?.mode === "transform" ? "object-transforming" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   useEffect(() => {
     const node = hostRef.current;
@@ -177,8 +202,11 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     }
 
     const transformer = transformerRef.current;
+    const interactionOverlay = interactionOverlayRef.current;
     const wasVisible = transformer?.visible();
+    const wasOverlayVisible = interactionOverlay?.visible();
     transformer?.visible(false);
+    interactionOverlay?.visible(false);
     transformer?.getLayer()?.batchDraw();
 
     const dataUrl = stage.toDataURL({
@@ -190,6 +218,10 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     if (transformer && wasVisible !== undefined) {
       transformer.visible(wasVisible);
       transformer.getLayer()?.batchDraw();
+    }
+    if (interactionOverlay && wasOverlayVisible !== undefined) {
+      interactionOverlay.visible(wasOverlayVisible);
+      interactionOverlay.getLayer()?.batchDraw();
     }
   }, []);
 
@@ -239,7 +271,15 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const targetName = event.target.name();
     if (event.target === event.target.getStage() || targetName === "tray") {
+      setActiveGesture(null);
       onSelectObject(null);
+    }
+  };
+
+  const setStageCursor = (cursor: string) => {
+    const container = stageRef.current?.container();
+    if (container) {
+      container.style.cursor = cursor;
     }
   };
 
@@ -287,7 +327,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     <main className="sandbox-editor" aria-label="沙盘画布">
       <div className="stage-host" ref={hostRef}>
         <div
-          className={dropPreview ? "stage-frame accepting-drop" : "stage-frame"}
+          className={stageFrameClassName}
           ref={stageFrameRef}
           style={{ width: VIEW_WIDTH * scale, height: VIEW_HEIGHT * scale }}
           onDragOver={handleDragOver}
@@ -320,6 +360,12 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     scaleX={object.scale * depthScale}
                     scaleY={object.scale * depthScale}
                     draggable
+                    onMouseEnter={() => setStageCursor(activeGesture?.mode === "drag" ? "grabbing" : "grab")}
+                    onMouseLeave={() => {
+                      if (!activeGesture) {
+                        setStageCursor("default");
+                      }
+                    }}
                     onMouseDown={(event) => {
                       event.cancelBubble = true;
                       onSelectObject(object.id);
@@ -330,11 +376,15 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     }}
                     onDragStart={() => {
                       onSelectObject(object.id);
+                      setActiveGesture({ objectId: object.id, mode: "drag" });
+                      setStageCursor("grabbing");
                       dragStartRef.current[object.id] = { x: object.x, y: object.y };
                     }}
                     onDragMove={(event) => handleDragMove(object, event)}
                     onDragEnd={(event) => {
                       handleDragMove(object, event);
+                      setActiveGesture(null);
+                      setStageCursor("grab");
                       const node = event.target as Konva.Group;
                       const dropped = unprojectPoint({ x: node.x(), y: node.y() });
                       onRecordEvent({
@@ -353,6 +403,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                       });
                     }}
                     onTransformStart={() => {
+                      setActiveGesture({ objectId: object.id, mode: "transform" });
                       transformStartRef.current[object.id] = {
                         x: object.x,
                         y: object.y,
@@ -360,7 +411,10 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                         scale: object.scale,
                       };
                     }}
-                    onTransformEnd={() => handleTransformEnd(object)}
+                    onTransformEnd={() => {
+                      handleTransformEnd(object);
+                      setActiveGesture(null);
+                    }}
                   >
                     <SandboxObjectShape
                       assetId={object.assetId}
@@ -375,25 +429,35 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
               <WeatherLayer environment={environment} />
 
-              {dropPreview ? (
-                <DropPlacementPreview point={dropPreview} asset={draggingAsset} environment={environment} />
-              ) : null}
+              <Group ref={interactionOverlayRef} listening={false}>
+                {selectedObject && selectedObjectMode ? (
+                  <SelectedObjectOverlay
+                    object={selectedObject}
+                    environment={environment}
+                    mode={selectedObjectMode}
+                  />
+                ) : null}
 
-              {dropPulse ? <DropPlacementPulse point={dropPulse} environment={environment} /> : null}
+                {dropPreview ? (
+                  <DropPlacementPreview point={dropPreview} asset={draggingAsset} environment={environment} />
+                ) : null}
+
+                {dropPulse ? <DropPlacementPulse point={dropPulse} environment={environment} /> : null}
+              </Group>
 
               <Transformer
                 ref={transformerRef}
                 rotateEnabled
                 keepRatio
-                anchorSize={9}
-                anchorCornerRadius={4}
-                borderStroke="#256c65"
-                borderStrokeWidth={1.4}
-                borderDash={[6, 5]}
-                anchorFill="#fffdf2"
-                anchorStroke="#256c65"
-                anchorStrokeWidth={1.5}
-                rotateAnchorOffset={30}
+                anchorSize={11}
+                anchorCornerRadius={6}
+                borderStroke={interactionPalette.stroke}
+                borderStrokeWidth={1.6}
+                borderDash={[8, 5]}
+                anchorFill={interactionPalette.anchorFill}
+                anchorStroke={interactionPalette.stroke}
+                anchorStrokeWidth={1.7}
+                rotateAnchorOffset={36}
                 rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
                 boundBoxFunc={(oldBox, newBox) => {
                   if (newBox.width < 24 || newBox.height < 24) {
@@ -414,6 +478,112 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 function normalizeRotation(rotation: number): number {
   const normalized = ((rotation % 360) + 360) % 360;
   return Number(normalized.toFixed(1));
+}
+
+function getInteractionPalette(environment: SandboxEnvironment): {
+  stroke: string;
+  fill: string;
+  glow: string;
+  dot: string;
+  anchorFill: string;
+} {
+  if (environment.light === "night") {
+    return {
+      stroke: "#98fff0",
+      fill: "rgba(85, 224, 205, 0.15)",
+      glow: "#65e9d7",
+      dot: "#c8fff8",
+      anchorFill: "#0c232b",
+    };
+  }
+
+  return {
+    stroke: "#28796d",
+    fill: "rgba(51, 155, 136, 0.13)",
+    glow: "#57bda9",
+    dot: "#fff8d9",
+    anchorFill: "#fffdf2",
+  };
+}
+
+function SelectedObjectOverlay({
+  object,
+  environment,
+  mode,
+}: {
+  object: SandboxObject;
+  environment: SandboxEnvironment;
+  mode: SelectedObjectMode;
+}): JSX.Element {
+  const projected = projectPoint(object);
+  const depthScale = getDepthScale(object.y) * object.scale;
+  const palette = getInteractionPalette(environment);
+  const width = Math.max(54, Math.min(180, object.footprint.width * 0.86));
+  const height = Math.max(24, Math.min(92, object.footprint.depth * 0.62));
+  const y = Math.max(8, object.height * 0.12);
+  const activeBoost = mode === "drag" ? 1.18 : mode === "transform" ? 1.08 : 1;
+  const strokeOpacity = mode === "selected" ? 0.82 : 0.96;
+  const dash = mode === "selected" ? [8, 6] : mode === "transform" ? [12, 5] : undefined;
+
+  return (
+    <Group
+      x={projected.x}
+      y={projected.y}
+      rotation={object.rotation}
+      scaleX={depthScale}
+      scaleY={depthScale}
+      listening={false}
+    >
+      <Ellipse
+        y={y}
+        radiusX={width * 0.62 * activeBoost}
+        radiusY={height * 0.64 * activeBoost}
+        fill={palette.fill}
+        stroke={palette.stroke}
+        strokeWidth={1.35}
+        dash={dash}
+        opacity={strokeOpacity}
+        shadowColor={palette.glow}
+        shadowBlur={mode === "drag" ? 18 : 10}
+        shadowOpacity={environment.light === "night" ? 0.34 : 0.18}
+      />
+      {mode === "drag" ? (
+        <Ellipse
+          y={y + height * 0.08}
+          radiusX={width * 0.78}
+          radiusY={height * 0.62}
+          fill={environment.light === "night" ? "rgba(0, 0, 0, 0.22)" : "rgba(73, 58, 35, 0.12)"}
+          opacity={0.64}
+        />
+      ) : null}
+      {[
+        [-width * 0.52, y - height * 0.42],
+        [width * 0.52, y - height * 0.42],
+        [-width * 0.52, y + height * 0.42],
+        [width * 0.52, y + height * 0.42],
+      ].map(([x, dotY], index) => (
+        <Circle
+          key={`${x}-${dotY}`}
+          x={x}
+          y={dotY}
+          radius={mode === "selected" ? 2.6 : 3.2}
+          fill={palette.dot}
+          stroke={palette.stroke}
+          strokeWidth={1}
+          opacity={index < 2 && mode === "drag" ? 0.72 : 0.92}
+        />
+      ))}
+      {mode === "transform" ? (
+        <Line
+          points={[0, y - height * 0.9, 0, y - height * 0.58]}
+          stroke={palette.stroke}
+          strokeWidth={1.2}
+          opacity={0.82}
+          lineCap="round"
+        />
+      ) : null}
+    </Group>
+  );
 }
 
 function DropPlacementPreview({
