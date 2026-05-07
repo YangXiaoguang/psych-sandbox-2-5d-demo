@@ -86,6 +86,7 @@ export function App(): JSX.Element {
   const [agents, setAgents] = useState(() => loadPsychAgents());
   const [adminGovernance, setAdminGovernance] = useState<AdminGovernanceData>(() => repositoryAdapter.admin.load(initialPersonalData));
   const [conversations, setConversations] = useState(() => repositoryAdapter.workspace.loadAgentConversations(initialPersonalData.activeUserId));
+  const [draggingAssetId, setDraggingAssetId] = useState<string | null>(null);
   const editorRef = useRef<SandboxEditorHandle | null>(null);
   const activeUserId = personalData.activeUserId;
 
@@ -96,6 +97,10 @@ export function App(): JSX.Element {
         .filter((asset) => asset.enabled && !asset.deletedAt)
         .map((asset) => toSandboxAsset(asset)),
     [managedAssets],
+  );
+  const draggingAsset = useMemo(
+    () => visibleAssets.find((asset) => asset.assetId === draggingAssetId) ?? null,
+    [draggingAssetId, visibleAssets],
   );
   const selectedObject = useMemo(
     () => objects.find((object) => object.id === selectedId) ?? null,
@@ -623,7 +628,12 @@ export function App(): JSX.Element {
                     onClick={() => patchLayoutPreferences({ assetDrawerOpen: false })}
                   />
                   <div className="focus-asset-drawer">
-                    <AssetLibrary assets={visibleAssets} onAddAsset={addAssetToScene} />
+                    <AssetLibrary
+                      assets={visibleAssets}
+                      onAddAsset={addAssetToScene}
+                      onBeginDragAsset={(asset) => setDraggingAssetId(asset.assetId)}
+                      onEndDragAsset={() => setDraggingAssetId(null)}
+                    />
                   </div>
                 </>
               ) : null}
@@ -640,7 +650,12 @@ export function App(): JSX.Element {
               ) : null}
             </>
           ) : (
-            <AssetLibrary assets={visibleAssets} onAddAsset={addAssetToScene} />
+            <AssetLibrary
+              assets={visibleAssets}
+              onAddAsset={addAssetToScene}
+              onBeginDragAsset={(asset) => setDraggingAssetId(asset.assetId)}
+              onEndDragAsset={() => setDraggingAssetId(null)}
+            />
           )}
 
           <section className="workspace-column" aria-label="沙盘编辑区">
@@ -663,6 +678,7 @@ export function App(): JSX.Element {
               ref={editorRef}
               objects={objects}
               selectedId={selectedId}
+              draggingAsset={draggingAsset}
               environment={environment}
               showGuides={showGuides}
               onSelectObject={handleSelectObject}

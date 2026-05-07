@@ -21,6 +21,8 @@ import { RiskTagBadge } from "./RiskTagBadge";
 interface AssetLibraryProps {
   assets: SandboxAsset[];
   onAddAsset: (asset: SandboxAsset) => void;
+  onBeginDragAsset?: (asset: SandboxAsset) => void;
+  onEndDragAsset?: () => void;
 }
 
 const DRAG_MIME = "application/x-sandbox-asset";
@@ -54,7 +56,12 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   特殊象征: Sparkles,
 };
 
-export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Element {
+export function AssetLibrary({
+  assets,
+  onAddAsset,
+  onBeginDragAsset,
+  onEndDragAsset,
+}: AssetLibraryProps): JSX.Element {
   const [query, setQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<RiskTag | "all">("all");
   const [activeShelf, setActiveShelf] = useState<AssetShelfId>("all");
@@ -240,6 +247,8 @@ export function AssetLibrary({ assets, onAddAsset }: AssetLibraryProps): JSX.Ele
                     favoriteIds={favoriteIdSet}
                     onAddAsset={handleAddAsset}
                     onToggleFavorite={toggleFavorite}
+                    onBeginDragAsset={onBeginDragAsset}
+                    onEndDragAsset={onEndDragAsset}
                   />
                 ) : null}
               </section>
@@ -326,11 +335,15 @@ function AssetGrid({
   favoriteIds,
   onAddAsset,
   onToggleFavorite,
+  onBeginDragAsset,
+  onEndDragAsset,
 }: {
   assets: SandboxAsset[];
   favoriteIds: Set<string>;
   onAddAsset: (asset: SandboxAsset) => void;
   onToggleFavorite: (assetId: string) => void;
+  onBeginDragAsset?: (asset: SandboxAsset) => void;
+  onEndDragAsset?: () => void;
 }): JSX.Element {
   return (
     <div className="asset-grid">
@@ -343,7 +356,9 @@ function AssetGrid({
             event.dataTransfer.setData(DRAG_MIME, asset.assetId);
             event.dataTransfer.effectAllowed = "copy";
             event.dataTransfer.setDragImage(event.currentTarget, event.currentTarget.clientWidth / 2, 42);
+            onBeginDragAsset?.(asset);
           }}
+          onDragEnd={() => onEndDragAsset?.()}
           title={`${asset.name} · ${RISK_LABELS[asset.riskTag]}`}
         >
           <button className="asset-card-action" type="button" onClick={() => onAddAsset(asset)}>

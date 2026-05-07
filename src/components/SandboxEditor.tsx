@@ -8,8 +8,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { Group, Layer, Stage, Transformer } from "react-konva";
-import type { SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
+import { Circle, Ellipse, Group, Layer, Line, Stage, Transformer } from "react-konva";
+import type { SandboxAsset, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp, depthSortObjects } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
 import { getDepthScale, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
@@ -26,6 +26,7 @@ export interface SandboxEditorHandle {
 interface SandboxEditorProps {
   objects: SandboxObject[];
   selectedId: string | null;
+  draggingAsset: SandboxAsset | null;
   environment: SandboxEnvironment;
   showGuides: boolean;
   onSelectObject: (objectId: string | null) => void;
@@ -48,6 +49,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   {
     objects,
     selectedId,
+    draggingAsset,
     environment,
     showGuides,
     onSelectObject,
@@ -67,7 +69,10 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const objectRefs = useRef<Record<string, Konva.Group | null>>({});
   const dragStartRef = useRef<Record<string, { x: number; y: number }>>({});
   const transformStartRef = useRef<Record<string, TransformState>>({});
+  const dropPulseTimerRef = useRef<number | null>(null);
   const [scale, setScale] = useState(1);
+  const [dropPreview, setDropPreview] = useState<{ x: number; y: number } | null>(null);
+  const [dropPulse, setDropPulse] = useState<{ x: number; y: number; id: number } | null>(null);
 
   const sortedObjects = useMemo(() => depthSortObjects(objects), [objects]);
 
@@ -134,6 +139,21 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onDeleteSelected, selectedId]);
 
+  useEffect(() => {
+    if (!draggingAsset) {
+      setDropPreview(null);
+    }
+  }, [draggingAsset]);
+
+  useEffect(
+    () => () => {
+      if (dropPulseTimerRef.current !== null) {
+        window.clearTimeout(dropPulseTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const toBoardPoint = useCallback(
     (clientX: number, clientY: number) => {
       const frame = stageFrameRef.current;
@@ -175,14 +195,45 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
   useImperativeHandle(ref, () => ({ exportPng }), [exportPng]);
 
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const hasSandboxAsset = Array.from(event.dataTransfer.types).includes(DRAG_MIME);
+    if (!hasSandboxAsset && !draggingAsset) {
+      return;
+    }
+    event.dataTransfer.dropEffect = "copy";
+    setDropPreview(toBoardPoint(event.clientX, event.clientY));
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+      return;
+    }
+    setDropPreview(null);
+  };
+
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const assetId = event.dataTransfer.getData(DRAG_MIME);
     if (!assetId) {
+      setDropPreview(null);
       return;
     }
 
-    onDropAsset(assetId, toBoardPoint(event.clientX, event.clientY));
+    const point = toBoardPoint(event.clientX, event.clientY);
+    onDropAsset(assetId, point);
+    setDropPreview(null);
+
+    const pulse = { ...point, id: Date.now() };
+    setDropPulse(pulse);
+    if (dropPulseTimerRef.current !== null) {
+      window.clearTimeout(dropPulseTimerRef.current);
+    }
+    dropPulseTimerRef.current = window.setTimeout(() => {
+      setDropPulse((current) => (current?.id === pulse.id ? null : current));
+      dropPulseTimerRef.current = null;
+    }, 520);
   };
 
   const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
@@ -236,10 +287,11 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     <main className="sandbox-editor" aria-label="沙盘画布">
       <div className="stage-host" ref={hostRef}>
         <div
-          className="stage-frame"
+          className={dropPreview ? "stage-frame accepting-drop" : "stage-frame"}
           ref={stageFrameRef}
           style={{ width: VIEW_WIDTH * scale, height: VIEW_HEIGHT * scale }}
-          onDragOver={(event) => event.preventDefault()}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           <Stage
@@ -323,6 +375,12 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
               <WeatherLayer environment={environment} />
 
+              {dropPreview ? (
+                <DropPlacementPreview point={dropPreview} asset={draggingAsset} environment={environment} />
+              ) : null}
+
+              {dropPulse ? <DropPlacementPulse point={dropPulse} environment={environment} /> : null}
+
               <Transformer
                 ref={transformerRef}
                 rotateEnabled
@@ -356,4 +414,85 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 function normalizeRotation(rotation: number): number {
   const normalized = ((rotation % 360) + 360) % 360;
   return Number(normalized.toFixed(1));
+}
+
+function DropPlacementPreview({
+  point,
+  asset,
+  environment,
+}: {
+  point: { x: number; y: number };
+  asset: SandboxAsset | null;
+  environment: SandboxEnvironment;
+}): JSX.Element {
+  const projected = projectPoint(point);
+  const width = Math.max(48, Math.min(150, (asset?.footprint?.width ?? asset?.defaultWidth ?? 86) * 0.76));
+  const height = Math.max(28, Math.min(82, (asset?.footprint?.depth ?? asset?.defaultHeight ?? 54) * 0.58));
+  const isNight = environment.light === "night";
+  const accent = isNight ? "#96fff0" : "#2f9a89";
+
+  return (
+    <Group x={projected.x} y={projected.y} listening={false} opacity={isNight ? 0.92 : 0.86}>
+      <Ellipse
+        radiusX={width * 0.58}
+        radiusY={height * 0.62}
+        fill={isNight ? "rgba(80, 220, 202, 0.2)" : "rgba(55, 161, 139, 0.16)"}
+        stroke={accent}
+        strokeWidth={1.5}
+        dash={[7, 6]}
+        shadowColor={accent}
+        shadowBlur={isNight ? 16 : 8}
+        shadowOpacity={isNight ? 0.42 : 0.18}
+      />
+      <Ellipse
+        radiusX={width * 0.38}
+        radiusY={height * 0.38}
+        fill="rgba(255, 255, 255, 0.16)"
+        opacity={0.72}
+      />
+      <Line points={[-width * 0.34, 0, width * 0.34, 0]} stroke={accent} strokeWidth={1.1} opacity={0.7} />
+      <Line points={[0, -height * 0.32, 0, height * 0.32]} stroke={accent} strokeWidth={1.1} opacity={0.7} />
+      <Circle radius={4} fill={accent} opacity={0.88} y={-height * 0.52} />
+      <Circle radius={2.8} fill={accent} opacity={0.68} x={width * 0.46} y={height * 0.1} />
+      <Circle radius={2.8} fill={accent} opacity={0.68} x={-width * 0.46} y={height * 0.1} />
+    </Group>
+  );
+}
+
+function DropPlacementPulse({
+  point,
+  environment,
+}: {
+  point: { x: number; y: number };
+  environment: SandboxEnvironment;
+}): JSX.Element {
+  const projected = projectPoint(point);
+  const isNight = environment.light === "night";
+  const accent = isNight ? "#95fff0" : "#4db7a2";
+
+  return (
+    <Group x={projected.x} y={projected.y} listening={false}>
+      <Ellipse
+        radiusX={58}
+        radiusY={25}
+        fill={isNight ? "rgba(110, 244, 226, 0.12)" : "rgba(255, 251, 220, 0.36)"}
+        stroke={accent}
+        strokeWidth={1.2}
+        opacity={0.78}
+        shadowColor={accent}
+        shadowBlur={isNight ? 22 : 12}
+        shadowOpacity={isNight ? 0.38 : 0.2}
+      />
+      {[-34, -16, 15, 33].map((x, index) => (
+        <Circle
+          key={x}
+          x={x}
+          y={index % 2 === 0 ? 8 : -5}
+          radius={index % 2 === 0 ? 2.6 : 2.1}
+          fill={isNight ? "#b6fff6" : "#fff3c5"}
+          opacity={0.84}
+        />
+      ))}
+    </Group>
+  );
 }
