@@ -2860,6 +2860,10 @@ button {
   overflow: hidden;
 }
 
+.user-directory-panel {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
 .user-directory-total,
 .user-result-count {
   min-width: 36px;
@@ -3002,6 +3006,7 @@ button {
   min-width: 0;
   align-items: center;
   gap: 7px;
+  overflow-x: auto;
   padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 249, 237, 0.42);
