@@ -1,4 +1,4 @@
-import type Konva from "konva";
+import Konva from "konva";
 import {
   forwardRef,
   useCallback,
@@ -68,9 +68,18 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const hostRef = useRef<HTMLDivElement | null>(null);
   const stageFrameRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
+  const objectLayerRef = useRef<Konva.Layer | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
   const interactionOverlayRef = useRef<Konva.Group | null>(null);
   const objectRefs = useRef<Record<string, Konva.Group | null>>({});
+  const visualRefs = useRef<Record<string, Konva.Group | null>>({});
+  const objectsRef = useRef<SandboxObject[]>(objects);
+  const selectedIdRef = useRef<string | null>(selectedId);
+  const activeGestureRef = useRef<{ objectId: string; mode: ObjectGestureMode } | null>(null);
+  const environmentRef = useRef<SandboxEnvironment>(environment);
+  const reduceMotionRef = useRef(false);
+  const previousObjectIdsRef = useRef<Set<string>>(new Set(objects.map((object) => object.id)));
+  const settleStartRef = useRef<Record<string, number>>({});
   const dragStartRef = useRef<Record<string, { x: number; y: number }>>({});
   const transformStartRef = useRef<Record<string, TransformState>>({});
   const dropPulseTimerRef = useRef<number | null>(null);
@@ -100,6 +109,50 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   ]
     .filter(Boolean)
     .join(" ");
+
+  useEffect(() => {
+    objectsRef.current = objects;
+    const previousIds = previousObjectIdsRef.current;
+    const currentIds = new Set(objects.map((object) => object.id));
+    const now = performance.now();
+
+    objects.forEach((object) => {
+      if (!previousIds.has(object.id)) {
+        settleStartRef.current[object.id] = now;
+      }
+    });
+
+    Object.keys(settleStartRef.current).forEach((objectId) => {
+      if (!currentIds.has(objectId)) {
+        delete settleStartRef.current[objectId];
+      }
+    });
+
+    previousObjectIdsRef.current = currentIds;
+  }, [objects]);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
+  useEffect(() => {
+    activeGestureRef.current = activeGesture;
+  }, [activeGesture]);
+
+  useEffect(() => {
+    environmentRef.current = environment;
+  }, [environment]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      reduceMotionRef.current = media.matches;
+    };
+
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     const node = hostRef.current;
@@ -178,6 +231,89 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     },
     [],
   );
+
+  useEffect(() => {
+    const layer = objectLayerRef.current;
+    if (!layer) {
+      return;
+    }
+
+    const animation = new Konva.Animation(() => {
+      const now = performance.now();
+      const active = activeGestureRef.current;
+      const selected = selectedIdRef.current;
+      const currentEnvironment = environmentRef.current;
+      const reduceMotion = reduceMotionRef.current;
+      const objectById = new Map(objectsRef.current.map((object) => [object.id, object]));
+
+      Object.entries(visualRefs.current).forEach(([objectId, node]) => {
+        if (!node) {
+          return;
+        }
+
+        const object = objectById.get(objectId);
+        if (!object) {
+          node.y(0);
+          node.rotation(0);
+          node.scale({ x: 1, y: 1 });
+          node.opacity(1);
+          return;
+        }
+
+        const isActive = active?.objectId === objectId;
+        const isSelected = selected === objectId;
+        const settle = reduceMotion
+          ? { active: false, done: true, y: 0, rotation: 0, scale: 0 }
+          : getSettleFrame(settleStartRef.current[objectId], now);
+        if (settle.done) {
+          delete settleStartRef.current[objectId];
+        }
+
+        if (reduceMotion) {
+          node.y(0);
+          node.rotation(0);
+          node.scale({ x: 1, y: 1 });
+          node.opacity(1);
+          return;
+        }
+
+        if (isActive && active?.mode === "transform") {
+          node.y(0);
+          node.rotation(0);
+          node.scale({ x: 1, y: 1 });
+          node.opacity(1);
+          return;
+        }
+
+        if (isActive && active?.mode === "drag") {
+          node.y(-5 + settle.y);
+          node.rotation(settle.rotation * 0.5);
+          node.scale({ x: 1.018 + settle.scale * 0.2, y: 1.018 - settle.scale * 0.14 });
+          node.opacity(1);
+          return;
+        }
+
+        const motion = getObjectMotionProfile(object, currentEnvironment);
+        const phase = now * motion.speed + getMotionSeed(objectId);
+        const shouldIdle = !isSelected || Boolean(settle.active);
+        const breath = shouldIdle ? Math.sin(phase) : 0;
+        const sway = shouldIdle ? Math.sin(phase * 0.64 + 0.7) : 0;
+
+        node.y(breath * motion.lift + settle.y);
+        node.rotation(sway * motion.rotation + settle.rotation);
+        node.scale({
+          x: 1 - breath * motion.scaleX + settle.scale * 0.22,
+          y: 1 + breath * motion.scaleY - settle.scale * 0.16,
+        });
+        node.opacity(motion.opacity);
+      });
+    }, layer);
+
+    animation.start();
+    return () => {
+      animation.stop();
+    };
+  }, []);
 
   const toBoardPoint = useCallback(
     (clientX: number, clientY: number) => {
@@ -341,7 +477,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             onMouseDown={handleStageMouseDown}
             onTouchStart={handleStageMouseDown}
           >
-            <Layer scaleX={scale} scaleY={scale}>
+            <Layer ref={objectLayerRef} scaleX={scale} scaleY={scale}>
               <SandboxGuideLayer environment={environment} showGuides={showGuides} />
 
               {sortedObjects.map((object, index) => {
@@ -351,7 +487,11 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                   <Group
                     key={object.id}
                     ref={(node) => {
-                      objectRefs.current[object.id] = node;
+                      if (node) {
+                        objectRefs.current[object.id] = node;
+                      } else {
+                        delete objectRefs.current[object.id];
+                      }
                     }}
                     name="sandbox-object"
                     x={projected.x}
@@ -383,6 +523,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     onDragMove={(event) => handleDragMove(object, event)}
                     onDragEnd={(event) => {
                       handleDragMove(object, event);
+                      settleStartRef.current[object.id] = performance.now();
                       setActiveGesture(null);
                       setStageCursor("grab");
                       const node = event.target as Konva.Group;
@@ -413,16 +554,27 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     }}
                     onTransformEnd={() => {
                       handleTransformEnd(object);
+                      settleStartRef.current[object.id] = performance.now();
                       setActiveGesture(null);
                     }}
                   >
-                    <SandboxObjectShape
-                      assetId={object.assetId}
-                      width={object.width}
-                      height={object.height}
-                      riskTag={object.riskTag}
-                      environment={environment}
-                    />
+                    <Group
+                      ref={(node) => {
+                        if (node) {
+                          visualRefs.current[object.id] = node;
+                        } else {
+                          delete visualRefs.current[object.id];
+                        }
+                      }}
+                    >
+                      <SandboxObjectShape
+                        assetId={object.assetId}
+                        width={object.width}
+                        height={object.height}
+                        riskTag={object.riskTag}
+                        environment={environment}
+                      />
+                    </Group>
                   </Group>
                 );
               })}
@@ -478,6 +630,80 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 function normalizeRotation(rotation: number): number {
   const normalized = ((rotation % 360) + 360) % 360;
   return Number(normalized.toFixed(1));
+}
+
+function getMotionSeed(value: string): number {
+  let seed = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    seed = (seed * 31 + value.charCodeAt(index)) % 997;
+  }
+  return seed / 997 * Math.PI * 2;
+}
+
+function getObjectMotionProfile(
+  object: SandboxObject,
+  environment: SandboxEnvironment,
+): {
+  lift: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  speed: number;
+  opacity: number;
+} {
+  const footprintFactor =
+    object.footprint.kind === "flat" ? 0.35 : object.footprint.kind === "tall" ? 1.08 : object.footprint.kind === "wide" ? 0.72 : 0.9;
+  const recipeFactor =
+    object.modelRecipe.kind === "bird" || object.modelRecipe.kind === "fish"
+      ? 1.2
+      : object.modelRecipe.kind === "water"
+        ? 0.5
+        : object.modelRecipe.kind === "tree"
+          ? 0.7
+          : 1;
+  const lightFactor = environment.light === "night" ? 0.7 : 1;
+  const weatherFactor = environment.weather === "rainy" ? 0.78 : environment.weather === "cloudy" ? 0.86 : 1;
+  const calm = footprintFactor * recipeFactor * lightFactor * weatherFactor;
+
+  return {
+    lift: 0.42 * calm,
+    rotation: 0.16 * calm,
+    scaleX: 0.0018 * calm,
+    scaleY: 0.0026 * calm,
+    speed: 0.0012 * (environment.weather === "rainy" ? 0.84 : environment.light === "night" ? 0.7 : 1),
+    opacity: environment.light === "night" ? 0.985 : 1,
+  };
+}
+
+function getSettleFrame(
+  startedAt: number | undefined,
+  now: number,
+): {
+  active: boolean;
+  done: boolean;
+  y: number;
+  rotation: number;
+  scale: number;
+} {
+  if (!startedAt) {
+    return { active: false, done: false, y: 0, rotation: 0, scale: 0 };
+  }
+
+  const duration = 680;
+  const progress = clamp((now - startedAt) / duration, 0, 1);
+  if (progress >= 1) {
+    return { active: false, done: true, y: 0, rotation: 0, scale: 0 };
+  }
+
+  const decay = 1 - progress;
+  const bounce = Math.sin(progress * Math.PI * 3.1) * decay;
+  return {
+    active: true,
+    done: false,
+    y: -4.8 * Math.sin(progress * Math.PI) * decay,
+    rotation: bounce * 0.55,
+    scale: Math.sin(progress * Math.PI * 1.25) * decay * 0.06,
+  };
 }
 
 function getInteractionPalette(environment: SandboxEnvironment): {
