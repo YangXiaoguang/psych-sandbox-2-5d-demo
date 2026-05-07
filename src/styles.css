@@ -682,6 +682,7 @@ button {
 
 .rail-toggle,
 .rail-tab {
+  position: relative;
   display: inline-flex;
   width: 38px;
   height: 38px;
@@ -692,6 +693,25 @@ button {
   background: var(--surface-warm);
   color: var(--ink-soft);
   box-shadow: var(--inner-highlight);
+}
+
+.rail-count {
+  position: absolute;
+  right: -5px;
+  top: -6px;
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid rgba(112, 169, 157, 0.5);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .rail-tab.active,
@@ -761,6 +781,153 @@ button {
   background: var(--accent-soft);
   color: var(--accent-dark);
   outline: none;
+}
+
+.right-panel-scroll,
+.insight-drawer {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.insight-drawer {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 10px;
+}
+
+.insight-overview {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 8px;
+}
+
+.insight-overview-item {
+  display: grid;
+  min-width: 0;
+  min-height: 58px;
+  align-content: center;
+  justify-items: center;
+  padding: 8px;
+  border: 1px solid #d3c6ae;
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.9), rgba(246, 237, 218, 0.76)),
+    var(--surface-warm);
+  box-shadow: var(--inner-highlight);
+}
+
+.insight-overview-item.primary {
+  border-color: rgba(112, 169, 157, 0.62);
+  background:
+    radial-gradient(circle at 36% 18%, rgba(139, 213, 193, 0.28), transparent 42%),
+    linear-gradient(180deg, rgba(239, 248, 243, 0.94), rgba(255, 249, 237, 0.76)),
+    var(--accent-soft);
+}
+
+.insight-overview-item strong {
+  color: var(--ink);
+  font-size: 23px;
+  line-height: 1;
+}
+
+.insight-overview-item span {
+  margin-top: 5px;
+  color: var(--ink-muted);
+  font-size: var(--font-xs);
+  font-weight: 900;
+}
+
+.insight-section {
+  overflow: hidden;
+  border: 1px solid #d2c5ae;
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 247, 0.82), rgba(247, 239, 222, 0.56)),
+    var(--panel-soft);
+  box-shadow: var(--inner-highlight);
+}
+
+.insight-section summary {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px;
+  border-bottom: 1px solid transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 950;
+  list-style: none;
+}
+
+.insight-section[open] summary {
+  border-bottom-color: rgba(207, 197, 178, 0.7);
+  background: rgba(255, 249, 237, 0.46);
+}
+
+.insight-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.insight-section summary span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.insight-section summary svg {
+  color: var(--accent-dark);
+}
+
+.insight-section summary em {
+  overflow: hidden;
+  max-width: 144px;
+  color: var(--ink-muted);
+  font-size: var(--font-xs);
+  font-style: normal;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insight-section summary::after {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(112, 169, 157, 0.34);
+  border-radius: 999px;
+  background: rgba(237, 248, 243, 0.72);
+  color: var(--accent-dark);
+  content: "+";
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.insight-section[open] summary::after {
+  content: "-";
+}
+
+.insight-section .side-section {
+  padding: 10px;
+  border-bottom: 0;
+}
+
+.insight-section .side-section > h2,
+.insight-section .section-title-row > h2 {
+  display: none;
+}
+
+.insight-section .selected-object-card {
+  margin-bottom: 10px;
 }
 
 .eyebrow {
@@ -862,9 +1029,12 @@ button {
   color: var(--accent-dark);
 }
 
-.asset-category-list,
-.right-panel {
+.asset-category-list {
   overflow: auto;
+}
+
+.right-panel {
+  overflow: hidden;
 }
 
 .asset-category {
@@ -1674,6 +1844,8 @@ button {
 .product-shell.night-mode .analysis-panel,
 .product-shell.night-mode .event-stream,
 .product-shell.night-mode .structured-data-panel,
+.product-shell.night-mode .insight-section,
+.product-shell.night-mode .insight-overview-item,
 .product-shell.night-mode .ai-panel,
 .product-shell.night-mode .ai-stage-companion {
   border-color: var(--line);
@@ -1681,6 +1853,40 @@ button {
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
     var(--surface);
   color: var(--ink);
+}
+
+.product-shell.night-mode .insight-overview-item.primary {
+  border-color: rgba(105, 202, 185, 0.5);
+  background:
+    radial-gradient(circle at 34% 18%, rgba(105, 202, 185, 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(24, 58, 57, 0.88), rgba(25, 38, 47, 0.92)),
+    var(--surface);
+}
+
+.product-shell.night-mode .insight-section summary {
+  color: var(--ink-soft);
+}
+
+.product-shell.night-mode .insight-section[open] summary {
+  border-bottom-color: rgba(81, 100, 106, 0.72);
+  background: rgba(105, 202, 185, 0.08);
+}
+
+.product-shell.night-mode .insight-section summary em,
+.product-shell.night-mode .insight-overview-item span {
+  color: var(--ink-muted);
+}
+
+.product-shell.night-mode .insight-section summary::after {
+  border-color: rgba(105, 202, 185, 0.34);
+  background: rgba(105, 202, 185, 0.12);
+  color: #dffdf6;
+}
+
+.product-shell.night-mode .rail-count {
+  border-color: rgba(105, 202, 185, 0.52);
+  background: #123b3a;
+  color: #dffdf6;
 }
 
 .product-shell.night-mode .focus-ai-drawer {

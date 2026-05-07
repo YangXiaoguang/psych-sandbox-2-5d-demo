@@ -1,4 +1,4 @@
-import { Bot, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight, Clock3, Database, LayoutDashboard, MousePointer2 } from "lucide-react";
 import type { LlmProviderConfig, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
 import { AnalysisPanel } from "./AnalysisPanel";
@@ -60,6 +60,7 @@ export function RightPanel({
           title="作品数据"
         >
           <LayoutDashboard size={18} />
+          <span className="rail-count">{objects.length}</span>
         </button>
         <button
           type="button"
@@ -116,26 +117,109 @@ export function RightPanel({
       </div>
 
       {activeTab === "scene" ? (
-        <>
-          <ObjectInspector
-            selectedObject={selectedObject}
-            onPatchSelected={onPatchSelected}
-            onDeleteSelected={onDeleteSelected}
-          />
-          <AnalysisPanel analysis={analysis} objects={objects} />
-          <EventStream events={events} />
-          <StructuredDataPanel objects={objects} analysis={analysis} selectedObject={selectedObject} />
-        </>
-      ) : (
-        <AiCompanionPanel
+        <SceneInsightDrawer
           objects={objects}
           selectedObject={selectedObject}
           events={events}
           analysis={analysis}
-          llmProviders={llmProviders}
-          personalMemoryContext={personalMemoryContext}
+          onPatchSelected={onPatchSelected}
+          onDeleteSelected={onDeleteSelected}
         />
+      ) : (
+        <div className="right-panel-scroll">
+          <AiCompanionPanel
+            objects={objects}
+            selectedObject={selectedObject}
+            events={events}
+            analysis={analysis}
+            llmProviders={llmProviders}
+            personalMemoryContext={personalMemoryContext}
+          />
+        </div>
       )}
     </aside>
+  );
+}
+
+function SceneInsightDrawer({
+  objects,
+  selectedObject,
+  events,
+  analysis,
+  onPatchSelected,
+  onDeleteSelected,
+}: {
+  objects: SandboxObject[];
+  selectedObject: SandboxObject | null;
+  events: SandboxEvent[];
+  analysis: SandboxAnalysis;
+  onPatchSelected: (patch: Partial<SandboxObject>, label: string) => void;
+  onDeleteSelected: () => void;
+}): JSX.Element {
+  return (
+    <div className="insight-drawer" aria-label="作品洞察抽屉">
+      <section className="insight-overview" aria-label="作品概览">
+        <div className="insight-overview-item primary">
+          <strong>{analysis.totalObjects}</strong>
+          <span>沙具</span>
+        </div>
+        <div className="insight-overview-item">
+          <strong>{analysis.centerObjects.length}</strong>
+          <span>中心</span>
+        </div>
+        <div className="insight-overview-item">
+          <strong>{events.length}</strong>
+          <span>事件</span>
+        </div>
+      </section>
+
+      <details className="insight-section" open>
+        <summary>
+          <span>
+            <MousePointer2 size={15} />
+            当前选中
+          </span>
+          <em>{selectedObject?.name ?? "未选择"}</em>
+        </summary>
+        <ObjectInspector
+          selectedObject={selectedObject}
+          onPatchSelected={onPatchSelected}
+          onDeleteSelected={onDeleteSelected}
+        />
+      </details>
+
+      <details className="insight-section" open>
+        <summary>
+          <span>
+            <LayoutDashboard size={15} />
+            作品洞察
+          </span>
+          <em>九宫格 / 风险</em>
+        </summary>
+        <AnalysisPanel analysis={analysis} objects={objects} />
+      </details>
+
+      <details className="insight-section">
+        <summary>
+          <span>
+            <Clock3 size={15} />
+            事件时间线
+          </span>
+          <em>{events.length} 条</em>
+        </summary>
+        <EventStream events={events} />
+      </details>
+
+      <details className="insight-section">
+        <summary>
+          <span>
+            <Database size={15} />
+            结构化数据
+          </span>
+          <em>JSON 预览</em>
+        </summary>
+        <StructuredDataPanel objects={objects} analysis={analysis} selectedObject={selectedObject} />
+      </details>
+    </div>
   );
 }
