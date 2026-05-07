@@ -1811,11 +1811,16 @@ button {
 .product-shell.night-mode .user-filter-grid select,
 .product-shell.night-mode .user-detail-form select,
 .product-shell.night-mode .user-admin-note,
-.product-shell.night-mode .user-stat-grid,
-.product-shell.night-mode .user-stat-grid span,
+.product-shell.night-mode .user-view-list,
+.product-shell.night-mode .user-view-list button,
+.product-shell.night-mode .user-stat-strip,
+.product-shell.night-mode .user-stat-strip button,
 .product-shell.night-mode .user-table th,
+.product-shell.night-mode .user-row-actions button,
 .product-shell.night-mode .user-pagination,
 .product-shell.night-mode .user-pagination button,
+.product-shell.night-mode .user-detail-drawer,
+.product-shell.night-mode .user-detail-tabs button,
 .product-shell.night-mode .user-detail-hero,
 .product-shell.night-mode .user-detail-metrics span,
 .product-shell.night-mode .user-detail-card,
@@ -1839,10 +1844,38 @@ button {
   background: rgba(71, 135, 126, 0.16);
 }
 
+.product-shell.night-mode .user-detail-overlay {
+  background: rgba(2, 9, 13, 0.58);
+}
+
+.product-shell.night-mode .user-view-list button.active,
+.product-shell.night-mode .user-view-list button:hover,
+.product-shell.night-mode .user-stat-strip button.active,
+.product-shell.night-mode .user-stat-strip button:not(.static):hover,
+.product-shell.night-mode .user-detail-tabs button.active,
+.product-shell.night-mode .user-detail-tabs button:hover,
+.product-shell.night-mode .user-row-actions button:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.product-shell.night-mode .user-view-list button span {
+  background: #22313a;
+  color: var(--ink-muted);
+}
+
+.product-shell.night-mode .user-view-list button.active span,
+.product-shell.night-mode .user-view-list button:hover span {
+  background: rgba(105, 202, 185, 0.2);
+  color: var(--accent-dark);
+}
+
 .product-shell.night-mode .user-name-button strong,
 .product-shell.night-mode .user-identity-stack strong,
 .product-shell.night-mode .user-detail-hero strong,
 .product-shell.night-mode .user-detail-metrics strong,
+.product-shell.night-mode .user-stat-strip strong,
 .product-shell.night-mode .user-detail-card h4,
 .product-shell.night-mode .user-audit-mini strong {
   color: var(--ink);
@@ -1854,6 +1887,7 @@ button {
 .product-shell.night-mode .user-detail-hero em,
 .product-shell.night-mode .user-detail-hero code,
 .product-shell.night-mode .user-detail-metrics span,
+.product-shell.night-mode .user-stat-strip em,
 .product-shell.night-mode .user-audit-mini time {
   color: var(--ink-muted);
 }
@@ -2757,8 +2791,9 @@ button {
 }
 
 .user-admin-layout {
+  position: relative;
   display: grid;
-  grid-template-columns: 280px minmax(640px, 1fr) 360px;
+  grid-template-columns: 260px minmax(760px, 1fr);
   min-height: 0;
   gap: 14px;
   overflow: hidden;
@@ -2869,6 +2904,59 @@ button {
   outline: none;
 }
 
+.user-view-list {
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid #d8c7a8;
+  border-radius: 9px;
+  background: rgba(255, 249, 237, 0.58);
+}
+
+.user-view-list button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 31px;
+  gap: 8px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: var(--font-sm);
+  font-weight: 900;
+  text-align: left;
+}
+
+.user-view-list button span {
+  display: inline-flex;
+  min-width: 24px;
+  min-height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #efe5d1;
+  color: var(--ink-muted);
+  font-size: var(--font-xs);
+  font-weight: 950;
+}
+
+.user-view-list button.active,
+.user-view-list button:hover,
+.user-view-list button:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.user-view-list button.active span,
+.user-view-list button:hover span {
+  background: #dff3ed;
+  color: var(--accent-dark);
+}
+
 .user-filter-grid {
   display: grid;
   gap: 10px;
@@ -2909,51 +2997,61 @@ button {
   line-height: 1.45;
 }
 
-.user-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 9px;
-  padding: 12px;
+.user-stat-strip {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 249, 237, 0.42);
 }
 
-.user-stat-grid span {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  grid-template-areas:
-    "icon value"
-    "icon label";
+.user-stat-strip button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 32px;
   align-items: center;
-  gap: 2px 8px;
-  min-height: 56px;
-  padding: 9px;
+  gap: 6px;
+  padding: 0 9px;
   border: 1px solid #dccbaa;
-  border-radius: 9px;
+  border-radius: 999px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent),
     #fff9ed;
   color: var(--ink);
   box-shadow: var(--inner-highlight);
 }
 
-.user-stat-grid svg {
-  grid-area: icon;
+.user-stat-strip button.static {
+  cursor: default;
+}
+
+.user-stat-strip button.active,
+.user-stat-strip button:not(.static):hover,
+.user-stat-strip button:not(.static):focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.user-stat-strip svg {
+  flex: 0 0 auto;
   color: var(--accent);
 }
 
-.user-stat-grid strong {
-  grid-area: value;
-  font-size: 19px;
+.user-stat-strip strong {
+  color: var(--ink);
+  font-size: 14px;
   line-height: 1;
 }
 
-.user-stat-grid em {
-  grid-area: label;
+.user-stat-strip em {
   color: var(--ink-muted);
   font-size: 11px;
   font-style: normal;
   font-weight: 850;
+  white-space: nowrap;
 }
 
 .user-table-wrap {
@@ -2987,6 +3085,12 @@ button {
   color: var(--ink-soft);
   font-weight: 820;
   vertical-align: middle;
+}
+
+.user-table th:last-child,
+.user-table td:last-child {
+  width: 150px;
+  text-align: right;
 }
 
 .user-table tr.selected td,
@@ -3084,6 +3188,40 @@ button {
   background: #f8efe0;
 }
 
+.user-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.user-row-actions button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #c8b99f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink-soft);
+  box-shadow: var(--inner-highlight);
+}
+
+.user-row-actions button:hover,
+.user-row-actions button:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.user-row-actions button.danger:hover,
+.user-row-actions button.danger:focus-visible {
+  border-color: #d7a094;
+  background: #fff0ec;
+  color: var(--danger);
+}
+
 .user-pagination {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) 36px;
@@ -3125,9 +3263,61 @@ button {
   overflow: auto;
 }
 
+.user-detail-overlay {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  justify-content: end;
+  background: rgba(24, 31, 31, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.user-detail-drawer {
+  display: grid;
+  width: min(460px, calc(100vw - 40px));
+  height: calc(100vh - 28px);
+  max-height: calc(100vh - 28px);
+  margin: 14px;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  box-shadow: 0 22px 60px rgba(45, 35, 24, 0.24);
+}
+
+.user-detail-drawer-header {
+  min-height: 60px;
+}
+
+.user-detail-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.user-detail-tabs button {
+  min-height: 32px;
+  border: 1px solid #c8b99f;
+  border-radius: 8px;
+  background: var(--surface-warm);
+  color: var(--ink-soft);
+  font-size: var(--font-sm);
+  font-weight: 900;
+}
+
+.user-detail-tabs button.active,
+.user-detail-tabs button:hover,
+.user-detail-tabs button:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
 .user-detail-hero {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 10px;
   padding: 12px;
   border: 1px solid #d8c7a8;

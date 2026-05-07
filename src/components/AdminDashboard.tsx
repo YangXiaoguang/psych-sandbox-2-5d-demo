@@ -7,8 +7,10 @@ import {
   Clock3,
   Database,
   Download,
+  Eye,
   Info,
   KeyRound,
+  Pencil,
   Plus,
   RefreshCcw,
   Search,
@@ -21,6 +23,7 @@ import {
   UserCheck,
   UserRound,
   Users,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -79,6 +82,7 @@ type AssetOriginFilter = "all" | "builtin" | "custom";
 type AssetViewMode = "table" | "grid";
 type AssetSortKey = "updatedAt" | "name" | "category" | "riskTag" | "status";
 type ConfigStatusTone = "ok" | "warn" | "error";
+type UserDetailTab = "overview" | "edit" | "access" | "audit";
 
 interface AdminDashboardProps {
   personalData: PersonalDataBundle;
@@ -437,6 +441,7 @@ function UserAdminPanel({
   const [authFilter, setAuthFilter] = useState<UserAuthFilter>("all");
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState(() => personalData.activeUserId);
+  const [detailTab, setDetailTab] = useState<UserDetailTab | null>(null);
 
   const authIdentities = useMemo(() => loadLocalAuthIdentities(), [personalData.accounts.length, personalData.activeUserId]);
   const authByUserId = useMemo(
@@ -526,7 +531,9 @@ function UserAdminPanel({
   const activeCount = directoryRows.filter((row) => row.account.status === "active").length;
   const archivedCount = directoryRows.filter((row) => row.account.status === "archived").length;
   const authBoundCount = directoryRows.filter((row) => row.authStatus === "bound").length;
+  const authGuestCount = directoryRows.filter((row) => row.authStatus === "guest").length;
   const totalSessionCount = directoryRows.reduce((total, row) => total + row.sessionCount, 0);
+  const hasNoSecondaryFilters = query.trim() === "" && roleFilter === "all" && ageFilter === "all";
 
   useEffect(() => {
     setPage(1);
@@ -598,6 +605,38 @@ function UserAdminPanel({
     );
   };
 
+  const resetUserFilters = () => {
+    setQuery("");
+    setRoleFilter("all");
+    setAgeFilter("all");
+    setStatusFilter("all");
+    setAuthFilter("all");
+  };
+
+  const applyQuickView = (view: "all" | "active" | "archived" | "bound" | "guest") => {
+    resetUserFilters();
+    if (view === "active" || view === "archived") {
+      setStatusFilter(view);
+    }
+    if (view === "bound" || view === "guest") {
+      setAuthFilter(view);
+    }
+  };
+
+  const openUserDetail = (userId: string, tab: UserDetailTab) => {
+    setSelectedUserId(userId);
+    setDetailTab(tab);
+  };
+
+  const toggleAccountArchive = (row: UserAdminRow) => {
+    const nextStatus: PersonalAccountStatus = row.account.status === "archived" ? "active" : "archived";
+    const actionLabel = nextStatus === "archived" ? "归档" : "恢复";
+    if (!window.confirm(`确认${actionLabel}用户「${row.account.displayName}」吗？`)) {
+      return;
+    }
+    updateAccountStatus(row.account.userId, nextStatus);
+  };
+
   return (
     <section className="user-admin-layout" aria-label="用户管理">
       <aside className="admin-card user-filter-panel">
@@ -617,6 +656,28 @@ function UserAdminPanel({
               placeholder="姓名、邮箱、handle、userId..."
             />
           </label>
+          <div className="user-view-list" aria-label="快捷视图">
+            <button type="button" className={hasNoSecondaryFilters && statusFilter === "all" && authFilter === "all" ? "active" : ""} onClick={() => applyQuickView("all")}>
+              全部用户
+              <span>{directoryRows.length}</span>
+            </button>
+            <button type="button" className={hasNoSecondaryFilters && statusFilter === "active" && authFilter === "all" ? "active" : ""} onClick={() => applyQuickView("active")}>
+              正常用户
+              <span>{activeCount}</span>
+            </button>
+            <button type="button" className={hasNoSecondaryFilters && statusFilter === "archived" && authFilter === "all" ? "active" : ""} onClick={() => applyQuickView("archived")}>
+              归档用户
+              <span>{archivedCount}</span>
+            </button>
+            <button type="button" className={hasNoSecondaryFilters && authFilter === "bound" && statusFilter === "all" ? "active" : ""} onClick={() => applyQuickView("bound")}>
+              已绑定邮箱
+              <span>{authBoundCount}</span>
+            </button>
+            <button type="button" className={hasNoSecondaryFilters && authFilter === "guest" && statusFilter === "all" ? "active" : ""} onClick={() => applyQuickView("guest")}>
+              本地账号
+              <span>{authGuestCount}</span>
+            </button>
+          </div>
           <div className="user-filter-grid">
             <label>
               <span>角色</span>
@@ -674,12 +735,12 @@ function UserAdminPanel({
             {filteredRows.length} / {directoryRows.length}
           </span>
         </header>
-        <div className="user-stat-grid" aria-label="用户统计">
-          <StatTile icon={<Users size={18} />} value={directoryRows.length} label="总用户" />
-          <StatTile icon={<UserCheck size={18} />} value={activeCount} label="正常用户" />
-          <StatTile icon={<Archive size={18} />} value={archivedCount} label="归档用户" />
-          <StatTile icon={<KeyRound size={18} />} value={authBoundCount} label="邮箱绑定" />
-          <StatTile icon={<Boxes size={18} />} value={totalSessionCount} label="沙盘档案" />
+        <div className="user-stat-strip" aria-label="用户统计">
+          <QuickStatButton icon={<Users size={14} />} value={directoryRows.length} label="全部" active={hasNoSecondaryFilters && statusFilter === "all" && authFilter === "all"} onClick={() => applyQuickView("all")} />
+          <QuickStatButton icon={<UserCheck size={14} />} value={activeCount} label="正常" active={hasNoSecondaryFilters && statusFilter === "active" && authFilter === "all"} onClick={() => applyQuickView("active")} />
+          <QuickStatButton icon={<Archive size={14} />} value={archivedCount} label="归档" active={hasNoSecondaryFilters && statusFilter === "archived" && authFilter === "all"} onClick={() => applyQuickView("archived")} />
+          <QuickStatButton icon={<KeyRound size={14} />} value={authBoundCount} label="邮箱绑定" active={hasNoSecondaryFilters && authFilter === "bound" && statusFilter === "all"} onClick={() => applyQuickView("bound")} />
+          <QuickStatButton icon={<Boxes size={14} />} value={totalSessionCount} label="沙盘档案" />
         </div>
         <div className="user-table-wrap">
           <table className="user-table">
@@ -693,12 +754,13 @@ function UserAdminPanel({
                 <th>沙盘</th>
                 <th>记忆</th>
                 <th>最近活跃</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {pagedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={9}>
                     <div className="user-empty-state">没有匹配的用户，请调整筛选条件。</div>
                   </td>
                 </tr>
@@ -706,7 +768,7 @@ function UserAdminPanel({
                 pagedRows.map((row) => (
                   <tr key={row.account.userId} className={selectedRow?.account.userId === row.account.userId ? "selected" : ""}>
                     <td>
-                      <button type="button" className="user-name-button" onClick={() => setSelectedUserId(row.account.userId)}>
+                      <button type="button" className="user-name-button" onClick={() => openUserDetail(row.account.userId, "overview")}>
                         <span>{getUserInitial(row.account.displayName)}</span>
                         <strong>{row.account.displayName}</strong>
                         <em>{row.authEmail ?? row.account.localHandle}</em>
@@ -736,6 +798,28 @@ function UserAdminPanel({
                       {row.confirmedMemoryCount}/{row.memoryCount}
                     </td>
                     <td>{formatDateTime(row.account.lastActiveAt)}</td>
+                    <td>
+                      <div className="user-row-actions" aria-label={`${row.account.displayName} 的操作`}>
+                        <button type="button" onClick={() => openUserDetail(row.account.userId, "overview")} aria-label="查看详情" title="查看详情">
+                          <Eye size={15} />
+                        </button>
+                        <button type="button" onClick={() => openUserDetail(row.account.userId, "edit")} aria-label="编辑用户" title="编辑用户">
+                          <Pencil size={15} />
+                        </button>
+                        <button type="button" onClick={() => openUserDetail(row.account.userId, "access")} aria-label="权限设置" title="权限设置">
+                          <ShieldCheck size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className={row.account.status === "archived" ? "" : "danger"}
+                          onClick={() => toggleAccountArchive(row)}
+                          aria-label={row.account.status === "archived" ? "恢复用户" : "归档用户"}
+                          title={row.account.status === "archived" ? "恢复用户" : "归档用户"}
+                        >
+                          {row.account.status === "archived" ? <Undo2 size={15} /> : <Trash2 size={15} />}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -755,191 +839,243 @@ function UserAdminPanel({
         </footer>
       </section>
 
-      <aside className="admin-card user-detail-panel">
-        <header className="admin-card-header">
-          <div>
-            <p className="eyebrow">Profile Detail</p>
-            <h3>用户详情</h3>
-          </div>
-          {selectedRow ? (
-            <span className={`user-status-pill ${selectedRow.account.status}`}>
-              {ACCOUNT_STATUS_LABELS[selectedRow.account.status]}
-            </span>
-          ) : null}
-        </header>
-        {selectedRow ? (
-          <div className="user-detail-body">
-            <section className="user-detail-hero">
-              <span>
-                <UserRound size={23} />
-              </span>
+      {detailTab && selectedRow ? (
+        <div className="user-detail-overlay" role="presentation" onClick={() => setDetailTab(null)}>
+          <aside
+            className="admin-card user-detail-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${selectedRow.account.displayName} 的用户详情`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="admin-card-header user-detail-drawer-header">
               <div>
-                <strong>{selectedRow.account.displayName}</strong>
-                <em>{selectedRow.authEmail ?? selectedRow.account.localHandle}</em>
-                <code>{selectedRow.account.userId}</code>
+                <p className="eyebrow">Profile Detail</p>
+                <h3>用户详情</h3>
               </div>
-            </section>
+              <button type="button" className="small-icon-button" onClick={() => setDetailTab(null)} aria-label="关闭用户详情">
+                <X size={16} />
+              </button>
+            </header>
+            <div className="user-detail-body">
+              <section className="user-detail-hero">
+                <span>
+                  <UserRound size={23} />
+                </span>
+                <div>
+                  <strong>{selectedRow.account.displayName}</strong>
+                  <em>{selectedRow.authEmail ?? selectedRow.account.localHandle}</em>
+                  <code>{selectedRow.account.userId}</code>
+                </div>
+                <b className={`user-status-pill ${selectedRow.account.status}`}>
+                  {ACCOUNT_STATUS_LABELS[selectedRow.account.status]}
+                </b>
+              </section>
 
-            <section className="user-detail-metrics">
-              <span>
-                <strong>{selectedRow.sessionCount}</strong>
-                沙盘档案
-              </span>
-              <span>
-                <strong>{selectedRow.memoryCount}</strong>
-                记忆候选
-              </span>
-              <span>
-                <strong>{selectedRow.consentGranted}/{selectedRow.consentTotal}</strong>
-                授权项
-              </span>
-            </section>
+              <nav className="user-detail-tabs" aria-label="用户详情分区">
+                <button type="button" className={detailTab === "overview" ? "active" : ""} onClick={() => setDetailTab("overview")}>
+                  概览
+                </button>
+                <button type="button" className={detailTab === "edit" ? "active" : ""} onClick={() => setDetailTab("edit")}>
+                  编辑
+                </button>
+                <button type="button" className={detailTab === "access" ? "active" : ""} onClick={() => setDetailTab("access")}>
+                  权限
+                </button>
+                <button type="button" className={detailTab === "audit" ? "active" : ""} onClick={() => setDetailTab("audit")}>
+                  审计
+                </button>
+              </nav>
 
-            <section className="user-detail-form">
-              <label>
-                <span>后台角色</span>
-                <select
-                  value={selectedRow.accessPolicy.role}
-                  onChange={(event) =>
-                    updateAccessPolicy(
-                      selectedRow.account.userId,
-                      { role: event.target.value as AdminAccessRole },
-                      `用户后台角色调整为：${ADMIN_ACCESS_ROLE_LABELS[event.target.value as AdminAccessRole]}。`,
-                    )
-                  }
-                >
-                  {ADMIN_ACCESS_ROLE_ORDER.map((role) => (
-                    <option key={role} value={role}>
-                      {ADMIN_ACCESS_ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span>权限状态</span>
-                <select
-                  value={selectedRow.accessPolicy.status}
-                  onChange={(event) =>
-                    updateAccessPolicy(
-                      selectedRow.account.userId,
-                      { status: event.target.value as AdminAccessStatus },
-                      `用户权限状态调整为：${ADMIN_ACCESS_STATUS_LABELS[event.target.value as AdminAccessStatus]}。`,
-                    )
-                  }
-                >
-                  <option value="active">可用</option>
-                  <option value="review_required">待复核</option>
-                  <option value="disabled">停用</option>
-                </select>
-              </label>
-              <label>
-                <span>工作区范围</span>
-                <select
-                  value={selectedRow.accessPolicy.workspaceScope}
-                  onChange={(event) =>
-                    updateAccessPolicy(
-                      selectedRow.account.userId,
-                      { workspaceScope: event.target.value as AdminWorkspaceScope },
-                      `用户工作区范围调整为：${ADMIN_WORKSPACE_SCOPE_LABELS[event.target.value as AdminWorkspaceScope]}。`,
-                    )
-                  }
-                >
-                  <option value="all">全部工作区</option>
-                  <option value="assigned">指定工作区</option>
-                  <option value="own">仅本人工作区</option>
-                </select>
-              </label>
-              <label>
-                <span>用户状态</span>
-                <select
-                  value={selectedRow.account.status}
-                  onChange={(event) =>
-                    updateAccountStatus(selectedRow.account.userId, event.target.value as PersonalAccountStatus)
-                  }
-                >
-                  <option value="active">正常</option>
-                  <option value="archived">归档</option>
-                </select>
-              </label>
-              <label>
-                <span>角色</span>
-                <select
-                  value={selectedRow.profile?.role ?? "demo"}
-                  onChange={(event) => updateProfile(selectedRow.account.userId, { role: event.target.value as PersonalRole })}
-                >
-                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span>年龄段</span>
-                <select
-                  value={selectedRow.profile?.ageGroup ?? "unknown"}
-                  onChange={(event) =>
-                    updateProfile(selectedRow.account.userId, { ageGroup: event.target.value as PersonalAgeGroup })
-                  }
-                >
-                  {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </section>
+              {detailTab === "overview" ? (
+                <>
+                  <section className="user-detail-metrics">
+                    <span>
+                      <strong>{selectedRow.sessionCount}</strong>
+                      沙盘档案
+                    </span>
+                    <span>
+                      <strong>{selectedRow.memoryCount}</strong>
+                      记忆候选
+                    </span>
+                    <span>
+                      <strong>{selectedRow.consentGranted}/{selectedRow.consentTotal}</strong>
+                      授权项
+                    </span>
+                  </section>
+                  <section className="user-detail-card">
+                    <h4>
+                      <ShieldCheck size={15} />
+                      授权边界
+                    </h4>
+                    <ul className="user-consent-list">
+                      {selectedConsents.map((consent) => (
+                        <li key={consent.consentId}>
+                          <span className={consent.granted ? "granted" : "revoked"}>{consent.granted ? "开启" : "关闭"}</span>
+                          <strong>{CONSENT_LABELS[consent.consentType]}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </>
+              ) : null}
 
-            <section className="user-detail-card">
-              <h4>
-                <ShieldCheck size={15} />
-                授权边界
-              </h4>
-              <ul className="user-consent-list">
-                {selectedConsents.map((consent) => (
-                  <li key={consent.consentId}>
-                    <span className={consent.granted ? "granted" : "revoked"}>{consent.granted ? "开启" : "关闭"}</span>
-                    <strong>{CONSENT_LABELS[consent.consentType]}</strong>
-                  </li>
-                ))}
-              </ul>
-            </section>
+              {detailTab === "edit" ? (
+                <section className="user-detail-form">
+                  <label>
+                    <span>用户状态</span>
+                    <select
+                      value={selectedRow.account.status}
+                      onChange={(event) =>
+                        updateAccountStatus(selectedRow.account.userId, event.target.value as PersonalAccountStatus)
+                      }
+                    >
+                      <option value="active">正常</option>
+                      <option value="archived">归档</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>角色</span>
+                    <select
+                      value={selectedRow.profile?.role ?? "demo"}
+                      onChange={(event) => updateProfile(selectedRow.account.userId, { role: event.target.value as PersonalRole })}
+                    >
+                      {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>年龄段</span>
+                    <select
+                      value={selectedRow.profile?.ageGroup ?? "unknown"}
+                      onChange={(event) =>
+                        updateProfile(selectedRow.account.userId, { ageGroup: event.target.value as PersonalAgeGroup })
+                      }
+                    >
+                      {Object.entries(AGE_GROUP_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+              ) : null}
 
-            <section className="user-detail-card">
-              <h4>
-                <Clock3 size={15} />
-                最近审计
-              </h4>
-              <div className="user-audit-mini">
-                {selectedAudits.length === 0 ? (
-                  <p>暂无审计记录。</p>
-                ) : (
-                  selectedAudits.map((log) => (
-                    <article key={log.id}>
-                      <strong>{log.detail}</strong>
-                      <time>{formatDateTime(log.createdAt)}</time>
-                    </article>
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
-        ) : (
-          <div className="user-empty-state">暂无用户数据。</div>
-        )}
-      </aside>
+              {detailTab === "access" ? (
+                <section className="user-detail-form">
+                  <label>
+                    <span>后台角色</span>
+                    <select
+                      value={selectedRow.accessPolicy.role}
+                      onChange={(event) =>
+                        updateAccessPolicy(
+                          selectedRow.account.userId,
+                          { role: event.target.value as AdminAccessRole },
+                          `用户后台角色调整为：${ADMIN_ACCESS_ROLE_LABELS[event.target.value as AdminAccessRole]}。`,
+                        )
+                      }
+                    >
+                      {ADMIN_ACCESS_ROLE_ORDER.map((role) => (
+                        <option key={role} value={role}>
+                          {ADMIN_ACCESS_ROLE_LABELS[role]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>权限状态</span>
+                    <select
+                      value={selectedRow.accessPolicy.status}
+                      onChange={(event) =>
+                        updateAccessPolicy(
+                          selectedRow.account.userId,
+                          { status: event.target.value as AdminAccessStatus },
+                          `用户权限状态调整为：${ADMIN_ACCESS_STATUS_LABELS[event.target.value as AdminAccessStatus]}。`,
+                        )
+                      }
+                    >
+                      <option value="active">可用</option>
+                      <option value="review_required">待复核</option>
+                      <option value="disabled">停用</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>工作区范围</span>
+                    <select
+                      value={selectedRow.accessPolicy.workspaceScope}
+                      onChange={(event) =>
+                        updateAccessPolicy(
+                          selectedRow.account.userId,
+                          { workspaceScope: event.target.value as AdminWorkspaceScope },
+                          `用户工作区范围调整为：${ADMIN_WORKSPACE_SCOPE_LABELS[event.target.value as AdminWorkspaceScope]}。`,
+                        )
+                      }
+                    >
+                      <option value="all">全部工作区</option>
+                      <option value="assigned">指定工作区</option>
+                      <option value="own">仅本人工作区</option>
+                    </select>
+                  </label>
+                </section>
+              ) : null}
+
+              {detailTab === "audit" ? (
+                <section className="user-detail-card">
+                  <h4>
+                    <Clock3 size={15} />
+                    最近审计
+                  </h4>
+                  <div className="user-audit-mini">
+                    {selectedAudits.length === 0 ? (
+                      <p>暂无审计记录。</p>
+                    ) : (
+                      selectedAudits.map((log) => (
+                        <article key={log.id}>
+                          <strong>{log.detail}</strong>
+                          <time>{formatDateTime(log.createdAt)}</time>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function StatTile({ icon, value, label }: { icon: JSX.Element; value: number; label: string }): JSX.Element {
+function QuickStatButton({
+  icon,
+  value,
+  label,
+  active,
+  onClick,
+}: {
+  icon: JSX.Element;
+  value: number;
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}): JSX.Element {
   return (
-    <span>
+    <button
+      type="button"
+      className={`${active ? "active" : ""} ${onClick ? "" : "static"}`.trim()}
+      onClick={onClick}
+      aria-disabled={!onClick}
+      tabIndex={onClick ? undefined : -1}
+    >
       {icon}
       <strong>{value}</strong>
       <em>{label}</em>
-    </span>
+    </button>
   );
 }
 
