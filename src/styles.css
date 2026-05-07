@@ -139,8 +139,8 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 306px minmax(0, 1fr) 382px;
-  gap: 14px;
+  grid-template-columns: clamp(252px, 15vw, 286px) minmax(0, 1fr) clamp(312px, 18vw, 348px);
+  gap: 10px;
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -148,7 +148,7 @@ button {
 }
 
 .app-shell.right-panel-collapsed {
-  grid-template-columns: 306px minmax(0, 1fr) 54px;
+  grid-template-columns: clamp(252px, 15vw, 286px) minmax(0, 1fr) 50px;
 }
 
 .app-shell.focus-mode {
@@ -159,11 +159,11 @@ button {
 
 .app-navigation {
   display: flex;
-  min-height: 68px;
+  min-height: 60px;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 10px 16px;
+  gap: 14px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background:
@@ -178,13 +178,13 @@ button {
 .app-brand {
   display: grid;
   min-width: 280px;
-  max-width: 440px;
-  gap: 4px;
+  max-width: 380px;
+  gap: 3px;
 }
 
 .app-brand h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1.12;
   letter-spacing: 0;
 }
@@ -228,8 +228,8 @@ button {
 
 .app-nav-tabs button {
   display: inline-flex;
-  min-width: 146px;
-  min-height: var(--control-lg);
+  min-width: 134px;
+  min-height: 42px;
   align-items: center;
   gap: 9px;
   padding: 0 12px;
@@ -280,7 +280,7 @@ button {
 .app-auth-chip {
   display: grid;
   grid-template-columns: 36px minmax(120px, 1fr) 32px;
-  min-width: 236px;
+  min-width: 220px;
   align-items: center;
   gap: 8px;
   padding: 7px;
@@ -662,6 +662,15 @@ button {
   box-shadow: var(--shadow-sm);
 }
 
+.asset-library .panel-header {
+  min-height: 58px;
+  padding: 12px;
+}
+
+.asset-library .panel-header h1 {
+  font-size: 18px;
+}
+
 .right-panel.collapsed {
   align-items: center;
   gap: 10px;
@@ -694,16 +703,17 @@ button {
 }
 
 .workspace-column {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   overflow: hidden;
 }
 
 .app-shell.focus-mode .workspace-column {
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
+  display: block;
+  position: relative;
 }
 
 .panel-header,
@@ -778,7 +788,7 @@ button {
 .asset-library-tools {
   display: grid;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 9px 10px;
   border-bottom: 1px solid var(--line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent),
@@ -918,7 +928,7 @@ button {
 .asset-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .asset-category-list.compact .asset-grid {
@@ -940,12 +950,12 @@ button {
 .asset-card {
   position: relative;
   display: grid;
-  grid-template-rows: 98px auto;
+  grid-template-rows: 88px auto;
   align-items: stretch;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-  min-height: 142px;
-  padding: 8px;
+  min-height: 128px;
+  padding: 7px;
   border: 1px solid #d3c6ae;
   border-radius: var(--radius-sm);
   background:
@@ -962,10 +972,19 @@ button {
     box-shadow 120ms ease;
 }
 
+.asset-card::after {
+  position: absolute;
+  inset: 1px;
+  border-radius: 7px;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.22), transparent 46%);
+  content: "";
+  pointer-events: none;
+}
+
 .asset-card-action {
   display: grid;
-  grid-template-rows: 98px auto;
-  gap: 8px;
+  grid-template-rows: 88px auto;
+  gap: 7px;
   min-width: 0;
   border: 0;
   background: transparent;
@@ -996,6 +1015,10 @@ button {
     0 10px 22px rgba(49, 89, 83, 0.16);
   transform: translateY(-2px);
   outline: none;
+}
+
+.asset-card:active {
+  transform: translateY(1px) scale(0.985);
 }
 
 .asset-card:focus-within {
@@ -1030,7 +1053,7 @@ button {
 .asset-preview {
   display: grid;
   width: 100%;
-  height: 98px;
+  height: 88px;
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(204, 163, 93, 0.52);
@@ -1099,12 +1122,12 @@ button {
   grid-template-areas:
     "title environment actions"
     "status environment actions";
-  grid-template-columns: minmax(180px, 1fr) minmax(190px, 220px) max-content;
+  grid-template-columns: minmax(170px, 1fr) minmax(180px, 220px) max-content;
   min-width: 0;
-  min-height: 88px;
+  min-height: 74px;
   align-items: center;
   gap: 8px 12px;
-  padding: 14px 16px;
+  padding: 10px 12px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -1117,6 +1140,14 @@ button {
 .topbar-title {
   grid-area: title;
   min-width: 0;
+}
+
+.topbar-title .eyebrow {
+  margin-bottom: 2px;
+}
+
+.topbar-title h2 {
+  font-size: 18px;
 }
 
 .topbar-status {
@@ -1288,11 +1319,28 @@ button {
 }
 
 .app-shell.focus-mode .sandbox-editor {
+  width: 100%;
+  height: 100%;
   border-radius: var(--radius-md);
 }
 
 .app-shell.focus-mode .stage-host {
-  padding: 10px 12px 12px;
+  padding: 92px 12px 12px;
+}
+
+.app-shell.focus-mode .topbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  left: 8px;
+  z-index: 10;
+  min-height: 70px;
+  border-color: rgba(112, 169, 157, 0.46);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.68), transparent 42%),
+    linear-gradient(180deg, rgba(255, 252, 242, 0.92), rgba(239, 247, 241, 0.86)),
+    var(--panel-strong);
+  backdrop-filter: blur(18px);
 }
 
 .ai-stage-companion {
@@ -1341,12 +1389,12 @@ button {
 
 .focus-asset-toggle {
   left: 14px;
-  top: 114px;
+  top: 96px;
 }
 
 .focus-panel-toggle {
   right: 14px;
-  top: 114px;
+  top: 96px;
 }
 
 .focus-ai-toggle {
@@ -1365,7 +1413,7 @@ button {
 .focus-asset-drawer {
   position: absolute;
   left: 14px;
-  top: 162px;
+  top: 144px;
   bottom: 14px;
   z-index: 8;
   width: min(354px, calc(100vw - 42px));
@@ -1380,12 +1428,12 @@ button {
 
 .focus-ai-drawer {
   position: absolute;
-  top: 162px;
-  right: 14px;
-  bottom: 14px;
+  right: 18px;
+  bottom: 18px;
   z-index: 12;
   display: grid;
-  width: min(468px, calc(100vw - 86px));
+  width: min(424px, calc(100vw - 42px));
+  max-height: min(680px, calc(100vh - 128px));
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid rgba(97, 142, 132, 0.64);
@@ -1427,15 +1475,15 @@ button {
 
 .focus-ai-drawer .ai-panel {
   min-height: 100%;
-  padding: 12px;
+  padding: 10px;
 }
 
 .focus-ai-drawer .ai-chat-log {
-  max-height: min(34vh, 360px);
+  max-height: min(26vh, 220px);
 }
 
 .focus-ai-drawer .ai-hero {
-  min-height: 88px;
+  min-height: 76px;
 }
 
 .app-shell.focus-mode.ai-drawer-open .ai-stage-companion {
@@ -2129,6 +2177,11 @@ button {
   padding: 12px 14px 16px;
 }
 
+.ai-panel.focus {
+  gap: 10px;
+  padding: 10px;
+}
+
 .ai-hero {
   display: grid;
   grid-template-columns: 76px 1fr;
@@ -2141,6 +2194,50 @@ button {
   background:
     radial-gradient(circle at 12% 20%, rgba(133, 204, 181, 0.22), transparent 48%),
     #fff9ed;
+}
+
+.ai-panel.focus .ai-hero {
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 74px;
+  padding: 10px;
+}
+
+.ai-panel.focus .ai-companion-portrait {
+  width: 52px;
+  height: 56px;
+}
+
+.ai-panel.focus .ai-portrait-head {
+  width: 46px;
+  height: 50px;
+}
+
+.ai-panel.focus .ai-portrait-ear {
+  width: 13px;
+  height: 16px;
+}
+
+.ai-panel.focus .ai-portrait-eye {
+  top: 22px;
+}
+
+.ai-panel.focus .ai-portrait-eye.left {
+  left: 14px;
+}
+
+.ai-panel.focus .ai-portrait-eye.right {
+  right: 14px;
+}
+
+.ai-panel.focus .ai-portrait-smile {
+  bottom: 10px;
+}
+
+.ai-panel.focus .ai-hero p:last-child {
+  max-width: 230px;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .ai-hero h2,
@@ -2248,6 +2345,12 @@ button {
   background: #fff9ed;
 }
 
+.ai-panel.focus .ai-context-card,
+.ai-panel.focus .ai-quick-section,
+.ai-panel.focus .ai-chat-log {
+  padding: 10px;
+}
+
 .ai-context-card .section-title-row span {
   color: #58716a;
   font-size: 12px;
@@ -2317,6 +2420,10 @@ button {
   gap: 7px;
 }
 
+.ai-panel.focus .ai-quick-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .ai-quick-list button {
   display: inline-flex;
   min-height: 36px;
@@ -2330,6 +2437,12 @@ button {
   font-size: 13px;
   font-weight: 800;
   text-align: left;
+}
+
+.ai-panel.focus .ai-quick-list button {
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: 12px;
 }
 
 .ai-quick-list button:hover,
@@ -2416,6 +2529,14 @@ button {
   font: inherit;
   font-size: 13px;
   line-height: 1.45;
+}
+
+.ai-panel.focus .ai-composer textarea {
+  min-height: 64px;
+}
+
+.ai-panel.focus .ai-safety-note {
+  display: none;
 }
 
 .ai-composer textarea:focus {
@@ -8733,11 +8854,11 @@ button:disabled {
   }
 
   .app-shell {
-    grid-template-columns: 272px minmax(0, 1fr) 330px;
+    grid-template-columns: 244px minmax(0, 1fr) 306px;
   }
 
   .app-shell.right-panel-collapsed {
-    grid-template-columns: 272px minmax(0, 1fr) 54px;
+    grid-template-columns: 244px minmax(0, 1fr) 50px;
   }
 
   .app-shell.focus-mode {

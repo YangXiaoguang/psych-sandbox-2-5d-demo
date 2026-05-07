@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Boxes, MessageCircle, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Bot, Boxes, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
 import type { AdminGovernanceData } from "./admin/types";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
@@ -606,19 +606,6 @@ export function App(): JSX.Element {
                 <span>{layoutPreferences.assetDrawerOpen ? "关闭沙具库" : "沙具库"}</span>
               </button>
               <button
-                className={classNames(
-                  "focus-floating-button",
-                  "focus-ai-toggle",
-                  layoutPreferences.aiDrawerOpen && "active",
-                )}
-                type="button"
-                onClick={handleOpenAiCompanion}
-                aria-label={layoutPreferences.aiDrawerOpen ? "关闭全屏 AI 伙伴" : "打开全屏 AI 伙伴"}
-              >
-                {layoutPreferences.aiDrawerOpen ? <X size={18} /> : <MessageCircle size={18} />}
-                <span>{layoutPreferences.aiDrawerOpen ? "关闭 AI" : "AI 伙伴"}</span>
-              </button>
-              <button
                 className="focus-floating-button focus-panel-toggle"
                 type="button"
                 onClick={() => patchLayoutPreferences({ focusMode: false, rightPanelCollapsed: false, aiDrawerOpen: false })}
@@ -804,6 +791,7 @@ function FocusAiCompanionDrawer({
           analysis={analysis}
           llmProviders={llmProviders}
           personalMemoryContext={personalMemoryContext}
+          variant="focus"
         />
       </div>
     </aside>

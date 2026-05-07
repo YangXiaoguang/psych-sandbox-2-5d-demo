@@ -32,9 +32,6 @@ export function AppNavigation({
         <h1>2.5D 心理沙盘协作系统</h1>
         <div className="app-brand-meta" aria-label="系统状态">
           <span>本地原型</span>
-          <span>沙盘编辑</span>
-          <span>AI 陪伴</span>
-          <span>个人记忆 OS</span>
           {activeUserName ? <span>当前：{activeUserName}</span> : null}
         </div>
       </div>

@@ -12,6 +12,7 @@ interface AiCompanionPanelProps {
   analysis: SandboxAnalysis;
   llmProviders: LlmProviderConfig[];
   personalMemoryContext: string[];
+  variant?: "default" | "focus";
 }
 
 interface CompanionMessage {
@@ -73,6 +74,7 @@ export function AiCompanionPanel({
   analysis,
   llmProviders,
   personalMemoryContext,
+  variant = "default",
 }: AiCompanionPanelProps): JSX.Element {
   const [messages, setMessages] = useState<CompanionMessage[]>(() => [
     {
@@ -182,7 +184,7 @@ export function AiCompanionPanel({
   };
 
   return (
-    <div className="ai-panel" aria-label="AI 伙伴面板">
+    <div className={`ai-panel ${variant === "focus" ? "focus" : ""}`} aria-label="AI 伙伴面板">
       <section className="ai-hero">
         <CompanionPortrait mode={mode} />
         <div>
