@@ -8306,6 +8306,7 @@ button:disabled {
 }
 
 .product-shell.night-mode .asset-card,
+.product-shell.night-mode .admin-list-row,
 .product-shell.night-mode .conversation-list button,
 .product-shell.night-mode .agent-picker button {
   border-color: #51646a;
@@ -8316,6 +8317,8 @@ button:disabled {
 }
 
 .product-shell.night-mode .asset-card:hover,
+.product-shell.night-mode .admin-list-row:hover,
+.product-shell.night-mode .admin-list-row.active,
 .product-shell.night-mode .conversation-list button:hover,
 .product-shell.night-mode .conversation-list button.active,
 .product-shell.night-mode .agent-picker button:hover,
@@ -8324,6 +8327,22 @@ button:disabled {
   background:
     radial-gradient(circle at 12% 4%, rgba(105, 202, 185, 0.18), transparent 36%),
     #173b3a;
+}
+
+.product-shell.night-mode .admin-list-row strong {
+  color: #f2fbf7;
+}
+
+.product-shell.night-mode .admin-list-row em {
+  color: #c8d8d1;
+}
+
+.product-shell.night-mode .admin-list-row.active strong {
+  color: #e8fff8;
+}
+
+.product-shell.night-mode .admin-list-row.active em {
+  color: #bde9dd;
 }
 
 .product-shell.night-mode .selected-object-card,
