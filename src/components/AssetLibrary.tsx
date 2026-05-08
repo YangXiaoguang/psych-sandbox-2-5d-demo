@@ -69,6 +69,7 @@ export function AssetLibrary({
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => loadStringList(FAVORITES_KEY));
   const [recentIds, setRecentIds] = useState<string[]>(() => loadStringList(RECENT_KEY));
   const [collapsedCategories, setCollapsedCategories] = useState<string[]>(() => loadStringList(COLLAPSED_KEY));
+  const [draggingAssetId, setDraggingAssetId] = useState<string | null>(null);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const collapsedSet = useMemo(() => new Set(collapsedCategories), [collapsedCategories]);
   const filteredAssets = useMemo(
@@ -102,6 +103,10 @@ export function AssetLibrary({
   const favoriteAssets = useMemo(
     () => filteredAssets.filter((asset) => favoriteIdSet.has(asset.assetId)),
     [favoriteIdSet, filteredAssets],
+  );
+  const draggingAsset = useMemo(
+    () => assets.find((asset) => asset.assetId === draggingAssetId) ?? null,
+    [assets, draggingAssetId],
   );
   const shelfItems = useMemo<ShelfItem[]>(
     () => [
@@ -144,15 +149,43 @@ export function AssetLibrary({
       ...categorySections,
     ];
   }, [activeShelf, categories, favoriteAssets, filteredAssets, recentAssets]);
-  const visibleAssetCount = activeSections.reduce((sum, section) => sum + section.assets.length, 0);
+  const visibleAssetCount = new Set(activeSections.flatMap((section) => section.assets.map((asset) => asset.assetId))).size;
 
   useEffect(() => saveStringList(FAVORITES_KEY, favoriteIds), [favoriteIds]);
   useEffect(() => saveStringList(RECENT_KEY, recentIds), [recentIds]);
   useEffect(() => saveStringList(COLLAPSED_KEY, collapsedCategories), [collapsedCategories]);
   useEffect(() => window.localStorage.setItem(VIEW_MODE_KEY, viewMode), [viewMode]);
 
-  const handleAddAsset = (asset: SandboxAsset) => {
+  const markAssetAsRecent = (asset: SandboxAsset) => {
     setRecentIds((current) => [asset.assetId, ...current.filter((assetId) => assetId !== asset.assetId)].slice(0, 24));
+  };
+
+  const finishDraggingAsset = (asset: SandboxAsset | null = draggingAsset) => {
+    if (asset) {
+      markAssetAsRecent(asset);
+    }
+    setDraggingAssetId(null);
+    onEndDragAsset?.();
+  };
+
+  useEffect(() => {
+    if (!draggingAsset) {
+      return;
+    }
+
+    const finish = () => finishDraggingAsset(draggingAsset);
+    window.addEventListener("dragend", finish, true);
+    window.addEventListener("drop", finish, true);
+    window.addEventListener("blur", finish);
+    return () => {
+      window.removeEventListener("dragend", finish, true);
+      window.removeEventListener("drop", finish, true);
+      window.removeEventListener("blur", finish);
+    };
+  }, [draggingAsset, onEndDragAsset]);
+
+  const handleAddAsset = (asset: SandboxAsset) => {
+    markAssetAsRecent(asset);
     onAddAsset(asset);
   };
 
@@ -169,7 +202,7 @@ export function AssetLibrary({
   };
 
   return (
-    <aside className="asset-library" aria-label="沙具资产库">
+    <aside className={draggingAsset ? "asset-library is-picking-asset" : "asset-library"} aria-label="沙具资产库">
       <div className="panel-header">
         <div>
           <p className="eyebrow">Asset Library</p>
@@ -222,8 +255,15 @@ export function AssetLibrary({
         <AssetShelfRail items={shelfItems} activeShelf={activeShelf} onChange={setActiveShelf} />
         <div className={`asset-category-list ${viewMode === "compact" ? "compact" : ""}`}>
           <div className="asset-shelf-status" aria-live="polite">
-            <strong>{getShelfLabel(activeShelf, shelfItems)}</strong>
-            <span>{visibleAssetCount} 个可用沙具</span>
+            <span className="asset-shelf-status-main">
+              <strong>{getShelfLabel(activeShelf, shelfItems)}</strong>
+              <em>{visibleAssetCount} 个可用沙具</em>
+            </span>
+            {draggingAsset ? (
+              <span className="asset-drag-status">正在拿取：{draggingAsset.name}</span>
+            ) : (
+              <span className="asset-drag-status idle">拖到沙盘放置</span>
+            )}
           </div>
           {activeSections.map((section) => {
             const collapsed = section.collapsible && collapsedSet.has(section.id);
@@ -247,8 +287,14 @@ export function AssetLibrary({
                     favoriteIds={favoriteIdSet}
                     onAddAsset={handleAddAsset}
                     onToggleFavorite={toggleFavorite}
-                    onBeginDragAsset={onBeginDragAsset}
-                    onEndDragAsset={onEndDragAsset}
+                    draggingAssetId={draggingAssetId}
+                    onBeginDragAsset={(asset) => {
+                      setDraggingAssetId(asset.assetId);
+                      onBeginDragAsset?.(asset);
+                    }}
+                    onEndDragAsset={(asset) => {
+                      finishDraggingAsset(asset);
+                    }}
                   />
                 ) : null}
               </section>
@@ -335,6 +381,7 @@ function AssetGrid({
   favoriteIds,
   onAddAsset,
   onToggleFavorite,
+  draggingAssetId,
   onBeginDragAsset,
   onEndDragAsset,
 }: {
@@ -342,30 +389,41 @@ function AssetGrid({
   favoriteIds: Set<string>;
   onAddAsset: (asset: SandboxAsset) => void;
   onToggleFavorite: (assetId: string) => void;
+  draggingAssetId: string | null;
   onBeginDragAsset?: (asset: SandboxAsset) => void;
-  onEndDragAsset?: () => void;
+  onEndDragAsset?: (asset: SandboxAsset) => void;
 }): JSX.Element {
   return (
     <div className="asset-grid">
       {assets.map((asset) => (
         <article
           key={asset.assetId}
-          className="asset-card"
+          className={draggingAssetId === asset.assetId ? "asset-card dragging" : "asset-card"}
           draggable
+          aria-grabbed={draggingAssetId === asset.assetId}
           onDragStart={(event) => {
             event.dataTransfer.setData(DRAG_MIME, asset.assetId);
             event.dataTransfer.effectAllowed = "copy";
             event.dataTransfer.setDragImage(event.currentTarget, event.currentTarget.clientWidth / 2, 42);
             onBeginDragAsset?.(asset);
           }}
-          onDragEnd={() => onEndDragAsset?.()}
+          onDragEnd={() => onEndDragAsset?.(asset)}
           title={`${asset.name} · ${RISK_LABELS[asset.riskTag]}`}
         >
+          <span className="asset-card-pocket-label">{asset.category}</span>
+          <span className="asset-card-grip" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
           <button className="asset-card-action" type="button" onClick={() => onAddAsset(asset)}>
             <AssetPreview asset={asset} />
             <span className="asset-card-main">
               <span className="asset-card-name">{asset.name}</span>
-              <RiskTagBadge riskTag={asset.riskTag} />
+              <span className="asset-card-meta">
+                <RiskTagBadge riskTag={asset.riskTag} />
+                <span className="asset-card-use-hint">拿取</span>
+              </span>
             </span>
           </button>
           <button
