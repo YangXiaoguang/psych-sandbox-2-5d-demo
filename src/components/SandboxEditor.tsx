@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Circle, Ellipse, Group, Layer, Line, Stage, Transformer } from "react-konva";
+import { Circle, Ellipse, Group, Layer, Line, Shape, Stage, Transformer } from "react-konva";
 import type { SandboxAsset, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp, depthSortObjects } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
@@ -558,6 +558,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                       setActiveGesture(null);
                     }}
                   >
+                    <ObjectInteractionHitArea object={object} />
                     <Group
                       ref={(node) => {
                         if (node) {
@@ -626,6 +627,26 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     </main>
   );
 });
+
+function ObjectInteractionHitArea({ object }: { object: SandboxObject }): JSX.Element {
+  const hitWidth = Math.max(42, object.width * 1.08, object.footprint.width * 0.9);
+  const hitHeight = Math.max(38, object.height * 1.08, object.footprint.depth * 0.9);
+
+  return (
+    <Shape
+      name="sandbox-object-hit-area"
+      fill="#000000"
+      sceneFunc={() => undefined}
+      hitFunc={(context, shape) => {
+        context.beginPath();
+        context.rect(-hitWidth * 0.5, -hitHeight * 0.86, hitWidth, hitHeight);
+        context.closePath();
+        context.fillStrokeShape(shape);
+      }}
+      listening
+    />
+  );
+}
 
 function normalizeRotation(rotation: number): number {
   const normalized = ((rotation % 360) + 360) % 360;
