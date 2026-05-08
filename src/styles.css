@@ -1518,6 +1518,159 @@ button {
   display: none;
 }
 
+.topbar {
+  grid-template-areas: none;
+  grid-template-columns: minmax(190px, 0.72fr) minmax(0, 1.35fr);
+  min-height: 88px;
+  gap: 10px;
+  padding: 10px;
+}
+
+.topbar-primary {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.topbar-title h2 {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.topbar-status span {
+  min-height: 24px;
+  padding: 4px 8px;
+  border-color: rgba(112, 169, 157, 0.26);
+  border-radius: 999px;
+  background: rgba(237, 248, 243, 0.62);
+  color: #5a6862;
+}
+
+.topbar-status .status-emphasis {
+  border-color: rgba(47, 154, 137, 0.34);
+  background: rgba(221, 247, 238, 0.82);
+  color: var(--accent-dark);
+}
+
+.topbar-hud {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.topbar-hud::-webkit-scrollbar {
+  display: none;
+}
+
+.hud-cluster {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 62px;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid rgba(188, 174, 148, 0.72);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.7), transparent 44%),
+    linear-gradient(180deg, rgba(255, 250, 238, 0.96), rgba(244, 234, 214, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 8px 18px rgba(86, 67, 38, 0.08);
+}
+
+.hud-cluster > p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.environment-hud {
+  align-items: stretch;
+}
+
+.hud-segment {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid rgba(195, 181, 153, 0.7);
+  border-radius: 7px;
+  background: rgba(255, 252, 244, 0.66);
+}
+
+.hud-segment button {
+  display: inline-flex;
+  min-width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #566760;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.hud-segment button svg {
+  color: var(--accent-dark);
+}
+
+.hud-segment button.active,
+.hud-segment button:hover,
+.hud-segment button:focus-visible {
+  border-color: rgba(47, 154, 137, 0.44);
+  background:
+    linear-gradient(180deg, rgba(237, 248, 243, 0.94), rgba(211, 241, 229, 0.76)),
+    var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.hud-segment.compact button {
+  min-width: 36px;
+}
+
+.action-hud {
+  min-height: 62px;
+  gap: 5px;
+}
+
+.action-hud .icon-button {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 7px;
+}
+
+.action-hud .icon-button span {
+  display: none;
+}
+
 .icon-button,
 .small-icon-button {
   display: inline-flex;
@@ -1672,7 +1825,7 @@ button {
 }
 
 .app-shell.focus-mode .stage-host {
-  padding: 92px 12px 12px;
+  padding: 104px 12px 12px;
 }
 
 .app-shell.focus-mode .topbar {
@@ -1682,12 +1835,30 @@ button {
   left: 8px;
   z-index: 10;
   min-height: 70px;
+  grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
+  padding: 8px 10px;
   border-color: rgba(112, 169, 157, 0.46);
   background:
     radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.68), transparent 42%),
     linear-gradient(180deg, rgba(255, 252, 242, 0.92), rgba(239, 247, 241, 0.86)),
     var(--panel-strong);
   backdrop-filter: blur(18px);
+}
+
+.app-shell.focus-mode .topbar-status span:nth-child(2),
+.app-shell.focus-mode .hud-cluster > p {
+  display: none;
+}
+
+.app-shell.focus-mode .hud-cluster {
+  min-height: 52px;
+  padding: 6px;
+}
+
+.app-shell.focus-mode .hud-segment button,
+.app-shell.focus-mode .action-hud .icon-button {
+  height: 32px;
+  min-height: 32px;
 }
 
 .ai-stage-companion {
@@ -2042,6 +2213,49 @@ button {
   background:
     radial-gradient(ellipse at 50% 58%, rgba(119, 237, 220, 0.11), transparent 48%),
     linear-gradient(135deg, rgba(182, 255, 246, 0.08), transparent 38%);
+}
+
+.product-shell.night-mode .topbar-status .status-emphasis {
+  border-color: rgba(105, 202, 185, 0.42);
+  background: rgba(19, 59, 58, 0.86);
+  color: #dffdf6;
+}
+
+.product-shell.night-mode .hud-cluster {
+  border-color: #52666d;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(105, 202, 185, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(28, 45, 55, 0.96), rgba(15, 30, 39, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 22px rgba(0, 0, 0, 0.22);
+}
+
+.product-shell.night-mode .hud-cluster > p {
+  color: #94aaa2;
+}
+
+.product-shell.night-mode .hud-segment {
+  border-color: rgba(82, 102, 109, 0.92);
+  background: rgba(7, 18, 25, 0.52);
+}
+
+.product-shell.night-mode .hud-segment button {
+  color: #cbdcd6;
+}
+
+.product-shell.night-mode .hud-segment button svg {
+  color: #a8fff4;
+}
+
+.product-shell.night-mode .hud-segment button.active,
+.product-shell.night-mode .hud-segment button:hover,
+.product-shell.night-mode .hud-segment button:focus-visible {
+  border-color: rgba(105, 202, 185, 0.58);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.26), rgba(105, 202, 185, 0.1)),
+    #123b3a;
+  color: #dffdf6;
 }
 
 .product-shell.night-mode .asset-card,
@@ -9313,7 +9527,19 @@ button:disabled {
     display: none;
   }
 
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .topbar-title {
-    min-width: 184px;
+    min-width: 0;
+  }
+
+  .topbar-hud {
+    justify-content: flex-start;
+  }
+
+  .hud-cluster > p {
+    display: none;
   }
 }
