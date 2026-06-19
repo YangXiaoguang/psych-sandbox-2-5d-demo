@@ -26,9 +26,29 @@ export function SandboxObjectShape({
   const castOffsetY = Math.max(4, height * profile.castOffsetY);
   const rainy = environment.weather === "rainy";
   const night = environment.light === "night";
+  const dentOpacity = night ? 0.16 : rainy ? 0.2 : 0.14;
 
   return (
     <Group>
+      <Ellipse
+        x={width * 0.02}
+        y={height * 0.13}
+        radiusX={shadowWidth * 0.92}
+        radiusY={shadowHeight * 0.92}
+        fill={night ? "#0d1a20" : rainy ? "#816f51" : "#8b744f"}
+        opacity={dentOpacity}
+        listening={false}
+      />
+      <Ellipse
+        x={-width * 0.01}
+        y={height * 0.105}
+        radiusX={shadowWidth * 0.72}
+        radiusY={shadowHeight * 0.48}
+        stroke={night ? "#b8fff5" : "#fff0c4"}
+        strokeWidth={Math.max(0.8, width * 0.008)}
+        opacity={night ? 0.08 : 0.16}
+        listening={false}
+      />
       <Ellipse
         x={castOffsetX}
         y={height * 0.13 + castOffsetY}

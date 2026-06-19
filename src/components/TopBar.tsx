@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Cloud,
   CloudRain,
@@ -9,6 +10,8 @@ import {
   Moon,
   PanelRightClose,
   PanelRightOpen,
+  RotateCcw,
+  SlidersHorizontal,
   Sun,
   Trash2,
 } from "lucide-react";
@@ -19,16 +22,20 @@ import {
   WEATHER_LABELS,
   WEATHER_OPTIONS,
 } from "../data/environment";
-import type { SandboxEnvironment, SandboxWeather } from "../types";
+import type { SandboxCameraState, SandboxEnvironment, SandboxWeather } from "../types";
+import { SANDBOX_CAMERA_PRESETS } from "../utils/projection";
 
 interface TopBarProps {
   objectCount: number;
   environment: SandboxEnvironment;
+  camera: SandboxCameraState;
   focusMode: boolean;
   rightPanelCollapsed: boolean;
   showRightPanelToggle: boolean;
   showGuides: boolean;
   onEnvironmentChange: (patch: Partial<SandboxEnvironment>) => void;
+  onCameraChange: (patch: Partial<SandboxCameraState>) => void;
+  onCameraReset: () => void;
   onToggleFocusMode: () => void;
   onToggleRightPanel: () => void;
   onToggleGuides: () => void;
@@ -40,11 +47,14 @@ interface TopBarProps {
 export function TopBar({
   objectCount,
   environment,
+  camera,
   focusMode,
   rightPanelCollapsed,
   showRightPanelToggle,
   showGuides,
   onEnvironmentChange,
+  onCameraChange,
+  onCameraReset,
   onToggleFocusMode,
   onToggleRightPanel,
   onToggleGuides,
@@ -52,6 +62,9 @@ export function TopBar({
   onExportPng,
   onClearScene,
 }: TopBarProps): JSX.Element {
+  const [cameraPanelOpen, setCameraPanelOpen] = useState(false);
+  const currentCameraPreset = SANDBOX_CAMERA_PRESETS.find((preset) => isCameraPresetActive(camera, preset.camera));
+
   return (
     <header className="topbar">
       <div className="topbar-primary">
@@ -76,6 +89,7 @@ export function TopBar({
                 className={environment.weather === weather ? "active" : ""}
                 onClick={() => onEnvironmentChange({ weather })}
                 aria-pressed={environment.weather === weather}
+                aria-label={`切换天气：${WEATHER_LABELS[weather]}`}
                 title={WEATHER_LABELS[weather]}
               >
                 <WeatherIcon weather={weather} />
@@ -91,6 +105,7 @@ export function TopBar({
                 className={environment.light === light ? "active" : ""}
                 onClick={() => onEnvironmentChange({ light })}
                 aria-pressed={environment.light === light}
+                aria-label={`切换光照：${LIGHT_LABELS[light]}`}
                 title={LIGHT_LABELS[light]}
               >
                 {light === "night" ? <Moon size={15} /> : <Sun size={15} />}
@@ -98,6 +113,53 @@ export function TopBar({
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="hud-cluster camera-hud" aria-label="沙盘视角">
+          <p>视角</p>
+          <div className="camera-current-pill" aria-label="当前沙盘视角">
+            <span>{currentCameraPreset?.label ?? "自定"}</span>
+            <small>
+              {Math.round(camera.yaw)}° / {camera.zoom.toFixed(2)}x
+            </small>
+          </div>
+          <button
+            className={`icon-button ${cameraPanelOpen ? "active" : ""}`}
+            type="button"
+            onClick={() => setCameraPanelOpen((current) => !current)}
+            aria-expanded={cameraPanelOpen}
+            aria-label="打开视角微调"
+          >
+            <SlidersHorizontal size={16} />
+            <span>微调</span>
+          </button>
+          <button className="icon-button" type="button" onClick={onCameraReset} aria-label="重置沙盘视角">
+            <RotateCcw size={16} />
+            <span>重置</span>
+          </button>
+          {cameraPanelOpen ? (
+            <div className="camera-adjust-panel" role="group" aria-label="沙盘视角高级调节">
+              <div className="camera-panel-presets" role="group" aria-label="选择沙盘视角预设">
+                {SANDBOX_CAMERA_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={isCameraPresetActive(camera, preset.camera) ? "active" : ""}
+                    onClick={() => onCameraChange(preset.camera)}
+                    title={preset.description}
+                  >
+                    <span>{preset.label}</span>
+                    <small>{preset.description}</small>
+                  </button>
+                ))}
+              </div>
+              <CameraSlider label="转动" value={camera.yaw} min={-32} max={32} step={1} unit="°" onChange={(yaw) => onCameraChange({ yaw })} />
+              <CameraSlider label="俯仰" value={camera.pitch} min={0.48} max={0.7} step={0.01} onChange={(pitch) => onCameraChange({ pitch })} />
+              <CameraSlider label="缩放" value={camera.zoom} min={0.74} max={1.28} step={0.01} onChange={(zoom) => onCameraChange({ zoom })} />
+              <CameraSlider label="横移" value={camera.panX} min={-260} max={260} step={4} onChange={(panX) => onCameraChange({ panX })} />
+              <CameraSlider label="纵移" value={camera.panY} min={-190} max={190} step={4} onChange={(panY) => onCameraChange({ panY })} />
+            </div>
+          ) : null}
         </section>
 
         <section className="hud-cluster action-hud view-hud" aria-label="视图控制">
@@ -163,6 +225,54 @@ function WeatherIcon({ weather }: { weather: SandboxWeather }): JSX.Element {
     return <Cloud size={15} />;
   }
   return <Sun size={15} />;
+}
+
+function CameraSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  unit = "",
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit?: string;
+  onChange: (value: number) => void;
+}): JSX.Element {
+  const displayValue = Math.abs(step) < 1 ? value.toFixed(2) : Math.round(value).toString();
+
+  return (
+    <label className="camera-slider">
+      <span>{label}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+      <strong>
+        {displayValue}
+        {unit}
+      </strong>
+    </label>
+  );
+}
+
+function isCameraPresetActive(current: SandboxCameraState, preset: SandboxCameraState): boolean {
+  return (
+    Math.abs(current.yaw - preset.yaw) < 0.6 &&
+    Math.abs(current.pitch - preset.pitch) < 0.012 &&
+    Math.abs(current.zoom - preset.zoom) < 0.012 &&
+    Math.abs(current.panX - preset.panX) < 3 &&
+    Math.abs(current.panY - preset.panY) < 3
+  );
 }
 
 function getWeatherShortLabel(weather: SandboxWeather): string {

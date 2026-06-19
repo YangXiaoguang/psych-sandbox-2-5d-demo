@@ -1,6 +1,6 @@
 import { Circle, Ellipse, Group, Line, Path, Rect } from "react-konva";
 import { getEnvironmentProfile } from "../data/environment";
-import type { SandboxEnvironment } from "../types";
+import type { SandboxCameraState, SandboxEnvironment } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, BOUNDARY_MARGIN } from "../utils/analysis";
 import {
   getProjectedStageCorners,
@@ -14,6 +14,7 @@ import { EnvironmentBackdrop } from "./EnvironmentBackdrop";
 
 interface SandboxGuideLayerProps {
   environment: SandboxEnvironment;
+  camera: SandboxCameraState;
   showGuides: boolean;
 }
 
@@ -31,10 +32,14 @@ const grains = createSandPoints(760, 37, 46, 42, BOARD_WIDTH - 92, BOARD_HEIGHT 
 const fineGrains = createSandPoints(520, 913, 58, 54, BOARD_WIDTH - 116, BOARD_HEIGHT - 108);
 const flecks = createSandPoints(170, 211, 74, 64, BOARD_WIDTH - 148, BOARD_HEIGHT - 128);
 
-export function SandboxGuideLayer({ environment, showGuides }: SandboxGuideLayerProps): JSX.Element {
+export function SandboxGuideLayer({ environment, camera, showGuides }: SandboxGuideLayerProps): JSX.Element {
   const profile = getEnvironmentProfile(environment);
-  const corners = getProjectedStageCorners();
-  const top = projectRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+  const corners = getProjectedStageCorners(camera);
+  const top = projectRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT, camera);
+  const yawRatio = Math.max(-1, Math.min(1, camera.yaw / 32));
+  const leftFaceFill = yawRatio < -0.18 ? "#c7965c" : yawRatio > 0.18 ? "#835b35" : "#a98151";
+  const rightFaceFill = yawRatio > 0.18 ? "#b88751" : yawRatio < -0.18 ? "#664729" : "#7d5a35";
+  const edgeGlowOpacity = 0.16 + Math.abs(yawRatio) * 0.12;
   const frontFace = [
     corners.bottomLeft.x,
     corners.bottomLeft.y,
@@ -99,10 +104,10 @@ export function SandboxGuideLayer({ environment, showGuides }: SandboxGuideLayer
         listening={false}
       />
 
-      <Line points={leftFace} closed fill="#a98151" stroke="#5f452b" strokeWidth={3} listening={false} />
-      <Line points={rightFace} closed fill="#7d5a35" stroke="#4c3522" strokeWidth={3} listening={false} />
-      <Line points={frontFace} closed fillLinearGradientStartPoint={{ x: corners.bottomLeft.x, y: corners.bottomLeft.y }} fillLinearGradientEndPoint={{ x: corners.bottomRight.x, y: corners.bottomRight.y + STAGE_THICKNESS }} fillLinearGradientColorStops={[0, "#c79a5e", 0.52, "#8b6137", 1, "#654323"]} stroke="#4f3722" strokeWidth={3} listening={false} />
-      <WoodGrain />
+      <Line points={leftFace} closed fill={leftFaceFill} stroke="#5f452b" strokeWidth={3} listening={false} />
+      <Line points={rightFace} closed fill={rightFaceFill} stroke="#4c3522" strokeWidth={3} listening={false} />
+      <Line points={frontFace} closed fillLinearGradientStartPoint={{ x: corners.bottomLeft.x, y: corners.bottomLeft.y }} fillLinearGradientEndPoint={{ x: corners.bottomRight.x, y: corners.bottomRight.y + STAGE_THICKNESS }} fillLinearGradientColorStops={[0, "#d0a66a", 0.48, "#93683d", 1, "#5d3d20"]} stroke="#4f3722" strokeWidth={3} listening={false} />
+      <WoodGrain camera={camera} />
 
       <Line
         name="tray"
@@ -118,30 +123,70 @@ export function SandboxGuideLayer({ environment, showGuides }: SandboxGuideLayer
         shadowOpacity={0.14}
       />
 
-      <SandMounds />
-      <SandRakeLines />
-      <BlueInnerLiner />
-      <StageLightWash environment={environment} />
-      <SandTexture />
-      {showGuides ? <GuideOverlay /> : null}
-      <WoodFrameHighlights />
+      <SandMounds camera={camera} />
+      <SandRakeLines camera={camera} />
+      <BlueInnerLiner camera={camera} />
+      <SandEdgeOcclusion camera={camera} edgeGlowOpacity={edgeGlowOpacity} />
+      <StageLightWash environment={environment} camera={camera} />
+      <SandTexture camera={camera} />
+      <SandMicroRelief camera={camera} />
+      {showGuides ? <GuideOverlay camera={camera} /> : null}
+      <WoodFrameHighlights camera={camera} />
     </Group>
   );
 }
 
-function BlueInnerLiner(): JSX.Element {
+function BlueInnerLiner({ camera }: { camera: SandboxCameraState }): JSX.Element {
   return (
     <Group listening={false}>
-      <Line points={projectRect(12, 12, BOARD_WIDTH - 24, 28)} closed fill="#2f9bd0" opacity={0.78} />
-      <Line points={projectRect(12, BOARD_HEIGHT - 40, BOARD_WIDTH - 24, 28)} closed fill="#197bac" opacity={0.72} />
-      <Line points={projectRect(12, 12, 28, BOARD_HEIGHT - 24)} closed fill="#2c95c8" opacity={0.78} />
-      <Line points={projectRect(BOARD_WIDTH - 40, 12, 28, BOARD_HEIGHT - 24)} closed fill="#1878a8" opacity={0.72} />
-      <Line points={projectRect(40, 40, BOARD_WIDTH - 80, BOARD_HEIGHT - 80)} closed stroke="#f6e6bd" strokeWidth={2.5} opacity={0.52} />
+      <Line points={projectRect(12, 12, BOARD_WIDTH - 24, 28, camera)} closed fill="#2f9bd0" opacity={0.78} />
+      <Line points={projectRect(12, BOARD_HEIGHT - 40, BOARD_WIDTH - 24, 28, camera)} closed fill="#197bac" opacity={0.72} />
+      <Line points={projectRect(12, 12, 28, BOARD_HEIGHT - 24, camera)} closed fill="#2c95c8" opacity={0.78} />
+      <Line points={projectRect(BOARD_WIDTH - 40, 12, 28, BOARD_HEIGHT - 24, camera)} closed fill="#1878a8" opacity={0.72} />
+      <Line points={projectRect(40, 40, BOARD_WIDTH - 80, BOARD_HEIGHT - 80, camera)} closed stroke="#f6e6bd" strokeWidth={2.5} opacity={0.52} />
     </Group>
   );
 }
 
-function SandMounds(): JSX.Element {
+function SandEdgeOcclusion({
+  camera,
+  edgeGlowOpacity,
+}: {
+  camera: SandboxCameraState;
+  edgeGlowOpacity: number;
+}): JSX.Element {
+  return (
+    <Group listening={false}>
+      <Line
+        points={projectRect(34, 34, BOARD_WIDTH - 68, BOARD_HEIGHT - 68, camera)}
+        closed
+        stroke="#5d4328"
+        strokeWidth={12}
+        opacity={0.11}
+        lineJoin="round"
+      />
+      <Line
+        points={projectRect(52, 52, BOARD_WIDTH - 104, BOARD_HEIGHT - 104, camera)}
+        closed
+        stroke="#fff3cc"
+        strokeWidth={3}
+        opacity={edgeGlowOpacity}
+        lineJoin="round"
+      />
+      <Line
+        points={projectRect(72, 74, BOARD_WIDTH - 144, BOARD_HEIGHT - 148, camera)}
+        closed
+        stroke="#79623f"
+        strokeWidth={1.2}
+        opacity={0.16}
+        dash={[14, 16]}
+        lineJoin="round"
+      />
+    </Group>
+  );
+}
+
+function SandMounds({ camera }: { camera: SandboxCameraState }): JSX.Element {
   return (
     <Group listening={false}>
       {[
@@ -151,7 +196,7 @@ function SandMounds(): JSX.Element {
         { x: 330, y: 410, rx: 160, ry: 42, color: "#a89161", opacity: 0.13 },
         { x: 755, y: 462, rx: 116, ry: 33, color: "#fff5d6", opacity: 0.2 },
       ].map((mound) => {
-        const point = projectPoint({ x: mound.x, y: mound.y });
+        const point = projectPoint({ x: mound.x, y: mound.y }, camera);
         return (
           <Ellipse
             key={`${mound.x}-${mound.y}`}
@@ -171,7 +216,7 @@ function SandMounds(): JSX.Element {
           { x: 430, y: 250 },
           { x: 620, y: 210 },
           { x: 820, y: 270 },
-        ])}
+        ], camera)}
         stroke="#f6e5b9"
         strokeWidth={22}
         opacity={0.18}
@@ -185,7 +230,7 @@ function SandMounds(): JSX.Element {
           { x: 430, y: 350 },
           { x: 570, y: 325 },
           { x: 720, y: 360 },
-        ])}
+        ], camera)}
         stroke="#7e6744"
         strokeWidth={10}
         opacity={0.07}
@@ -196,7 +241,72 @@ function SandMounds(): JSX.Element {
   );
 }
 
-function SandRakeLines(): JSX.Element {
+function SandMicroRelief({ camera }: { camera: SandboxCameraState }): JSX.Element {
+  const reliefPaths = [
+    {
+      points: [
+        { x: 88, y: 122 },
+        { x: 210, y: 102 },
+        { x: 338, y: 116 },
+        { x: 476, y: 92 },
+      ],
+      stroke: "#fff8dc",
+      width: 1.7,
+      opacity: 0.18,
+    },
+    {
+      points: [
+        { x: 602, y: 154 },
+        { x: 704, y: 132 },
+        { x: 822, y: 154 },
+        { x: 916, y: 126 },
+      ],
+      stroke: "#8f744c",
+      width: 1.2,
+      opacity: 0.13,
+    },
+    {
+      points: [
+        { x: 116, y: 528 },
+        { x: 266, y: 496 },
+        { x: 402, y: 516 },
+        { x: 568, y: 480 },
+      ],
+      stroke: "#fff5cf",
+      width: 1.4,
+      opacity: 0.15,
+    },
+    {
+      points: [
+        { x: 618, y: 462 },
+        { x: 722, y: 438 },
+        { x: 836, y: 462 },
+        { x: 914, y: 442 },
+      ],
+      stroke: "#806844",
+      width: 1.1,
+      opacity: 0.12,
+    },
+  ];
+
+  return (
+    <Group listening={false}>
+      {reliefPaths.map((path, index) => (
+        <Path
+          key={`sand-relief-${index}`}
+          data={sandCurve(path.points, camera)}
+          stroke={path.stroke}
+          strokeWidth={path.width}
+          opacity={path.opacity}
+          lineCap="round"
+          lineJoin="round"
+        />
+      ))}
+    </Group>
+  );
+}
+
+function SandRakeLines({ camera }: { camera: SandboxCameraState }): JSX.Element {
   const paths = [
     {
       points: [
@@ -238,7 +348,7 @@ function SandRakeLines(): JSX.Element {
       {paths.map((path, index) => (
         <Path
           key={`sand-rake-${index}`}
-          data={sandCurve(path.points)}
+          data={sandCurve(path.points, camera)}
           stroke={path.stroke}
           strokeWidth={path.width}
           opacity={path.opacity}
@@ -250,10 +360,10 @@ function SandRakeLines(): JSX.Element {
   );
 }
 
-function StageLightWash({ environment }: { environment: SandboxEnvironment }): JSX.Element {
+function StageLightWash({ environment, camera }: { environment: SandboxEnvironment; camera: SandboxCameraState }): JSX.Element {
   const profile = getEnvironmentProfile(environment);
-  const warm = projectPoint({ x: 260, y: 132 });
-  const cool = projectPoint({ x: 760, y: 430 });
+  const warm = projectPoint({ x: 260, y: 132 }, camera);
+  const cool = projectPoint({ x: 760, y: 430 }, camera);
 
   return (
     <Group listening={false}>
@@ -276,7 +386,7 @@ function StageLightWash({ environment }: { environment: SandboxEnvironment }): J
         rotation={-10}
       />
       <Line
-        points={projectRect(42, 42, BOARD_WIDTH - 84, BOARD_HEIGHT - 84)}
+        points={projectRect(42, 42, BOARD_WIDTH - 84, BOARD_HEIGHT - 84, camera)}
         closed
         stroke="#fff5ca"
         strokeWidth={5}
@@ -286,11 +396,11 @@ function StageLightWash({ environment }: { environment: SandboxEnvironment }): J
   );
 }
 
-function SandTexture(): JSX.Element {
+function SandTexture({ camera }: { camera: SandboxCameraState }): JSX.Element {
   return (
     <Group listening={false}>
       {fineGrains.map((grain) => {
-        const point = projectPoint(grain);
+        const point = projectPoint(grain, camera);
         return (
           <Circle
             key={grain.id}
@@ -303,7 +413,7 @@ function SandTexture(): JSX.Element {
         );
       })}
       {grains.map((grain) => {
-        const point = projectPoint(grain);
+        const point = projectPoint(grain, camera);
         const radius = grain.tone > 0.72 ? 1.5 : 0.9;
         return (
           <Circle
@@ -317,7 +427,7 @@ function SandTexture(): JSX.Element {
         );
       })}
       {flecks.map((fleck) => {
-        const point = projectPoint(fleck);
+        const point = projectPoint(fleck, camera);
         return (
           <Ellipse
             key={fleck.id}
@@ -335,20 +445,20 @@ function SandTexture(): JSX.Element {
   );
 }
 
-function WoodFrameHighlights(): JSX.Element {
-  const corners = getProjectedStageCorners();
+function WoodFrameHighlights({ camera }: { camera: SandboxCameraState }): JSX.Element {
+  const corners = getProjectedStageCorners(camera);
   return (
     <Group listening={false}>
       <Line points={[corners.topLeft.x, corners.topLeft.y, corners.topRight.x, corners.topRight.y]} stroke="#deb56d" strokeWidth={4} opacity={0.8} />
       <Line points={[corners.topLeft.x, corners.topLeft.y, corners.bottomLeft.x, corners.bottomLeft.y]} stroke="#e1ba76" strokeWidth={4} opacity={0.72} />
       <Line points={[corners.bottomLeft.x, corners.bottomLeft.y, corners.bottomRight.x, corners.bottomRight.y]} stroke="#5f3d22" strokeWidth={5} opacity={0.52} />
       <Line points={[corners.topRight.x, corners.topRight.y, corners.bottomRight.x, corners.bottomRight.y]} stroke="#5a3921" strokeWidth={5} opacity={0.5} />
-      <Line points={projectRect(30, 30, BOARD_WIDTH - 60, BOARD_HEIGHT - 60)} closed stroke="#fff0c5" strokeWidth={2.4} opacity={0.34} />
-      <Line points={projectRect(18, 18, BOARD_WIDTH - 36, BOARD_HEIGHT - 36)} closed stroke="#2d1d12" strokeWidth={5} opacity={0.12} />
-      <Line points={projectRect(22, 22, BOARD_WIDTH - 44, BOARD_HEIGHT - 44)} closed stroke="#4b3320" strokeWidth={2.2} opacity={0.16} />
+      <Line points={projectRect(30, 30, BOARD_WIDTH - 60, BOARD_HEIGHT - 60, camera)} closed stroke="#fff0c5" strokeWidth={2.4} opacity={0.34} />
+      <Line points={projectRect(18, 18, BOARD_WIDTH - 36, BOARD_HEIGHT - 36, camera)} closed stroke="#2d1d12" strokeWidth={5} opacity={0.12} />
+      <Line points={projectRect(22, 22, BOARD_WIDTH - 44, BOARD_HEIGHT - 44, camera)} closed stroke="#4b3320" strokeWidth={2.2} opacity={0.16} />
       {[0.18, 0.82].map((offset) => {
-        const topPoint = projectPoint({ x: BOARD_WIDTH * offset, y: 18 });
-        const bottomPoint = projectPoint({ x: BOARD_WIDTH * offset, y: BOARD_HEIGHT - 18 });
+        const topPoint = projectPoint({ x: BOARD_WIDTH * offset, y: 18 }, camera);
+        const bottomPoint = projectPoint({ x: BOARD_WIDTH * offset, y: BOARD_HEIGHT - 18 }, camera);
         return (
           <Line
             key={`wood-cross-highlight-${offset}`}
@@ -363,8 +473,8 @@ function WoodFrameHighlights(): JSX.Element {
   );
 }
 
-function WoodGrain(): JSX.Element {
-  const corners = getProjectedStageCorners();
+function WoodGrain({ camera }: { camera: SandboxCameraState }): JSX.Element {
+  const corners = getProjectedStageCorners(camera);
   const frontLines = [0.22, 0.36, 0.5, 0.64, 0.78];
   const leftLines = [0.24, 0.42, 0.6, 0.78];
   const rightLines = [0.22, 0.4, 0.58, 0.76];
@@ -417,21 +527,21 @@ function WoodGrain(): JSX.Element {
   );
 }
 
-function GuideOverlay(): JSX.Element {
+function GuideOverlay({ camera }: { camera: SandboxCameraState }): JSX.Element {
   return (
     <Group listening={false}>
       {thirdsX.map((x) => {
-        const start = projectPoint({ x, y: 40 });
-        const end = projectPoint({ x, y: BOARD_HEIGHT - 40 });
+        const start = projectPoint({ x, y: 40 }, camera);
+        const end = projectPoint({ x, y: BOARD_HEIGHT - 40 }, camera);
         return <Line key={`x-${x}`} points={[start.x, start.y, end.x, end.y]} stroke="#8b6a3f" strokeWidth={1.5} dash={[9, 9]} opacity={0.36} />;
       })}
       {thirdsY.map((y) => {
-        const start = projectPoint({ x: 40, y });
-        const end = projectPoint({ x: BOARD_WIDTH - 40, y });
+        const start = projectPoint({ x: 40, y }, camera);
+        const end = projectPoint({ x: BOARD_WIDTH - 40, y }, camera);
         return <Line key={`y-${y}`} points={[start.x, start.y, end.x, end.y]} stroke="#8b6a3f" strokeWidth={1.5} dash={[9, 9]} opacity={0.36} />;
       })}
       <Line
-        points={projectRect(BOARD_WIDTH / 3, BOARD_HEIGHT / 3, BOARD_WIDTH / 3, BOARD_HEIGHT / 3)}
+        points={projectRect(BOARD_WIDTH / 3, BOARD_HEIGHT / 3, BOARD_WIDTH / 3, BOARD_HEIGHT / 3, camera)}
         closed
         stroke="#2f8f83"
         strokeWidth={2}
@@ -439,7 +549,7 @@ function GuideOverlay(): JSX.Element {
         opacity={0.62}
       />
       <Line
-        points={projectRect(BOUNDARY_MARGIN, BOUNDARY_MARGIN, BOARD_WIDTH - BOUNDARY_MARGIN * 2, BOARD_HEIGHT - BOUNDARY_MARGIN * 2)}
+        points={projectRect(BOUNDARY_MARGIN, BOUNDARY_MARGIN, BOARD_WIDTH - BOUNDARY_MARGIN * 2, BOARD_HEIGHT - BOUNDARY_MARGIN * 2, camera)}
         closed
         stroke="#b06124"
         strokeWidth={1.6}
@@ -450,10 +560,10 @@ function GuideOverlay(): JSX.Element {
   );
 }
 
-function sandCurve(points: Array<{ x: number; y: number }>): string {
+function sandCurve(points: Array<{ x: number; y: number }>, camera: SandboxCameraState): string {
   return points
     .map((point, index) => {
-      const projected = projectPoint(point);
+      const projected = projectPoint(point, camera);
       return `${index === 0 ? "M" : "L"}${projected.x} ${projected.y}`;
     })
     .join(" ");

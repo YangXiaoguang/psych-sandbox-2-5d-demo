@@ -7,6 +7,14 @@ export interface SandboxEnvironment {
   light: SandboxLightMode;
 }
 
+export interface SandboxCameraState {
+  panX: number;
+  panY: number;
+  zoom: number;
+  yaw: number;
+  pitch: number;
+}
+
 export interface SandboxLayoutPreferences {
   rightPanelCollapsed: boolean;
   focusMode: boolean;

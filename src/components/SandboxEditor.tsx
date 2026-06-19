@@ -9,10 +9,10 @@ import {
   useState,
 } from "react";
 import { Circle, Ellipse, Group, Layer, Line, Shape, Stage, Transformer } from "react-konva";
-import type { SandboxAsset, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
-import { BOARD_HEIGHT, BOARD_WIDTH, clamp, depthSortObjects } from "../utils/analysis";
+import type { SandboxAsset, SandboxCameraState, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
+import { BOARD_HEIGHT, BOARD_WIDTH, clamp } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
-import { getDepthScale, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
+import { getDepthScale, getViewDepth, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
 import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
@@ -28,12 +28,14 @@ interface SandboxEditorProps {
   selectedId: string | null;
   draggingAsset: SandboxAsset | null;
   environment: SandboxEnvironment;
+  camera: SandboxCameraState;
   showGuides: boolean;
   onSelectObject: (objectId: string | null) => void;
   onPatchObject: (objectId: string, patch: Partial<SandboxObject>) => void;
   onDropAsset: (assetId: string, position: { x: number; y: number }) => void;
   onDeleteSelected: () => void;
   onRecordEvent: (draft: SandboxEventDraft) => void;
+  onCameraChange: (patch: Partial<SandboxCameraState>) => void;
   aiCompanionActive: boolean;
   onOpenAiCompanion: () => void;
 }
@@ -54,12 +56,14 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     selectedId,
     draggingAsset,
     environment,
+    camera,
     showGuides,
     onSelectObject,
     onPatchObject,
     onDropAsset,
     onDeleteSelected,
     onRecordEvent,
+    onCameraChange,
     aiCompanionActive,
     onOpenAiCompanion,
   },
@@ -88,7 +92,13 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [dropPulse, setDropPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const [activeGesture, setActiveGesture] = useState<{ objectId: string; mode: ObjectGestureMode } | null>(null);
 
-  const sortedObjects = useMemo(() => depthSortObjects(objects), [objects]);
+  const sortedObjects = useMemo(
+    () =>
+      [...objects].sort(
+        (a, b) => getViewDepth(a, camera) - getViewDepth(b, camera) || a.createdAt - b.createdAt,
+      ),
+    [camera, objects],
+  );
   const selectedObject = useMemo(
     () => objects.find((object) => object.id === selectedId) ?? null,
     [objects, selectedId],
@@ -323,12 +333,15 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       }
 
       const rect = frame.getBoundingClientRect();
-      return unprojectPoint({
-        x: (clientX - rect.left) / scale,
-        y: (clientY - rect.top) / scale,
-      });
+      return unprojectPoint(
+        {
+          x: (clientX - rect.left) / scale,
+          y: (clientY - rect.top) / scale,
+        },
+        camera,
+      );
     },
-    [scale],
+    [camera, scale],
   );
 
   const exportPng = useCallback(() => {
@@ -412,6 +425,12 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     }
   };
 
+  const handleStageWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const delta = -event.deltaY * 0.0012;
+    onCameraChange({ zoom: Number((camera.zoom + delta).toFixed(3)) });
+  };
+
   const setStageCursor = (cursor: string) => {
     const container = stageRef.current?.container();
     if (container) {
@@ -421,8 +440,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
   const handleDragMove = (object: SandboxObject, event: Konva.KonvaEventObject<DragEvent>) => {
     const node = event.target as Konva.Group;
-    const next = unprojectPoint({ x: node.x(), y: node.y() });
-    node.position(projectPoint(next));
+    const next = unprojectPoint({ x: node.x(), y: node.y() }, camera);
+    node.position(projectPoint(next, camera));
     onPatchObject(object.id, next);
   };
 
@@ -432,8 +451,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       return;
     }
 
-    const boardPoint = unprojectPoint({ x: node.x(), y: node.y() });
-    const depthScale = getDepthScale(boardPoint.y);
+    const boardPoint = unprojectPoint({ x: node.x(), y: node.y() }, camera);
+    const depthScale = getDepthScale(boardPoint, camera);
     const rawScale = (Math.abs(node.scaleX()) + Math.abs(node.scaleY())) / 2 / depthScale;
     const nextScale = clamp(Number(rawScale.toFixed(2)), 0.35, 2.4);
     const patch = {
@@ -442,7 +461,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       rotation: normalizeRotation(node.rotation()),
       scale: nextScale,
     };
-    node.position(projectPoint(boardPoint));
+    node.position(projectPoint(boardPoint, camera));
     node.scale({ x: nextScale * depthScale, y: nextScale * depthScale });
     onPatchObject(object.id, patch);
 
@@ -469,6 +488,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onWheel={handleStageWheel}
         >
           <Stage
             ref={stageRef}
@@ -478,11 +498,11 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             onTouchStart={handleStageMouseDown}
           >
             <Layer ref={objectLayerRef} scaleX={scale} scaleY={scale}>
-              <SandboxGuideLayer environment={environment} showGuides={showGuides} />
+              <SandboxGuideLayer environment={environment} camera={camera} showGuides={showGuides} />
 
               {sortedObjects.map((object, index) => {
-                const projected = projectPoint(object);
-                const depthScale = getDepthScale(object.y);
+                const projected = projectPoint(object, camera);
+                const depthScale = getDepthScale(object, camera);
                 return (
                   <Group
                     key={object.id}
@@ -527,7 +547,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                       setActiveGesture(null);
                       setStageCursor("grab");
                       const node = event.target as Konva.Group;
-                      const dropped = unprojectPoint({ x: node.x(), y: node.y() });
+                      const dropped = unprojectPoint({ x: node.x(), y: node.y() }, camera);
                       onRecordEvent({
                         type: "move",
                         objectId: object.id,
@@ -587,15 +607,16 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                   <SelectedObjectOverlay
                     object={selectedObject}
                     environment={environment}
+                    camera={camera}
                     mode={selectedObjectMode}
                   />
                 ) : null}
 
                 {dropPreview ? (
-                  <DropPlacementPreview point={dropPreview} asset={draggingAsset} environment={environment} />
+                  <DropPlacementPreview point={dropPreview} asset={draggingAsset} environment={environment} camera={camera} />
                 ) : null}
 
-                {dropPulse ? <DropPlacementPulse point={dropPulse} environment={environment} /> : null}
+                {dropPulse ? <DropPlacementPulse point={dropPulse} environment={environment} camera={camera} /> : null}
               </Group>
 
               <Transformer
@@ -756,14 +777,16 @@ function getInteractionPalette(environment: SandboxEnvironment): {
 function SelectedObjectOverlay({
   object,
   environment,
+  camera,
   mode,
 }: {
   object: SandboxObject;
   environment: SandboxEnvironment;
+  camera: SandboxCameraState;
   mode: SelectedObjectMode;
 }): JSX.Element {
-  const projected = projectPoint(object);
-  const depthScale = getDepthScale(object.y) * object.scale;
+  const projected = projectPoint(object, camera);
+  const depthScale = getDepthScale(object, camera) * object.scale;
   const palette = getInteractionPalette(environment);
   const width = Math.max(54, Math.min(180, object.footprint.width * 0.86));
   const height = Math.max(24, Math.min(92, object.footprint.depth * 0.62));
@@ -837,12 +860,14 @@ function DropPlacementPreview({
   point,
   asset,
   environment,
+  camera,
 }: {
   point: { x: number; y: number };
   asset: SandboxAsset | null;
   environment: SandboxEnvironment;
+  camera: SandboxCameraState;
 }): JSX.Element {
-  const projected = projectPoint(point);
+  const projected = projectPoint(point, camera);
   const width = Math.max(48, Math.min(150, (asset?.footprint?.width ?? asset?.defaultWidth ?? 86) * 0.76));
   const height = Math.max(28, Math.min(82, (asset?.footprint?.depth ?? asset?.defaultHeight ?? 54) * 0.58));
   const isNight = environment.light === "night";
@@ -879,11 +904,13 @@ function DropPlacementPreview({
 function DropPlacementPulse({
   point,
   environment,
+  camera,
 }: {
   point: { x: number; y: number };
   environment: SandboxEnvironment;
+  camera: SandboxCameraState;
 }): JSX.Element {
-  const projected = projectPoint(point);
+  const projected = projectPoint(point, camera);
   const isNight = environment.light === "night";
   const accent = isNight ? "#95fff0" : "#4db7a2";
 

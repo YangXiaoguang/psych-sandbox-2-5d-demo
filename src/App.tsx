@@ -18,6 +18,7 @@ import type {
   LlmProviderConfig,
   SandboxAnalysis,
   SandboxAsset,
+  SandboxCameraState,
   SandboxEnvironment,
   SandboxEvent,
   SandboxEventDraft,
@@ -28,6 +29,7 @@ import { BOARD_HEIGHT, BOARD_WIDTH, analyzeScene, buildSnapshot, clamp } from ".
 import { downloadSnapshot } from "./utils/download";
 import { createSandboxEvent } from "./utils/events";
 import { createSandboxObject } from "./utils/objectFactory";
+import { DEFAULT_SANDBOX_CAMERA, normalizeSandboxCamera } from "./utils/projection";
 import {
   loadLlmProviders,
   loadManagedAssets,
@@ -63,6 +65,8 @@ interface SceneState {
   events: SandboxEvent[];
 }
 
+const SANDBOX_CAMERA_STORAGE_KEY = "psych-sandbox:stage-camera-v1";
+
 export function App(): JSX.Element {
   const [repositoryMode, setRepositoryMode] = useState<RepositoryMode>(() => loadRepositoryMode());
   const repositoryAdapter = useMemo(() => getSystemRepositoryAdapter(repositoryMode), [repositoryMode]);
@@ -77,6 +81,7 @@ export function App(): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showGuides, setShowGuides] = useState(false);
   const [environment, setEnvironment] = useState(() => repositoryAdapter.workspace.loadEnvironment(initialPersonalData.activeUserId));
+  const [sandboxCamera, setSandboxCamera] = useState<SandboxCameraState>(() => loadSandboxCamera());
   const [layoutPreferences, setLayoutPreferences] = useState(() => repositoryAdapter.workspace.loadLayout(initialPersonalData.activeUserId));
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("scene");
   const [activeView, setActiveView] = useState<AppView>(() => (initialAuthSession ? "sandbox" : "auth"));
@@ -132,6 +137,10 @@ export function App(): JSX.Element {
   useEffect(() => {
     repositoryAdapter.workspace.saveEnvironment(activeUserId, environment);
   }, [activeUserId, environment, repositoryAdapter]);
+
+  useEffect(() => {
+    saveSandboxCamera(sandboxCamera);
+  }, [sandboxCamera]);
 
   useEffect(() => {
     repositoryAdapter.workspace.saveLayout(activeUserId, layoutPreferences);
@@ -198,6 +207,16 @@ export function App(): JSX.Element {
           assetDrawerOpen: !current.assetDrawerOpen,
           aiDrawerOpen: false,
         }));
+      }
+
+      if (event.key.toLowerCase() === "g") {
+        event.preventDefault();
+        setShowGuides((current) => !current);
+      }
+
+      if (event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        setSandboxCamera(DEFAULT_SANDBOX_CAMERA);
       }
     };
 
@@ -368,6 +387,14 @@ export function App(): JSX.Element {
     },
     [environment, recordEvent],
   );
+
+  const handleCameraChange = useCallback((patch: Partial<SandboxCameraState>) => {
+    setSandboxCamera((current) => normalizeSandboxCamera({ ...current, ...patch }));
+  }, []);
+
+  const handleCameraReset = useCallback(() => {
+    setSandboxCamera(DEFAULT_SANDBOX_CAMERA);
+  }, []);
 
   const patchLayoutPreferences = useCallback((patch: Partial<SandboxLayoutPreferences>) => {
     setLayoutPreferences((current) => ({ ...current, ...patch }));
@@ -662,11 +689,14 @@ export function App(): JSX.Element {
             <TopBar
               objectCount={objects.length}
               environment={environment}
+              camera={sandboxCamera}
               focusMode={sandboxFocusMode}
               rightPanelCollapsed={rightPanelCollapsed}
               showRightPanelToggle={!sandboxFocusMode}
               showGuides={showGuides}
               onEnvironmentChange={handleEnvironmentChange}
+              onCameraChange={handleCameraChange}
+              onCameraReset={handleCameraReset}
               onToggleFocusMode={handleToggleFocusMode}
               onToggleRightPanel={handleToggleRightPanel}
               onToggleGuides={() => setShowGuides((current) => !current)}
@@ -680,12 +710,14 @@ export function App(): JSX.Element {
               selectedId={selectedId}
               draggingAsset={draggingAsset}
               environment={environment}
+              camera={sandboxCamera}
               showGuides={showGuides}
               onSelectObject={handleSelectObject}
               onPatchObject={patchObject}
               onDropAsset={handleDropAsset}
               onDeleteSelected={handleDeleteSelected}
               onRecordEvent={recordEvent}
+              onCameraChange={handleCameraChange}
               aiCompanionActive={sandboxFocusMode ? layoutPreferences.aiDrawerOpen : rightPanelTab === "ai"}
               onOpenAiCompanion={handleOpenAiCompanion}
             />
@@ -897,4 +929,33 @@ function sanitizePatch(patch: Partial<SandboxObject>): Partial<SandboxObject> {
   }
 
   return next;
+}
+
+function loadSandboxCamera(): SandboxCameraState {
+  if (typeof window === "undefined") {
+    return DEFAULT_SANDBOX_CAMERA;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(SANDBOX_CAMERA_STORAGE_KEY);
+    if (!stored) {
+      return DEFAULT_SANDBOX_CAMERA;
+    }
+
+    const parsed = JSON.parse(stored) as Partial<SandboxCameraState>;
+    return normalizeSandboxCamera({
+      ...DEFAULT_SANDBOX_CAMERA,
+      ...parsed,
+    });
+  } catch {
+    return DEFAULT_SANDBOX_CAMERA;
+  }
+}
+
+function saveSandboxCamera(camera: SandboxCameraState): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(SANDBOX_CAMERA_STORAGE_KEY, JSON.stringify(normalizeSandboxCamera(camera)));
 }

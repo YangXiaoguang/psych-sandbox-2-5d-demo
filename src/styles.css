@@ -10545,3 +10545,366 @@ button:disabled {
   color: #f2faf6;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
 }
+
+/* Premium stage camera controls: compact in the toolbar, detailed only on demand. */
+.camera-hud {
+  position: relative;
+  z-index: 22;
+}
+
+.camera-preset-strip {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid rgba(195, 181, 153, 0.7);
+  border-radius: 7px;
+  background: rgba(255, 252, 244, 0.64);
+}
+
+.camera-preset-strip button {
+  height: 32px;
+  min-width: 42px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #566760;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.camera-preset-strip button.active,
+.camera-preset-strip button:hover,
+.camera-preset-strip button:focus-visible {
+  border-color: rgba(47, 154, 137, 0.44);
+  background:
+    linear-gradient(180deg, rgba(237, 248, 243, 0.94), rgba(211, 241, 229, 0.76)),
+    var(--accent-soft);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.camera-adjust-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  width: min(300px, calc(100vw - 48px));
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(174, 156, 126, 0.78);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.9), transparent 42%),
+    linear-gradient(180deg, rgba(255, 251, 241, 0.98), rgba(242, 230, 207, 0.96));
+  box-shadow:
+    0 24px 52px rgba(48, 39, 24, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.camera-slider {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 48px;
+  gap: 8px;
+  align-items: center;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.camera-slider span,
+.camera-slider strong {
+  white-space: nowrap;
+}
+
+.camera-slider strong {
+  justify-self: end;
+  color: var(--accent-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.camera-slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.product-shell.night-mode .camera-preset-strip {
+  border-color: rgba(82, 102, 109, 0.92);
+  background: rgba(7, 18, 25, 0.52);
+}
+
+.product-shell.night-mode .camera-preset-strip button {
+  color: #cbdcd6;
+}
+
+.product-shell.night-mode .camera-preset-strip button.active,
+.product-shell.night-mode .camera-preset-strip button:hover,
+.product-shell.night-mode .camera-preset-strip button:focus-visible {
+  border-color: rgba(105, 202, 185, 0.58);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.26), rgba(105, 202, 185, 0.1)),
+    #123b3a;
+  color: #dffdf6;
+}
+
+.product-shell.night-mode .camera-adjust-panel {
+  border-color: rgba(105, 202, 185, 0.32);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(105, 202, 185, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(28, 45, 55, 0.98), rgba(10, 24, 32, 0.98));
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-shell.night-mode .camera-slider {
+  color: #e6f3ef;
+}
+
+.product-shell.night-mode .camera-slider strong {
+  color: #b8fff5;
+}
+
+.product-shell.night-mode .camera-slider input[type="range"] {
+  color: #9dfff2;
+  accent-color: #69cab9;
+}
+
+@media (max-width: 1440px) {
+  .camera-preset-strip button {
+    min-width: 36px;
+    padding: 0 7px;
+  }
+
+  .camera-hud .icon-button span {
+    display: none;
+  }
+}
+
+/* Keep the main workbench stage tall: presets live inside the camera popover. */
+.camera-hud {
+  min-width: 0;
+}
+
+.camera-current-pill {
+  display: grid;
+  min-width: 86px;
+  height: 36px;
+  align-content: center;
+  gap: 1px;
+  padding: 0 10px;
+  border: 1px solid rgba(195, 181, 153, 0.72);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.7), transparent 52%),
+    rgba(255, 252, 244, 0.72);
+  color: #33413d;
+}
+
+.camera-current-pill span {
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.camera-current-pill small {
+  color: #6a7972;
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.camera-panel-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(195, 181, 153, 0.58);
+}
+
+.camera-panel-presets button {
+  display: grid;
+  min-height: 48px;
+  gap: 3px;
+  justify-items: start;
+  padding: 8px 9px;
+  border: 1px solid rgba(195, 181, 153, 0.76);
+  border-radius: 9px;
+  background: rgba(255, 252, 244, 0.66);
+  color: #34413e;
+  text-align: left;
+}
+
+.camera-panel-presets button span {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.camera-panel-presets button small {
+  color: #6a7972;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.camera-panel-presets button.active,
+.camera-panel-presets button:hover,
+.camera-panel-presets button:focus-visible {
+  border-color: rgba(47, 154, 137, 0.5);
+  background:
+    linear-gradient(180deg, rgba(237, 248, 243, 0.96), rgba(211, 241, 229, 0.8)),
+    var(--accent-soft);
+  outline: none;
+}
+
+.product-shell.night-mode .camera-current-pill {
+  border-color: rgba(82, 102, 109, 0.92);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(105, 202, 185, 0.16), transparent 52%),
+    rgba(7, 18, 25, 0.56);
+  color: #e7f5f0;
+}
+
+.product-shell.night-mode .camera-current-pill small {
+  color: #9fb8b0;
+}
+
+.product-shell.night-mode .camera-panel-presets {
+  border-bottom-color: rgba(82, 102, 109, 0.72);
+}
+
+.product-shell.night-mode .camera-panel-presets button {
+  border-color: rgba(82, 102, 109, 0.92);
+  background: rgba(7, 18, 25, 0.56);
+  color: #e7f5f0;
+}
+
+.product-shell.night-mode .camera-panel-presets button small {
+  color: #9fb8b0;
+}
+
+.product-shell.night-mode .camera-panel-presets button.active,
+.product-shell.night-mode .camera-panel-presets button:hover,
+.product-shell.night-mode .camera-panel-presets button:focus-visible {
+  border-color: rgba(105, 202, 185, 0.58);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.26), rgba(105, 202, 185, 0.1)),
+    #123b3a;
+}
+
+/* Final premium workbench pass: keep the stage toolbar compact and out of the sand tray. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  grid-template-columns: minmax(178px, 0.42fr) minmax(0, 1.58fr);
+  align-items: center;
+  min-height: 78px;
+  overflow: visible;
+}
+
+.workspace-column .topbar-hud {
+  flex-wrap: nowrap;
+  align-content: center;
+  justify-content: flex-end;
+  gap: 6px;
+  overflow: visible;
+  row-gap: 0;
+}
+
+.workspace-column .hud-cluster {
+  min-height: 44px;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 10px;
+}
+
+.workspace-column .hud-cluster > p {
+  display: none;
+}
+
+.workspace-column .hud-segment {
+  gap: 3px;
+  padding: 3px;
+}
+
+.workspace-column .hud-segment button {
+  min-width: 33px;
+  height: 33px;
+  padding: 0 7px;
+}
+
+.workspace-column .action-hud .icon-button,
+.workspace-column .camera-hud .icon-button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.workspace-column .action-hud .icon-button span,
+.workspace-column .camera-hud .icon-button span {
+  display: none;
+}
+
+.workspace-column .camera-current-pill {
+  min-width: 72px;
+  height: 34px;
+  padding: 0 8px;
+}
+
+.workspace-column .camera-current-pill span {
+  font-size: 11px;
+}
+
+.workspace-column .camera-current-pill small {
+  font-size: 8px;
+}
+
+.workspace-column .environment-hud {
+  flex-wrap: nowrap;
+}
+
+.workspace-column .export-hud,
+.workspace-column .view-hud {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 1320px) {
+  .workspace-column .topbar,
+  .product-shell.night-mode .workspace-column .topbar {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 72px;
+  }
+
+  .workspace-column .topbar-primary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .workspace-column .topbar-status {
+    justify-content: flex-end;
+  }
+
+  .workspace-column .topbar-hud {
+    justify-content: flex-start;
+  }
+
+  .workspace-column .hud-segment button span,
+  .workspace-column .camera-current-pill {
+    display: none;
+  }
+
+  .workspace-column .hud-segment button {
+    min-width: 32px;
+    padding: 0 8px;
+  }
+
+  .workspace-column .environment-hud,
+  .workspace-column .camera-hud,
+  .workspace-column .view-hud,
+  .workspace-column .export-hud {
+    padding: 4px;
+  }
+}
