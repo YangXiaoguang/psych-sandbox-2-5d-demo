@@ -47,6 +47,13 @@ interface TransformState {
   scale: number;
 }
 
+interface CameraPanGesture {
+  clientX: number;
+  clientY: number;
+  panX: number;
+  panY: number;
+}
+
 type ObjectGestureMode = "drag" | "transform";
 type SelectedObjectMode = ObjectGestureMode | "selected";
 
@@ -87,10 +94,16 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const dragStartRef = useRef<Record<string, { x: number; y: number }>>({});
   const transformStartRef = useRef<Record<string, TransformState>>({});
   const dropPulseTimerRef = useRef<number | null>(null);
+  const cameraRef = useRef<SandboxCameraState>(camera);
+  const spacePanRef = useRef(false);
+  const cameraPanRef = useRef<CameraPanGesture | null>(null);
   const [scale, setScale] = useState(1);
+  const scaleRef = useRef(scale);
   const [dropPreview, setDropPreview] = useState<{ x: number; y: number } | null>(null);
   const [dropPulse, setDropPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const [activeGesture, setActiveGesture] = useState<{ objectId: string; mode: ObjectGestureMode } | null>(null);
+  const [isCameraPanning, setIsCameraPanning] = useState(false);
+  const [spacePanActive, setSpacePanActive] = useState(false);
 
   const sortedObjects = useMemo(
     () =>
@@ -116,6 +129,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     selectedId ? "has-selection" : "",
     activeGesture?.mode === "drag" ? "object-dragging" : "",
     activeGesture?.mode === "transform" ? "object-transforming" : "",
+    isCameraPanning ? "camera-panning" : "",
+    spacePanActive ? "camera-pan-ready" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -152,6 +167,14 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   useEffect(() => {
     environmentRef.current = environment;
   }, [environment]);
+
+  useEffect(() => {
+    cameraRef.current = camera;
+  }, [camera]);
+
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -241,6 +264,69 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     },
     [],
   );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) {
+        return;
+      }
+
+      if (event.code !== "Space") {
+        return;
+      }
+
+      event.preventDefault();
+      spacePanRef.current = true;
+      setSpacePanActive(true);
+      if (!cameraPanRef.current) {
+        setStageCursor("grab");
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== "Space") {
+        return;
+      }
+
+      spacePanRef.current = false;
+      setSpacePanActive(false);
+      if (!cameraPanRef.current && !activeGestureRef.current) {
+        setStageCursor("default");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isCameraPanning) {
+      return;
+    }
+
+    const handleMove = (event: MouseEvent) => {
+      event.preventDefault();
+      updateCameraPan(event.clientX, event.clientY);
+    };
+
+    const handleEnd = () => {
+      endCameraPan();
+    };
+
+    window.addEventListener("mousemove", handleMove, { passive: false });
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("blur", handleEnd);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("blur", handleEnd);
+    };
+  }, [isCameraPanning]);
 
   useEffect(() => {
     const layer = objectLayerRef.current;
@@ -419,9 +505,37 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
   const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const targetName = event.target.name();
-    if (event.target === event.target.getStage() || targetName === "tray") {
+    const isTraySurface = event.target === event.target.getStage() || targetName === "tray";
+
+    if (shouldStartCameraPan(event.evt, isTraySurface)) {
+      event.evt.preventDefault();
+      event.cancelBubble = true;
+      beginCameraPan(event.evt);
+      if (isTraySurface) {
+        setActiveGesture(null);
+        onSelectObject(null);
+      }
+      return;
+    }
+
+    if (isTraySurface) {
       setActiveGesture(null);
       onSelectObject(null);
+    }
+  };
+
+  const handleStageMouseMove = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    const point = getNativeClientPoint(event.evt);
+    if (!point || !cameraPanRef.current) {
+      return;
+    }
+    event.evt.preventDefault();
+    updateCameraPan(point.clientX, point.clientY);
+  };
+
+  const handleStageMouseUp = () => {
+    if (cameraPanRef.current) {
+      endCameraPan();
     }
   };
 
@@ -436,6 +550,53 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     if (container) {
       container.style.cursor = cursor;
     }
+  };
+
+  function shouldStartCameraPan(event: MouseEvent | TouchEvent, isTraySurface: boolean): boolean {
+    if ("touches" in event) {
+      return isTraySurface;
+    }
+
+    return isTraySurface || event.button === 1 || event.button === 2 || spacePanRef.current;
+  }
+
+  const beginCameraPan = (event: MouseEvent | TouchEvent) => {
+    const point = getNativeClientPoint(event);
+    if (!point) {
+      return;
+    }
+
+    const current = cameraRef.current;
+    cameraPanRef.current = {
+      clientX: point.clientX,
+      clientY: point.clientY,
+      panX: current.panX,
+      panY: current.panY,
+    };
+    setIsCameraPanning(true);
+    setStageCursor("grabbing");
+  };
+
+  const updateCameraPan = (clientX: number, clientY: number) => {
+    const gesture = cameraPanRef.current;
+    if (!gesture) {
+      return;
+    }
+
+    onCameraChange({
+      panX: Number((gesture.panX + (clientX - gesture.clientX) / scaleRef.current).toFixed(1)),
+      panY: Number((gesture.panY + (clientY - gesture.clientY) / scaleRef.current).toFixed(1)),
+    });
+  };
+
+  const endCameraPan = () => {
+    cameraPanRef.current = null;
+    setIsCameraPanning(false);
+    if (spacePanRef.current) {
+      setStageCursor("grab");
+      return;
+    }
+    setStageCursor(activeGestureRef.current ? "grabbing" : "default");
   };
 
   const handleDragMove = (object: SandboxObject, event: Konva.KonvaEventObject<DragEvent>) => {
@@ -495,7 +656,13 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             width={VIEW_WIDTH * scale}
             height={VIEW_HEIGHT * scale}
             onMouseDown={handleStageMouseDown}
+            onMouseMove={handleStageMouseMove}
+            onMouseUp={handleStageMouseUp}
+            onMouseLeave={handleStageMouseUp}
+            onContextMenu={(event) => event.evt.preventDefault()}
             onTouchStart={handleStageMouseDown}
+            onTouchMove={handleStageMouseMove}
+            onTouchEnd={handleStageMouseUp}
           >
             <Layer ref={objectLayerRef} scaleX={scale} scaleY={scale}>
               <SandboxGuideLayer environment={environment} camera={camera} showGuides={showGuides} />
@@ -519,14 +686,20 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     rotation={object.rotation}
                     scaleX={object.scale * depthScale}
                     scaleY={object.scale * depthScale}
-                    draggable
-                    onMouseEnter={() => setStageCursor(activeGesture?.mode === "drag" ? "grabbing" : "grab")}
+                    draggable={!spacePanActive && !isCameraPanning}
+                    onMouseEnter={() => setStageCursor(spacePanActive ? "grab" : activeGesture?.mode === "drag" ? "grabbing" : "grab")}
                     onMouseLeave={() => {
-                      if (!activeGesture) {
+                      if (!activeGesture && !spacePanActive && !isCameraPanning) {
                         setStageCursor("default");
                       }
                     }}
                     onMouseDown={(event) => {
+                      if (shouldStartCameraPan(event.evt, false)) {
+                        event.cancelBubble = true;
+                        event.evt.preventDefault();
+                        beginCameraPan(event.evt);
+                        return;
+                      }
                       event.cancelBubble = true;
                       onSelectObject(object.id);
                     }}
@@ -667,6 +840,15 @@ function ObjectInteractionHitArea({ object }: { object: SandboxObject }): JSX.El
       listening
     />
   );
+}
+
+function getNativeClientPoint(event: MouseEvent | TouchEvent): { clientX: number; clientY: number } | null {
+  if ("touches" in event) {
+    const touch = event.touches[0] ?? event.changedTouches[0];
+    return touch ? { clientX: touch.clientX, clientY: touch.clientY } : null;
+  }
+
+  return { clientX: event.clientX, clientY: event.clientY };
 }
 
 function normalizeRotation(rotation: number): number {

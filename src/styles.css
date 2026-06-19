@@ -2022,6 +2022,22 @@ button {
   filter: saturate(1.04) contrast(1.01);
 }
 
+.stage-frame.camera-pan-ready canvas {
+  cursor: grab !important;
+}
+
+.stage-frame.camera-panning {
+  filter: saturate(1.03) contrast(1.02);
+  box-shadow:
+    0 38px 78px rgba(38, 55, 47, 0.32),
+    0 16px 34px rgba(72, 129, 116, 0.18),
+    0 0 0 1px rgba(86, 177, 160, 0.42);
+}
+
+.stage-frame.camera-panning canvas {
+  cursor: grabbing !important;
+}
+
 .stage-frame.object-transforming:not(.accepting-drop)::after {
   border-color: rgba(96, 197, 176, 0.32);
   opacity: 0.58;
