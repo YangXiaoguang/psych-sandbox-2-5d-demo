@@ -422,7 +422,6 @@ function AssetGrid({
               <span className="asset-card-name">{asset.name}</span>
               <span className="asset-card-meta">
                 <RiskTagBadge riskTag={asset.riskTag} />
-                <span className="asset-card-use-hint">拿取</span>
               </span>
             </span>
           </button>

@@ -188,7 +188,7 @@ function SceneInsightDrawer({
         />
       </details>
 
-      <details className="insight-section" open>
+      <details className="insight-section">
         <summary>
           <span>
             <LayoutDashboard size={15} />

@@ -1865,6 +1865,7 @@ function AssetAdminPanel({
   const [sortKey, setSortKey] = useState<AssetSortKey>("updatedAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
+  const [detailOpen, setDetailOpen] = useState(false);
   const selected = assets.find((asset) => asset.assetId === selectedId) ?? assets[0] ?? null;
   const selectedAssetSet = useMemo(() => new Set(selectedAssetIds), [selectedAssetIds]);
   const categories = useMemo(
@@ -1950,6 +1951,7 @@ function AssetAdminPanel({
     };
     onAssetsChange([asset, ...assets]);
     setSelectedId(asset.assetId);
+    setDetailOpen(true);
   };
 
   const markDeleted = () => {
@@ -2012,6 +2014,11 @@ function AssetAdminPanel({
     setStatusFilter("all");
     setOriginFilter("all");
     setSelectedAssetIds([]);
+  };
+
+  const openAssetDetail = (assetId: string) => {
+    setSelectedId(assetId);
+    setDetailOpen(true);
   };
 
   return (
@@ -2213,6 +2220,7 @@ function AssetAdminPanel({
                     </button>
                   </th>
                   <th>问题</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -2230,7 +2238,7 @@ function AssetAdminPanel({
                       <AssetPreview asset={asset} />
                     </td>
                     <td>
-                      <button type="button" className="asset-name-button" onClick={() => setSelectedId(asset.assetId)}>
+                      <button type="button" className="asset-name-button" onClick={() => openAssetDetail(asset.assetId)}>
                         <strong>{asset.name}</strong>
                         <em>{asset.assetId}</em>
                       </button>
@@ -2247,6 +2255,34 @@ function AssetAdminPanel({
                       <span className={getAssetIssueCount(asset, assets) > 0 ? "asset-issue-count warn" : "asset-issue-count"}>
                         {getAssetIssueCount(asset, assets)}
                       </span>
+                    </td>
+                    <td>
+                      <div className="asset-row-actions" aria-label={`${asset.name} 操作`}>
+                        <button type="button" onClick={() => openAssetDetail(asset.assetId)} aria-label={`查看并编辑 ${asset.name}`}>
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateAssetById(asset.assetId, {
+                              enabled: !asset.enabled,
+                              deletedAt: !asset.enabled ? undefined : asset.deletedAt,
+                            })
+                          }
+                          aria-label={asset.enabled ? `停用 ${asset.name}` : `启用 ${asset.name}`}
+                        >
+                          <ShieldCheck size={14} />
+                        </button>
+                        {asset.deletedAt || !asset.enabled ? (
+                          <button type="button" onClick={() => restoreAssets([asset.assetId])} aria-label={`恢复 ${asset.name}`}>
+                            <Undo2 size={14} />
+                          </button>
+                        ) : (
+                          <button type="button" onClick={() => markAssetsDeleted([asset.assetId])} aria-label={`隐藏 ${asset.name}`}>
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -2266,7 +2302,7 @@ function AssetAdminPanel({
                   选择
                 </label>
                 <AssetPreview asset={asset} />
-                <button type="button" onClick={() => setSelectedId(asset.assetId)}>
+                <button type="button" onClick={() => openAssetDetail(asset.assetId)}>
                   <strong>{asset.name}</strong>
                   <em>{asset.category}</em>
                 </button>
@@ -2294,7 +2330,16 @@ function AssetAdminPanel({
         </div>
       </section>
 
-      <aside className="admin-card asset-detail-panel" aria-label="沙具详情">
+      {detailOpen && selected ? (
+        <button
+          className="asset-detail-scrim"
+          type="button"
+          aria-label="关闭沙具详情"
+          onClick={() => setDetailOpen(false)}
+        />
+      ) : null}
+
+      <aside className={`admin-card asset-detail-panel asset-detail-drawer ${detailOpen && selected ? "open" : ""}`} aria-label="沙具详情">
         <div className="admin-card-header">
           <div>
             <p className="eyebrow">Asset Detail</p>
@@ -2302,6 +2347,9 @@ function AssetAdminPanel({
           </div>
           {selected ? (
             <div className="admin-actions">
+              <button type="button" className="small-icon-button" onClick={() => setDetailOpen(false)} aria-label="关闭沙具详情">
+                <X size={16} />
+              </button>
               {selected.deletedAt || !selected.enabled ? (
                 <button type="button" className="icon-button" onClick={restoreAsset}>
                   <Undo2 size={15} />
