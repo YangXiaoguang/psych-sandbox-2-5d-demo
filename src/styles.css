@@ -2043,6 +2043,169 @@ button {
   opacity: 0.58;
 }
 
+.stage-tool-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid rgba(191, 174, 145, 0.72);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.96), transparent 45%),
+    linear-gradient(180deg, rgba(255, 252, 244, 0.96), rgba(244, 235, 217, 0.92));
+  box-shadow:
+    0 18px 38px rgba(68, 52, 30, 0.18),
+    0 6px 14px rgba(66, 87, 78, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateX(-50%);
+  backdrop-filter: blur(14px);
+}
+
+.stage-tool-dock button {
+  display: inline-grid;
+  min-width: 54px;
+  min-height: 50px;
+  place-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #465450;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.stage-tool-dock button svg {
+  color: #2f695f;
+}
+
+.stage-tool-dock button:hover:not(:disabled),
+.stage-tool-dock button:focus-visible,
+.stage-tool-dock button.active {
+  border-color: rgba(47, 154, 137, 0.5);
+  background:
+    linear-gradient(180deg, rgba(230, 248, 241, 0.96), rgba(203, 238, 225, 0.86)),
+    var(--accent-soft);
+  color: #155b52;
+  outline: none;
+}
+
+.stage-tool-dock button.danger svg {
+  color: #b44930;
+}
+
+.stage-tool-dock button:disabled {
+  color: #a79c8b;
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+/* Premium sandplay stage: the center surface should read as the product's hero, not another panel. */
+.workspace-column .sandbox-editor {
+  isolation: isolate;
+  border-color: rgba(196, 179, 149, 0.58);
+  background:
+    radial-gradient(circle at 77% 18%, rgba(255, 241, 165, 0.38), transparent 17%),
+    radial-gradient(circle at 19% 23%, rgba(255, 255, 255, 0.78), transparent 19%),
+    radial-gradient(ellipse at 16% 52%, rgba(130, 165, 114, 0.2), transparent 32%),
+    radial-gradient(ellipse at 86% 52%, rgba(137, 166, 118, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(244, 238, 216, 0.78), rgba(218, 211, 189, 0.9)),
+    #e8e1ce;
+  box-shadow:
+    0 34px 70px rgba(94, 76, 48, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66);
+}
+
+.workspace-column .sandbox-editor::before,
+.workspace-column .sandbox-editor::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+}
+
+.workspace-column .sandbox-editor::before {
+  background:
+    radial-gradient(ellipse at 10% 34%, rgba(85, 130, 89, 0.16), transparent 14%),
+    radial-gradient(ellipse at 94% 28%, rgba(85, 130, 89, 0.14), transparent 16%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.34), transparent 26%, transparent 74%, rgba(112, 91, 62, 0.1));
+  filter: blur(10px);
+}
+
+.workspace-column .sandbox-editor::after {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.28), transparent 22%, transparent 78%, rgba(127, 99, 57, 0.12)),
+    radial-gradient(ellipse at 50% 100%, rgba(86, 62, 35, 0.16), transparent 58%);
+  mix-blend-mode: soft-light;
+}
+
+.workspace-column .stage-host {
+  padding: 10px 12px 74px;
+}
+
+.workspace-column .stage-frame {
+  border-radius: 16px;
+  box-shadow:
+    0 44px 82px rgba(85, 68, 42, 0.26),
+    0 18px 36px rgba(106, 83, 47, 0.17),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.workspace-column .stage-frame::before {
+  height: 40%;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255, 252, 226, 0.36), transparent 58%),
+    linear-gradient(100deg, rgba(255, 255, 255, 0.2), transparent 60%);
+}
+
+.product-shell.night-mode .workspace-column .sandbox-editor {
+  border-color: rgba(82, 102, 109, 0.86);
+  background:
+    radial-gradient(circle at 76% 18%, rgba(185, 218, 211, 0.12), transparent 18%),
+    radial-gradient(ellipse at 50% 22%, rgba(58, 80, 101, 0.22), transparent 42%),
+    radial-gradient(ellipse at 18% 60%, rgba(54, 91, 91, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(18, 34, 43, 0.98), rgba(7, 19, 27, 0.99)),
+    #091721;
+  box-shadow:
+    0 34px 72px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.product-shell.night-mode .stage-tool-dock {
+  border-color: rgba(86, 111, 118, 0.88);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(105, 202, 185, 0.16), transparent 45%),
+    linear-gradient(180deg, rgba(24, 42, 52, 0.94), rgba(9, 24, 33, 0.94));
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-shell.night-mode .stage-tool-dock button {
+  color: #dbe9e5;
+}
+
+.product-shell.night-mode .stage-tool-dock button svg {
+  color: #9dfff2;
+}
+
+.product-shell.night-mode .stage-tool-dock button:hover:not(:disabled),
+.product-shell.night-mode .stage-tool-dock button:focus-visible,
+.product-shell.night-mode .stage-tool-dock button.active {
+  border-color: rgba(105, 202, 185, 0.56);
+  background:
+    linear-gradient(180deg, rgba(105, 202, 185, 0.28), rgba(105, 202, 185, 0.1)),
+    #123b3a;
+  color: #effffb;
+}
+
 @keyframes drop-target-breathe {
   0%,
   100% {

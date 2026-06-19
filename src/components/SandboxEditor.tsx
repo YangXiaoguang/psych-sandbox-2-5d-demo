@@ -1,4 +1,5 @@
 import Konva from "konva";
+import { Hand, MousePointer2, RotateCcw, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import {
   forwardRef,
   useCallback,
@@ -12,7 +13,15 @@ import { Circle, Ellipse, Group, Layer, Line, Shape, Stage, Transformer } from "
 import type { SandboxAsset, SandboxCameraState, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
-import { getDepthScale, getViewDepth, projectPoint, unprojectPoint, VIEW_HEIGHT, VIEW_WIDTH } from "../utils/projection";
+import {
+  DEFAULT_SANDBOX_CAMERA,
+  getDepthScale,
+  getViewDepth,
+  projectPoint,
+  unprojectPoint,
+  VIEW_HEIGHT,
+  VIEW_WIDTH,
+} from "../utils/projection";
 import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
@@ -56,6 +65,7 @@ interface CameraPanGesture {
 
 type ObjectGestureMode = "drag" | "transform";
 type SelectedObjectMode = ObjectGestureMode | "selected";
+type StageToolMode = "select" | "pan";
 
 export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>(function SandboxEditor(
   {
@@ -104,6 +114,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [activeGesture, setActiveGesture] = useState<{ objectId: string; mode: ObjectGestureMode } | null>(null);
   const [isCameraPanning, setIsCameraPanning] = useState(false);
   const [spacePanActive, setSpacePanActive] = useState(false);
+  const [stageToolMode, setStageToolMode] = useState<StageToolMode>("select");
 
   const sortedObjects = useMemo(
     () =>
@@ -130,7 +141,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     activeGesture?.mode === "drag" ? "object-dragging" : "",
     activeGesture?.mode === "transform" ? "object-transforming" : "",
     isCameraPanning ? "camera-panning" : "",
-    spacePanActive ? "camera-pan-ready" : "",
+    spacePanActive || stageToolMode === "pan" ? "camera-pan-ready" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -557,7 +568,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       return isTraySurface;
     }
 
-    return isTraySurface || event.button === 1 || event.button === 2 || spacePanRef.current;
+    return stageToolMode === "pan" || isTraySurface || event.button === 1 || event.button === 2 || spacePanRef.current;
   }
 
   const beginCameraPan = (event: MouseEvent | TouchEvent) => {
@@ -639,6 +650,10 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     });
   };
 
+  const handleZoomStep = (step: number) => {
+    onCameraChange({ zoom: Number(clamp(camera.zoom + step, 0.74, 1.28).toFixed(2)) });
+  };
+
   return (
     <main className="sandbox-editor" aria-label="沙盘画布">
       <div className="stage-host" ref={hostRef}>
@@ -686,10 +701,10 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     rotation={object.rotation}
                     scaleX={object.scale * depthScale}
                     scaleY={object.scale * depthScale}
-                    draggable={!spacePanActive && !isCameraPanning}
-                    onMouseEnter={() => setStageCursor(spacePanActive ? "grab" : activeGesture?.mode === "drag" ? "grabbing" : "grab")}
+                    draggable={stageToolMode !== "pan" && !spacePanActive && !isCameraPanning}
+                    onMouseEnter={() => setStageCursor(spacePanActive || stageToolMode === "pan" ? "grab" : activeGesture?.mode === "drag" ? "grabbing" : "grab")}
                     onMouseLeave={() => {
-                      if (!activeGesture && !spacePanActive && !isCameraPanning) {
+                      if (!activeGesture && !spacePanActive && !isCameraPanning && stageToolMode !== "pan") {
                         setStageCursor("default");
                       }
                     }}
@@ -817,6 +832,18 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
           </Stage>
         </div>
       </div>
+      <StageToolDock
+        mode={stageToolMode}
+        hasSelection={Boolean(selectedObject)}
+        onModeChange={(mode) => {
+          setStageToolMode(mode);
+          setStageCursor(mode === "pan" ? "grab" : "default");
+        }}
+        onZoomIn={() => handleZoomStep(0.08)}
+        onZoomOut={() => handleZoomStep(-0.08)}
+        onResetCamera={() => onCameraChange(DEFAULT_SANDBOX_CAMERA)}
+        onDeleteSelected={onDeleteSelected}
+      />
       <AiCompanionAvatar active={aiCompanionActive} onOpen={onOpenAiCompanion} />
     </main>
   );
@@ -839,6 +866,63 @@ function ObjectInteractionHitArea({ object }: { object: SandboxObject }): JSX.El
       }}
       listening
     />
+  );
+}
+
+function StageToolDock({
+  mode,
+  hasSelection,
+  onModeChange,
+  onZoomIn,
+  onZoomOut,
+  onResetCamera,
+  onDeleteSelected,
+}: {
+  mode: StageToolMode;
+  hasSelection: boolean;
+  onModeChange: (mode: StageToolMode) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onResetCamera: () => void;
+  onDeleteSelected: () => void;
+}): JSX.Element {
+  return (
+    <div className="stage-tool-dock" role="toolbar" aria-label="沙盘快捷工具">
+      <button
+        type="button"
+        className={mode === "select" ? "active" : ""}
+        onClick={() => onModeChange("select")}
+        aria-pressed={mode === "select"}
+      >
+        <MousePointer2 size={18} />
+        <span>选择</span>
+      </button>
+      <button
+        type="button"
+        className={mode === "pan" ? "active" : ""}
+        onClick={() => onModeChange("pan")}
+        aria-pressed={mode === "pan"}
+      >
+        <Hand size={18} />
+        <span>移动沙盘</span>
+      </button>
+      <button type="button" onClick={onZoomIn}>
+        <ZoomIn size={18} />
+        <span>放大</span>
+      </button>
+      <button type="button" onClick={onZoomOut}>
+        <ZoomOut size={18} />
+        <span>缩小</span>
+      </button>
+      <button type="button" onClick={onResetCamera}>
+        <RotateCcw size={18} />
+        <span>复位</span>
+      </button>
+      <button type="button" className="danger" onClick={onDeleteSelected} disabled={!hasSelection}>
+        <Trash2 size={18} />
+        <span>删除</span>
+      </button>
+    </div>
   );
 }
 
