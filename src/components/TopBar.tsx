@@ -64,9 +64,32 @@ export function TopBar({
 }: TopBarProps): JSX.Element {
   const [cameraPanelOpen, setCameraPanelOpen] = useState(false);
   const currentCameraPreset = SANDBOX_CAMERA_PRESETS.find((preset) => isCameraPresetActive(camera, preset.camera));
+  const cameraAdjustPanel = cameraPanelOpen ? (
+    <div className="camera-adjust-panel" role="group" aria-label="沙盘视角高级调节">
+      <div className="camera-panel-presets" role="group" aria-label="选择沙盘视角预设">
+        {SANDBOX_CAMERA_PRESETS.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            className={isCameraPresetActive(camera, preset.camera) ? "active" : ""}
+            onClick={() => onCameraChange(preset.camera)}
+            title={preset.description}
+          >
+            <span>{preset.label}</span>
+            <small>{preset.description}</small>
+          </button>
+        ))}
+      </div>
+      <CameraSlider label="转动" value={camera.yaw} min={-32} max={32} step={1} unit="°" onChange={(yaw) => onCameraChange({ yaw })} />
+      <CameraSlider label="俯仰" value={camera.pitch} min={0.48} max={0.74} step={0.01} onChange={(pitch) => onCameraChange({ pitch })} />
+      <CameraSlider label="缩放" value={camera.zoom} min={0.7} max={1.48} step={0.01} onChange={(zoom) => onCameraChange({ zoom })} />
+      <CameraSlider label="横移" value={camera.panX} min={-260} max={260} step={4} onChange={(panX) => onCameraChange({ panX })} />
+      <CameraSlider label="纵移" value={camera.panY} min={-190} max={190} step={4} onChange={(panY) => onCameraChange({ panY })} />
+    </div>
+  ) : null;
 
   return (
-    <header className="topbar">
+    <header className={cameraPanelOpen ? "topbar camera-panel-open" : "topbar"}>
       <div className="topbar-primary">
         <div className="topbar-title">
           <p className="eyebrow">2.5D Sandplay Engine</p>
@@ -137,29 +160,6 @@ export function TopBar({
             <RotateCcw size={16} />
             <span>重置</span>
           </button>
-          {cameraPanelOpen ? (
-            <div className="camera-adjust-panel" role="group" aria-label="沙盘视角高级调节">
-              <div className="camera-panel-presets" role="group" aria-label="选择沙盘视角预设">
-                {SANDBOX_CAMERA_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className={isCameraPresetActive(camera, preset.camera) ? "active" : ""}
-                    onClick={() => onCameraChange(preset.camera)}
-                    title={preset.description}
-                  >
-                    <span>{preset.label}</span>
-                    <small>{preset.description}</small>
-                  </button>
-                ))}
-              </div>
-              <CameraSlider label="转动" value={camera.yaw} min={-32} max={32} step={1} unit="°" onChange={(yaw) => onCameraChange({ yaw })} />
-              <CameraSlider label="俯仰" value={camera.pitch} min={0.48} max={0.7} step={0.01} onChange={(pitch) => onCameraChange({ pitch })} />
-              <CameraSlider label="缩放" value={camera.zoom} min={0.74} max={1.28} step={0.01} onChange={(zoom) => onCameraChange({ zoom })} />
-              <CameraSlider label="横移" value={camera.panX} min={-260} max={260} step={4} onChange={(panX) => onCameraChange({ panX })} />
-              <CameraSlider label="纵移" value={camera.panY} min={-190} max={190} step={4} onChange={(panY) => onCameraChange({ panY })} />
-            </div>
-          ) : null}
         </section>
 
         <section className="hud-cluster action-hud view-hud" aria-label="视图控制">
@@ -171,7 +171,7 @@ export function TopBar({
             aria-label={focusMode ? "退出沙盘全屏模式" : "进入沙盘全屏模式"}
           >
             {focusMode ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
-            <span>{focusMode ? "退出" : "全屏"}</span>
+            <span>{focusMode ? "退出全屏" : "全屏"}</span>
           </button>
           {showRightPanelToggle ? (
             <button
@@ -213,6 +213,7 @@ export function TopBar({
           </button>
         </section>
       </div>
+      {cameraAdjustPanel}
     </header>
   );
 }

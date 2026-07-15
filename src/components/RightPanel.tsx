@@ -1,5 +1,7 @@
+import type { CSSProperties } from "react";
 import { Bot, ChevronLeft, ChevronRight, Clock3, Database, LayoutDashboard, MousePointer2 } from "lucide-react";
-import type { LlmProviderConfig, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
+import { RISK_COLORS, RISK_LABELS } from "../data/assets";
+import type { LlmProviderConfig, RiskTag, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { EventStream } from "./EventStream";
@@ -7,6 +9,8 @@ import { ObjectInspector } from "./ObjectInspector";
 import { StructuredDataPanel } from "./StructuredDataPanel";
 
 export type RightPanelTab = "scene" | "ai";
+
+const riskOrder: RiskTag[] = ["normal", "conflict", "death", "fantasy"];
 
 interface RightPanelProps {
   objects: SandboxObject[];
@@ -173,7 +177,10 @@ function SceneInsightDrawer({
         </div>
       </section>
 
-      <details className="insight-section" open>
+      <InsightHeatmapSummary analysis={analysis} />
+      <RecentEventPreview events={events} />
+
+      <details className="insight-section" open={Boolean(selectedObject)}>
         <summary>
           <span>
             <MousePointer2 size={15} />
@@ -222,4 +229,92 @@ function SceneInsightDrawer({
       </details>
     </div>
   );
+}
+
+function InsightHeatmapSummary({ analysis }: { analysis: SandboxAnalysis }): JSX.Element {
+  const maxGridCount = Math.max(1, ...analysis.grid.map((cell) => cell.count));
+
+  return (
+    <section className="insight-snapshot-panel" aria-label="九宫格与风险摘要">
+      <div className="insight-snapshot-header">
+        <div>
+          <span className="eyebrow">Live Map</span>
+          <h2>空间热力与风险</h2>
+        </div>
+        <span>{analysis.totalObjects} 个对象</span>
+      </div>
+
+      <div className="insight-snapshot-grid">
+        <div className="insight-heatmap" aria-label="九宫格热力图">
+          {analysis.grid.map((cell) => {
+            const heat = cell.count / maxGridCount;
+
+            return (
+              <div
+                key={cell.id}
+                className={cell.id === "middle-center" ? "insight-heat-cell center" : "insight-heat-cell"}
+                style={{ "--heat": `${Math.round(heat * 84)}%` } as CSSProperties}
+              >
+                <span>{cell.label.replace("中", "")}</span>
+                <strong>{cell.count}</strong>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="insight-risk-mini" aria-label="风险标签分布">
+          {riskOrder.map((riskTag) => (
+            <div key={riskTag}>
+              <span>{RISK_LABELS[riskTag]}</span>
+              <i>
+                <b
+                  style={{
+                    width: `${analysis.totalObjects ? (analysis.riskCounts[riskTag] / analysis.totalObjects) * 100 : 0}%`,
+                    background: RISK_COLORS[riskTag],
+                  }}
+                />
+              </i>
+              <strong>{analysis.riskCounts[riskTag]}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RecentEventPreview({ events }: { events: SandboxEvent[] }): JSX.Element {
+  const recentEvents = [...events].reverse().slice(0, 3);
+
+  return (
+    <section className="insight-event-preview" aria-label="最近事件摘要">
+      <div className="insight-snapshot-header compact">
+        <div>
+          <span className="eyebrow">Timeline</span>
+          <h2>最近事件</h2>
+        </div>
+        <span>{events.length} 条</span>
+      </div>
+      {recentEvents.length > 0 ? (
+        <ol>
+          {recentEvents.map((event) => (
+            <li key={event.id}>
+              <time>{formatEventPreviewTime(event.timestamp)}</time>
+              <strong>{event.label}</strong>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p>开始摆放沙具后，这里会记录最近动作。</p>
+      )}
+    </section>
+  );
+}
+
+function formatEventPreviewTime(timestamp: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp));
 }

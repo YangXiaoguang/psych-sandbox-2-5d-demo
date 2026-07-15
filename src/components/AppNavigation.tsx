@@ -33,6 +33,7 @@ export function AppNavigation({
         <div className="app-brand-meta" aria-label="系统状态">
           <span>本地原型</span>
           {activeUserName ? <span>当前：{activeUserName}</span> : null}
+          <span className="app-save-status">已保存</span>
         </div>
       </div>
       <div className="app-navigation-actions">

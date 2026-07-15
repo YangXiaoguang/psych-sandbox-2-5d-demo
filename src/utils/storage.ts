@@ -1,4 +1,5 @@
-import { createDefaultManagedAssets } from "../data/assets";
+import { createDefaultManagedAssets, SANDBOX_ASSETS } from "../data/assets";
+import { getToyAssetSpec } from "../data/toyAssetSpecs";
 import { createDefaultLlmProviders, createDefaultPsychAgents } from "../data/defaultAgents";
 import type {
   AgentConversation,
@@ -141,7 +142,7 @@ export function saveSandboxLayoutPreferencesForUser(userId: string, preferences:
 
 export function loadManagedAssets(): ManagedAsset[] {
   const parsed = readJson<ManagedAsset[]>(MANAGED_ASSETS_KEY);
-  return Array.isArray(parsed) ? parsed : createDefaultManagedAssets();
+  return Array.isArray(parsed) ? reconcileManagedAssets(parsed) : createDefaultManagedAssets();
 }
 
 export function saveManagedAssets(assets: ManagedAsset[]): void {
@@ -152,6 +153,52 @@ export function resetManagedAssets(): ManagedAsset[] {
   const assets = createDefaultManagedAssets();
   saveManagedAssets(assets);
   return assets;
+}
+
+function reconcileManagedAssets(assets: ManagedAsset[]): ManagedAsset[] {
+  const now = new Date().toISOString();
+  const defaultsById = new Map(SANDBOX_ASSETS.map((asset) => [asset.assetId, asset]));
+  const reconciled = assets.map((asset) => {
+    const builtIn = defaultsById.get(asset.assetId);
+
+    if (builtIn) {
+      return {
+        ...asset,
+        isBuiltIn: true,
+        enabled: typeof asset.enabled === "boolean" ? asset.enabled : true,
+        createdAt: asset.createdAt || now,
+        updatedAt: asset.updatedAt || now,
+        anchor: builtIn.anchor,
+        footprint: builtIn.footprint,
+        thumbnailScale: builtIn.thumbnailScale,
+        semanticTags: builtIn.semanticTags,
+        modelRecipe: builtIn.modelRecipe,
+      };
+    }
+
+    const spec = getToyAssetSpec(asset.assetId, asset.riskTag);
+    return {
+      ...asset,
+      isBuiltIn: Boolean(asset.isBuiltIn),
+      enabled: typeof asset.enabled === "boolean" ? asset.enabled : true,
+      createdAt: asset.createdAt || now,
+      updatedAt: asset.updatedAt || now,
+      anchor: asset.anchor ?? spec.anchor,
+      footprint: asset.footprint ?? spec.footprint,
+      thumbnailScale: asset.thumbnailScale ?? spec.thumbnailScale,
+      semanticTags: Array.isArray(asset.semanticTags) && asset.semanticTags.length > 0 ? asset.semanticTags : spec.semanticTags,
+      modelRecipe: asset.modelRecipe ?? spec.modelRecipe,
+    };
+  });
+
+  const existingIds = new Set(reconciled.map((asset) => asset.assetId));
+  createDefaultManagedAssets(now).forEach((asset) => {
+    if (!existingIds.has(asset.assetId)) {
+      reconciled.push(asset);
+    }
+  });
+
+  return reconciled;
 }
 
 export function loadLlmProviders(): LlmProviderConfig[] {

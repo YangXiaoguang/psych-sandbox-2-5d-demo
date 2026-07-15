@@ -1,7 +1,8 @@
 import Konva from "konva";
-import { Hand, MousePointer2, RotateCcw, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import { Hand, MousePointer2, Orbit, RotateCcw, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import {
   forwardRef,
+  type CSSProperties,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -9,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Circle, Ellipse, Group, Layer, Line, Shape, Stage, Transformer } from "react-konva";
+import { Circle, Ellipse, Group, Layer, Line, Rect, Stage, Transformer } from "react-konva";
 import type { SandboxAsset, SandboxCameraState, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../types";
 import { BOARD_HEIGHT, BOARD_WIDTH, clamp } from "../utils/analysis";
 import { downloadDataUrl, safeTimestamp } from "../utils/download";
@@ -17,6 +18,7 @@ import {
   DEFAULT_SANDBOX_CAMERA,
   getDepthScale,
   getViewDepth,
+  normalizeSandboxCamera,
   projectPoint,
   unprojectPoint,
   VIEW_HEIGHT,
@@ -25,7 +27,10 @@ import {
 import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
+import { SandboxSandMaterialLayer } from "./SandboxSandMaterialLayer";
 import { SandboxObjectShape } from "./SandboxObjectShape";
+import { ThreeSandboxStageLayer } from "./ThreeSandboxStageLayer";
+import { SandboxTrayPolishLayer } from "./SandboxTrayPolishLayer";
 import { WeatherLayer } from "./WeatherLayer";
 
 export interface SandboxEditorHandle {
@@ -56,16 +61,21 @@ interface TransformState {
   scale: number;
 }
 
-interface CameraPanGesture {
+interface CameraGesture {
+  mode: "pan" | "orbit";
   clientX: number;
   clientY: number;
   panX: number;
   panY: number;
+  yaw: number;
+  pitch: number;
 }
 
 type ObjectGestureMode = "drag" | "transform";
 type SelectedObjectMode = ObjectGestureMode | "selected";
-type StageToolMode = "select" | "pan";
+type CameraGestureMode = CameraGesture["mode"];
+type StageToolMode = "select" | "pan" | "orbit";
+type NativeCameraEvent = MouseEvent | TouchEvent | PointerEvent;
 
 export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>(function SandboxEditor(
   {
@@ -93,6 +103,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const transformerRef = useRef<Konva.Transformer | null>(null);
   const interactionOverlayRef = useRef<Konva.Group | null>(null);
   const objectRefs = useRef<Record<string, Konva.Group | null>>({});
+  const transformProxyRefs = useRef<Record<string, Konva.Rect | null>>({});
   const visualRefs = useRef<Record<string, Konva.Group | null>>({});
   const objectsRef = useRef<SandboxObject[]>(objects);
   const selectedIdRef = useRef<string | null>(selectedId);
@@ -106,15 +117,28 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const dropPulseTimerRef = useRef<number | null>(null);
   const cameraRef = useRef<SandboxCameraState>(camera);
   const spacePanRef = useRef(false);
-  const cameraPanRef = useRef<CameraPanGesture | null>(null);
+  const cameraPanRef = useRef<CameraGesture | null>(null);
+  const cameraDocumentCleanupRef = useRef<(() => void) | null>(null);
+  const cameraDocumentTrackingRef = useRef(false);
   const [scale, setScale] = useState(1);
   const scaleRef = useRef(scale);
   const [dropPreview, setDropPreview] = useState<{ x: number; y: number } | null>(null);
   const [dropPulse, setDropPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const [activeGesture, setActiveGesture] = useState<{ objectId: string; mode: ObjectGestureMode } | null>(null);
-  const [isCameraPanning, setIsCameraPanning] = useState(false);
+  const [cameraGestureMode, setCameraGestureMode] = useState<CameraGestureMode | null>(null);
   const [spacePanActive, setSpacePanActive] = useState(false);
   const [stageToolMode, setStageToolMode] = useState<StageToolMode>("select");
+  const isCameraPanning = cameraGestureMode === "pan";
+  const isCameraOrbiting = cameraGestureMode === "orbit";
+
+  useEffect(
+    () => () => {
+      cameraDocumentCleanupRef.current?.();
+      cameraDocumentCleanupRef.current = null;
+      cameraDocumentTrackingRef.current = false;
+    },
+    [],
+  );
 
   const sortedObjects = useMemo(
     () =>
@@ -141,7 +165,9 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     activeGesture?.mode === "drag" ? "object-dragging" : "",
     activeGesture?.mode === "transform" ? "object-transforming" : "",
     isCameraPanning ? "camera-panning" : "",
-    spacePanActive || stageToolMode === "pan" ? "camera-pan-ready" : "",
+    isCameraOrbiting ? "camera-orbiting" : "",
+    spacePanActive || stageToolMode === "pan" || stageToolMode === "select" ? "camera-pan-ready" : "",
+    stageToolMode === "orbit" ? "camera-orbit-ready" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -205,11 +231,17 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     }
 
     const updateScale = () => {
+      const styles = window.getComputedStyle(node);
+      const isFocusMode = Boolean(node.closest(".focus-mode"));
+      const horizontalPadding = isFocusMode ? parseCssPixels(styles.paddingLeft) + parseCssPixels(styles.paddingRight) : 0;
+      const verticalPadding = isFocusMode ? parseCssPixels(styles.paddingTop) + parseCssPixels(styles.paddingBottom) : 0;
+      const safetyInset = isFocusMode ? 16 : 24;
       const nextScale = Math.min(
-        (node.clientWidth - 24) / VIEW_WIDTH,
-        (node.clientHeight - 24) / VIEW_HEIGHT,
+        (node.clientWidth - horizontalPadding - safetyInset) / VIEW_WIDTH,
+        (node.clientHeight - verticalPadding - safetyInset) / VIEW_HEIGHT,
       );
-      setScale(clamp(Number(nextScale.toFixed(3)), 0.5, 1.2));
+      const minScale = node.clientWidth < 640 ? 0.32 : 0.5;
+      setScale(clamp(Number(nextScale.toFixed(3)), minScale, 1.2));
     };
 
     updateScale();
@@ -235,7 +267,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       return;
     }
 
-    const node = objectRefs.current[selectedId];
+    const node = transformProxyRefs.current[selectedId] ?? objectRefs.current[selectedId];
     transformer.nodes(node ? [node] : []);
     transformer.getLayer()?.batchDraw();
   }, [objects, selectedId]);
@@ -314,30 +346,6 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
-
-  useEffect(() => {
-    if (!isCameraPanning) {
-      return;
-    }
-
-    const handleMove = (event: MouseEvent) => {
-      event.preventDefault();
-      updateCameraPan(event.clientX, event.clientY);
-    };
-
-    const handleEnd = () => {
-      endCameraPan();
-    };
-
-    window.addEventListener("mousemove", handleMove, { passive: false });
-    window.addEventListener("mouseup", handleEnd);
-    window.addEventListener("blur", handleEnd);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleEnd);
-      window.removeEventListener("blur", handleEnd);
-    };
-  }, [isCameraPanning]);
 
   useEffect(() => {
     const layer = objectLayerRef.current;
@@ -473,8 +481,28 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
   useImperativeHandle(ref, () => ({ exportPng }), [exportPng]);
 
+  const updateStagePointerLight = (clientX: number, clientY: number) => {
+    const frame = stageFrameRef.current;
+    if (!frame || reduceMotionRef.current) {
+      return;
+    }
+
+    const rect = frame.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    const x = clamp(((clientX - rect.left) / rect.width) * 100, 8, 92);
+    const y = clamp(((clientY - rect.top) / rect.height) * 100, 8, 78);
+    frame.style.setProperty("--stage-light-x", `${x.toFixed(1)}%`);
+    frame.style.setProperty("--stage-light-y", `${y.toFixed(1)}%`);
+    hostRef.current?.style.setProperty("--stage-light-x", `${x.toFixed(1)}%`);
+    hostRef.current?.style.setProperty("--stage-light-y", `${y.toFixed(1)}%`);
+  };
+
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    updateStagePointerLight(event.clientX, event.clientY);
     const hasSandboxAsset = Array.from(event.dataTransfer.types).includes(DRAG_MIME);
     if (!hasSandboxAsset && !draggingAsset) {
       return;
@@ -514,9 +542,19 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     }, 520);
   };
 
-  const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-    const targetName = event.target.name();
-    const isTraySurface = event.target === event.target.getStage() || targetName === "tray";
+  const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent | PointerEvent>) => {
+    const isTraySurface = !isSandboxObjectTarget(event.target);
+
+    if (shouldStartCameraOrbit(event.evt, isTraySurface)) {
+      event.evt.preventDefault();
+      event.cancelBubble = true;
+      beginCameraOrbit(event.evt);
+      if (isTraySurface) {
+        setActiveGesture(null);
+        onSelectObject(null);
+      }
+      return;
+    }
 
     if (shouldStartCameraPan(event.evt, isTraySurface)) {
       event.evt.preventDefault();
@@ -535,25 +573,59 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     }
   };
 
-  const handleStageMouseMove = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+  const handleStageMouseMove = (event: Konva.KonvaEventObject<MouseEvent | TouchEvent | PointerEvent>) => {
     const point = getNativeClientPoint(event.evt);
+    if (point) {
+      updateStagePointerLight(point.clientX, point.clientY);
+    }
     if (!point || !cameraPanRef.current) {
       return;
     }
+    if (cameraDocumentTrackingRef.current) {
+      return;
+    }
     event.evt.preventDefault();
-    updateCameraPan(point.clientX, point.clientY);
+    updateCameraGesture(point.clientX, point.clientY);
   };
 
   const handleStageMouseUp = () => {
     if (cameraPanRef.current) {
-      endCameraPan();
+      endCameraGesture();
     }
   };
 
   const handleStageWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault();
-    const delta = -event.deltaY * 0.0012;
-    onCameraChange({ zoom: Number((camera.zoom + delta).toFixed(3)) });
+    updateStagePointerLight(event.clientX, event.clientY);
+
+    if (event.shiftKey) {
+      onCameraChange({ yaw: Number(clamp(camera.yaw - event.deltaY * 0.035, -32, 32).toFixed(1)) });
+      return;
+    }
+
+    if (event.altKey) {
+      onCameraChange({ pitch: Number(clamp(camera.pitch - event.deltaY * 0.0008, 0.48, 0.74).toFixed(3)) });
+      return;
+    }
+
+    const frame = stageFrameRef.current;
+    const rect = frame?.getBoundingClientRect();
+    const pointer = rect
+      ? {
+          x: (event.clientX - rect.left) / scale,
+          y: (event.clientY - rect.top) / scale,
+        }
+      : { x: VIEW_WIDTH / 2, y: VIEW_HEIGHT / 2 };
+    const nextZoom = clamp(Number((camera.zoom - event.deltaY * 0.0012).toFixed(3)), 0.7, 1.48);
+    const anchor = unprojectPoint(pointer, camera);
+    const nextCamera = normalizeSandboxCamera({ ...camera, zoom: nextZoom });
+    const projectedAnchor = projectPoint(anchor, nextCamera);
+
+    onCameraChange({
+      zoom: nextCamera.zoom,
+      panX: Number((nextCamera.panX + pointer.x - projectedAnchor.x).toFixed(1)),
+      panY: Number((nextCamera.panY + pointer.y - projectedAnchor.y).toFixed(1)),
+    });
   };
 
   const setStageCursor = (cursor: string) => {
@@ -563,15 +635,43 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     }
   };
 
-  function shouldStartCameraPan(event: MouseEvent | TouchEvent, isTraySurface: boolean): boolean {
+  function shouldStartCameraPan(event: NativeCameraEvent, isTraySurface: boolean): boolean {
     if ("touches" in event) {
-      return isTraySurface;
+      return isTraySurface || stageToolMode === "pan";
     }
 
-    return stageToolMode === "pan" || isTraySurface || event.button === 1 || event.button === 2 || spacePanRef.current;
+    const isPrimaryButton = isPrimaryPointerButton(event);
+    const isMousePanShortcut = event.button === 1 || event.button === 2 || spacePanRef.current;
+
+    if (stageToolMode === "pan") {
+      return isPrimaryButton || isMousePanShortcut;
+    }
+
+    return (isTraySurface && isPrimaryButton && stageToolMode !== "orbit") || isMousePanShortcut;
   }
 
-  const beginCameraPan = (event: MouseEvent | TouchEvent) => {
+  function shouldStartCameraOrbit(event: NativeCameraEvent, isTraySurface: boolean): boolean {
+    if ("touches" in event) {
+      return false;
+    }
+
+    const isPrimaryButton = isPrimaryPointerButton(event);
+    return isPrimaryButton && (stageToolMode === "orbit" || (isTraySurface && event.altKey));
+  }
+
+  const beginCameraPan = (event: NativeCameraEvent) => {
+    beginCameraGesture(event, "pan");
+  };
+
+  const beginCameraOrbit = (event: NativeCameraEvent) => {
+    beginCameraGesture(event, "orbit");
+  };
+
+  const beginCameraGesture = (event: NativeCameraEvent, mode: CameraGestureMode) => {
+    if (cameraPanRef.current) {
+      return;
+    }
+
     const point = getNativeClientPoint(event);
     if (!point) {
       return;
@@ -583,14 +683,77 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       clientY: point.clientY,
       panX: current.panX,
       panY: current.panY,
+      yaw: current.yaw,
+      pitch: current.pitch,
+      mode,
     };
-    setIsCameraPanning(true);
+    setCameraGestureMode(mode);
     setStageCursor("grabbing");
+    bindCameraDocumentGestureListeners();
   };
 
-  const updateCameraPan = (clientX: number, clientY: number) => {
+  const clearCameraDocumentGestureListeners = () => {
+    cameraDocumentCleanupRef.current?.();
+    cameraDocumentCleanupRef.current = null;
+    cameraDocumentTrackingRef.current = false;
+  };
+
+  const bindCameraDocumentGestureListeners = () => {
+    clearCameraDocumentGestureListeners();
+    cameraDocumentTrackingRef.current = true;
+
+    const handleMove = (event: NativeCameraEvent) => {
+      const point = getNativeClientPoint(event);
+      if (!point || !cameraPanRef.current) {
+        return;
+      }
+      event.preventDefault();
+      updateStagePointerLight(point.clientX, point.clientY);
+      updateCameraGesture(point.clientX, point.clientY);
+    };
+
+    const handleEnd = () => {
+      if (cameraPanRef.current) {
+        endCameraGesture();
+      }
+    };
+
+    window.addEventListener("mousemove", handleMove as EventListener, { passive: false });
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("pointermove", handleMove as EventListener, { passive: false });
+    window.addEventListener("pointerup", handleEnd);
+    window.addEventListener("pointercancel", handleEnd);
+    window.addEventListener("touchmove", handleMove as EventListener, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+    window.addEventListener("touchcancel", handleEnd);
+    window.addEventListener("blur", handleEnd);
+
+    cameraDocumentCleanupRef.current = () => {
+      window.removeEventListener("mousemove", handleMove as EventListener);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("pointermove", handleMove as EventListener);
+      window.removeEventListener("pointerup", handleEnd);
+      window.removeEventListener("pointercancel", handleEnd);
+      window.removeEventListener("touchmove", handleMove as EventListener);
+      window.removeEventListener("touchend", handleEnd);
+      window.removeEventListener("touchcancel", handleEnd);
+      window.removeEventListener("blur", handleEnd);
+    };
+  };
+
+  const updateCameraGesture = (clientX: number, clientY: number) => {
     const gesture = cameraPanRef.current;
     if (!gesture) {
+      return;
+    }
+
+    if (gesture.mode === "orbit") {
+      const deltaX = (clientX - gesture.clientX) / scaleRef.current;
+      const deltaY = (clientY - gesture.clientY) / scaleRef.current;
+      onCameraChange({
+        yaw: Number(clamp(gesture.yaw + deltaX * 0.16, -32, 32).toFixed(1)),
+        pitch: Number(clamp(gesture.pitch - deltaY * 0.0012, 0.48, 0.74).toFixed(3)),
+      });
       return;
     }
 
@@ -600,14 +763,15 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     });
   };
 
-  const endCameraPan = () => {
+  const endCameraGesture = () => {
     cameraPanRef.current = null;
-    setIsCameraPanning(false);
+    setCameraGestureMode(null);
+    clearCameraDocumentGestureListeners();
     if (spacePanRef.current) {
       setStageCursor("grab");
       return;
     }
-    setStageCursor(activeGestureRef.current ? "grabbing" : "default");
+    setStageCursor(activeGestureRef.current ? "grabbing" : stageToolMode === "select" ? "default" : "grab");
   };
 
   const handleDragMove = (object: SandboxObject, event: Konva.KonvaEventObject<DragEvent>) => {
@@ -615,6 +779,70 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     const next = unprojectPoint({ x: node.x(), y: node.y() }, camera);
     node.position(projectPoint(next, camera));
     onPatchObject(object.id, next);
+  };
+
+  const resetTransformProxy = (object: SandboxObject) => {
+    const node = transformProxyRefs.current[object.id];
+    if (!node) {
+      return;
+    }
+    const proxyBox = getTransformProxyBox(object);
+    node.position({ x: proxyBox.x, y: proxyBox.y });
+    node.size({ width: proxyBox.width, height: proxyBox.height });
+    node.rotation(0);
+    node.scale({ x: 1, y: 1 });
+  };
+
+  const handleProxyTransformPreview = (object: SandboxObject) => {
+    const proxy = transformProxyRefs.current[object.id];
+    const objectNode = objectRefs.current[object.id];
+    if (!proxy || !objectNode) {
+      return;
+    }
+
+    const boardPoint = unprojectPoint({ x: objectNode.x(), y: objectNode.y() }, camera);
+    const depthScale = getDepthScale(boardPoint, camera);
+    const scaleDelta = (Math.abs(proxy.scaleX()) + Math.abs(proxy.scaleY())) / 2;
+    const previewScale = clamp(object.scale * scaleDelta, 0.35, 2.4) * depthScale;
+    objectNode.rotation(normalizeRotation(object.rotation + proxy.rotation()));
+    objectNode.scale({ x: previewScale, y: previewScale });
+  };
+
+  const handleProxyTransformEnd = (object: SandboxObject) => {
+    const proxy = transformProxyRefs.current[object.id];
+    const objectNode = objectRefs.current[object.id];
+    if (!proxy || !objectNode) {
+      return;
+    }
+
+    const boardPoint = unprojectPoint({ x: objectNode.x(), y: objectNode.y() }, camera);
+    const depthScale = getDepthScale(boardPoint, camera);
+    const scaleDelta = (Math.abs(proxy.scaleX()) + Math.abs(proxy.scaleY())) / 2;
+    const nextScale = clamp(Number((object.scale * scaleDelta).toFixed(2)), 0.35, 2.4);
+    const patch = {
+      x: Number(boardPoint.x.toFixed(1)),
+      y: Number(boardPoint.y.toFixed(1)),
+      rotation: normalizeRotation(object.rotation + proxy.rotation()),
+      scale: nextScale,
+    };
+
+    objectNode.position(projectPoint(boardPoint, camera));
+    objectNode.rotation(patch.rotation);
+    objectNode.scale({ x: nextScale * depthScale, y: nextScale * depthScale });
+    resetTransformProxy(object);
+    onPatchObject(object.id, patch);
+
+    const from = transformStartRef.current[object.id];
+    onRecordEvent({
+      type: "transform",
+      objectId: object.id,
+      assetId: object.assetId,
+      label: `变换沙具: ${object.name}`,
+      payload: {
+        from,
+        to: patch,
+      },
+    });
   };
 
   const handleTransformEnd = (object: SandboxObject) => {
@@ -651,7 +879,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   };
 
   const handleZoomStep = (step: number) => {
-    onCameraChange({ zoom: Number(clamp(camera.zoom + step, 0.74, 1.28).toFixed(2)) });
+    onCameraChange({ zoom: Number(clamp(camera.zoom + step, 0.7, 1.48).toFixed(2)) });
   };
 
   return (
@@ -660,7 +888,20 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
         <div
           className={stageFrameClassName}
           ref={stageFrameRef}
-          style={{ width: VIEW_WIDTH * scale, height: VIEW_HEIGHT * scale }}
+          data-camera-pan-x={camera.panX.toFixed(1)}
+          data-camera-pan-y={camera.panY.toFixed(1)}
+          data-camera-yaw={camera.yaw.toFixed(1)}
+          data-camera-pitch={camera.pitch.toFixed(3)}
+          data-camera-zoom={camera.zoom.toFixed(3)}
+          data-stage-tool-mode={stageToolMode}
+          style={
+            {
+              width: VIEW_WIDTH * scale,
+              height: VIEW_HEIGHT * scale,
+              "--stage-light-x": "50%",
+              "--stage-light-y": "30%",
+            } as CSSProperties
+          }
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -674,13 +915,29 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             onMouseMove={handleStageMouseMove}
             onMouseUp={handleStageMouseUp}
             onMouseLeave={handleStageMouseUp}
+            onPointerDown={handleStageMouseDown}
+            onPointerMove={handleStageMouseMove}
+            onPointerUp={handleStageMouseUp}
+            onPointerCancel={handleStageMouseUp}
             onContextMenu={(event) => event.evt.preventDefault()}
             onTouchStart={handleStageMouseDown}
             onTouchMove={handleStageMouseMove}
             onTouchEnd={handleStageMouseUp}
           >
             <Layer ref={objectLayerRef} scaleX={scale} scaleY={scale}>
-              <SandboxGuideLayer environment={environment} camera={camera} showGuides={showGuides} />
+              <ThreeSandboxStageLayer environment={environment} camera={camera} />
+              <SandboxSandMaterialLayer environment={environment} camera={camera} />
+              <SandboxTrayPolishLayer environment={environment} camera={camera} />
+              <SandboxGuideLayer environment={environment} camera={camera} showGuides={showGuides} renderBackdrop={false} />
+              <Rect
+                name="sandbox-camera-pan-surface"
+                x={0}
+                y={0}
+                width={VIEW_WIDTH}
+                height={VIEW_HEIGHT}
+                fill="rgba(255,255,255,0.001)"
+                listening
+              />
 
               {sortedObjects.map((object, index) => {
                 const projected = projectPoint(object, camera);
@@ -701,14 +958,28 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                     rotation={object.rotation}
                     scaleX={object.scale * depthScale}
                     scaleY={object.scale * depthScale}
-                    draggable={stageToolMode !== "pan" && !spacePanActive && !isCameraPanning}
-                    onMouseEnter={() => setStageCursor(spacePanActive || stageToolMode === "pan" ? "grab" : activeGesture?.mode === "drag" ? "grabbing" : "grab")}
+                    draggable={stageToolMode === "select" && !spacePanActive && !cameraGestureMode}
+                    onMouseEnter={() =>
+                      setStageCursor(
+                        spacePanActive || stageToolMode !== "select"
+                          ? "grab"
+                          : activeGesture?.mode === "drag"
+                            ? "grabbing"
+                            : "grab",
+                      )
+                    }
                     onMouseLeave={() => {
-                      if (!activeGesture && !spacePanActive && !isCameraPanning && stageToolMode !== "pan") {
+                      if (!activeGesture && !spacePanActive && !cameraGestureMode && stageToolMode === "select") {
                         setStageCursor("default");
                       }
                     }}
                     onMouseDown={(event) => {
+                      if (shouldStartCameraOrbit(event.evt, false)) {
+                        event.cancelBubble = true;
+                        event.evt.preventDefault();
+                        beginCameraOrbit(event.evt);
+                        return;
+                      }
                       if (shouldStartCameraPan(event.evt, false)) {
                         event.cancelBubble = true;
                         event.evt.preventDefault();
@@ -782,8 +1053,45 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                         height={object.height}
                         riskTag={object.riskTag}
                         environment={environment}
+                        camera={camera}
+                        rotation={object.rotation}
+                        footprint={object.footprint}
                       />
                     </Group>
+                    <Rect
+                      ref={(node) => {
+                        if (node) {
+                          transformProxyRefs.current[object.id] = node;
+                        } else {
+                          delete transformProxyRefs.current[object.id];
+                        }
+                      }}
+                      name="sandbox-object-transform-proxy"
+                      {...getTransformProxyBox(object)}
+                      fill="rgba(0,0,0,0.001)"
+                      opacity={0.001}
+                      listening={false}
+                      onTransformStart={(event) => {
+                        event.cancelBubble = true;
+                        setActiveGesture({ objectId: object.id, mode: "transform" });
+                        transformStartRef.current[object.id] = {
+                          x: object.x,
+                          y: object.y,
+                          rotation: object.rotation,
+                          scale: object.scale,
+                        };
+                      }}
+                      onTransform={(event) => {
+                        event.cancelBubble = true;
+                        handleProxyTransformPreview(object);
+                      }}
+                      onTransformEnd={(event) => {
+                        event.cancelBubble = true;
+                        handleProxyTransformEnd(object);
+                        settleStartRef.current[object.id] = performance.now();
+                        setActiveGesture(null);
+                      }}
+                    />
                   </Group>
                 );
               })}
@@ -832,12 +1140,18 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
           </Stage>
         </div>
       </div>
+      <StageCameraHud
+        camera={camera}
+        mode={stageToolMode}
+        gestureMode={cameraGestureMode}
+        spacePanActive={spacePanActive}
+      />
       <StageToolDock
         mode={stageToolMode}
         hasSelection={Boolean(selectedObject)}
         onModeChange={(mode) => {
           setStageToolMode(mode);
-          setStageCursor(mode === "pan" ? "grab" : "default");
+          setStageCursor(mode === "select" ? "default" : "grab");
         }}
         onZoomIn={() => handleZoomStep(0.08)}
         onZoomOut={() => handleZoomStep(-0.08)}
@@ -849,24 +1163,130 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   );
 });
 
-function ObjectInteractionHitArea({ object }: { object: SandboxObject }): JSX.Element {
-  const hitWidth = Math.max(42, object.width * 1.08, object.footprint.width * 0.9);
-  const hitHeight = Math.max(38, object.height * 1.08, object.footprint.depth * 0.9);
+function StageCameraHud({
+  camera,
+  mode,
+  gestureMode,
+  spacePanActive,
+}: {
+  camera: SandboxCameraState;
+  mode: StageToolMode;
+  gestureMode: CameraGestureMode | null;
+  spacePanActive: boolean;
+}): JSX.Element {
+  const stateLabel =
+    gestureMode === "orbit"
+      ? "转动中"
+      : gestureMode === "pan"
+        ? "移动中"
+        : mode === "orbit"
+          ? "转动视角"
+          : mode === "pan" || spacePanActive
+            ? "移动视角"
+            : "空白沙面可拖动";
+  const CameraIcon = gestureMode === "orbit" || mode === "orbit" ? Orbit : Hand;
+  const tipLabel =
+    gestureMode === "orbit"
+      ? "拖动鼠标调整角度与俯仰"
+      : gestureMode === "pan"
+        ? "拖动鼠标移动沙盘视角"
+        : mode === "orbit"
+          ? "按住鼠标拖动即可转动沙盘"
+          : mode === "pan" || spacePanActive
+            ? "按住鼠标拖动即可移动沙盘"
+            : "拖空白处移动视角，点住沙具调整作品";
+  const isCameraHudActive = Boolean(gestureMode) || mode !== "select" || spacePanActive;
 
   return (
-    <Shape
+    <aside
+      className={`stage-camera-hud ${isCameraHudActive ? "active" : ""}`}
+      data-mode={gestureMode ?? mode}
+      data-gesture={gestureMode ? "true" : "false"}
+      aria-label="沙盘视角状态"
+      aria-live="polite"
+    >
+      <div className="stage-camera-hud-status">
+        <CameraIcon size={15} aria-hidden="true" />
+        <span>{stateLabel}</span>
+      </div>
+      <p className="stage-camera-hud-tip">{tipLabel}</p>
+      <dl>
+        <div>
+          <dt>角度</dt>
+          <dd>{Math.round(camera.yaw)}°</dd>
+        </div>
+        <div>
+          <dt>缩放</dt>
+          <dd>{camera.zoom.toFixed(2)}x</dd>
+        </div>
+        <div>
+          <dt>俯仰</dt>
+          <dd>{Math.round(camera.pitch * 100)}%</dd>
+        </div>
+        <div>
+          <dt>位置</dt>
+          <dd>
+            {Math.round(camera.panX)},{Math.round(camera.panY)}
+          </dd>
+        </div>
+      </dl>
+    </aside>
+  );
+}
+
+function isSandboxObjectTarget(target: Konva.Node): boolean {
+  let node: Konva.Node | null = target;
+  while (node) {
+    const name = node.name();
+    const className = node.getClassName();
+    if (
+      name === "sandbox-object" ||
+      name === "sandbox-object-hit-area" ||
+      name === "sandbox-object-transform-proxy" ||
+      name.includes("_anchor") ||
+      className === "Transformer"
+    ) {
+      return true;
+    }
+    node = node.getParent();
+  }
+  return false;
+}
+
+function ObjectInteractionHitArea({ object }: { object: SandboxObject }): JSX.Element {
+  const hitWidth = Math.max(42, object.width * 1.08, object.footprint.width * 0.9);
+  const topReach = Math.max(object.height * 0.94, object.footprint.height * 0.78, 38);
+  const bottomReach = Math.max(object.height * 0.16, object.footprint.depth * 0.26, 12);
+  const hitHeight = topReach + bottomReach;
+
+  return (
+    <Rect
       name="sandbox-object-hit-area"
-      fill="#000000"
-      sceneFunc={() => undefined}
-      hitFunc={(context, shape) => {
-        context.beginPath();
-        context.rect(-hitWidth * 0.5, -hitHeight * 0.86, hitWidth, hitHeight);
-        context.closePath();
-        context.fillStrokeShape(shape);
-      }}
+      x={-hitWidth * 0.5}
+      y={-topReach}
+      width={hitWidth}
+      height={hitHeight}
+      fill="rgba(0,0,0,0.01)"
       listening
     />
   );
+}
+
+function getTransformProxyBox(object: SandboxObject): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  const width = clamp(Math.max(object.width * 0.74, object.footprint.width * 0.62, 34), 34, object.width * 1.04);
+  const height = clamp(Math.max(object.height * 0.72, object.footprint.height * 0.76, 34), 34, object.height * 1.02);
+
+  return {
+    x: Number((-width * 0.5).toFixed(1)),
+    y: Number((-height * 0.86).toFixed(1)),
+    width: Number(width.toFixed(1)),
+    height: Number(height.toFixed(1)),
+  };
 }
 
 function StageToolDock({
@@ -893,6 +1313,7 @@ function StageToolDock({
         className={mode === "select" ? "active" : ""}
         onClick={() => onModeChange("select")}
         aria-pressed={mode === "select"}
+        title="选择沙具。拖动沙盘空白处可移动视角。"
       >
         <MousePointer2 size={18} />
         <span>选择</span>
@@ -902,9 +1323,20 @@ function StageToolDock({
         className={mode === "pan" ? "active" : ""}
         onClick={() => onModeChange("pan")}
         aria-pressed={mode === "pan"}
+        title="移动沙盘视角。按住鼠标拖动画面。"
       >
         <Hand size={18} />
         <span>移动沙盘</span>
+      </button>
+      <button
+        type="button"
+        className={mode === "orbit" ? "active" : ""}
+        onClick={() => onModeChange("orbit")}
+        aria-pressed={mode === "orbit"}
+        title="转动沙盘视角。按住鼠标拖动可调整角度和俯仰。"
+      >
+        <Orbit size={18} />
+        <span>转动</span>
       </button>
       <button type="button" onClick={onZoomIn}>
         <ZoomIn size={18} />
@@ -926,7 +1358,7 @@ function StageToolDock({
   );
 }
 
-function getNativeClientPoint(event: MouseEvent | TouchEvent): { clientX: number; clientY: number } | null {
+function getNativeClientPoint(event: NativeCameraEvent): { clientX: number; clientY: number } | null {
   if ("touches" in event) {
     const touch = event.touches[0] ?? event.changedTouches[0];
     return touch ? { clientX: touch.clientX, clientY: touch.clientY } : null;
@@ -935,9 +1367,18 @@ function getNativeClientPoint(event: MouseEvent | TouchEvent): { clientX: number
   return { clientX: event.clientX, clientY: event.clientY };
 }
 
+function isPrimaryPointerButton(event: MouseEvent | PointerEvent): boolean {
+  return event.button === 0 || event.buttons === 1 || event.button === -1;
+}
+
 function normalizeRotation(rotation: number): number {
   const normalized = ((rotation % 360) + 360) % 360;
   return Number(normalized.toFixed(1));
+}
+
+function parseCssPixels(value: string): number {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function getMotionSeed(value: string): number {

@@ -89,6 +89,7 @@ export function AiCompanionPanel({
   const [streamStatus, setStreamStatus] = useState("真实 LLM 未开始");
   const timerRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const chatLogRef = useRef<HTMLElement | null>(null);
 
   const contextSummary = useMemo(
     () => buildContextSummary(objects, selectedObject, events, analysis, personalMemoryContext),
@@ -103,6 +104,22 @@ export function AiCompanionPanel({
       abortRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    const node = chatLogRef.current;
+    if (!node) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      node.scrollTo({
+        top: node.scrollHeight,
+        behavior: mode === "speaking" ? "auto" : "smooth",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages, mode]);
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -223,7 +240,7 @@ export function AiCompanionPanel({
         </div>
       </section>
 
-      <section className="ai-chat-log" aria-label="对话内容" aria-live="polite">
+      <section ref={chatLogRef} className="ai-chat-log" aria-label="对话内容" aria-live="polite">
         {messages.map((message) => (
           <article key={message.id} className={`ai-message ${message.role}`}>
             <span>{message.role === "assistant" ? "AI" : "你"}</span>

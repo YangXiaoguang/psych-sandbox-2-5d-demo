@@ -11087,3 +11087,4675 @@ button:disabled {
     padding: 4px;
   }
 }
+
+/* Cohesive editor visual system v8.
+   This is the single authoritative override layer for the sand tray workbench. */
+.product-shell {
+  --editor-gap: 12px;
+  --editor-pad: 14px;
+  --toolbar-height: 86px;
+  --rail-width: 58px;
+  --backpack-width: clamp(300px, 18vw, 346px);
+  --inspector-width: clamp(304px, 20vw, 364px);
+  --workspace-min: 620px;
+  color: var(--ink);
+}
+
+.product-shell:not(.night-mode) {
+  color: #24302f;
+  background:
+    radial-gradient(circle at 54% 8%, rgba(255, 252, 235, 0.86), transparent 34%),
+    radial-gradient(circle at 18% 12%, rgba(121, 183, 166, 0.2), transparent 30%),
+    linear-gradient(135deg, #eef3ea 0%, #e2eadf 42%, #d5e1d7 100%);
+}
+
+.product-shell.night-mode {
+  --panel: #15252d;
+  --panel-soft: #182a33;
+  --panel-strong: #0f1c24;
+  --surface: #102029;
+  --surface-warm: #102029;
+  --line: rgba(160, 191, 191, 0.28);
+  --line-soft: rgba(160, 191, 191, 0.18);
+  --line-strong: rgba(171, 218, 213, 0.54);
+  --ink: #edf7f3;
+  --ink-soft: #d8e9e4;
+  --ink-muted: #a8bbb6;
+  --accent: #70d6c6;
+  --accent-soft: rgba(38, 111, 102, 0.38);
+  --accent-line: #69c9bd;
+  --accent-dark: #b8fff3;
+  --warning: #f2b36d;
+  --danger: #ff927f;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 55% 0%, rgba(95, 165, 188, 0.14), transparent 30%),
+    radial-gradient(circle at 20% 6%, rgba(101, 217, 194, 0.12), transparent 28%),
+    linear-gradient(140deg, #071118 0%, #0d1b23 48%, #101922 100%);
+}
+
+.product-shell * {
+  min-width: 0;
+}
+
+.product-shell input,
+.product-shell select,
+.product-shell textarea,
+.product-shell button {
+  letter-spacing: 0;
+}
+
+.product-shell input,
+.product-shell select,
+.product-shell textarea {
+  color: #26312f;
+  background: rgba(255, 253, 246, 0.94);
+  border-color: rgba(158, 139, 108, 0.5);
+}
+
+.product-shell input::placeholder,
+.product-shell textarea::placeholder {
+  color: rgba(72, 84, 78, 0.58);
+}
+
+.product-shell.night-mode input,
+.product-shell.night-mode select,
+.product-shell.night-mode textarea {
+  color: #f4fffb !important;
+  background: #07161e !important;
+  border-color: rgba(156, 195, 196, 0.42) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.product-shell.night-mode input::placeholder,
+.product-shell.night-mode textarea::placeholder {
+  color: rgba(213, 232, 226, 0.58) !important;
+}
+
+.product-shell.night-mode select option {
+  color: #effaf6;
+  background: #07161e;
+}
+
+.product-shell.night-mode button:disabled,
+.product-shell.night-mode .disabled,
+.product-shell.night-mode [aria-disabled="true"] {
+  color: rgba(224, 240, 235, 0.42) !important;
+  border-color: rgba(156, 195, 196, 0.18) !important;
+  background: rgba(10, 26, 35, 0.62) !important;
+  opacity: 1;
+}
+
+/* App chrome */
+.app-navigation {
+  position: relative;
+  z-index: 80;
+  min-height: 64px;
+  overflow: visible;
+}
+
+.app-brand {
+  max-width: 420px;
+}
+
+.app-brand h1 {
+  font-size: clamp(18px, 1.3vw, 23px);
+  line-height: 1.08;
+}
+
+.app-brand-meta {
+  gap: 6px;
+}
+
+.app-brand-meta span {
+  max-width: 142px;
+}
+
+.app-brand-meta .app-save-status {
+  gap: 6px;
+  color: #2b7b70;
+  background: rgba(232, 247, 241, 0.78);
+}
+
+.app-brand-meta .app-save-status::before {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #45aa95;
+  box-shadow: 0 0 0 4px rgba(69, 170, 149, 0.12);
+  content: "";
+}
+
+.app-navigation-actions {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.app-nav-tabs {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+}
+
+.app-nav-tabs button {
+  min-width: 134px;
+  min-height: 48px;
+  border-radius: 9px;
+}
+
+.app-auth-chip {
+  flex: 0 0 auto;
+  width: min(292px, 24vw);
+  min-height: 48px;
+}
+
+.product-shell.night-mode .app-navigation,
+.product-shell.night-mode .app-nav-tabs button,
+.product-shell.night-mode .app-auth-chip {
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(25, 43, 52, 0.96), rgba(15, 29, 38, 0.98));
+  border-color: rgba(156, 195, 196, 0.3);
+}
+
+.product-shell.night-mode .app-nav-tabs button.active,
+.product-shell.night-mode .app-nav-tabs button:hover {
+  color: #f5fffb;
+  border-color: rgba(112, 214, 198, 0.78);
+  background: linear-gradient(180deg, rgba(28, 109, 99, 0.88), rgba(18, 80, 75, 0.9));
+}
+
+.product-shell.night-mode .app-nav-tabs button em,
+.product-shell.night-mode .app-auth-chip em,
+.product-shell.night-mode .app-brand-meta span {
+  color: rgba(218, 235, 230, 0.72);
+}
+
+.product-shell.night-mode .app-brand-meta .app-save-status {
+  color: #c9fff4;
+  border-color: rgba(112, 214, 198, 0.34);
+  background: rgba(35, 112, 101, 0.32);
+}
+
+.app-brand-meta .app-save-status {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1620px) {
+  .app-brand {
+    max-width: 340px;
+  }
+
+  .app-nav-tabs button {
+    min-width: 116px;
+    padding: 0 10px;
+  }
+
+  .app-auth-chip {
+    width: 230px;
+  }
+}
+
+@media (max-width: 1420px) {
+  .app-brand-meta span:not(:first-child),
+  .app-nav-tabs button span em {
+    display: none;
+  }
+
+  .app-nav-tabs button {
+    min-width: 104px;
+  }
+}
+
+/* Main editor grid */
+.app-shell {
+  grid-template-columns: var(--backpack-width) minmax(var(--workspace-min), 1fr) var(--inspector-width);
+  gap: var(--editor-gap);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell.right-panel-collapsed {
+  grid-template-columns: var(--backpack-width) minmax(var(--workspace-min), 1fr) 58px;
+}
+
+.workspace-column {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  gap: 10px;
+  overflow: hidden;
+}
+
+@media (max-width: 1600px) {
+  .app-shell:not(.focus-mode) {
+    --backpack-width: 300px;
+    --workspace-min: 560px;
+    --inspector-width: 58px;
+    grid-template-columns: var(--backpack-width) minmax(var(--workspace-min), 1fr) var(--inspector-width);
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) {
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+    overflow: hidden;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) > :not(.panel-header) {
+    display: none !important;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .panel-header {
+    height: 100%;
+    justify-content: center;
+    padding: 12px 8px;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .panel-header > div {
+    display: none;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .small-icon-button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Top workbench ribbon */
+.topbar {
+  position: relative;
+  z-index: 70;
+  display: grid;
+  grid-template-columns: minmax(210px, 0.9fr) minmax(0, 1.7fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 78px;
+  padding: 12px 16px;
+  overflow: visible;
+  border-radius: 10px;
+}
+
+.topbar-primary {
+  min-width: 0;
+}
+
+.topbar-title h2 {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(18px, 1.3vw, 24px);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  overflow: visible;
+}
+
+.topbar-status span {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-hud {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 2px 0;
+  scrollbar-width: none;
+}
+
+.topbar-hud::-webkit-scrollbar {
+  display: none;
+}
+
+.hud-cluster {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 7px 9px;
+  border-radius: 10px;
+}
+
+.hud-cluster > p {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+.hud-segment {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 9px;
+}
+
+.hud-segment button,
+.action-hud .icon-button,
+.camera-hud .icon-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 42px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.hud-segment button span {
+  display: inline-block;
+}
+
+.action-hud .icon-button span,
+.camera-hud .icon-button span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+.camera-current-pill {
+  display: none !important;
+}
+
+.camera-adjust-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 14px;
+  z-index: 140;
+  width: min(520px, calc(100vw - 48px));
+  max-height: min(560px, calc(100vh - 190px));
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-strong);
+  box-shadow: 0 24px 70px rgba(27, 33, 31, 0.24);
+}
+
+.camera-panel-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.camera-panel-presets button {
+  display: grid;
+  gap: 4px;
+  min-height: 62px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.camera-panel-presets button small {
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.camera-panel-presets button.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.camera-slider {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.product-shell.night-mode .topbar,
+.product-shell.night-mode .hud-cluster,
+.product-shell.night-mode .hud-segment,
+.product-shell.night-mode .camera-adjust-panel,
+.product-shell.night-mode .camera-panel-presets button {
+  color: var(--ink);
+  border-color: rgba(156, 195, 196, 0.3);
+  background: linear-gradient(180deg, rgba(20, 36, 45, 0.96), rgba(12, 27, 35, 0.98));
+}
+
+.product-shell.night-mode .hud-segment button,
+.product-shell.night-mode .icon-button,
+.product-shell.night-mode .small-icon-button,
+.product-shell.night-mode .rail-toggle,
+.product-shell.night-mode .rail-tab {
+  color: #eaf8f4;
+  border-color: rgba(156, 195, 196, 0.34);
+  background: rgba(9, 24, 33, 0.76);
+}
+
+.product-shell.night-mode .hud-segment button.active,
+.product-shell.night-mode .hud-segment button:hover,
+.product-shell.night-mode .icon-button.active,
+.product-shell.night-mode .icon-button:hover,
+.product-shell.night-mode .small-icon-button:hover,
+.product-shell.night-mode .rail-tab.active {
+  color: #fafffd;
+  border-color: rgba(112, 214, 198, 0.86);
+  background: linear-gradient(180deg, rgba(31, 126, 114, 0.95), rgba(19, 87, 82, 0.98));
+}
+
+@media (max-width: 1540px) {
+  .topbar {
+    grid-template-columns: minmax(0, 0.55fr) minmax(0, 2fr);
+  }
+
+  .topbar-primary {
+    max-width: 250px;
+  }
+
+  .topbar-status span:not(:first-child) {
+    display: none;
+  }
+}
+
+@media (max-width: 1360px) {
+  .topbar-primary {
+    display: none;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar-hud {
+    justify-content: flex-start;
+  }
+}
+
+/* Stage */
+.sandbox-editor {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stage-host {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 18px;
+  overflow: hidden;
+}
+
+.stage-host::before,
+.stage-host::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.stage-host::before {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 14% 13%, rgba(255, 255, 255, 0.7), transparent 9%),
+    radial-gradient(circle at 86% 10%, rgba(190, 211, 184, 0.44), transparent 13%),
+    radial-gradient(circle at 72% 82%, rgba(171, 139, 93, 0.2), transparent 22%),
+    linear-gradient(90deg, rgba(173, 193, 169, 0.16) 0 1px, transparent 1px 100%),
+    linear-gradient(0deg, rgba(173, 193, 169, 0.13) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgba(255, 253, 242, 0.78), rgba(226, 220, 195, 0.44));
+  background-size: auto, auto, auto, 168px 168px, 168px 168px, auto;
+  filter: saturate(1.04);
+  opacity: 0.9;
+}
+
+.stage-host::after {
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 50% 90%, rgba(81, 55, 31, 0.2), transparent 46%),
+    radial-gradient(ellipse at var(--stage-light-x, 48%) var(--stage-light-y, 22%), rgba(255, 244, 205, 0.32), transparent 45%);
+  mix-blend-mode: multiply;
+  opacity: 0.56;
+}
+
+.product-shell.weather-cloudy .stage-host::before,
+.product-shell.weather-rainy .stage-host::before {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.42), transparent 10%),
+    radial-gradient(circle at 82% 10%, rgba(138, 154, 146, 0.38), transparent 14%),
+    linear-gradient(90deg, rgba(144, 160, 153, 0.18) 0 1px, transparent 1px 100%),
+    linear-gradient(0deg, rgba(144, 160, 153, 0.15) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgba(235, 237, 226, 0.76), rgba(196, 202, 191, 0.52));
+  background-size: auto, auto, 168px 168px, 168px 168px, auto;
+}
+
+.product-shell.weather-rainy .stage-host::after {
+  background:
+    linear-gradient(108deg, transparent 0 48%, rgba(255, 255, 255, 0.16) 49%, transparent 51% 100%),
+    radial-gradient(ellipse at 50% 90%, rgba(37, 52, 49, 0.26), transparent 48%);
+  background-size: 84px 100%, auto;
+  opacity: 0.5;
+}
+
+.product-shell.night-mode .stage-host::before {
+  background:
+    radial-gradient(circle at 17% 13%, rgba(124, 168, 178, 0.16), transparent 10%),
+    radial-gradient(circle at 84% 10%, rgba(83, 127, 142, 0.2), transparent 15%),
+    radial-gradient(circle at 78% 28%, rgba(231, 225, 175, 0.06), transparent 10%),
+    linear-gradient(90deg, rgba(126, 158, 162, 0.1) 0 1px, transparent 1px 100%),
+    linear-gradient(0deg, rgba(126, 158, 162, 0.08) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgba(13, 31, 40, 0.82), rgba(5, 16, 24, 0.94));
+  background-size: auto, auto, auto, 168px 168px, 168px 168px, auto;
+}
+
+.product-shell.night-mode .stage-host::after {
+  background:
+    radial-gradient(ellipse at 78% 20%, rgba(159, 205, 220, 0.11), transparent 32%),
+    radial-gradient(ellipse at 50% 90%, rgba(0, 0, 0, 0.34), transparent 48%),
+    radial-gradient(ellipse at var(--stage-light-x, 48%) var(--stage-light-y, 22%), rgba(105, 192, 202, 0.08), transparent 44%);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+}
+
+.stage-frame {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: var(--shadow-stage);
+  transform: translateZ(0);
+}
+
+.stage-frame.camera-pan-ready canvas,
+.stage-frame.camera-panning canvas {
+  cursor: grab;
+}
+
+.stage-frame.camera-panning canvas,
+.stage-frame.camera-orbiting canvas,
+.stage-frame.object-dragging canvas {
+  cursor: grabbing;
+}
+
+.stage-frame.camera-orbit-ready canvas {
+  cursor: grab;
+}
+
+.stage-frame.camera-pan-ready,
+.stage-frame.camera-orbit-ready {
+  box-shadow:
+    var(--shadow-stage),
+    0 0 0 1px rgba(104, 214, 197, 0.32);
+}
+
+.stage-frame.camera-panning,
+.stage-frame.camera-orbiting {
+  filter: saturate(1.04) contrast(1.02);
+  box-shadow:
+    var(--shadow-stage),
+    0 0 0 1px rgba(112, 214, 198, 0.56),
+    0 0 0 8px rgba(112, 214, 198, 0.08);
+}
+
+.stage-camera-hud {
+  position: absolute;
+  left: 28px;
+  top: 26px;
+  z-index: 34;
+  display: grid;
+  width: min(292px, calc(100% - 56px));
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(141, 125, 98, 0.32);
+  border-radius: 13px;
+  color: #2b3734;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 244, 0.82), rgba(247, 239, 221, 0.74));
+  box-shadow:
+    0 16px 34px rgba(50, 43, 30, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  opacity: 0.78;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition:
+    opacity 180ms ease,
+    width 180ms ease,
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+  backdrop-filter: blur(16px);
+}
+
+.stage-camera-hud:not(.active) {
+  width: auto;
+  max-width: min(268px, calc(100% - 56px));
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  opacity: 0.84;
+}
+
+.stage-camera-hud.active {
+  border-color: rgba(59, 156, 139, 0.46);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stage-camera-hud-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.stage-camera-hud-status svg {
+  color: #278074;
+}
+
+.stage-camera-hud-tip {
+  margin: 0;
+  color: #62706a;
+  font-size: 11.5px;
+  font-weight: 780;
+  line-height: 1.35;
+}
+
+.stage-camera-hud:not(.active) .stage-camera-hud-tip {
+  max-width: 218px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stage-camera-hud dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin: 1px 0 0;
+}
+
+.stage-camera-hud:not(.active) dl {
+  display: none;
+}
+
+.stage-camera-hud dl div {
+  display: grid;
+  gap: 1px;
+  min-height: 32px;
+  align-content: center;
+  padding: 5px 6px;
+  border: 1px solid rgba(159, 143, 112, 0.26);
+  border-radius: 8px;
+  background: rgba(255, 252, 242, 0.6);
+}
+
+.stage-camera-hud dt,
+.stage-camera-hud dd {
+  margin: 0;
+}
+
+.stage-camera-hud dt {
+  color: #758178;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.stage-camera-hud dd {
+  overflow: hidden;
+  color: #26312f;
+  font-size: 11px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stage-tool-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  z-index: 35;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(155, 139, 112, 0.42);
+  border-radius: 12px;
+  background: rgba(255, 250, 237, 0.92);
+  box-shadow: 0 16px 32px rgba(48, 54, 46, 0.18);
+  transform: translateX(-50%);
+}
+
+.stage-tool-dock button {
+  min-width: 54px;
+  height: 48px;
+  padding: 0 8px;
+  border-radius: 9px;
+}
+
+.product-shell.night-mode .sandbox-editor {
+  background: linear-gradient(180deg, rgba(8, 18, 25, 0.92), rgba(6, 15, 22, 0.95));
+  border-color: rgba(156, 195, 196, 0.24);
+}
+
+.product-shell.night-mode .stage-tool-dock {
+  border-color: rgba(156, 195, 196, 0.28);
+  background: rgba(7, 20, 29, 0.88);
+}
+
+.product-shell.night-mode .stage-camera-hud {
+  color: #edf8f4;
+  border-color: rgba(156, 195, 196, 0.26);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(112, 214, 198, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(12, 31, 40, 0.82), rgba(7, 20, 29, 0.76));
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.product-shell.night-mode .stage-camera-hud.active,
+.product-shell.night-mode .stage-camera-hud.active {
+  border-color: rgba(112, 214, 198, 0.58);
+}
+
+.product-shell.night-mode .stage-camera-hud-status svg {
+  color: #a8fff2;
+}
+
+.product-shell.night-mode .stage-camera-hud-tip,
+.product-shell.night-mode .stage-camera-hud dt {
+  color: rgba(221, 240, 235, 0.72);
+}
+
+.product-shell.night-mode .stage-camera-hud dd {
+  color: #f6fffb;
+}
+
+.product-shell.night-mode .stage-camera-hud dl div {
+  border-color: rgba(156, 195, 196, 0.2);
+  background: rgba(8, 23, 31, 0.58);
+}
+
+.product-shell.night-mode .stage-tool-dock button {
+  color: #edf8f4;
+  border-color: rgba(156, 195, 196, 0.32);
+  background: rgba(11, 30, 40, 0.9);
+}
+
+.product-shell.night-mode .stage-tool-dock button.active,
+.product-shell.night-mode .stage-tool-dock button:hover {
+  color: #fafffd;
+  border-color: rgba(112, 214, 198, 0.8);
+  background: rgba(25, 101, 94, 0.9);
+}
+
+@media (max-width: 980px) {
+  .stage-camera-hud {
+    display: none;
+  }
+}
+
+/* Asset backpack */
+.asset-library {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.asset-library .panel-header {
+  min-height: 70px;
+}
+
+.asset-library-tools {
+  position: relative;
+  z-index: 4;
+}
+
+.asset-backpack {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.asset-shelf-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: var(--rail-width);
+  padding: 10px 8px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line-soft);
+  background: rgba(19, 46, 48, 0.04);
+}
+
+.asset-shelf-rail button {
+  position: relative;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.asset-shelf-rail button em {
+  position: absolute;
+  top: -8px;
+  right: -7px;
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.asset-category-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+.asset-shelf-status {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: -12px -12px 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.asset-shelf-status-main {
+  display: grid;
+  gap: 2px;
+}
+
+.asset-shelf-status-main strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-shelf-status-main em,
+.asset-drag-status {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.asset-drag-status {
+  align-self: center;
+  max-width: 96px;
+  overflow: hidden;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-category {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.asset-category-header {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.asset-category-header span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.asset-category-header strong {
+  overflow: hidden;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-category-header em {
+  display: grid;
+  min-width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink-soft);
+  font-style: normal;
+  font-weight: 950;
+}
+
+.asset-grid,
+.asset-category-list.compact .asset-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-items: start;
+}
+
+.asset-card {
+  position: relative;
+  min-width: 0;
+  min-height: 168px;
+  overflow: visible;
+  border: 1px solid rgba(116, 140, 139, 0.48);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(249, 247, 234, 0.95), rgba(235, 223, 198, 0.96));
+  box-shadow: 0 10px 24px rgba(34, 45, 42, 0.14);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.asset-card:hover,
+.asset-card:focus-within {
+  border-color: var(--accent-line);
+  box-shadow: 0 14px 32px rgba(43, 74, 69, 0.22);
+  transform: translateY(-1px);
+}
+
+.asset-card.dragging {
+  opacity: 0.72;
+  transform: scale(0.98);
+}
+
+.asset-card-action {
+  display: grid !important;
+  grid-template-rows: minmax(100px, 1fr) 46px !important;
+  grid-template-areas: "preview" "info" !important;
+  width: 100%;
+  min-height: 166px;
+  padding: 10px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--ink);
+  text-align: center;
+}
+
+.asset-preview {
+  grid-area: preview !important;
+  align-self: stretch;
+  min-height: 98px;
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.asset-preview img,
+.asset-preview canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.asset-card-main {
+  grid-area: info !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: 22px 20px !important;
+  grid-template-areas: none !important;
+  align-items: center;
+  justify-items: center;
+  gap: 1px;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0 4px;
+  overflow: visible;
+  color: inherit;
+  background: transparent !important;
+}
+
+.asset-card-name {
+  grid-area: auto !important;
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0 2px;
+  overflow: hidden;
+  color: #25312f !important;
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 22px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.asset-card-meta {
+  grid-area: auto !important;
+  display: flex !important;
+  width: 100%;
+  min-width: 0;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent !important;
+}
+
+.asset-card-pocket-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  max-width: calc(100% - 54px);
+  overflow: hidden;
+  padding: 4px 8px;
+  border: 1px solid rgba(112, 169, 157, 0.45);
+  border-radius: 999px;
+  background: rgba(33, 100, 91, 0.84);
+  color: #f2fffb;
+  font-size: 11px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-card-grip {
+  display: none !important;
+}
+
+.asset-favorite {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(186, 153, 91, 0.65);
+  border-radius: 999px;
+  background: rgba(255, 251, 238, 0.94);
+  color: #b98b36;
+}
+
+.risk-badge {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 18px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.asset-category-list.compact .asset-card {
+  min-height: 130px;
+}
+
+.asset-category-list.compact .asset-card-action {
+  min-height: 128px;
+  grid-template-rows: 76px 42px !important;
+  padding: 8px;
+}
+
+.asset-category-list.compact .asset-preview {
+  min-height: 72px;
+}
+
+.product-shell.night-mode .asset-library,
+.product-shell.night-mode .asset-library-tools,
+.product-shell.night-mode .asset-shelf-rail,
+.product-shell.night-mode .asset-shelf-status,
+.product-shell.night-mode .asset-category-list {
+  color: var(--ink);
+  border-color: rgba(156, 195, 196, 0.22);
+  background: linear-gradient(180deg, rgba(17, 33, 42, 0.96), rgba(9, 23, 31, 0.98));
+}
+
+.product-shell.night-mode .asset-card {
+  border-color: rgba(137, 183, 181, 0.52);
+  background: linear-gradient(180deg, rgba(19, 43, 47, 0.98), rgba(9, 25, 34, 0.98));
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.42);
+}
+
+.product-shell.night-mode .asset-card-action {
+  color: var(--ink);
+}
+
+.product-shell.night-mode .asset-card-name {
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .asset-card:hover,
+.product-shell.night-mode .asset-card:focus-within {
+  border-color: rgba(112, 214, 198, 0.92);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.54), 0 0 0 1px rgba(112, 214, 198, 0.2);
+}
+
+.product-shell.night-mode .asset-category-header,
+.product-shell.night-mode .asset-shelf-status-main strong {
+  color: #effbf7;
+}
+
+.product-shell.night-mode .asset-shelf-status-main em,
+.product-shell.night-mode .asset-drag-status {
+  color: rgba(218, 235, 230, 0.76);
+}
+
+.product-shell.night-mode .asset-shelf-rail button {
+  color: #e9f7f3;
+  border-color: rgba(156, 195, 196, 0.28);
+  background: rgba(8, 24, 33, 0.8);
+}
+
+.product-shell.night-mode .asset-shelf-rail button.active,
+.product-shell.night-mode .asset-shelf-rail button:hover {
+  color: #fbfffe;
+  border-color: rgba(112, 214, 198, 0.78);
+  background: rgba(29, 109, 100, 0.88);
+}
+
+.product-shell.night-mode .asset-shelf-rail button em,
+.product-shell.night-mode .asset-category-header em,
+.product-shell.night-mode .asset-drag-status {
+  color: #effbf7;
+  border-color: rgba(156, 195, 196, 0.32);
+  background: rgba(6, 20, 28, 0.92);
+}
+
+/* Inspector and AI */
+.right-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.right-panel.collapsed {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  justify-items: center;
+  width: 58px;
+  min-width: 58px;
+  padding: 10px 8px;
+}
+
+.right-panel-scroll,
+.insight-drawer {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.insight-drawer {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.insight-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.insight-section,
+.insight-snapshot-panel,
+.insight-event-preview,
+.ai-hero,
+.ai-context-card,
+.ai-quick-section,
+.ai-chat-log,
+.ai-composer,
+.selected-object-card,
+.object-inspector,
+.analysis-panel,
+.event-stream,
+.structured-data-panel {
+  color: #26312f;
+  background: rgba(255, 250, 237, 0.94);
+  border-color: rgba(175, 155, 119, 0.55);
+}
+
+.ai-panel {
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+}
+
+.ai-hero {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 112px;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.ai-hero h2,
+.ai-quick-section h2,
+.ai-context-card h2 {
+  margin: 0;
+  color: inherit;
+}
+
+.ai-hero p:not(.eyebrow) {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ai-context-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ai-context-metric {
+  min-height: 62px;
+  padding: 8px;
+}
+
+.ai-context-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ai-context-chips span {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 5px 8px;
+  border-radius: 999px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-quick-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-quick-list button {
+  justify-content: flex-start;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 9px;
+  color: #26312f;
+  background: rgba(255, 253, 246, 0.92);
+}
+
+.ai-chat-log {
+  max-height: min(44vh, 420px);
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.ai-message {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 10px;
+  color: #26312f;
+}
+
+.ai-message > span {
+  color: #65736e;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ai-message .markdown-text,
+.ai-message p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.68;
+}
+
+.ai-composer textarea {
+  min-height: 92px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.product-shell.night-mode .right-panel,
+.product-shell.night-mode .panel-header,
+.product-shell.night-mode .panel-tabs,
+.product-shell.night-mode .insight-drawer,
+.product-shell.night-mode .insight-section,
+.product-shell.night-mode .insight-snapshot-panel,
+.product-shell.night-mode .insight-event-preview,
+.product-shell.night-mode .ai-panel,
+.product-shell.night-mode .ai-hero,
+.product-shell.night-mode .ai-context-card,
+.product-shell.night-mode .ai-quick-section,
+.product-shell.night-mode .ai-chat-log,
+.product-shell.night-mode .ai-composer,
+.product-shell.night-mode .selected-object-card,
+.product-shell.night-mode .object-inspector,
+.product-shell.night-mode .analysis-panel,
+.product-shell.night-mode .event-stream,
+.product-shell.night-mode .structured-data-panel {
+  color: var(--ink) !important;
+  border-color: rgba(156, 195, 196, 0.26) !important;
+  background: linear-gradient(180deg, rgba(18, 34, 43, 0.96), rgba(9, 23, 32, 0.98)) !important;
+}
+
+.product-shell.night-mode .panel-tabs button,
+.product-shell.night-mode .ai-quick-list button {
+  color: #ebf8f4 !important;
+  border-color: rgba(156, 195, 196, 0.32) !important;
+  background: rgba(7, 20, 28, 0.78) !important;
+}
+
+.product-shell.night-mode .panel-tabs button.active,
+.product-shell.night-mode .panel-tabs button:hover,
+.product-shell.night-mode .ai-quick-list button:hover {
+  color: #fbfffd !important;
+  border-color: rgba(112, 214, 198, 0.86) !important;
+  background: rgba(30, 111, 101, 0.9) !important;
+}
+
+.product-shell.night-mode .ai-hero p:not(.eyebrow),
+.product-shell.night-mode .ai-message > span,
+.product-shell.night-mode .insight-section summary em,
+.product-shell.night-mode .insight-overview-item span,
+.product-shell.night-mode .section-title-row span {
+  color: rgba(216, 233, 228, 0.78) !important;
+}
+
+.product-shell.night-mode .ai-message,
+.product-shell.night-mode .ai-message .markdown-text,
+.product-shell.night-mode .ai-message p,
+.product-shell.night-mode .ai-context-metric,
+.product-shell.night-mode .selected-object-card strong,
+.product-shell.night-mode .object-inspector label,
+.product-shell.night-mode .structured-data-panel pre {
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .ai-context-chips span,
+.product-shell.night-mode .tag,
+.product-shell.night-mode .risk-badge {
+  color: #effbf7 !important;
+  border-color: rgba(112, 214, 198, 0.36) !important;
+  background: rgba(48, 124, 113, 0.28) !important;
+}
+
+/* Focus mode */
+.product-shell.focus-mode {
+  padding: 10px;
+  background: #071119;
+}
+
+.app-shell.focus-mode {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.app-shell.focus-mode .workspace-column {
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+.app-shell.focus-mode .topbar {
+  margin: 0;
+  grid-template-columns: minmax(0, 0.58fr) minmax(0, 1.65fr);
+  min-height: 76px;
+}
+
+.app-shell.focus-mode .stage-host {
+  padding: 14px 72px;
+}
+
+.focus-floating-button,
+.focus-selection-card,
+.focus-ai-drawer,
+.focus-asset-drawer {
+  z-index: 150;
+}
+
+.focus-floating-button {
+  position: absolute;
+  top: 94px;
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 10px;
+}
+
+.focus-asset-toggle {
+  left: 18px;
+}
+
+.focus-panel-toggle {
+  right: 18px;
+}
+
+.focus-ai-drawer {
+  position: absolute;
+  top: 92px;
+  right: 18px;
+  bottom: 18px;
+  width: min(420px, calc(100vw - 64px));
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.focus-ai-drawer-body {
+  height: calc(100% - 72px);
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.focus-ai-drawer .ai-chat-log {
+  max-height: 260px;
+}
+
+.focus-selection-card {
+  position: absolute;
+  right: 190px;
+  bottom: 28px;
+  width: min(420px, 34vw);
+}
+
+.product-shell.night-mode .focus-floating-button,
+.product-shell.night-mode .focus-selection-card,
+.product-shell.night-mode .focus-ai-drawer,
+.product-shell.night-mode .focus-ai-drawer-header {
+  color: var(--ink);
+  border-color: rgba(156, 195, 196, 0.28);
+  background: rgba(12, 29, 39, 0.94);
+}
+
+/* AI companion conversation layout: keep the composer reachable while messages scroll. */
+.right-panel > .right-panel-scroll {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.right-panel > .right-panel-scroll > .ai-panel,
+.focus-ai-drawer-body > .ai-panel {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto auto auto minmax(120px, 1fr) auto auto;
+  gap: 10px;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.right-panel .ai-hero {
+  grid-template-columns: 64px minmax(0, 1fr);
+  min-height: 84px;
+  padding: 10px;
+}
+
+.right-panel .ai-companion-portrait {
+  width: 58px;
+  height: 62px;
+}
+
+.right-panel .ai-portrait-head {
+  width: 50px;
+  height: 54px;
+}
+
+.right-panel .ai-context-card {
+  max-height: 180px;
+  overflow: auto;
+}
+
+.right-panel .ai-quick-section {
+  max-height: 164px;
+  overflow: auto;
+}
+
+.right-panel .ai-quick-list,
+.focus-ai-drawer .ai-quick-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.right-panel .ai-quick-list button,
+.focus-ai-drawer .ai-quick-list button {
+  min-height: 36px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.ai-panel .ai-chat-log {
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 12px;
+}
+
+.ai-stream-status {
+  margin: 0;
+  overflow: hidden;
+  padding: 7px 10px;
+  border: 1px solid rgba(175, 155, 119, 0.42);
+  border-radius: 9px;
+  background: rgba(255, 250, 237, 0.82);
+  color: #5b6862;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-panel .ai-composer {
+  position: relative;
+  z-index: 6;
+  gap: 7px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid rgba(175, 155, 119, 0.54);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.96), rgba(248, 240, 224, 0.96)),
+    var(--surface-warm);
+  box-shadow: 0 -12px 24px rgba(55, 48, 37, 0.08);
+}
+
+.ai-panel .ai-composer label {
+  display: none;
+}
+
+.ai-panel .ai-composer > div {
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: end;
+  gap: 8px;
+}
+
+.ai-panel .ai-composer textarea {
+  min-height: 72px;
+  max-height: 132px;
+  resize: none;
+}
+
+.ai-panel .ai-composer button {
+  width: 42px;
+  height: 42px;
+  align-self: stretch;
+  border-radius: 10px;
+}
+
+.ai-panel .ai-safety-note {
+  padding: 0 2px;
+}
+
+.focus-ai-drawer-body {
+  overflow: hidden;
+}
+
+.focus-ai-drawer .ai-panel {
+  grid-template-rows: auto auto auto minmax(140px, 1fr) auto;
+}
+
+.focus-ai-drawer .ai-chat-log {
+  max-height: none;
+}
+
+.focus-ai-drawer .ai-composer textarea {
+  min-height: 70px;
+}
+
+.focus-ai-drawer {
+  top: 92px;
+  bottom: 18px;
+  display: grid;
+  height: auto;
+  max-height: none;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.focus-ai-drawer-body {
+  display: grid;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.focus-ai-drawer-body > .ai-panel {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(86px, 0.72fr) auto minmax(72px, 1fr) auto auto;
+}
+
+.focus-ai-drawer .ai-context-card {
+  max-height: 112px;
+  overflow: auto;
+}
+
+.focus-ai-drawer .ai-context-grid {
+  margin-top: 7px;
+}
+
+.focus-ai-drawer .ai-context-metric {
+  min-height: 46px;
+  padding: 6px;
+}
+
+.focus-ai-drawer .ai-context-chips {
+  max-height: 42px;
+  overflow: auto;
+}
+
+.focus-ai-drawer .ai-quick-section {
+  max-height: 96px;
+  overflow: auto;
+}
+
+.focus-ai-drawer .ai-chat-log {
+  min-height: 72px;
+  max-height: none;
+}
+
+.focus-ai-drawer .ai-composer {
+  padding: 9px;
+}
+
+.focus-ai-drawer .ai-composer textarea {
+  min-height: 66px;
+  max-height: 104px;
+}
+
+.product-shell.night-mode .ai-stream-status,
+.product-shell.night-mode .ai-panel .ai-composer {
+  color: var(--ink-soft) !important;
+  border-color: rgba(156, 195, 196, 0.28) !important;
+  background: linear-gradient(180deg, rgba(13, 30, 39, 0.98), rgba(7, 20, 28, 0.98)) !important;
+}
+
+.product-shell.night-mode .ai-panel .ai-composer textarea {
+  color: #f6fffc !important;
+  background: #06141c !important;
+}
+
+.product-shell.night-mode .ai-panel .ai-composer button {
+  color: #06141c !important;
+  border-color: rgba(143, 232, 217, 0.82) !important;
+  background: linear-gradient(180deg, #8be8d9, #4ec3b4) !important;
+}
+
+/* Admin and large data pages */
+.admin-shell,
+.personal-shell,
+.agent-chat-view,
+.auth-stage {
+  min-width: 0;
+  min-height: 0;
+  color: var(--ink);
+}
+
+.admin-card,
+.admin-hero,
+.admin-detail-panel,
+.admin-user-list,
+.asset-admin-table,
+.agent-admin-panel,
+.provider-editor,
+.personal-card,
+.personal-panel,
+.agent-chat-panel {
+  min-width: 0;
+}
+
+.admin-table,
+.asset-table,
+.user-table,
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td,
+.asset-table th,
+.asset-table td,
+.user-table th,
+.user-table td,
+table th,
+table td {
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-shell.night-mode .admin-card,
+.product-shell.night-mode .admin-hero,
+.product-shell.night-mode .admin-detail-panel,
+.product-shell.night-mode .admin-user-list,
+.product-shell.night-mode .asset-admin-table,
+.product-shell.night-mode .agent-admin-panel,
+.product-shell.night-mode .provider-editor,
+.product-shell.night-mode .personal-card,
+.product-shell.night-mode .personal-panel,
+.product-shell.night-mode .agent-chat-panel,
+.product-shell.night-mode .admin-table,
+.product-shell.night-mode .asset-table,
+.product-shell.night-mode .user-table,
+.product-shell.night-mode table {
+  color: var(--ink) !important;
+  border-color: rgba(156, 195, 196, 0.26) !important;
+  background: linear-gradient(180deg, rgba(18, 34, 43, 0.96), rgba(9, 23, 32, 0.98)) !important;
+}
+
+.product-shell.night-mode table th,
+.product-shell.night-mode table td,
+.product-shell.night-mode .admin-muted,
+.product-shell.night-mode .muted,
+.product-shell.night-mode small {
+  color: rgba(220, 237, 232, 0.78) !important;
+}
+
+.product-shell.night-mode .status-pill,
+.product-shell.night-mode .metric-card,
+.product-shell.night-mode .filter-chip,
+.product-shell.night-mode .tag-chip {
+  color: #effbf7 !important;
+  border-color: rgba(112, 214, 198, 0.32) !important;
+  background: rgba(48, 124, 113, 0.22) !important;
+}
+
+/* General responsive guardrails */
+@media (max-height: 820px) {
+  .topbar {
+    min-height: 68px;
+    padding-block: 8px;
+  }
+
+  .stage-host {
+    padding-block: 10px;
+  }
+
+  .asset-library .panel-header,
+  .right-panel .panel-header {
+    min-height: 58px;
+  }
+
+  .ai-chat-log {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 1320px) {
+  .product-shell {
+    --backpack-width: 306px;
+  }
+
+  .asset-grid,
+  .asset-category-list.compact .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .asset-card {
+    min-height: 138px;
+    padding: 7px;
+  }
+
+  .asset-card-action {
+    min-height: 124px;
+    grid-template-rows: 74px minmax(38px, auto) !important;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .asset-preview {
+    min-height: 72px;
+  }
+
+  .asset-card-name {
+    height: 19px;
+    font-size: 12px;
+    line-height: 19px;
+  }
+
+  .asset-card-main {
+    min-height: 38px;
+    gap: 3px;
+  }
+
+  .asset-card-pocket-label {
+    max-width: calc(100% - 44px);
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .asset-favorite {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 1120px) {
+  .product-shell {
+    --backpack-width: 272px;
+  }
+
+  .asset-grid,
+  .asset-category-list.compact .asset-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Workbench polish guardrails v9: keep controls legible, non-overlapping, and game-inventory-like. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-height: auto !important;
+  padding: 10px 12px !important;
+  overflow: visible !important;
+}
+
+.workspace-column .topbar-primary {
+  display: none !important;
+}
+
+.workspace-column .topbar-hud {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.workspace-column .hud-cluster {
+  flex: 0 0 auto !important;
+  min-height: 46px !important;
+  padding: 6px !important;
+  gap: 6px !important;
+  border-radius: 12px !important;
+}
+
+.workspace-column .environment-hud,
+.workspace-column .camera-hud,
+.workspace-column .view-hud,
+.workspace-column .export-hud {
+  max-width: 100% !important;
+}
+
+.workspace-column .hud-segment {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  padding: 3px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .action-hud .icon-button,
+.workspace-column .camera-hud .icon-button {
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+}
+
+.workspace-column .hud-segment button span {
+  position: static !important;
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  clip: auto !important;
+  color: inherit !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.workspace-column .action-hud .icon-button span,
+.workspace-column .camera-hud .icon-button span,
+.workspace-column .hud-cluster > p {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .camera-adjust-panel {
+  right: 50% !important;
+  width: min(520px, calc(100vw - 72px)) !important;
+  transform: translateX(50%) !important;
+}
+
+@media (max-width: 1220px) {
+  .workspace-column .topbar-hud {
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 2px !important;
+  }
+}
+
+.asset-card {
+  min-height: 176px !important;
+  padding: 8px !important;
+  overflow: visible !important;
+}
+
+.asset-card-action {
+  min-height: 160px !important;
+  display: grid !important;
+  grid-template-rows: minmax(104px, 1fr) 52px !important;
+  gap: 7px !important;
+  padding: 9px !important;
+  overflow: visible !important;
+}
+
+.asset-preview {
+  min-height: 100px !important;
+}
+
+.asset-card-main {
+  position: relative !important;
+  z-index: 5 !important;
+  display: grid !important;
+  grid-template-rows: 24px 22px !important;
+  min-height: 50px !important;
+  padding: 0 3px !important;
+  overflow: visible !important;
+}
+
+.asset-card-name {
+  display: block !important;
+  height: 24px !important;
+  color: #f8fffb !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  line-height: 24px !important;
+  text-align: center !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+.product-shell:not(.night-mode) .asset-card-name {
+  color: #26312f !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+.asset-card-meta {
+  position: relative !important;
+  z-index: 6 !important;
+  min-height: 22px !important;
+  height: 22px !important;
+  overflow: visible !important;
+}
+
+.asset-card .risk-badge {
+  position: relative !important;
+  z-index: 7 !important;
+  min-height: 20px !important;
+  line-height: 18px !important;
+}
+
+.asset-category-list.compact .asset-card {
+  min-height: 144px !important;
+}
+
+.asset-category-list.compact .asset-card-action {
+  min-height: 130px !important;
+  grid-template-rows: 78px 46px !important;
+}
+
+.asset-category-list.compact .asset-preview {
+  min-height: 76px !important;
+}
+
+.asset-category-list.compact .asset-card-main {
+  grid-template-rows: 22px 20px !important;
+  min-height: 44px !important;
+}
+
+.product-shell.night-mode .asset-card-name,
+.product-shell.night-mode .asset-category-header strong,
+.product-shell.night-mode .asset-shelf-status-main strong {
+  color: #f5fffb !important;
+}
+
+.product-shell.night-mode .ai-hero,
+.product-shell.night-mode .ai-context-card,
+.product-shell.night-mode .ai-quick-section,
+.product-shell.night-mode .ai-chat-log,
+.product-shell.night-mode .selected-object-card {
+  color: #263333 !important;
+  border-color: rgba(207, 189, 156, 0.82) !important;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(120, 198, 176, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(255, 253, 246, 0.98), rgba(255, 247, 232, 0.96)),
+    #fff8ea !important;
+}
+
+.product-shell.night-mode .ai-hero *,
+.product-shell.night-mode .ai-context-card *,
+.product-shell.night-mode .ai-quick-section *,
+.product-shell.night-mode .ai-chat-log *,
+.product-shell.night-mode .selected-object-card * {
+  color: inherit;
+}
+
+.product-shell.night-mode .ai-context-card .section-title-row span,
+.product-shell.night-mode .selected-object-card span,
+.product-shell.night-mode .ai-context-chips span {
+  color: #2f6f65 !important;
+}
+
+/* Asset backpack readability: full toy silhouettes beat cropped thumbnails. */
+.asset-preview {
+  display: grid !important;
+  place-items: center !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.asset-preview img,
+.asset-preview canvas {
+  width: 96% !important;
+  height: 92% !important;
+  max-width: 96% !important;
+  max-height: 92% !important;
+  object-fit: contain !important;
+  transform: translateY(1px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.78)) !important;
+  transform-origin: 50% 58% !important;
+  filter: drop-shadow(0 8px 6px rgba(73, 54, 31, 0.22)) !important;
+}
+
+.asset-card:hover .asset-preview img,
+.asset-card:focus-within .asset-preview img,
+.asset-card:hover .asset-preview canvas,
+.asset-card:focus-within .asset-preview canvas {
+  transform: translateY(-1px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.82)) !important;
+  filter: drop-shadow(0 11px 8px rgba(73, 54, 31, 0.28)) !important;
+}
+
+.product-shell.night-mode .asset-preview img,
+.product-shell.night-mode .asset-preview canvas {
+  filter: drop-shadow(0 9px 7px rgba(0, 0, 0, 0.42)) drop-shadow(0 -1px 3px rgba(117, 255, 231, 0.12)) !important;
+}
+
+/* Design-target convergence pass: compact game-workbench controls without losing readable labels. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  min-height: 70px !important;
+  padding: 8px 12px !important;
+}
+
+.workspace-column .topbar-hud {
+  gap: 7px !important;
+  justify-content: center !important;
+}
+
+.workspace-column .hud-cluster {
+  min-height: 42px !important;
+  padding: 4px 6px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .action-hud .icon-button,
+.workspace-column .camera-hud .icon-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+}
+
+.stage-host {
+  padding: 10px 14px 12px !important;
+}
+
+.stage-frame {
+  box-shadow:
+    0 26px 74px rgba(38, 58, 48, 0.2),
+    0 12px 34px rgba(116, 82, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48) !important;
+}
+
+.asset-card {
+  min-height: 190px !important;
+}
+
+.asset-card-action {
+  min-height: 176px !important;
+  grid-template-rows: minmax(120px, 1fr) 48px !important;
+  gap: 6px !important;
+  padding: 8px !important;
+}
+
+.asset-preview {
+  min-height: 118px !important;
+}
+
+.asset-card-main {
+  grid-template-rows: 23px 20px !important;
+  min-height: 44px !important;
+}
+
+.asset-card-name {
+  height: 23px !important;
+  font-size: 13px !important;
+  line-height: 23px !important;
+}
+
+.asset-card-meta {
+  height: 20px !important;
+  min-height: 20px !important;
+}
+
+.asset-card .risk-badge {
+  min-height: 18px !important;
+  padding-inline: 7px !important;
+  font-size: 10px !important;
+  line-height: 17px !important;
+}
+
+.asset-preview img,
+.asset-preview canvas {
+  height: 100% !important;
+  transform: translateY(1px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.84)) !important;
+}
+
+.asset-card:hover .asset-preview img,
+.asset-card:focus-within .asset-preview img,
+.asset-card:hover .asset-preview canvas,
+.asset-card:focus-within .asset-preview canvas {
+  transform: translateY(-1px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.88)) !important;
+}
+
+.product-shell.night-mode .stage-frame {
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(132, 198, 195, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Workbench convergence v12: remove the remaining legacy grid clipping from toy cards
+   and keep the compact game toolbar usable at every editor width. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  display: block !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.workspace-column .topbar-hud {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+
+.workspace-column .hud-cluster {
+  flex: 0 0 auto !important;
+  max-width: 100% !important;
+}
+
+.workspace-column .environment-hud,
+.workspace-column .camera-hud,
+.workspace-column .view-hud,
+.workspace-column .export-hud {
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 1220px) {
+  .workspace-column .topbar-hud {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+}
+
+.asset-card {
+  display: block !important;
+  grid-template-rows: none !important;
+  isolation: isolate !important;
+  min-height: 194px !important;
+  overflow: visible !important;
+}
+
+.asset-card::before,
+.asset-card::after {
+  z-index: 0 !important;
+}
+
+.asset-card-action {
+  position: relative !important;
+  z-index: 2 !important;
+  grid-template-rows: minmax(122px, 1fr) 50px !important;
+  min-height: 178px !important;
+}
+
+.asset-card-pocket-label,
+.asset-favorite {
+  z-index: 5 !important;
+}
+
+.asset-card-main {
+  z-index: 4 !important;
+  align-self: end !important;
+  min-height: 48px !important;
+}
+
+.asset-card-name {
+  position: relative !important;
+  z-index: 5 !important;
+  display: block !important;
+  min-height: 24px !important;
+  color: #25312f !important;
+  opacity: 1 !important;
+}
+
+.product-shell.night-mode .asset-card-name {
+  color: #f7fffb !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48) !important;
+}
+
+.asset-card .risk-badge {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.asset-category-list.compact .asset-card {
+  min-height: 152px !important;
+}
+
+.asset-category-list.compact .asset-card-action {
+  grid-template-rows: 82px 48px !important;
+  min-height: 136px !important;
+}
+
+.asset-category-list.compact .asset-card-main {
+  min-height: 44px !important;
+}
+
+/* Reference workbench convergence v13:
+   keep the editor close to the target mockup on normal desktop widths. */
+.app-shell:not(.focus-mode) {
+  grid-template-columns:
+    clamp(272px, 18vw, 332px)
+    minmax(0, 1fr)
+    clamp(286px, 20vw, 348px) !important;
+  gap: 12px !important;
+}
+
+.app-shell.right-panel-collapsed:not(.focus-mode) {
+  grid-template-columns:
+    clamp(272px, 18vw, 332px)
+    minmax(0, 1fr)
+    58px !important;
+}
+
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+}
+
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) > .panel-tabs {
+  display: grid !important;
+}
+
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) > .right-panel-scroll,
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) > .insight-drawer {
+  display: grid !important;
+}
+
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .panel-header {
+  height: auto !important;
+  min-height: 70px !important;
+  justify-content: space-between !important;
+  padding: 14px 16px !important;
+}
+
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .panel-header > div {
+  display: block !important;
+}
+
+.app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .small-icon-button {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+.workspace-column .topbar {
+  border-radius: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 247, 0.94), rgba(246, 239, 225, 0.9)),
+    var(--surface) !important;
+}
+
+.workspace-column .topbar-hud {
+  row-gap: 7px !important;
+}
+
+.workspace-column .hud-cluster {
+  min-width: max-content !important;
+  border-radius: 10px !important;
+}
+
+.workspace-column .hud-cluster > p,
+.workspace-column .camera-current-pill {
+  display: none !important;
+}
+
+.stage-host {
+  min-height: 0 !important;
+}
+
+.stage-frame {
+  border-radius: 14px !important;
+}
+
+.asset-card-action {
+  overflow: visible !important;
+}
+
+.asset-card-main {
+  position: relative !important;
+  z-index: 6 !important;
+  padding: 0 4px 2px !important;
+  overflow: visible !important;
+}
+
+.asset-card-name {
+  overflow: visible !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+.asset-card .risk-badge {
+  margin-inline: auto !important;
+  transform: none !important;
+}
+
+.product-shell.night-mode .workspace-column .topbar {
+  border-color: rgba(123, 176, 178, 0.36) !important;
+  background:
+    linear-gradient(180deg, rgba(26, 44, 52, 0.96), rgba(13, 28, 38, 0.95)),
+    #10202b !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed),
+.product-shell.night-mode .right-panel:not(.collapsed) .panel-tabs,
+.product-shell.night-mode .right-panel:not(.collapsed) .insight-drawer,
+.product-shell.night-mode .right-panel:not(.collapsed) .right-panel-scroll {
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .companion-card,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-section,
+.product-shell.night-mode .right-panel:not(.collapsed) .insight-snapshot-panel,
+.product-shell.night-mode .right-panel:not(.collapsed) .insight-section,
+.product-shell.night-mode .right-panel:not(.collapsed) .object-card,
+.product-shell.night-mode .right-panel:not(.collapsed) .structured-panel {
+  color: #f6fffb !important;
+  border-color: rgba(132, 214, 202, 0.34) !important;
+  background:
+    linear-gradient(180deg, rgba(16, 39, 48, 0.96), rgba(9, 25, 34, 0.95)) !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .context-chip,
+.product-shell.night-mode .right-panel:not(.collapsed) .quick-prompt-button,
+.product-shell.night-mode .right-panel:not(.collapsed) .status-pill,
+.product-shell.night-mode .right-panel:not(.collapsed) .tag-chip {
+  color: #edfffb !important;
+  border-color: rgba(132, 214, 202, 0.4) !important;
+  background: rgba(48, 124, 113, 0.26) !important;
+}
+
+.product-shell.night-mode input,
+.product-shell.night-mode textarea,
+.product-shell.night-mode select {
+  color: #f6fffb !important;
+  border-color: rgba(132, 214, 202, 0.38) !important;
+  background: rgba(5, 18, 27, 0.92) !important;
+}
+
+.product-shell.night-mode input::placeholder,
+.product-shell.night-mode textarea::placeholder {
+  color: rgba(232, 251, 246, 0.68) !important;
+}
+
+@media (max-width: 1180px) {
+  .app-shell:not(.focus-mode) {
+    grid-template-columns: 58px minmax(0, 1fr) 58px !important;
+  }
+
+  .app-shell:not(.focus-mode) > .asset-library:not(.collapsed) {
+    width: 58px !important;
+    min-width: 58px !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) > :not(.panel-header) {
+    display: none !important;
+  }
+
+  .app-shell:not(.focus-mode) > .right-panel:not(.collapsed) .panel-header > div {
+    display: none !important;
+  }
+}
+
+/* Insight drawer compact visualization v13.1 */
+.insight-snapshot-panel,
+.insight-event-preview {
+  display: grid !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(189, 167, 128, 0.56) !important;
+  border-radius: 12px !important;
+  background:
+    radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.86), transparent 36%),
+    linear-gradient(180deg, rgba(255, 253, 245, 0.96), rgba(248, 239, 220, 0.88)) !important;
+}
+
+.insight-snapshot-panel {
+  min-height: 218px !important;
+}
+
+.insight-event-preview {
+  min-height: 136px !important;
+}
+
+.insight-snapshot-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.insight-snapshot-header h2 {
+  margin: 0 !important;
+  color: #25312f !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+}
+
+.insight-snapshot-header > span {
+  flex: 0 0 auto !important;
+  padding: 4px 8px !important;
+  border: 1px solid rgba(112, 169, 157, 0.38) !important;
+  border-radius: 999px !important;
+  color: #286e63 !important;
+  background: rgba(225, 246, 240, 0.82) !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.insight-snapshot-grid {
+  display: grid !important;
+  grid-template-columns: minmax(92px, 0.92fr) minmax(118px, 1.08fr) !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+
+.insight-heatmap {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-rows: 36px !important;
+  gap: 4px !important;
+  padding: 7px !important;
+  border: 1px solid rgba(112, 169, 157, 0.24) !important;
+  border-radius: 10px !important;
+  background: rgba(235, 247, 239, 0.78) !important;
+}
+
+.insight-heat-cell {
+  display: grid !important;
+  place-items: center !important;
+  min-width: 0 !important;
+  border-radius: 7px !important;
+  color: #38524d !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0)),
+    color-mix(in srgb, #53b4a5 var(--heat), rgba(247, 244, 231, 0.9)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42) !important;
+}
+
+.insight-heat-cell.center {
+  outline: 1px solid rgba(48, 151, 137, 0.5) !important;
+}
+
+.insight-heat-cell span {
+  color: inherit !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+}
+
+.insight-heat-cell strong {
+  color: #1d3733 !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+
+.insight-risk-mini {
+  display: grid !important;
+  align-content: center !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+.insight-risk-mini > div {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) 18px !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+.insight-risk-mini span,
+.insight-risk-mini strong {
+  color: #4d5f59 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+.insight-risk-mini i {
+  display: block !important;
+  height: 7px !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  background: rgba(222, 211, 190, 0.82) !important;
+}
+
+.insight-risk-mini b {
+  display: block !important;
+  height: 100% !important;
+  min-width: 3px !important;
+  border-radius: inherit !important;
+}
+
+.insight-event-preview ol {
+  display: grid !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+.insight-event-preview li {
+  display: grid !important;
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: start !important;
+  color: #2e3f3b !important;
+  font-size: 12px !important;
+}
+
+.insight-event-preview time {
+  color: #287467 !important;
+  font-weight: 950 !important;
+}
+
+.insight-event-preview strong {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.product-shell.night-mode .insight-snapshot-panel,
+.product-shell.night-mode .insight-event-preview {
+  border-color: rgba(132, 214, 202, 0.34) !important;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(83, 180, 165, 0.18), transparent 38%),
+    linear-gradient(180deg, rgba(18, 42, 51, 0.98), rgba(8, 24, 34, 0.96)) !important;
+}
+
+.product-shell.night-mode .insight-snapshot-header h2,
+.product-shell.night-mode .insight-event-preview li,
+.product-shell.night-mode .insight-risk-mini span,
+.product-shell.night-mode .insight-risk-mini strong {
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .insight-heatmap {
+  border-color: rgba(132, 214, 202, 0.22) !important;
+  background: rgba(8, 25, 34, 0.72) !important;
+}
+
+.product-shell.night-mode .insight-heat-cell {
+  color: #d9fff6 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0)),
+    color-mix(in srgb, #54d6c3 var(--heat), rgba(16, 42, 52, 0.82)) !important;
+}
+
+.product-shell.night-mode .insight-heat-cell strong,
+.product-shell.night-mode .insight-event-preview time {
+  color: #aef8ec !important;
+}
+
+/* Reference workbench convergence v14:
+   prioritize the tray as the primary canvas on mid-width desktop screens. */
+@media (min-width: 1181px) and (max-width: 1440px) {
+  .app-shell:not(.focus-mode) {
+    grid-template-columns: 248px minmax(0, 1fr) 252px !important;
+    gap: 10px !important;
+  }
+
+  .app-shell.right-panel-collapsed:not(.focus-mode) {
+    grid-template-columns: 248px minmax(0, 1fr) 58px !important;
+  }
+
+  .asset-backpack {
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+  }
+
+  .asset-shelf-rail {
+    min-width: 52px !important;
+    padding-inline: 6px !important;
+  }
+
+  .asset-shelf-rail button {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .asset-grid,
+  .asset-category-list.compact .asset-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .asset-card {
+    min-height: 168px !important;
+  }
+
+  .asset-card-action {
+    min-height: 152px !important;
+    grid-template-rows: 98px 46px !important;
+  }
+
+  .asset-card-main {
+    grid-template-rows: 22px 20px !important;
+    min-height: 44px !important;
+  }
+
+  .asset-card-name {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  .asset-card .risk-badge {
+    min-height: 20px !important;
+    line-height: 18px !important;
+  }
+
+  .workspace-column .topbar,
+  .product-shell.night-mode .workspace-column .topbar {
+    min-height: 58px !important;
+    padding: 8px 10px !important;
+  }
+
+  .workspace-column .topbar-hud {
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scrollbar-width: none !important;
+  }
+
+  .workspace-column .topbar-hud::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .workspace-column .hud-cluster {
+    min-height: 40px !important;
+    padding: 4px !important;
+  }
+
+  .workspace-column .hud-segment button,
+  .workspace-column .action-hud .icon-button,
+  .workspace-column .camera-hud .icon-button {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+  }
+
+  .right-panel:not(.collapsed) .panel-header {
+    min-height: 62px !important;
+    padding: 12px 14px !important;
+  }
+
+  .right-panel:not(.collapsed) .panel-tabs {
+    gap: 7px !important;
+    padding: 10px 12px !important;
+  }
+
+  .right-panel:not(.collapsed) .panel-tabs button {
+    min-height: 38px !important;
+    padding-inline: 8px !important;
+  }
+
+  .insight-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .insight-overview-item {
+    min-height: 62px !important;
+    padding: 8px !important;
+  }
+
+  .insight-overview-item strong {
+    font-size: 22px !important;
+  }
+
+  .insight-snapshot-panel {
+    min-height: 194px !important;
+  }
+
+  .insight-event-preview {
+    min-height: 112px !important;
+  }
+}
+
+@media (min-width: 1441px) {
+  .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Reference daylight art direction v15:
+   daytime should feel like a premium tabletop toy editor, while night keeps the dark environment shell. */
+.product-shell:not(.night-mode) {
+  --app-bg: #f4ead8;
+  --panel: rgba(255, 252, 244, 0.86);
+  --panel-soft: rgba(255, 248, 235, 0.78);
+  --surface: rgba(255, 252, 244, 0.82);
+  --surface-warm: rgba(255, 242, 217, 0.9);
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.78), transparent 25%),
+    radial-gradient(circle at 82% 10%, rgba(146, 199, 180, 0.16), transparent 26%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, #f6efe3, #e5d8c6) !important;
+}
+
+.product-shell:not(.night-mode) .app-navigation,
+.product-shell:not(.night-mode) .asset-library,
+.product-shell:not(.night-mode) .right-panel,
+.product-shell:not(.night-mode) .workspace-column .topbar {
+  border-color: rgba(184, 162, 128, 0.58) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 254, 249, 0.94), rgba(255, 246, 230, 0.88)),
+    rgba(255, 250, 239, 0.86) !important;
+  box-shadow:
+    0 18px 50px rgba(125, 94, 54, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+
+.product-shell:not(.night-mode) .workspace-column .topbar {
+  box-shadow:
+    0 12px 34px rgba(133, 100, 58, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.product-shell:not(.night-mode) .stage-host {
+  background:
+    radial-gradient(ellipse at 50% 96%, rgba(123, 82, 39, 0.12), transparent 48%),
+    linear-gradient(180deg, rgba(255, 253, 242, 0.3), rgba(230, 214, 190, 0.16)) !important;
+}
+
+.product-shell:not(.night-mode) .stage-host::before {
+  background:
+    radial-gradient(circle at 22% 10%, rgba(255, 255, 255, 0.78), transparent 10%),
+    radial-gradient(circle at 82% 12%, rgba(196, 214, 184, 0.5), transparent 15%),
+    radial-gradient(circle at 7% 48%, rgba(116, 153, 107, 0.16), transparent 19%),
+    radial-gradient(circle at 96% 43%, rgba(150, 124, 80, 0.12), transparent 20%),
+    linear-gradient(90deg, rgba(169, 189, 166, 0.1) 0 1px, transparent 1px 100%),
+    linear-gradient(0deg, rgba(169, 189, 166, 0.09) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgba(255, 254, 244, 0.82), rgba(230, 219, 194, 0.42)) !important;
+  background-size: auto, auto, auto, auto, 178px 178px, 178px 178px, auto !important;
+}
+
+.product-shell:not(.night-mode) .stage-host::after {
+  background:
+    radial-gradient(ellipse at 50% 92%, rgba(84, 52, 21, 0.13), transparent 46%),
+    radial-gradient(ellipse at var(--stage-light-x, 46%) var(--stage-light-y, 18%), rgba(255, 244, 198, 0.24), transparent 48%) !important;
+  mix-blend-mode: multiply !important;
+  opacity: 0.36 !important;
+}
+
+.product-shell:not(.night-mode) .stage-frame {
+  border: 1px solid rgba(255, 255, 255, 0.62) !important;
+  box-shadow:
+    0 30px 74px rgba(96, 67, 35, 0.2),
+    0 10px 24px rgba(134, 96, 52, 0.12),
+    0 0 0 1px rgba(133, 104, 66, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+.product-shell:not(.night-mode) .stage-tool-dock {
+  border-color: rgba(180, 158, 125, 0.58) !important;
+  background: rgba(255, 251, 241, 0.92) !important;
+  box-shadow:
+    0 18px 38px rgba(91, 66, 33, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(16px) saturate(1.06) !important;
+}
+
+.product-shell:not(.night-mode) .stage-tool-dock button {
+  color: #31413d !important;
+  border-color: rgba(177, 155, 121, 0.6) !important;
+  background: rgba(255, 254, 248, 0.72) !important;
+}
+
+.product-shell:not(.night-mode) .stage-tool-dock button.active,
+.product-shell:not(.night-mode) .stage-tool-dock button:hover {
+  color: #146f64 !important;
+  border-color: rgba(44, 153, 136, 0.48) !important;
+  background:
+    linear-gradient(180deg, rgba(233, 250, 243, 0.98), rgba(204, 238, 226, 0.88)),
+    #e8f6ef !important;
+}
+
+.product-shell:not(.night-mode) .stage-camera-hud {
+  color: #30413d !important;
+  border-color: rgba(180, 158, 125, 0.42) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.88), transparent 42%),
+    rgba(255, 250, 237, 0.8) !important;
+  box-shadow:
+    0 16px 34px rgba(96, 67, 35, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.product-shell:not(.night-mode) .right-panel:not(.collapsed) .insight-snapshot-panel,
+.product-shell:not(.night-mode) .right-panel:not(.collapsed) .insight-event-preview,
+.product-shell:not(.night-mode) .right-panel:not(.collapsed) .insight-section {
+  border-color: rgba(206, 184, 148, 0.72) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 254, 248, 0.92), rgba(255, 246, 230, 0.82)),
+    rgba(255, 250, 238, 0.84) !important;
+}
+
+/* Reference composition convergence v16:
+   make the sand tray the dominant workspace by compressing the control ribbon. */
+.workspace-column {
+  gap: 8px !important;
+}
+
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  display: flex !important;
+  min-height: 56px !important;
+  padding: 7px 10px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  overflow: visible !important;
+}
+
+.workspace-column .topbar-primary {
+  flex: 0 1 245px !important;
+  min-width: 180px !important;
+}
+
+.workspace-column .topbar-title .eyebrow {
+  margin-bottom: 1px !important;
+  font-size: 9px !important;
+  letter-spacing: 0.15em !important;
+}
+
+.workspace-column .topbar-title h2 {
+  font-size: clamp(17px, 1.08vw, 21px) !important;
+  line-height: 1.06 !important;
+}
+
+.workspace-column .topbar-status {
+  margin-top: 5px !important;
+  gap: 5px !important;
+}
+
+.workspace-column .topbar-status span {
+  max-width: 88px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+}
+
+.workspace-column .topbar-hud {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding: 0 !important;
+  scrollbar-width: none !important;
+}
+
+.workspace-column .topbar-hud::-webkit-scrollbar {
+  display: none !important;
+}
+
+.workspace-column .hud-cluster {
+  min-height: 38px !important;
+  padding: 4px 5px !important;
+  gap: 5px !important;
+  border-radius: 10px !important;
+}
+
+.workspace-column .environment-hud {
+  flex-shrink: 0 !important;
+}
+
+.workspace-column .hud-segment {
+  gap: 4px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .action-hud .icon-button,
+.workspace-column .camera-hud .icon-button {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+}
+
+.workspace-column .hud-segment button span,
+.workspace-column .action-hud .icon-button span,
+.workspace-column .camera-hud .icon-button span {
+  font-size: 0 !important;
+}
+
+.workspace-column .hud-segment button span::first-letter,
+.workspace-column .action-hud .icon-button span::first-letter,
+.workspace-column .camera-hud .icon-button span::first-letter {
+  font-size: 0 !important;
+}
+
+.workspace-column .sandbox-editor {
+  min-height: 0 !important;
+}
+
+.stage-host {
+  padding: 6px 12px 10px !important;
+}
+
+.stage-camera-hud:not(.active) {
+  left: 22px !important;
+  top: 18px !important;
+  max-width: min(250px, calc(100% - 44px)) !important;
+  padding: 6px 9px !important;
+  opacity: 0.76 !important;
+}
+
+.stage-camera-hud:not(.active) .stage-camera-hud-status {
+  font-size: 12px !important;
+}
+
+.stage-camera-hud:not(.active) .stage-camera-hud-tip {
+  max-width: 190px !important;
+  font-size: 10px !important;
+}
+
+@media (max-width: 1340px) {
+  .workspace-column .topbar-primary {
+    flex-basis: 210px !important;
+  }
+
+  .workspace-column .topbar-status span:nth-child(2) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .workspace-column .topbar,
+  .product-shell.night-mode .workspace-column .topbar {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .workspace-column .topbar-hud {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+}
+
+/* Presentation polish v17: keep guidance available, but do not let it occupy the artwork. */
+.stage-camera-hud:not(.active) {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  padding: 0 !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  opacity: 0.66 !important;
+  overflow: hidden !important;
+}
+
+.stage-camera-hud:not(.active) .stage-camera-hud-status {
+  justify-content: center !important;
+  gap: 0 !important;
+}
+
+.stage-camera-hud:not(.active) .stage-camera-hud-status span,
+.stage-camera-hud:not(.active) .stage-camera-hud-tip,
+.stage-camera-hud:not(.active) dl {
+  display: none !important;
+}
+
+.stage-camera-hud.active {
+  min-width: min(292px, calc(100% - 56px)) !important;
+}
+
+/* Workbench stabilization v18:
+   The final layer keeps the editor usable while the art direction continues to improve. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  display: flex !important;
+  min-height: 72px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 10px 12px !important;
+  overflow: visible !important;
+}
+
+.workspace-column .topbar-primary {
+  flex: 0 1 230px !important;
+  min-width: 174px !important;
+  max-width: 260px !important;
+}
+
+.workspace-column .topbar-title h2 {
+  font-size: clamp(17px, 1.05vw, 22px) !important;
+}
+
+.workspace-column .topbar-status {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  margin-top: 7px !important;
+  overflow: hidden !important;
+}
+
+.workspace-column .topbar-status span {
+  flex: 0 1 auto !important;
+  max-width: 92px !important;
+  padding: 4px 8px !important;
+  overflow: hidden !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .topbar-status span:nth-child(2) {
+  display: none !important;
+}
+
+.workspace-column .topbar-hud {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding: 2px 0 4px !important;
+  scrollbar-width: none !important;
+}
+
+.workspace-column .topbar-hud::-webkit-scrollbar {
+  display: none !important;
+}
+
+.workspace-column .hud-cluster {
+  flex: 0 0 auto !important;
+  min-height: 46px !important;
+  padding: 5px !important;
+  gap: 5px !important;
+  border-radius: 11px !important;
+}
+
+.workspace-column .hud-segment {
+  flex: 0 0 auto !important;
+  gap: 4px !important;
+  padding: 3px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .camera-hud .icon-button,
+.workspace-column .action-hud .icon-button {
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+}
+
+.workspace-column .hud-segment button span {
+  display: inline !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.workspace-column .camera-current-pill {
+  display: none !important;
+}
+
+@media (max-width: 1500px) {
+  .workspace-column .topbar-primary {
+    flex-basis: 194px !important;
+    min-width: 150px !important;
+  }
+
+  .workspace-column .topbar-title .eyebrow {
+    display: none !important;
+  }
+
+  .workspace-column .topbar-status span:not(:first-child) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1280px) {
+  .workspace-column .topbar,
+  .product-shell.night-mode .workspace-column .topbar {
+    min-height: 64px !important;
+    padding: 8px !important;
+  }
+
+  .workspace-column .topbar-primary {
+    display: none !important;
+  }
+
+  .workspace-column .topbar-hud {
+    justify-content: flex-start !important;
+  }
+}
+
+.asset-card,
+.asset-card-action {
+  grid-template-rows: none !important;
+}
+
+.asset-card {
+  min-height: 176px !important;
+  overflow: hidden !important;
+}
+
+.asset-card::before,
+.asset-card::after {
+  z-index: 0 !important;
+}
+
+.asset-card::after {
+  opacity: 0.46 !important;
+}
+
+.asset-card > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.asset-card-action {
+  display: grid !important;
+  grid-template-rows: minmax(102px, 1fr) minmax(54px, auto) !important;
+  gap: 8px !important;
+  min-height: 174px !important;
+  padding: 10px !important;
+}
+
+.asset-preview {
+  min-height: 102px !important;
+}
+
+.asset-card-main {
+  display: grid !important;
+  grid-template-rows: minmax(22px, auto) 22px !important;
+  align-content: start !important;
+  justify-items: center !important;
+  min-height: 50px !important;
+  padding: 0 4px 2px !important;
+  overflow: visible !important;
+}
+
+.asset-card-name {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 22px !important;
+  overflow: hidden !important;
+  color: #25312f !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  line-height: 1.22 !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+}
+
+.asset-card-meta {
+  display: flex !important;
+  min-height: 22px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+}
+
+.asset-card .risk-badge {
+  min-height: 21px !important;
+  padding: 0 8px !important;
+  line-height: 19px !important;
+}
+
+.asset-category-list.compact .asset-card {
+  min-height: 142px !important;
+}
+
+.asset-category-list.compact .asset-card-action {
+  grid-template-rows: minmax(78px, 1fr) minmax(48px, auto) !important;
+  min-height: 140px !important;
+  padding: 8px !important;
+}
+
+.asset-category-list.compact .asset-preview {
+  min-height: 78px !important;
+}
+
+.asset-category-list.compact .asset-card-main {
+  min-height: 46px !important;
+}
+
+.product-shell.night-mode .asset-card-name {
+  color: #f7fffb !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.32) !important;
+}
+
+.product-shell.night-mode .asset-card .risk-badge {
+  border-color: rgba(121, 219, 207, 0.48) !important;
+  background: rgba(22, 69, 64, 0.78) !important;
+  color: #eafffa !important;
+}
+
+.asset-library.is-picking-asset .asset-card:not(.dragging) {
+  opacity: 0.86 !important;
+  transform: none !important;
+}
+
+.asset-library.is-picking-asset::after {
+  inset: 9px !important;
+  border-color: rgba(112, 214, 198, 0.2) !important;
+}
+
+.right-panel:not(.collapsed) .ai-hero,
+.right-panel:not(.collapsed) .ai-context-card,
+.right-panel:not(.collapsed) .ai-quick-section,
+.right-panel:not(.collapsed) .ai-chat-log,
+.right-panel:not(.collapsed) .ai-message > p,
+.right-panel:not(.collapsed) .ai-message > .message-content {
+  color: #273433 !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-hero,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-section,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-chat-log {
+  border-color: rgba(132, 214, 202, 0.34) !important;
+  background:
+    radial-gradient(circle at 14% 6%, rgba(104, 214, 198, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(17, 41, 50, 0.98), rgba(8, 24, 34, 0.96)) !important;
+  color: #f3fffb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-hero h2,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card h2,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-section h2,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-message span {
+  color: #f7fffb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-hero p,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card .section-title-row span,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-stream-status {
+  color: rgba(224, 241, 236, 0.78) !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-metric,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-list button,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-message > p,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-message > .message-content {
+  border-color: rgba(132, 214, 202, 0.34) !important;
+  background: rgba(7, 19, 27, 0.84) !important;
+  color: #f3fffb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-metric em,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-chips span {
+  color: rgba(224, 241, 236, 0.78) !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-metric strong,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-list button svg {
+  color: #aaf9ec !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-chips span {
+  border: 1px solid rgba(132, 214, 202, 0.28) !important;
+  background: rgba(48, 124, 113, 0.22) !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-composer label {
+  color: #dcefeb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-composer textarea {
+  min-height: 86px !important;
+  color: #f7fffb !important;
+  background: #06151d !important;
+}
+
+.stage-host {
+  padding: 12px 16px 16px !important;
+}
+
+.app-shell.focus-mode .stage-host {
+  padding: 94px 14px 14px !important;
+}
+
+/* Workbench stabilization v19: right panel AI uses natural document flow.
+   The fixed grid version compressed context cards in narrow/night layouts. */
+.right-panel > .right-panel-scroll > .ai-panel {
+  display: flex !important;
+  height: auto !important;
+  min-height: auto !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  overflow: visible !important;
+}
+
+.right-panel:not(.collapsed) .ai-context-card,
+.right-panel:not(.collapsed) .ai-quick-section {
+  height: auto !important;
+  min-height: max-content !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 14px !important;
+}
+
+.right-panel:not(.collapsed) .ai-context-card .section-title-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-height: 22px !important;
+}
+
+.right-panel:not(.collapsed) .ai-context-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+
+.right-panel:not(.collapsed) .ai-context-metric {
+  min-height: 62px !important;
+}
+
+.right-panel:not(.collapsed) .ai-context-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  margin-top: 12px !important;
+}
+
+.right-panel:not(.collapsed) .ai-context-chips span {
+  display: inline-flex !important;
+  max-width: 100% !important;
+  align-items: center !important;
+  white-space: normal !important;
+}
+
+.right-panel:not(.collapsed) .ai-quick-list {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+.right-panel:not(.collapsed) .ai-quick-list button {
+  width: 100% !important;
+  min-height: 42px !important;
+  justify-content: flex-start !important;
+  padding: 0 12px !important;
+  text-align: left !important;
+}
+
+.right-panel:not(.collapsed) .ai-chat-log {
+  min-height: 132px !important;
+  max-height: clamp(160px, 28vh, 260px) !important;
+  overflow: auto !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-hero,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-section {
+  color: #f7fffb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-chips span,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-list button {
+  color: #edfdf8 !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-chips span {
+  background: rgba(80, 166, 150, 0.22) !important;
+}
+
+/* Cinematic workbench v20:
+   Prioritize the tray as the hero surface on normal desktop widths. */
+@media (max-width: 1440px) {
+  .product-shell:not(.auth-mode):not(.focus-mode) {
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-navigation {
+    min-height: 54px !important;
+    padding: 6px 10px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-brand {
+    min-width: 232px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-brand h1 {
+    font-size: 20px !important;
+    line-height: 1.05 !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-brand .eyebrow {
+    font-size: 11px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell:not(.focus-mode) {
+    grid-template-columns: 224px minmax(0, 1fr) 228px !important;
+    gap: 8px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell.right-panel-collapsed:not(.focus-mode) {
+    grid-template-columns: 224px minmax(0, 1fr) 52px !important;
+  }
+
+  .asset-library .panel-header,
+  .right-panel:not(.collapsed) .panel-header {
+    min-height: 52px !important;
+    padding: 9px 12px !important;
+  }
+
+  .asset-library .panel-header h1,
+  .right-panel:not(.collapsed) .panel-header h1 {
+    font-size: 18px !important;
+  }
+
+  .asset-library .panel-header .eyebrow,
+  .right-panel:not(.collapsed) .panel-header .eyebrow {
+    font-size: 10px !important;
+  }
+
+  .asset-library-tools {
+    gap: 7px !important;
+    padding: 8px !important;
+  }
+
+  .asset-search {
+    min-height: 34px !important;
+  }
+
+  .workspace-column {
+    gap: 8px !important;
+  }
+
+  .workspace-column .topbar,
+  .product-shell.night-mode .workspace-column .topbar {
+    min-height: 56px !important;
+    justify-content: center !important;
+    padding: 8px !important;
+  }
+
+  .workspace-column .topbar-primary {
+    display: none !important;
+  }
+
+  .workspace-column .topbar-hud {
+    flex: 0 1 auto !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  .workspace-column .hud-cluster {
+    min-height: 38px !important;
+    padding: 4px !important;
+    gap: 4px !important;
+  }
+
+  .workspace-column .hud-segment {
+    padding: 2px !important;
+  }
+
+  .workspace-column .hud-segment button,
+  .workspace-column .camera-hud .icon-button,
+  .workspace-column .action-hud .icon-button {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 9px !important;
+  }
+
+  .workspace-column .hud-segment button span,
+  .workspace-column .camera-hud .icon-button span,
+  .workspace-column .action-hud .icon-button span {
+    display: inline !important;
+    overflow: hidden !important;
+    max-width: 1em !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  .workspace-column .sandbox-editor {
+    min-height: 0 !important;
+  }
+
+  .stage-host {
+    padding: 6px 8px 62px !important;
+  }
+
+  .stage-tool-dock {
+    bottom: 11px !important;
+    padding: 5px !important;
+    border-radius: 13px !important;
+  }
+
+  .stage-tool-dock button {
+    min-width: 45px !important;
+    min-height: 44px !important;
+    padding: 5px 6px !important;
+    font-size: 10px !important;
+  }
+
+  .right-panel:not(.collapsed) .panel-tabs {
+    gap: 6px !important;
+    padding: 8px 10px !important;
+  }
+
+  .right-panel:not(.collapsed) .panel-tabs button {
+    min-height: 34px !important;
+    font-size: 12px !important;
+  }
+
+  .insight-drawer {
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .insight-overview {
+    gap: 6px !important;
+  }
+
+  .insight-overview-item {
+    min-height: 52px !important;
+    padding: 6px !important;
+  }
+
+  .insight-overview-item strong {
+    font-size: 20px !important;
+  }
+
+  .insight-snapshot-panel,
+  .insight-event-preview {
+    padding: 10px !important;
+  }
+}
+
+@media (max-width: 1280px) {
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell:not(.focus-mode) {
+    grid-template-columns: 216px minmax(0, 1fr) 216px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell.right-panel-collapsed:not(.focus-mode) {
+    grid-template-columns: 216px minmax(0, 1fr) 48px !important;
+  }
+
+  .workspace-column .topbar-hud {
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+}
+
+/* Visual polish sprint v21:
+   Keep the toy backpack readable in the narrow game-workbench layout. */
+.asset-card {
+  overflow: visible !important;
+}
+
+.asset-card-action {
+  grid-template-rows: minmax(98px, 1fr) auto !important;
+  align-content: stretch !important;
+}
+
+.asset-card-main {
+  position: relative !important;
+  display: grid !important;
+  min-height: 46px !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 3px !important;
+  padding: 5px 6px 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 241, 0.72), rgba(246, 236, 215, 0.36)),
+    rgba(255, 250, 236, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38) !important;
+}
+
+.asset-card-name {
+  display: block !important;
+  width: 100% !important;
+  min-height: 18px !important;
+  color: #21312e !important;
+  font-size: 13px !important;
+  line-height: 1.18 !important;
+  text-align: center !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.66) !important;
+}
+
+.asset-card .risk-badge {
+  min-height: 19px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  padding-inline: 8px !important;
+  text-overflow: ellipsis !important;
+}
+
+.product-shell.night-mode .asset-card-main {
+  border-color: rgba(126, 215, 203, 0.2) !important;
+  background:
+    linear-gradient(180deg, rgba(21, 55, 60, 0.76), rgba(9, 26, 35, 0.84)),
+    rgba(14, 38, 47, 0.88) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(177, 255, 241, 0.08),
+    0 -8px 18px rgba(3, 12, 18, 0.18) !important;
+}
+
+.product-shell.night-mode .asset-card-name {
+  color: #f4fffb !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.42) !important;
+}
+
+.product-shell.night-mode .asset-card .risk-badge {
+  border-color: rgba(126, 224, 211, 0.5) !important;
+  background: rgba(30, 92, 83, 0.72) !important;
+  color: #eafffa !important;
+}
+
+@media (max-width: 1280px) {
+  .asset-grid,
+  .asset-category-list.compact .asset-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .asset-card {
+    min-height: 154px !important;
+  }
+
+  .asset-card-action {
+    grid-template-rows: minmax(88px, 1fr) auto !important;
+    min-height: 150px !important;
+    padding: 8px !important;
+  }
+
+  .asset-preview,
+  .asset-category-list.compact .asset-preview {
+    min-height: 88px !important;
+  }
+
+  .asset-card-main,
+  .asset-category-list.compact .asset-card-main {
+    min-height: 44px !important;
+  }
+}
+
+/* Design target sprint v22:
+   Make the editor read like a premium toy-sandbox workbench: the tray is the hero,
+   the HUD is a compact game control strip, and side panels recede behind the stage. */
+@media (min-width: 1361px) {
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell:not(.focus-mode) {
+    grid-template-columns: clamp(276px, 18vw, 342px) minmax(720px, 1fr) clamp(286px, 19vw, 356px) !important;
+    gap: 12px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell.right-panel-collapsed:not(.focus-mode) {
+    grid-template-columns: clamp(276px, 18vw, 342px) minmax(720px, 1fr) 58px !important;
+  }
+}
+
+.product-shell.light-day:not(.night-mode) {
+  background:
+    radial-gradient(circle at 52% 4%, rgba(255, 251, 224, 0.72), transparent 28%),
+    radial-gradient(circle at 12% 0%, rgba(92, 161, 138, 0.14), transparent 26%),
+    linear-gradient(135deg, #edf4e9 0%, #e5eee3 44%, #dce8da 100%) !important;
+}
+
+.product-shell.light-day:not(.night-mode) .app-navigation {
+  border-color: rgba(188, 171, 142, 0.62) !important;
+  background:
+    radial-gradient(circle at 5% 0%, rgba(255, 255, 255, 0.88), transparent 38%),
+    linear-gradient(180deg, rgba(255, 252, 243, 0.96), rgba(248, 240, 224, 0.92)) !important;
+  box-shadow:
+    0 16px 36px rgba(91, 73, 45, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+}
+
+.product-shell.light-day:not(.night-mode) .workspace-column .sandbox-editor {
+  overflow: hidden !important;
+  border-color: rgba(185, 164, 128, 0.62) !important;
+  background:
+    radial-gradient(circle at 52% -10%, rgba(255, 253, 232, 0.92), transparent 25%),
+    radial-gradient(ellipse at 8% 32%, rgba(109, 152, 101, 0.22), transparent 19%),
+    radial-gradient(ellipse at 94% 36%, rgba(125, 157, 99, 0.2), transparent 20%),
+    radial-gradient(ellipse at 50% 110%, rgba(114, 77, 35, 0.18), transparent 48%),
+    linear-gradient(180deg, rgba(250, 244, 224, 0.94), rgba(223, 212, 188, 0.94)),
+    #ebe2cc !important;
+  box-shadow:
+    0 32px 70px rgba(88, 73, 48, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+.product-shell.light-day:not(.night-mode) .workspace-column .sandbox-editor::before {
+  background:
+    radial-gradient(ellipse at 12% 36%, rgba(94, 132, 82, 0.18), transparent 16%),
+    radial-gradient(ellipse at 92% 30%, rgba(84, 126, 83, 0.16), transparent 18%),
+    radial-gradient(circle at 50% 2%, rgba(255, 255, 250, 0.68), transparent 26%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.34), transparent 26%, transparent 74%, rgba(114, 85, 46, 0.1)) !important;
+  filter: blur(12px) !important;
+}
+
+.product-shell.light-day:not(.night-mode) .workspace-column .stage-frame {
+  border-radius: 18px !important;
+  box-shadow:
+    0 42px 86px rgba(92, 72, 39, 0.28),
+    0 18px 34px rgba(82, 108, 89, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.38) !important;
+}
+
+.product-shell.light-day:not(.night-mode) .workspace-column .stage-frame::before {
+  inset: -20% -12% auto -12% !important;
+  height: 48% !important;
+  background:
+    radial-gradient(ellipse at var(--stage-light-x, 42%) var(--stage-light-y, 24%), rgba(255, 255, 235, 0.36), transparent 46%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.24), transparent 62%) !important;
+  opacity: 0.95 !important;
+}
+
+.product-shell.weather-rainy.light-day:not(.night-mode) .workspace-column .sandbox-editor {
+  background:
+    radial-gradient(circle at 52% -10%, rgba(241, 248, 230, 0.68), transparent 24%),
+    radial-gradient(ellipse at 8% 32%, rgba(102, 131, 111, 0.2), transparent 19%),
+    radial-gradient(ellipse at 94% 36%, rgba(105, 126, 112, 0.18), transparent 20%),
+    linear-gradient(180deg, rgba(223, 231, 219, 0.96), rgba(190, 199, 184, 0.94)),
+    #dce4d8 !important;
+}
+
+.workspace-column .topbar {
+  align-items: center !important;
+  border-radius: 15px !important;
+  overflow: visible !important;
+  border-color: rgba(178, 162, 136, 0.6) !important;
+  background:
+    radial-gradient(circle at 6% 0%, rgba(255, 255, 255, 0.86), transparent 38%),
+    linear-gradient(180deg, rgba(255, 252, 242, 0.92), rgba(246, 237, 219, 0.88)) !important;
+  box-shadow:
+    0 12px 24px rgba(74, 57, 31, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+.workspace-column .topbar-hud {
+  align-items: center !important;
+  gap: 7px !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding-block: 2px !important;
+}
+
+.workspace-column .hud-cluster {
+  min-height: 48px !important;
+  padding: 5px !important;
+  gap: 5px !important;
+  border-radius: 12px !important;
+}
+
+.workspace-column .hud-cluster > p {
+  min-width: 22px !important;
+  color: rgba(85, 99, 94, 0.72) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.05em !important;
+}
+
+.workspace-column .hud-segment {
+  border-radius: 10px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .camera-hud .icon-button,
+.workspace-column .action-hud .icon-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: 10px !important;
+}
+
+.workspace-column .hud-segment button span,
+.workspace-column .camera-hud .icon-button span,
+.workspace-column .action-hud .icon-button span {
+  max-width: 1.6em !important;
+  font-size: 11px !important;
+}
+
+.workspace-column .camera-current-pill {
+  display: none !important;
+}
+
+.camera-adjust-panel {
+  z-index: 40 !important;
+  border-radius: 14px !important;
+}
+
+.stage-tool-dock {
+  border-radius: 18px !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.96), transparent 45%),
+    linear-gradient(180deg, rgba(255, 253, 247, 0.94), rgba(242, 234, 219, 0.9)) !important;
+  box-shadow:
+    0 20px 42px rgba(58, 44, 25, 0.2),
+    0 6px 14px rgba(67, 93, 83, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+}
+
+.stage-tool-dock button {
+  border-radius: 13px !important;
+  transition:
+    transform 130ms ease,
+    border-color 130ms ease,
+    background 130ms ease,
+    color 130ms ease !important;
+}
+
+.stage-tool-dock button:hover:not(:disabled),
+.stage-tool-dock button:focus-visible,
+.stage-tool-dock button.active {
+  transform: translateY(-1px) !important;
+}
+
+.stage-frame.camera-pan-ready canvas {
+  cursor: grab !important;
+}
+
+.stage-frame.camera-panning canvas,
+.stage-frame.camera-orbiting canvas {
+  cursor: grabbing !important;
+}
+
+.stage-frame.camera-orbiting {
+  filter: saturate(1.05) contrast(1.03) !important;
+  box-shadow:
+    0 40px 82px rgba(46, 60, 70, 0.32),
+    0 14px 30px rgba(78, 197, 176, 0.16),
+    0 0 0 1px rgba(98, 210, 190, 0.45) !important;
+}
+
+.asset-shelf-status {
+  min-height: 48px !important;
+  align-items: center !important;
+}
+
+.asset-drag-status {
+  max-width: 112px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.asset-card {
+  border-radius: 16px !important;
+}
+
+.asset-preview {
+  border-radius: 12px !important;
+}
+
+.asset-card:hover .asset-preview img,
+.asset-card:focus-within .asset-preview img,
+.asset-card:hover .asset-preview canvas,
+.asset-card:focus-within .asset-preview canvas {
+  transform: translateY(-4px) scale(1.075) !important;
+}
+
+.right-panel:not(.collapsed) .insight-overview {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.right-panel:not(.collapsed) .insight-section:not([open]) {
+  min-height: 46px !important;
+}
+
+.product-shell.night-mode .workspace-column .topbar,
+.product-shell.night-mode .stage-tool-dock {
+  border-color: rgba(130, 166, 169, 0.48) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(114, 223, 207, 0.13), transparent 42%),
+    linear-gradient(180deg, rgba(27, 45, 55, 0.94), rgba(11, 25, 34, 0.94)) !important;
+}
+
+.product-shell.night-mode .workspace-column .hud-cluster > p {
+  color: rgba(212, 230, 224, 0.58) !important;
+}
+
+@media (max-width: 1360px) {
+  .workspace-column .topbar {
+    min-height: 52px !important;
+  }
+
+  .workspace-column .hud-cluster {
+    min-height: 40px !important;
+  }
+
+  .workspace-column .hud-cluster > p {
+    display: none !important;
+  }
+
+  .workspace-column .hud-segment button,
+  .workspace-column .camera-hud .icon-button,
+  .workspace-column .action-hud .icon-button {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+}
+
+/* Design-target convergence v23:
+   Final guardrails for the game-like workbench. The tray stays the hero,
+   toolbar controls never overlap, and toy backpack labels remain readable. */
+.workspace-column {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  display: block !important;
+  min-height: 58px !important;
+  max-height: none !important;
+  padding: 8px 10px !important;
+  overflow: visible !important;
+  border-radius: 14px !important;
+}
+
+.workspace-column .topbar-primary {
+  display: none !important;
+}
+
+.workspace-column .topbar-hud {
+  display: flex !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding: 2px 2px 5px !important;
+  scroll-padding-inline: 8px !important;
+  scrollbar-width: none !important;
+}
+
+.workspace-column .topbar-hud::-webkit-scrollbar {
+  display: none !important;
+}
+
+.workspace-column .hud-cluster {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  min-width: max-content !important;
+  min-height: 42px !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 5px !important;
+  border-radius: 12px !important;
+}
+
+.workspace-column .hud-cluster > p {
+  position: static !important;
+  display: inline-flex !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 22px !important;
+  overflow: visible !important;
+  clip: auto !important;
+  align-items: center !important;
+  color: rgba(76, 90, 85, 0.72) !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.06em !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .hud-segment {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  padding: 3px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .camera-hud .icon-button,
+.workspace-column .action-hud .icon-button {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+}
+
+.workspace-column .hud-segment button span,
+.workspace-column .camera-hud .icon-button span,
+.workspace-column .action-hud .icon-button span {
+  position: static !important;
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 1.4em !important;
+  overflow: hidden !important;
+  clip: auto !important;
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .camera-current-pill {
+  display: none !important;
+}
+
+.product-shell.night-mode .workspace-column .hud-cluster > p {
+  color: rgba(224, 245, 239, 0.7) !important;
+}
+
+.stage-frame.camera-panning::after,
+.stage-frame.camera-orbiting::after {
+  border-color: rgba(113, 230, 210, 0.44) !important;
+  background:
+    radial-gradient(ellipse at var(--stage-light-x, 50%) var(--stage-light-y, 32%), rgba(128, 239, 218, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.11), transparent 42%) !important;
+  opacity: 0.86 !important;
+  transform: scale(0.994) !important;
+}
+
+.stage-frame.camera-orbiting::after {
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(128, 239, 218, 0.16), transparent 34%),
+    conic-gradient(from 45deg at 50% 50%, transparent, rgba(128, 239, 218, 0.12), transparent 28%) !important;
+}
+
+.product-shell.night-mode .stage-frame.camera-panning::after,
+.product-shell.night-mode .stage-frame.camera-orbiting::after {
+  border-color: rgba(139, 255, 235, 0.5) !important;
+  background:
+    radial-gradient(ellipse at var(--stage-light-x, 50%) var(--stage-light-y, 32%), rgba(116, 242, 222, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(183, 255, 241, 0.08), transparent 42%) !important;
+}
+
+.asset-card {
+  min-height: 178px !important;
+  overflow: hidden !important;
+  contain: paint !important;
+  border-radius: 16px !important;
+}
+
+.asset-card::before,
+.asset-card::after {
+  z-index: 0 !important;
+}
+
+.asset-card > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.asset-card-pocket-label,
+.asset-favorite,
+.asset-card-grip {
+  z-index: 8 !important;
+}
+
+.asset-card-action {
+  display: grid !important;
+  grid-template-rows: minmax(104px, 1fr) 48px !important;
+  gap: 7px !important;
+  min-height: 162px !important;
+  overflow: hidden !important;
+  padding: 8px !important;
+}
+
+.asset-preview {
+  min-height: 102px !important;
+  max-height: 116px !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+
+.asset-preview img,
+.asset-preview canvas {
+  max-width: 96% !important;
+  max-height: 94% !important;
+  object-fit: contain !important;
+  transform: translateY(0) scale(calc(var(--asset-thumbnail-scale, 1) * 0.82)) !important;
+}
+
+.asset-card:hover .asset-preview img,
+.asset-card:focus-within .asset-preview img,
+.asset-card:hover .asset-preview canvas,
+.asset-card:focus-within .asset-preview canvas {
+  transform: translateY(-2px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.88)) !important;
+}
+
+.asset-card-main {
+  position: relative !important;
+  z-index: 6 !important;
+  display: grid !important;
+  grid-template-rows: minmax(20px, auto) 20px !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 2px !important;
+  overflow: hidden !important;
+  padding: 4px 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 241, 0.76), rgba(244, 234, 214, 0.48)),
+    rgba(255, 250, 236, 0.2) !important;
+}
+
+.asset-card-name {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 20px !important;
+  overflow: hidden !important;
+  color: #21312e !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  line-height: 20px !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+}
+
+.asset-card-meta {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 20px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.asset-card .risk-badge {
+  position: static !important;
+  max-width: 100% !important;
+  min-height: 18px !important;
+  overflow: hidden !important;
+  padding: 0 7px !important;
+  font-size: 10px !important;
+  line-height: 17px !important;
+  text-overflow: ellipsis !important;
+  transform: none !important;
+}
+
+.product-shell.night-mode .asset-card-main {
+  border-color: rgba(126, 215, 203, 0.24) !important;
+  background:
+    linear-gradient(180deg, rgba(26, 61, 66, 0.84), rgba(8, 26, 36, 0.9)),
+    rgba(14, 38, 47, 0.9) !important;
+}
+
+.product-shell.night-mode .asset-card-name {
+  color: #f7fffb !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55) !important;
+}
+
+.product-shell.night-mode .asset-card .risk-badge {
+  border-color: rgba(126, 224, 211, 0.52) !important;
+  background: rgba(30, 92, 83, 0.74) !important;
+  color: #effffb !important;
+}
+
+@media (max-width: 1440px) {
+  .workspace-column .topbar-hud {
+    justify-content: flex-start !important;
+  }
+
+  .workspace-column .hud-cluster > p {
+    display: none !important;
+  }
+
+  .workspace-column .hud-segment button,
+  .workspace-column .camera-hud .icon-button,
+  .workspace-column .action-hud .icon-button {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+  }
+
+  .asset-card {
+    min-height: 158px !important;
+  }
+
+  .asset-card-action {
+    grid-template-rows: minmax(88px, 1fr) 46px !important;
+    min-height: 142px !important;
+    gap: 6px !important;
+  }
+
+  .asset-preview {
+    min-height: 88px !important;
+    max-height: 96px !important;
+  }
+}
+
+/* Sand tray camera polish v24:
+   Mouse-pan/orbit feedback stays visible without stealing hit testing from Konva. */
+.stage-camera-hud,
+.product-shell.night-mode .stage-camera-hud {
+  left: 18px !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: 18px !important;
+  z-index: 44 !important;
+  pointer-events: none !important;
+}
+
+.stage-camera-hud:not(.active),
+.product-shell.night-mode .stage-camera-hud:not(.active) {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  padding: 0 !important;
+  border-color: rgba(109, 143, 142, 0.36) !important;
+  opacity: 0.62 !important;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.62), transparent 42%),
+    rgba(13, 30, 39, 0.72) !important;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+.stage-camera-hud.active,
+.product-shell.night-mode .stage-camera-hud.active {
+  width: min(324px, calc(100% - 36px)) !important;
+  min-width: min(284px, calc(100% - 36px)) !important;
+  max-width: min(324px, calc(100% - 36px)) !important;
+  padding: 10px 12px !important;
+  border-color: rgba(128, 237, 219, 0.68) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(128, 237, 219, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(19, 42, 52, 0.9), rgba(7, 20, 29, 0.88)) !important;
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(128, 237, 219, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  color: #f4fffb !important;
+}
+
+.stage-camera-hud.active .stage-camera-hud-status,
+.product-shell.night-mode .stage-camera-hud.active .stage-camera-hud-status {
+  color: #f8fffc !important;
+  font-size: 13px !important;
+  letter-spacing: 0.02em !important;
+}
+
+.stage-camera-hud.active .stage-camera-hud-tip,
+.product-shell.night-mode .stage-camera-hud.active .stage-camera-hud-tip {
+  display: block !important;
+  max-width: none !important;
+  color: rgba(232, 250, 244, 0.78) !important;
+  font-size: 11px !important;
+}
+
+.stage-camera-hud.active dl,
+.product-shell.night-mode .stage-camera-hud.active dl {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.stage-frame.camera-panning,
+.stage-frame.camera-orbiting {
+  outline: 1px solid rgba(128, 237, 219, 0.34) !important;
+  outline-offset: 2px !important;
+}
+
+.stage-frame.camera-panning::after,
+.stage-frame.camera-orbiting::after {
+  pointer-events: none !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(128, 237, 219, 0.3),
+    inset 0 0 58px rgba(128, 237, 219, 0.08) !important;
+}
+
+/* Interaction hardening v25:
+   The backpack and top controls must stay readable at all editor widths. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  min-height: auto !important;
+  padding: 8px 10px !important;
+  overflow: visible !important;
+}
+
+.workspace-column .topbar-hud {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.workspace-column .hud-cluster {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 4px !important;
+}
+
+.workspace-column .hud-cluster > p {
+  display: none !important;
+}
+
+.workspace-column .hud-segment {
+  min-width: 0 !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .camera-hud .icon-button,
+.workspace-column .action-hud .icon-button {
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+}
+
+.workspace-column .camera-hud,
+.workspace-column .action-hud {
+  flex-wrap: nowrap !important;
+}
+
+.workspace-column .environment-hud {
+  flex: 1 1 236px !important;
+  max-width: 420px !important;
+  justify-content: flex-end !important;
+}
+
+.asset-category-list {
+  scroll-padding-bottom: 24px !important;
+}
+
+.asset-grid {
+  align-items: start !important;
+  gap: 12px !important;
+}
+
+.asset-card,
+.asset-category-list.compact .asset-card {
+  min-height: 174px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  contain: none !important;
+}
+
+.asset-card-action,
+.asset-category-list.compact .asset-card-action {
+  display: grid !important;
+  grid-template-rows: 112px 54px !important;
+  min-height: 174px !important;
+  height: 174px !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+  padding: 9px !important;
+}
+
+.asset-category-list.compact .asset-card-action {
+  grid-template-rows: 88px 46px !important;
+  min-height: 148px !important;
+  height: 148px !important;
+}
+
+.asset-preview,
+.asset-category-list.compact .asset-preview {
+  display: grid !important;
+  place-items: center !important;
+  min-height: 0 !important;
+  height: 112px !important;
+  max-height: 112px !important;
+}
+
+.asset-category-list.compact .asset-preview {
+  height: 88px !important;
+  max-height: 88px !important;
+}
+
+.asset-card-main,
+.asset-category-list.compact .asset-card-main {
+  display: grid !important;
+  grid-template-rows: 24px 20px !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  align-content: center !important;
+  padding: 5px 7px !important;
+  overflow: hidden !important;
+}
+
+.asset-category-list.compact .asset-card-main {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  grid-template-rows: 22px 18px !important;
+}
+
+.asset-card-name {
+  display: block !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  line-height: 24px !important;
+  visibility: visible !important;
+}
+
+.asset-category-list.compact .asset-card-name {
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  font-size: 12px !important;
+  line-height: 22px !important;
+}
+
+.asset-card .risk-badge {
+  height: 18px !important;
+  min-height: 18px !important;
+  line-height: 17px !important;
+}
+
+.asset-card-pocket-label {
+  top: 9px !important;
+  left: 9px !important;
+  max-width: calc(100% - 58px) !important;
+}
+
+.asset-card-grip {
+  display: none !important;
+}
+
+.asset-card.dragging {
+  opacity: 0.72 !important;
+  transform: translateY(-4px) scale(0.98) !important;
+}
+
+.asset-library.is-picking-asset .asset-card:not(.dragging) {
+  opacity: 0.9 !important;
+  filter: saturate(0.82) brightness(0.92) !important;
+}
+
+@media (max-width: 1480px) {
+  .workspace-column .topbar-hud {
+    justify-content: flex-start !important;
+  }
+
+  .workspace-column .environment-hud {
+    order: 1 !important;
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    justify-content: flex-start !important;
+  }
+
+  .workspace-column .camera-hud {
+    order: 2 !important;
+  }
+
+  .workspace-column .action-hud {
+    order: 3 !important;
+  }
+}

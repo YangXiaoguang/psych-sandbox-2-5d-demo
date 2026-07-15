@@ -65,7 +65,7 @@ interface SceneState {
   events: SandboxEvent[];
 }
 
-const SANDBOX_CAMERA_STORAGE_KEY = "psych-sandbox:stage-camera-v1";
+const SANDBOX_CAMERA_STORAGE_KEY = "psych-sandbox:stage-camera-v14";
 
 export function App(): JSX.Element {
   const [repositoryMode, setRepositoryMode] = useState<RepositoryMode>(() => loadRepositoryMode());
@@ -586,6 +586,8 @@ export function App(): JSX.Element {
     <div
       className={classNames(
         "product-shell",
+        `weather-${environment.weather}`,
+        `light-${environment.light}`,
         environment.light === "night" && "night-mode",
         sandboxFocusMode && "focus-mode",
         activeView === "auth" && "auth-mode",

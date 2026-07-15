@@ -2,27 +2,29 @@ import { BOARD_HEIGHT, BOARD_WIDTH, clamp } from "./analysis";
 import type { SandboxCameraState } from "../types";
 
 export const VIEW_WIDTH = 1120;
-export const VIEW_HEIGHT = 700;
+export const VIEW_HEIGHT = 640;
 export const STAGE_LEFT = 48;
 export const STAGE_TOP = 156;
-export const STAGE_PITCH = 0.58;
-export const STAGE_SKEW = 0.16;
-export const STAGE_THICKNESS = 76;
+export const STAGE_PITCH = 0.64;
+export const STAGE_SKEW = 0.13;
+export const STAGE_THICKNESS = 82;
 export const DEFAULT_SANDBOX_CAMERA: SandboxCameraState = {
-  panX: 28,
-  panY: -49,
-  zoom: 1,
+  panX: -2,
+  panY: -4,
+  zoom: 1.13,
   yaw: 0,
-  pitch: STAGE_PITCH,
+  pitch: 0.68,
 };
 
 export const SANDBOX_CAMERA_LIMITS = {
-  panX: { min: -260, max: 260 },
-  panY: { min: -190, max: 190 },
-  zoom: { min: 0.74, max: 1.28 },
+  panX: { min: -220, max: 220 },
+  panY: { min: -150, max: 150 },
+  zoom: { min: 0.7, max: 1.48 },
   yaw: { min: -32, max: 32 },
-  pitch: { min: 0.48, max: 0.7 },
+  pitch: { min: 0.48, max: 0.74 },
 };
+
+const CAMERA_VIEW_MARGIN = 34;
 
 export type SandboxCameraPresetId = "standard" | "showcase" | "overview" | "close";
 
@@ -42,19 +44,19 @@ export const SANDBOX_CAMERA_PRESETS: Array<{
     id: "showcase",
     label: "展示",
     description: "轻微转台感，适合观察作品",
-    camera: { panX: 22, panY: -34, zoom: 1.04, yaw: -14, pitch: 0.62 },
+    camera: { panX: -6, panY: -6, zoom: 1.15, yaw: -7, pitch: 0.68 },
   },
   {
     id: "overview",
     label: "俯视",
     description: "更接近作品分析视角",
-    camera: { panX: 18, panY: -28, zoom: 0.94, yaw: 0, pitch: 0.7 },
+    camera: { panX: 0, panY: -10, zoom: 0.76, yaw: 0, pitch: 0.72 },
   },
   {
     id: "close",
     label: "近景",
     description: "突出沙具和沙面细节",
-    camera: { panX: 18, panY: -48, zoom: 1.18, yaw: 10, pitch: 0.58 },
+    camera: { panX: -14, panY: -16, zoom: 1.28, yaw: 7, pitch: 0.64 },
   },
 ];
 
@@ -69,12 +71,62 @@ export interface ProjectedPoint {
 }
 
 export function normalizeSandboxCamera(camera: SandboxCameraState): SandboxCameraState {
+  const zoom = clampFinite(camera.zoom, SANDBOX_CAMERA_LIMITS.zoom.min, SANDBOX_CAMERA_LIMITS.zoom.max, DEFAULT_SANDBOX_CAMERA.zoom);
+  const yaw = clampFinite(camera.yaw, SANDBOX_CAMERA_LIMITS.yaw.min, SANDBOX_CAMERA_LIMITS.yaw.max, DEFAULT_SANDBOX_CAMERA.yaw);
+  const pitch = clampFinite(camera.pitch, SANDBOX_CAMERA_LIMITS.pitch.min, SANDBOX_CAMERA_LIMITS.pitch.max, DEFAULT_SANDBOX_CAMERA.pitch);
+  const panLimits = getDynamicPanLimits({ zoom, yaw, pitch });
+
   return {
-    panX: clampFinite(camera.panX, SANDBOX_CAMERA_LIMITS.panX.min, SANDBOX_CAMERA_LIMITS.panX.max, DEFAULT_SANDBOX_CAMERA.panX),
-    panY: clampFinite(camera.panY, SANDBOX_CAMERA_LIMITS.panY.min, SANDBOX_CAMERA_LIMITS.panY.max, DEFAULT_SANDBOX_CAMERA.panY),
-    zoom: clampFinite(camera.zoom, SANDBOX_CAMERA_LIMITS.zoom.min, SANDBOX_CAMERA_LIMITS.zoom.max, DEFAULT_SANDBOX_CAMERA.zoom),
-    yaw: clampFinite(camera.yaw, SANDBOX_CAMERA_LIMITS.yaw.min, SANDBOX_CAMERA_LIMITS.yaw.max, DEFAULT_SANDBOX_CAMERA.yaw),
-    pitch: clampFinite(camera.pitch, SANDBOX_CAMERA_LIMITS.pitch.min, SANDBOX_CAMERA_LIMITS.pitch.max, DEFAULT_SANDBOX_CAMERA.pitch),
+    panX: clampFinite(camera.panX, panLimits.panX.min, panLimits.panX.max, DEFAULT_SANDBOX_CAMERA.panX),
+    panY: clampFinite(camera.panY, panLimits.panY.min, panLimits.panY.max, DEFAULT_SANDBOX_CAMERA.panY),
+    zoom,
+    yaw,
+    pitch,
+  };
+}
+
+function getDynamicPanLimits(camera: Pick<SandboxCameraState, "zoom" | "yaw" | "pitch">): {
+  panX: { min: number; max: number };
+  panY: { min: number; max: number };
+} {
+  const points = [
+    { x: 0, y: 0 },
+    { x: BOARD_WIDTH, y: 0 },
+    { x: BOARD_WIDTH, y: BOARD_HEIGHT },
+    { x: 0, y: BOARD_HEIGHT },
+  ].map((point) => {
+    const rotated = rotateBoardPoint(point, camera.yaw);
+    return {
+      x: VIEW_WIDTH / 2 + (rotated.x + rotated.y * STAGE_SKEW) * camera.zoom,
+      y: VIEW_HEIGHT / 2 + rotated.y * camera.pitch * camera.zoom,
+    };
+  });
+
+  const minX = Math.min(...points.map((point) => point.x));
+  const maxX = Math.max(...points.map((point) => point.x));
+  const minY = Math.min(...points.map((point) => point.y));
+  const maxY = Math.max(...points.map((point) => point.y)) + STAGE_THICKNESS;
+
+  return {
+    panX: clampPanAxis(minX, maxX, VIEW_WIDTH, SANDBOX_CAMERA_LIMITS.panX),
+    panY: clampPanAxis(minY, maxY, VIEW_HEIGHT, SANDBOX_CAMERA_LIMITS.panY),
+  };
+}
+
+function clampPanAxis(
+  min: number,
+  max: number,
+  viewSize: number,
+  hardLimit: { min: number; max: number },
+): { min: number; max: number } {
+  const extent = max - min;
+  const available = viewSize - CAMERA_VIEW_MARGIN * 2;
+  const viewMin = extent <= available ? CAMERA_VIEW_MARGIN - min : viewSize - CAMERA_VIEW_MARGIN - max;
+  const viewMax = extent <= available ? viewSize - CAMERA_VIEW_MARGIN - max : CAMERA_VIEW_MARGIN - min;
+
+  return {
+    min: Math.max(hardLimit.min, Math.min(viewMin, viewMax)),
+    max: Math.min(hardLimit.max, Math.max(viewMin, viewMax)),
   };
 }
 
