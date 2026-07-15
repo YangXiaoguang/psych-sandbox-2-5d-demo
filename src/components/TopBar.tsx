@@ -152,13 +152,12 @@ export function TopBar({
             onClick={() => setCameraPanelOpen((current) => !current)}
             aria-expanded={cameraPanelOpen}
             aria-label="打开视角微调"
+            title="视角微调"
           >
             <SlidersHorizontal size={16} />
-            <span>微调</span>
           </button>
-          <button className="icon-button" type="button" onClick={onCameraReset} aria-label="重置沙盘视角">
+          <button className="icon-button" type="button" onClick={onCameraReset} aria-label="重置沙盘视角" title="重置视角">
             <RotateCcw size={16} />
-            <span>重置</span>
           </button>
         </section>
 
@@ -169,9 +168,9 @@ export function TopBar({
             type="button"
             onClick={onToggleFocusMode}
             aria-label={focusMode ? "退出沙盘全屏模式" : "进入沙盘全屏模式"}
+            title={focusMode ? "退出全屏" : "全屏"}
           >
             {focusMode ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
-            <span>{focusMode ? "退出全屏" : "全屏"}</span>
           </button>
           {showRightPanelToggle ? (
             <button
@@ -180,9 +179,9 @@ export function TopBar({
               onClick={onToggleRightPanel}
               aria-label={rightPanelCollapsed ? "展开右侧作品面板" : "隐藏右侧作品面板"}
               aria-pressed={rightPanelCollapsed}
+              title={rightPanelCollapsed ? "展开作品面板" : "隐藏作品面板"}
             >
               {rightPanelCollapsed ? <PanelRightOpen size={17} /> : <PanelRightClose size={17} />}
-              <span>{rightPanelCollapsed ? "面板" : "隐藏"}</span>
             </button>
           ) : null}
           <button
@@ -191,25 +190,22 @@ export function TopBar({
             onClick={onToggleGuides}
             aria-label="切换辅助区域"
             aria-pressed={showGuides}
+            title="辅助区域"
           >
             <Grid3X3 size={17} />
-            <span>九宫格</span>
           </button>
         </section>
 
         <section className="hud-cluster action-hud export-hud" aria-label="作品操作">
           <p>输出</p>
-          <button className="icon-button" type="button" onClick={onExportJson} aria-label="导出 JSON 快照">
+          <button className="icon-button" type="button" onClick={onExportJson} aria-label="导出 JSON 快照" title="导出 JSON">
             <FileDown size={17} />
-            <span>JSON</span>
           </button>
-          <button className="icon-button" type="button" onClick={onExportPng} aria-label="导出 PNG 截图">
+          <button className="icon-button" type="button" onClick={onExportPng} aria-label="导出 PNG 截图" title="导出 PNG">
             <ImageDown size={17} />
-            <span>PNG</span>
           </button>
-          <button className="icon-button danger" type="button" onClick={onClearScene} aria-label="清空当前作品">
+          <button className="icon-button danger" type="button" onClick={onClearScene} aria-label="清空当前作品" title="清空作品">
             <Trash2 size={17} />
-            <span>清空</span>
           </button>
         </section>
       </div>

@@ -15124,6 +15124,16 @@ table td {
   white-space: nowrap !important;
 }
 
+.workspace-column .camera-hud .icon-button span,
+.workspace-column .action-hud .icon-button span {
+  display: none !important;
+}
+
+.workspace-column .camera-hud .icon-button,
+.workspace-column .action-hud .icon-button {
+  gap: 0 !important;
+}
+
 .asset-card {
   border-radius: 16px !important;
 }
@@ -15757,5 +15767,436 @@ table td {
 
   .workspace-column .action-hud {
     order: 3 !important;
+  }
+}
+
+/* Stability polish v26:
+   The editor has accumulated several historical visual layers. This final
+   guard keeps the workbench readable without touching Konva interaction code. */
+.workspace-column .topbar,
+.product-shell.night-mode .workspace-column .topbar {
+  display: grid !important;
+  grid-template-columns: minmax(184px, 0.62fr) minmax(420px, 1.38fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 72px !important;
+  padding: 10px 12px !important;
+  overflow: visible !important;
+}
+
+.workspace-column .topbar-primary {
+  display: grid !important;
+  min-width: 0 !important;
+  gap: 7px !important;
+}
+
+.workspace-column .topbar-title {
+  min-width: 0 !important;
+}
+
+.workspace-column .topbar-title .eyebrow {
+  margin: 0 0 2px !important;
+  color: var(--ink-muted) !important;
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+}
+
+.workspace-column .topbar-title h2 {
+  display: block !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--ink) !important;
+  font-size: 18px !important;
+  line-height: 1.16 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .topbar-status {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+.workspace-column .topbar-status span {
+  display: inline-flex !important;
+  max-width: 116px !important;
+  min-height: 22px !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .topbar-status span:nth-child(2) {
+  display: none !important;
+}
+
+.workspace-column .topbar-hud,
+.product-shell.night-mode .workspace-column .topbar-hud {
+  display: flex !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.workspace-column .hud-cluster,
+.product-shell.night-mode .workspace-column .hud-cluster {
+  display: inline-flex !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px !important;
+  border-radius: 12px !important;
+}
+
+.workspace-column .hud-cluster > p,
+.product-shell.night-mode .workspace-column .hud-cluster > p {
+  display: none !important;
+}
+
+.workspace-column .environment-hud {
+  flex: 1 1 232px !important;
+  max-width: 360px !important;
+  justify-content: flex-end !important;
+}
+
+.workspace-column .camera-hud,
+.workspace-column .view-hud,
+.workspace-column .export-hud {
+  flex: 0 0 auto !important;
+}
+
+.workspace-column .hud-segment,
+.product-shell.night-mode .workspace-column .hud-segment {
+  display: inline-flex !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  padding: 3px !important;
+}
+
+.workspace-column .hud-segment button,
+.workspace-column .camera-hud .icon-button,
+.workspace-column .action-hud .icon-button {
+  display: inline-flex !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+}
+
+.workspace-column .hud-segment button span,
+.workspace-column .camera-hud .icon-button span,
+.workspace-column .action-hud .icon-button span {
+  display: inline-block !important;
+  max-width: 1.6em !important;
+  overflow: hidden !important;
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .camera-current-pill {
+  display: none !important;
+}
+
+.workspace-column .camera-adjust-panel {
+  right: 12px !important;
+  left: auto !important;
+  width: min(520px, calc(100% - 24px)) !important;
+  max-height: min(72vh, 620px) !important;
+  overflow: auto !important;
+}
+
+.asset-grid {
+  align-items: start !important;
+}
+
+.asset-card,
+.asset-category-list.compact .asset-card {
+  display: block !important;
+  min-height: 188px !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  contain: paint !important;
+}
+
+.asset-category-list.compact .asset-card {
+  min-height: 158px !important;
+}
+
+.asset-card-action,
+.asset-category-list.compact .asset-card-action {
+  display: grid !important;
+  grid-template-rows: 116px 54px !important;
+  width: 100% !important;
+  min-height: 180px !important;
+  height: 180px !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+  padding: 9px !important;
+}
+
+.asset-category-list.compact .asset-card-action {
+  grid-template-rows: 88px 48px !important;
+  min-height: 150px !important;
+  height: 150px !important;
+  gap: 7px !important;
+}
+
+.asset-preview,
+.asset-category-list.compact .asset-preview {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: 116px !important;
+  max-height: 116px !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+
+.asset-category-list.compact .asset-preview {
+  height: 88px !important;
+  max-height: 88px !important;
+}
+
+.asset-card-main,
+.asset-category-list.compact .asset-card-main {
+  display: grid !important;
+  grid-template-rows: 25px 20px !important;
+  width: 100% !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 2px !important;
+  overflow: hidden !important;
+  padding: 4px 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  border-radius: 11px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 248, 0.88), rgba(247, 233, 204, 0.72)),
+    rgba(255, 250, 236, 0.56) !important;
+}
+
+.asset-category-list.compact .asset-card-main {
+  grid-template-rows: 24px 18px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding: 3px 7px !important;
+}
+
+.asset-card-name,
+.asset-category-list.compact .asset-card-name {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  overflow: hidden !important;
+  color: #182827 !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  line-height: 25px !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.asset-category-list.compact .asset-card-name {
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  font-size: 13px !important;
+  line-height: 24px !important;
+}
+
+.asset-card-meta,
+.asset-category-list.compact .asset-card-meta {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 20px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.asset-card .risk-badge,
+.asset-category-list.compact .asset-card .risk-badge {
+  position: static !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+  line-height: 17px !important;
+  transform: none !important;
+}
+
+.asset-card-pocket-label {
+  max-width: calc(100% - 58px) !important;
+}
+
+.product-shell.night-mode .asset-card-main,
+.product-shell.night-mode .asset-category-list.compact .asset-card-main {
+  border-color: rgba(129, 233, 218, 0.32) !important;
+  background:
+    linear-gradient(180deg, rgba(32, 66, 70, 0.92), rgba(7, 25, 34, 0.94)),
+    rgba(9, 28, 36, 0.96) !important;
+}
+
+.product-shell.night-mode .asset-card-name,
+.product-shell.night-mode .asset-category-list.compact .asset-card-name {
+  color: #f8fffc !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.62) !important;
+}
+
+.product-shell.night-mode .asset-card .risk-badge {
+  border-color: rgba(129, 233, 218, 0.58) !important;
+  background: rgba(28, 91, 83, 0.9) !important;
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-hero,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-section,
+.product-shell.night-mode .right-panel:not(.collapsed) .selected-object-card {
+  border-color: rgba(82, 111, 118, 0.9) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(105, 202, 185, 0.13), transparent 42%),
+    linear-gradient(180deg, rgba(24, 43, 53, 0.96), rgba(10, 25, 34, 0.98)) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-hero *,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card *,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-section *,
+.product-shell.night-mode .right-panel:not(.collapsed) .selected-object-card * {
+  color: inherit !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-card .section-title-row span,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-chips span,
+.product-shell.night-mode .right-panel:not(.collapsed) .selected-object-card span {
+  color: #b7cbc4 !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-metric,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-list button {
+  border-color: rgba(91, 119, 126, 0.92) !important;
+  background: rgba(8, 20, 28, 0.88) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-list button:hover,
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-quick-list button:focus-visible {
+  border-color: rgba(105, 202, 185, 0.72) !important;
+  background: rgba(20, 67, 63, 0.96) !important;
+  color: #f8fffc !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-metric strong {
+  color: #ffffff !important;
+}
+
+.product-shell.night-mode .right-panel:not(.collapsed) .ai-context-metric em {
+  color: #b7cbc4 !important;
+}
+
+.product-shell.night-mode .metric-card,
+.product-shell.night-mode .grid-cell,
+.product-shell.night-mode .mini-grid-cell,
+.product-shell.night-mode .object-meta-grid > div,
+.product-shell.night-mode .symbolic-list span,
+.product-shell.night-mode .semantic-chip-list span {
+  border-color: rgba(82, 111, 118, 0.9) !important;
+  background:
+    linear-gradient(180deg, rgba(23, 40, 49, 0.94), rgba(9, 22, 30, 0.94)) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .property-grid input,
+.product-shell.night-mode .property-grid label,
+.product-shell.night-mode .range-row input,
+.product-shell.night-mode .asset-catalog-toolbar input,
+.product-shell.night-mode .asset-catalog-toolbar select,
+.product-shell.night-mode .asset-catalog-toolbar button,
+.product-shell.night-mode .admin-table th,
+.product-shell.night-mode .admin-table td,
+.product-shell.night-mode .asset-admin-table th,
+.product-shell.night-mode .asset-admin-table td {
+  border-color: rgba(82, 111, 118, 0.9) !important;
+  background: rgba(8, 20, 28, 0.9) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode input,
+.product-shell.night-mode select,
+.product-shell.night-mode textarea {
+  caret-color: #a6efe1 !important;
+}
+
+.product-shell.night-mode input::placeholder,
+.product-shell.night-mode textarea::placeholder {
+  color: #93aaa3 !important;
+}
+
+@media (max-width: 1540px) {
+  .workspace-column .topbar,
+  .product-shell.night-mode .workspace-column .topbar {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .workspace-column .topbar-hud,
+  .product-shell.night-mode .workspace-column .topbar-hud {
+    justify-content: flex-start !important;
+  }
+
+  .workspace-column .environment-hud {
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 1320px) {
+  .workspace-column .topbar-title h2 {
+    font-size: 16px !important;
+  }
+
+  .workspace-column .topbar-status span {
+    max-width: 96px !important;
   }
 }

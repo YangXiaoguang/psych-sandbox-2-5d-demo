@@ -9,6 +9,10 @@ npm install
 npm run dev
 ```
 
+## 开发文档
+
+- [开发文档与技术说明书](docs/development-and-technical-spec.md)
+
 ## 能力
 
 - 左侧内置沙具资产库，沙具由 Three.js 正交相机离屏渲染为玩具化 3D sprite
