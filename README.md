@@ -11,7 +11,8 @@ npm run dev
 
 ## 开发文档
 
-- [开发文档与技术说明书](docs/development-and-technical-spec.md)
+- [项目开发手册与技术说明书](docs/project-development-manual.md)
+- [详细开发文档与技术规格参考](docs/development-and-technical-spec.md)
 
 ## 能力
 
