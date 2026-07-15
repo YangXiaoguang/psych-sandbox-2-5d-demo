@@ -29,6 +29,7 @@ import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
 import { SandboxSandMaterialLayer } from "./SandboxSandMaterialLayer";
 import { SandboxObjectShape } from "./SandboxObjectShape";
+import { SandboxObjectContactLayer } from "./SandboxObjectContactLayer";
 import { ThreeSandboxStageLayer } from "./ThreeSandboxStageLayer";
 import { SandboxTrayPolishLayer } from "./SandboxTrayPolishLayer";
 import { WeatherLayer } from "./WeatherLayer";
@@ -929,6 +930,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
               <SandboxSandMaterialLayer environment={environment} camera={camera} />
               <SandboxTrayPolishLayer environment={environment} camera={camera} />
               <SandboxGuideLayer environment={environment} camera={camera} showGuides={showGuides} renderBackdrop={false} />
+              <SandboxObjectContactLayer objects={objects} environment={environment} camera={camera} />
               <Rect
                 name="sandbox-camera-pan-surface"
                 x={0}
