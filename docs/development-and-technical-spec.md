@@ -30,6 +30,56 @@
 - 当前本地登录和 API Key 保存均为浏览器 localStorage 原型方案，生产环境必须迁移到服务端鉴权和加密密钥存储。
 - AI Agent 只能作为陪伴式、探索式问答入口，不应在 UI 或提示词中声明诊断结论。
 
+### 1.1 文档适用对象
+
+本说明书面向四类角色：
+
+| 角色 | 阅读重点 |
+|---|---|
+| 产品经理 | 项目边界、核心流程、用户数据生命周期、后续产品路线 |
+| 前端工程师 | 组件结构、状态流、Konva/Three.js 交互边界、样式规范 |
+| 后端工程师 | API DTO、分页协议、Repository Adapter、认证与权限上下文 |
+| 运维/交付人员 | 构建部署、静态托管、生产化风险和迁移要求 |
+
+### 1.2 能力矩阵
+
+| 域 | 已实现能力 | 当前形态 | 生产化方向 |
+|---|---|---|---|
+| 沙盘编辑 | 沙具拖拽、选择、移动、旋转、缩放、删除、深度排序 | React-Konva 本地运行 | 保持前端交互，作品持久化迁移服务端 |
+| 沙具资产 | 内置资产、收藏、最近使用、搜索、管理后台 CRUD | localStorage + Three.js 离屏 sprite | 资产服务、版本管理、预渲染缓存、CDN/对象存储 |
+| 视觉环境 | 方形木框沙盘、沙面材质、天气、日夜、工作室背景 | Canvas/Konva/程序化绘制 | 增加视觉回归、资源分层、可配置主题 |
+| 作品洞察 | 九宫格、中心/边界、风险分布、事件流 | 前端纯函数分析 | 服务端存档、审计、报告草稿 |
+| AI 伙伴 | 右侧/全屏抽屉、上下文摘要、流式回复 | 浏览器直连或模拟回退 | 后端 LLM Proxy、密钥托管、调用审计 |
+| Agent 对话 | 多理论取向 Agent、会话列表、Markdown 渲染 | 本地会话存储 | 会话服务、消息分页、内容安全策略 |
+| 个人中心 | 注册登录、访客、本地用户切换、沙盘档案、记忆候选 | localStorage 原型 | 账号服务、隐私授权、长期记忆服务 |
+| 管理后台 | 用户、权限、资产、LLM、Agent、系统架构 | 本地管理控制台 | 真实 RBAC、审计日志、任务队列 |
+
+### 1.3 核心用户流程
+
+```mermaid
+flowchart TD
+  Start["进入系统"] --> Auth["登录 / 注册 / 访客进入"]
+  Auth --> Sandbox["沙盘编辑"]
+  Sandbox --> Asset["从沙具库选择或拖拽沙具"]
+  Asset --> Edit["移动 / 旋转 / 缩放 / 删除"]
+  Edit --> Insight["作品洞察和事件流"]
+  Insight --> Export["导出 JSON / PNG"]
+  Insight --> Companion["AI 伙伴对话"]
+  Sandbox --> Archive["归档为沙盘会话档案"]
+  Archive --> Memory["生成记忆候选"]
+  Memory --> Confirm["用户确认是否进入 AI 上下文"]
+  Confirm --> Agent["Agent 对话读取 Context Packet"]
+  Auth --> Admin["管理后台配置资产 / LLM / Agent / 权限"]
+```
+
+### 1.4 当前工程原则
+
+1. 沙盘本体优先：任何 UI 调整不能遮挡、破坏或降低沙盘编辑交互。
+2. 用户可控记忆：AI 使用的记忆必须可解释、可关闭、可追溯来源。
+3. 本地可运行：Demo 不依赖后端服务，所有核心流程必须开箱即跑。
+4. 后端可迁移：新增持久化能力时优先走 Repository Adapter 或 API DTO，不把业务逻辑锁死在 localStorage。
+5. 心理安全边界：不输出诊断结论，不暗示系统可替代专业心理服务。
+
 ---
 
 ## 2. 快速开始
@@ -164,6 +214,57 @@ flowchart LR
   LLM --> Providers["DeepSeek/OpenAI/Anthropic/Gemini 等"]
 ```
 
+### 4.4 模块边界与依赖规则
+
+| 模块 | 可以依赖 | 不应依赖 |
+|---|---|---|
+| `components/` | `types`、`utils`、`data`、`hooks`、领域服务 | 直接修改 localStorage key、直接拼接 API URL |
+| `utils/` | `types`、纯函数、浏览器下载 API | React state、组件 DOM、业务页面状态 |
+| `rendering/` | Three.js、`types`、资产规格 | React 组件状态、管理后台逻辑 |
+| `personal/` | `types`、沙盘快照类型、审计模型 | UI 组件、LLM provider 具体实现 |
+| `admin/` | 权限模型、审计模型、个人数据摘要 | 沙盘渲染层、Konva 实例 |
+| `api/` | DTO、错误码、分页协议 | 页面组件内部状态 |
+| `platform/` | `api`、`personal`、`admin`、`utils/storage` | 具体页面组件 |
+| `llm/` | provider 配置、fetch、SSE 解析 | AgentChatView 组件细节 |
+
+开发约束：
+
+- 领域数据类型优先放在 `src/types.ts`、`src/personal/types.ts`、`src/admin/types.ts` 或 `src/api/contracts.ts`。
+- UI 组件只负责展示和交互编排，复杂数据转换应下沉到 `utils`、`personal`、`admin` 或 `platform`。
+- 新增跨页面状态时优先评估是否属于 `App.tsx` 顶层状态；如果状态生命周期只属于某个页面，不要提升到全局。
+- 后续引入后端时，不要让组件直接调用 `fetch`；应通过 `api/client.ts` 或 Repository Adapter。
+
+### 4.5 运行时数据生命周期
+
+```mermaid
+sequenceDiagram
+  participant U as 用户
+  participant UI as React 组件
+  participant APP as App.tsx 状态
+  participant ANA as 分析/归档工具
+  participant REPO as Repository Adapter
+  participant LS as localStorage / Future API
+
+  U->>UI: 拖拽或编辑沙具
+  UI->>APP: 更新 objects / selectedId
+  APP->>APP: recordEvent
+  APP->>ANA: analyzeScene(objects)
+  APP->>REPO: saveScene(userId)
+  REPO->>LS: 写入 user-scoped workspace
+  U->>UI: 归档作品
+  UI->>ANA: createSandtraySessionArchive
+  ANA->>APP: SandtraySessionArchive + MemoryCandidate
+  APP->>REPO: personal.save(bundle)
+  REPO->>LS: 写入个人记忆 OS
+```
+
+生命周期规则：
+
+- 运行态作品：`objects + events + environment + layoutPreferences`。
+- 可归档作品：运行态作品被封装为 `SandtraySessionArchive` 后进入个人档案。
+- AI 可用记忆：只有用户授权且候选状态允许的记忆才进入 `PersonalContextPacket`。
+- 管理后台数据：资产、LLM、Agent、权限治理均是配置域，不应直接改变历史沙盘快照。
+
 ---
 
 ## 5. 沙盘编辑器技术说明
@@ -203,13 +304,30 @@ flowchart LR
 
 ```ts
 {
-  panX: -2,
-  panY: -4,
-  zoom: 1.13,
-  yaw: 0,
-  pitch: 0.68,
+  panX: 0,
+  panY: -48,
+  zoom: 0.96,
+  yaw: -6,
+  pitch: 0.61,
 }
 ```
+
+当前相机限制：
+
+| 参数 | 范围 | 说明 |
+|---|---:|---|
+| `panX` | 动态限制，硬边界 `-220 ~ 220` | 横向移动沙盘视角 |
+| `panY` | 动态限制，硬边界 `-150 ~ 150` | 纵向移动沙盘视角 |
+| `zoom` | `0.7 ~ 1.48` | 缩放沙盘 |
+| `yaw` | `-32 ~ 32` | 水平转动角度 |
+| `pitch` | `0.48 ~ 0.74` | 斜俯视角压缩比例 |
+
+内置预设位于 `SANDBOX_CAMERA_PRESETS`：
+
+- `standard`：默认编辑视角。
+- `showcase`：展示视角，适合观察作品。
+- `overview`：偏俯视，适合分析九宫格关系。
+- `close`：近景，适合观察沙具和沙面细节。
 
 ### 5.3 2.5D 深度排序
 
@@ -888,12 +1006,22 @@ interface ApiPagePayloadDto<T> {
 | `psych-sandbox-2-5d-demo.admin-governance.v1` | 后台权限治理 |
 | `psych-sandbox-2-5d-demo.local-auth-identities.v1` | 本地登录身份 |
 | `psych-sandbox-2-5d-demo.local-auth-session.v1` | 当前登录会话 |
-| `psych-sandbox:stage-camera-v14` | 沙盘相机 |
+| `psych-sandbox-2-5d-demo.repository-mode.v1` | Repository Adapter 模式 |
+| `psych-sandbox:stage-camera-v16` | 沙盘相机 |
 
 用户隔离：
 
 - `utils/storage.ts` 提供 `loadSceneForUser`、`saveSceneForUser` 等 user-scoped API。
 - 新用户切换时，`App.tsx` 会先保存当前用户运行态，再加载目标用户运行态。
+- user-scoped key 规则为：`${baseKey}.user.${encodeURIComponent(userId)}`。
+- 默认用户仍会兼容写入历史非 user-scoped key，避免旧数据丢失。
+
+存储设计原则：
+
+1. 所有新增本地数据必须使用明确版本号，例如 `.v1`、`.v2`。
+2. 修改结构时必须提供 reconcile / normalize，保证旧 localStorage 不导致白屏。
+3. 敏感数据仅允许在 Demo 阶段保存到 localStorage；生产迁移时必须转为服务端托管。
+4. 大对象，例如 PNG 截图、导出包、长会话记录，后续应迁移到 IndexedDB 或对象存储。
 
 ---
 
@@ -1225,3 +1353,267 @@ server {
 4. 将账号、权限、档案、记忆、LLM 密钥迁移到真实服务端。
 5. 保持“用户知道 AI 使用了什么记忆、为什么使用、可以如何控制”的产品透明度。
 
+---
+
+## 25. 标准开发流程
+
+### 25.1 本地开发步骤
+
+1. 拉取代码并安装依赖。
+
+```bash
+npm install
+```
+
+2. 启动本地开发环境。
+
+```bash
+npm run dev
+```
+
+3. 开发前确认工作区状态。
+
+```bash
+git status --short
+```
+
+4. 开发完成后执行构建。
+
+```bash
+npm run build
+```
+
+5. 对涉及 UI / 交互的修改进行浏览器回归。
+
+### 25.2 建议提交粒度
+
+| 变更类型 | 建议 commit 范围 |
+|---|---|
+| 沙盘交互 | 只包含 `SandboxEditor`、投影、对象形状、必要 CSS |
+| 沙具资产 | 只包含资产规格、渲染器、资产库展示 |
+| AI 对话 | 只包含 AgentChat、LLM adapter、Markdown 渲染 |
+| 个人中心 | 只包含 personal types/store/UI |
+| 管理后台 | 只包含 AdminDashboard、admin types、API/mock adapter |
+| 样式系统 | 独立提交，避免和行为修改混在一起 |
+
+提交信息建议：
+
+```text
+feat: add sandtray archive dashboard
+fix: restore object dragging in transformed stage
+docs: update technical architecture manual
+chore: checkpoint before visual refactor
+```
+
+### 25.3 代码审查重点
+
+- 是否破坏沙具拖拽、选择、旋转、缩放、删除。
+- 是否引入会影响 Konva 坐标命中的 CSS transform。
+- 夜间模式是否有不可读文字或不可见输入内容。
+- localStorage schema 是否有兼容逻辑。
+- LLM 调用是否暴露明文 key、是否保留错误回退。
+- 个人记忆是否保持用户可控、可解释、可追溯。
+- 管理后台是否避免一次性渲染万级数据。
+
+---
+
+## 26. 质量门禁与回归用例
+
+### 26.1 必过命令
+
+```bash
+npm run build
+```
+
+如果后续引入测试框架，建议新增：
+
+```bash
+npm run test
+npm run test:e2e
+npm run lint
+```
+
+### 26.2 沙盘编辑回归
+
+| 场景 | 预期 |
+|---|---|
+| 点击沙具库卡片 | 沙具出现在沙盘中并被选中 |
+| 从沙具库拖拽到沙盘 | 沙具落在鼠标对应位置 |
+| 拖拽已放置沙具 | 坐标变化，事件流记录移动 |
+| 拖拽空白沙面 | 相机平移，对象逻辑坐标不变 |
+| 旋转/缩放控制框 | 对象角度/比例变化，接地阴影跟随 |
+| 删除选中沙具 | 对象消失，事件流记录删除 |
+| y 深度排序 | 下方/近处对象覆盖上方/远处对象 |
+| 导出 JSON | 文件包含对象、事件、环境、分析 |
+| 导出 PNG | 截图包含当前沙盘视觉，不包含无关调试元素 |
+
+### 26.3 夜间模式回归
+
+| 检查点 | 要求 |
+|---|---|
+| 顶部导航 | active、hover、disabled 均可识别 |
+| 输入框 | 输入文字和 placeholder 对比度足够 |
+| 资产卡片 | 名称、标签、收藏按钮不重叠 |
+| 右侧面板 | 次级文本、标签、进度条、折叠头可读 |
+| 管理表格 | 表头、行内容、徽章、操作按钮可读 |
+| Agent 对话 | 用户气泡、AI 气泡、Markdown 标题/列表可读 |
+
+### 26.4 API / 数据回归
+
+| 场景 | 预期 |
+|---|---|
+| 切换用户 | 当前用户运行态先保存，新用户运行态正确加载 |
+| 删除资产 | 资产库隐藏，已放置对象不丢失 |
+| 重置资产 | 内置资产恢复 |
+| 切换 Repository 模式 | 系统架构页能显示当前模式和健康状态 |
+| 导入/导出个人档案 | schema/version 可校验，冲突策略明确 |
+| LLM provider 连接失败 | UI 显示可理解错误，不导致页面崩溃 |
+
+---
+
+## 27. 排障手册
+
+### 27.1 沙具不能拖拽
+
+优先检查：
+
+1. `SandboxEditor.tsx` 中对象 `Group` 是否仍然 `draggable`。
+2. 背景层、天气层、辅助层是否设置 `listening={false}`。
+3. 是否有外层 CSS transform 造成鼠标坐标偏移。
+4. `stageToolMode` 是否停留在 `select`。
+5. `onDragMove` 是否调用 `unprojectPoint` 并更新逻辑坐标。
+
+推荐搜索：
+
+```bash
+rg -n "draggable|onDragMove|listening=\\{false\\}|Transformer|unprojectPoint" src/components src/utils
+```
+
+### 27.2 夜间模式文字不可见
+
+优先检查：
+
+1. `.night-mode` 下是否覆盖了对应组件的文字色。
+2. 输入框是否设置了 `color`，而不只是 `background`。
+3. `::placeholder` 是否有独立颜色。
+4. disabled 按钮是否被降到过低透明度。
+5. 白色卡片是否在夜间面板中需要切换为深色卡片。
+
+推荐搜索：
+
+```bash
+rg -n "night-mode|placeholder|disabled|opacity|color:" src/styles.css
+```
+
+### 27.3 LLM 真实流式不可用
+
+优先检查：
+
+1. Provider 是否 `enabled`。
+2. API Key 是否非空。
+3. Base URL 是否包含正确协议和路径。
+4. 供应商是否允许浏览器直连。
+5. 控制台是否出现 CORS。
+6. `streamText.ts` 中 provider adapter 是否匹配。
+
+前端 Demo 允许失败后回退到本地模拟，但生产环境必须用后端 LLM Proxy。
+
+### 27.4 用户数据错乱
+
+优先检查：
+
+1. `activeUserId` 是否正确。
+2. `persistRuntimeStateForUser(activeUserId)` 是否在切换前执行。
+3. user-scoped storage key 是否包含正确 userId。
+4. 管理后台是否直接修改了 personal bundle 但没有触发 normalize。
+5. Auth session userId 是否能匹配 personal account。
+
+---
+
+## 28. 后端数据模型建议
+
+当前 DTO 已经为后端化做了第一层约束。建议真实服务端按以下领域拆表或集合。
+
+| 领域 | 推荐实体 |
+|---|---|
+| 账号 | `users`、`auth_identities`、`sessions`、`password_reset_tokens` |
+| 用户画像 | `identity_profiles`、`communication_preferences`、`consent_records` |
+| 工作区 | `workspaces`、`workspace_members` |
+| 沙盘作品 | `sandtray_sessions`、`sandtray_snapshots`、`sandbox_objects`、`sandbox_events` |
+| 记忆 | `memory_candidates`、`memory_block_rules`、`context_packets` |
+| 管理权限 | `admin_access_policies`、`admin_audit_logs` |
+| 资产 | `asset_catalog`、`asset_versions`、`asset_tags`、`asset_health_checks` |
+| LLM | `llm_providers`、`llm_provider_secrets`、`llm_call_logs` |
+| Agent | `psych_agents`、`agent_versions`、`agent_conversations`、`agent_messages` |
+| 后台任务 | `tasks`、`task_events`、`exports` |
+
+### 28.1 数据访问约束
+
+- 所有用户数据表必须包含 `owner_user_id` 或可推导的授权范围。
+- 管理后台读取用户数据必须经过 RBAC 和工作区范围校验。
+- 沙盘快照应不可被静默覆盖，推荐 append-only 版本或保留历史版本。
+- 记忆候选的状态变化必须记录审计。
+- LLM 明文 API Key 不应进入应用数据库普通字段，应使用 KMS 或加密字段。
+
+### 28.2 索引建议
+
+| 表 | 索引 |
+|---|---|
+| `users` | `email unique`、`status + created_at`、`display_name text` |
+| `sandtray_sessions` | `owner_user_id + archived_at desc`、`workspace_id + updated_at desc` |
+| `memory_candidates` | `user_id + status + updated_at desc`、`source_session_id` |
+| `sandbox_events` | `session_id + created_at asc` |
+| `asset_catalog` | `category + enabled`、`risk_tag`、`updated_at desc` |
+| `agent_messages` | `conversation_id + created_at asc` |
+| `admin_audit_logs` | `actor_user_id + created_at desc`、`resource_type + resource_id` |
+
+---
+
+## 29. 后端迁移执行路线
+
+### 29.1 P0：认证与用户目录
+
+- 实现 `/api/auth/register`、`/api/auth/login`。
+- 实现 `/api/admin/users` 服务端分页。
+- 将 `LocalAuthSession` 替换为服务端 Session/JWT。
+- 管理后台用户列表改为远程分页查询。
+
+### 29.2 P1：沙盘作品与个人档案
+
+- 实现 `workspaces` 和 `sandtray_sessions`。
+- 保存当前作品草稿和归档快照。
+- 将个人中心历史作品切换为远程分页。
+- 保留前端 localStorage 作为离线草稿缓存。
+
+### 29.3 P2：记忆系统与 Context Packet
+
+- 服务端生成记忆候选。
+- 用户确认后进入长期记忆。
+- 每次 AI 调用记录使用的 context packet item。
+- 增加记忆禁用、删除、导出和审计。
+
+### 29.4 P3：LLM Proxy 与后台任务
+
+- API Key 服务端加密存储。
+- 前端调用 `/api/agent/chat/stream`，不再直连供应商。
+- 导入导出、资产批量处理走 `/api/tasks`。
+- 支持任务状态轮询和失败重试。
+
+---
+
+## 30. 文档维护规范
+
+本文件应随代码变化同步更新，尤其是以下场景：
+
+- 新增或重命名顶层视图。
+- 修改核心类型、localStorage key、API DTO。
+- 修改沙盘坐标、相机、对象交互机制。
+- 新增 LLM provider 或 Agent 协议。
+- 修改个人记忆、授权、Context Packet 规则。
+- 管理后台从 localStorage 迁移到真实后端。
+
+每次更新建议在文档顶部维护版本日期，并在 commit 信息中使用：
+
+```text
+docs: update development and technical specification
+```
