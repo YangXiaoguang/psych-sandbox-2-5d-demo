@@ -16200,3 +16200,80 @@ table td {
     max-width: 96px !important;
   }
 }
+
+/* Responsive backpack polish v27:
+   Keep the asset library usable on common 1366px workstations without
+   sacrificing the clear toy thumbnails that the sandplay workflow needs. */
+@media (min-width: 1281px) and (max-width: 1440px) {
+  .asset-grid,
+  .asset-category-list.compact .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .asset-card,
+  .asset-category-list.compact .asset-card {
+    min-height: 148px !important;
+    border-radius: 14px !important;
+  }
+
+  .asset-card-action,
+  .asset-category-list.compact .asset-card-action {
+    grid-template-rows: 90px 42px !important;
+    min-height: 144px !important;
+    height: 144px !important;
+    gap: 6px !important;
+    padding: 7px !important;
+  }
+
+  .asset-preview,
+  .asset-category-list.compact .asset-preview {
+    height: 90px !important;
+    max-height: 90px !important;
+    border-radius: 11px !important;
+  }
+
+  .asset-card-main,
+  .asset-category-list.compact .asset-card-main {
+    grid-template-rows: 21px 17px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    gap: 1px !important;
+    padding: 3px 5px !important;
+  }
+
+  .asset-card-name,
+  .asset-category-list.compact .asset-card-name {
+    height: 21px !important;
+    min-height: 21px !important;
+    max-height: 21px !important;
+    font-size: 12px !important;
+    line-height: 21px !important;
+  }
+
+  .asset-card-meta,
+  .asset-category-list.compact .asset-card-meta {
+    min-height: 17px !important;
+  }
+
+  .asset-card .risk-badge,
+  .asset-category-list.compact .asset-card .risk-badge {
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    padding: 0 6px !important;
+    font-size: 9px !important;
+    line-height: 15px !important;
+  }
+
+  .asset-card-pocket-label {
+    max-width: calc(100% - 48px) !important;
+    font-size: 10px !important;
+  }
+
+  .asset-favorite-button {
+    width: 26px !important;
+    height: 26px !important;
+  }
+}
