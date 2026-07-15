@@ -16277,3 +16277,95 @@ table td {
     height: 26px !important;
   }
 }
+
+/* Focus AI companion console v28:
+   In fullscreen editing the AI companion must behave like a side console, not a
+   modal floating above the tray. Reserve real layout space so the sand tray,
+   toolbar, and AI drawer remain independently operable. */
+.app-shell.focus-mode.ai-drawer-open {
+  --focus-ai-drawer-width: 420px;
+  --focus-ai-drawer-gap: 18px;
+}
+
+.app-shell.focus-mode.ai-drawer-open .workspace-column {
+  box-sizing: border-box !important;
+  padding-right: calc(var(--focus-ai-drawer-width) + (var(--focus-ai-drawer-gap) * 2)) !important;
+  transition: padding-right 180ms ease !important;
+}
+
+.app-shell.focus-mode.ai-drawer-open .topbar,
+.product-shell.night-mode .app-shell.focus-mode.ai-drawer-open .topbar {
+  max-width: 100% !important;
+}
+
+.app-shell.focus-mode.ai-drawer-open .focus-ai-drawer {
+  right: var(--focus-ai-drawer-gap) !important;
+  width: var(--focus-ai-drawer-width) !important;
+  max-width: calc(100vw - 64px) !important;
+}
+
+.app-shell.focus-mode.ai-drawer-open .focus-panel-toggle {
+  right: calc(var(--focus-ai-drawer-width) + (var(--focus-ai-drawer-gap) * 2)) !important;
+}
+
+.app-shell.focus-mode.ai-drawer-open .focus-selection-card {
+  display: none !important;
+}
+
+.product-shell.night-mode .focus-ai-drawer .ai-hero,
+.product-shell.night-mode .focus-ai-drawer .ai-context-card,
+.product-shell.night-mode .focus-ai-drawer .ai-quick-section,
+.product-shell.night-mode .focus-ai-drawer .ai-chat-log {
+  border-color: rgba(105, 202, 185, 0.24) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(105, 202, 185, 0.13), transparent 42%),
+    linear-gradient(180deg, rgba(18, 38, 48, 0.97), rgba(8, 21, 30, 0.99)) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .focus-ai-drawer .ai-hero *,
+.product-shell.night-mode .focus-ai-drawer .ai-context-card *,
+.product-shell.night-mode .focus-ai-drawer .ai-quick-section *,
+.product-shell.night-mode .focus-ai-drawer .ai-chat-log * {
+  color: inherit !important;
+}
+
+.product-shell.night-mode .focus-ai-drawer .ai-context-metric,
+.product-shell.night-mode .focus-ai-drawer .ai-message,
+.product-shell.night-mode .focus-ai-drawer .ai-message .markdown-text {
+  border-color: rgba(96, 125, 132, 0.82) !important;
+  background: rgba(7, 19, 27, 0.78) !important;
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .focus-ai-drawer .ai-context-chips span {
+  color: #dff8f1 !important;
+  border-color: rgba(105, 202, 185, 0.32) !important;
+  background: rgba(31, 96, 88, 0.34) !important;
+}
+
+@media (max-width: 1500px) {
+  .app-shell.focus-mode.ai-drawer-open {
+    --focus-ai-drawer-width: 380px;
+    --focus-ai-drawer-gap: 14px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .app-shell.focus-mode.ai-drawer-open .workspace-column {
+    padding-right: 0 !important;
+  }
+
+  .app-shell.focus-mode.ai-drawer-open .focus-ai-drawer {
+    right: 14px !important;
+    left: 14px !important;
+    bottom: 14px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: min(56vh, 560px) !important;
+  }
+
+  .app-shell.focus-mode.ai-drawer-open .focus-panel-toggle {
+    right: 14px !important;
+  }
+}
