@@ -810,6 +810,7 @@ function paintCompositeStage(
   paintCinematicRoomSet(context, environment);
   paintPremiumStudioDepth(context, environment);
   paintHeroWorkspaceBackdrop(context, environment);
+  paintPremiumWorkbenchSetDressing(context, environment, corners);
   paintDeskSurface(context, environment, corners);
   paintWorkbenchDepthCues(context, environment, corners);
   paintTrayShadow(context, environment, corners);
@@ -1048,6 +1049,130 @@ function paintHeroWorkspaceBackdrop(context: CanvasRenderingContext2D, environme
   context.fillRect(0, VIEW_HEIGHT * 0.48, VIEW_WIDTH, VIEW_HEIGHT * 0.52);
   context.restore();
 
+  context.restore();
+}
+
+function paintPremiumWorkbenchSetDressing(
+  context: CanvasRenderingContext2D,
+  environment: SandboxEnvironment,
+  corners: ReturnType<typeof getProjectedStageCorners>,
+): void {
+  const night = environment.light === "night";
+  const rainy = environment.weather === "rainy";
+  const cloudy = environment.weather === "cloudy";
+  const trayTop = Math.min(corners.topLeft.y, corners.topRight.y, corners.bottomLeft.y, corners.bottomRight.y);
+  const trayFront = Math.max(corners.bottomLeft.y, corners.bottomRight.y) + STAGE_THICKNESS * 0.5;
+  const windowBottom = Math.max(150, Math.min(248, trayTop + 20));
+  const deskStart = Math.max(VIEW_HEIGHT * 0.56, Math.min(VIEW_HEIGHT - 142, trayFront - 36));
+
+  context.save();
+  const windowX = VIEW_WIDTH * 0.18;
+  const windowWidth = VIEW_WIDTH * 0.64;
+  const windowGradient = context.createLinearGradient(0, 0, 0, windowBottom);
+  windowGradient.addColorStop(0, night ? "rgba(24,58,72,0.38)" : rainy ? "rgba(226,236,229,0.5)" : "rgba(255,253,236,0.74)");
+  windowGradient.addColorStop(0.58, night ? "rgba(14,39,54,0.22)" : cloudy ? "rgba(234,230,204,0.24)" : "rgba(255,231,172,0.3)");
+  windowGradient.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = windowGradient;
+  context.fillRect(windowX, 0, windowWidth, windowBottom);
+
+  context.globalAlpha = night ? 0.17 : rainy ? 0.22 : 0.3;
+  context.strokeStyle = night ? "rgba(150,225,226,0.34)" : "rgba(148,177,151,0.34)";
+  context.lineWidth = 2;
+  for (let pane = 0; pane <= 5; pane += 1) {
+    const x = windowX + (windowWidth / 5) * pane;
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, windowBottom * (0.72 + (pane % 2) * 0.08));
+    context.stroke();
+  }
+  context.beginPath();
+  context.moveTo(windowX, windowBottom * 0.48);
+  context.lineTo(windowX + windowWidth, windowBottom * 0.42);
+  context.stroke();
+  context.restore();
+
+  context.save();
+  context.filter = "blur(12px)";
+  context.globalAlpha = night ? 0.22 : rainy ? 0.24 : cloudy ? 0.28 : 0.38;
+  const leafPalette = night
+    ? ["#2d6a66", "#1d5359", "#61734e"]
+    : rainy
+      ? ["#748f77", "#607e70", "#b19a66"]
+      : cloudy
+        ? ["#849a70", "#8ba980", "#c4a26c"]
+        : ["#6aa665", "#8bc776", "#cfaa65"];
+  [
+    { x: VIEW_WIDTH * 0.08, y: windowBottom * 0.66, side: -1, scale: 1.12 },
+    { x: VIEW_WIDTH * 0.91, y: windowBottom * 0.62, side: 1, scale: 1.22 },
+  ].forEach((plant, plantIndex) => {
+    for (let leaf = 0; leaf < 16; leaf += 1) {
+      context.fillStyle = leafPalette[(leaf + plantIndex) % leafPalette.length];
+      context.beginPath();
+      context.ellipse(
+        plant.x + plant.side * (18 + random(22000 + plantIndex * 181 + leaf * 17) * 96),
+        plant.y + random(22100 + plantIndex * 191 + leaf * 19) * 190,
+        (20 + random(22200 + plantIndex * 197 + leaf * 23) * 42) * plant.scale,
+        (56 + random(22300 + plantIndex * 199 + leaf * 29) * 78) * plant.scale,
+        plant.side * (-0.62 + random(22400 + plantIndex * 211 + leaf * 31) * 0.88),
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+    }
+    const potGradient = context.createLinearGradient(plant.x - 52, deskStart - 92, plant.x + 52, deskStart + 24);
+    potGradient.addColorStop(0, night ? "rgba(119,92,58,0.34)" : "rgba(198,142,78,0.48)");
+    potGradient.addColorStop(1, night ? "rgba(54,38,28,0.32)" : "rgba(121,76,38,0.4)");
+    context.fillStyle = potGradient;
+    context.fillRect(plant.x - 42, deskStart - 64, 84, 112);
+  });
+  context.restore();
+
+  context.save();
+  const deskGradient = context.createLinearGradient(0, deskStart - 56, VIEW_WIDTH, VIEW_HEIGHT);
+  deskGradient.addColorStop(0, night ? "rgba(22,51,60,0.08)" : "rgba(255,244,205,0.14)");
+  deskGradient.addColorStop(0.35, night ? "rgba(26,48,51,0.3)" : rainy ? "rgba(178,151,105,0.2)" : "rgba(224,166,86,0.27)");
+  deskGradient.addColorStop(1, night ? "rgba(5,13,18,0.52)" : "rgba(124,77,34,0.32)");
+  context.fillStyle = deskGradient;
+  context.fillRect(0, deskStart - 70, VIEW_WIDTH, VIEW_HEIGHT - deskStart + 70);
+
+  context.globalAlpha = night ? 0.16 : 0.22;
+  context.strokeStyle = night ? "rgba(151,211,204,0.28)" : "rgba(109,68,31,0.26)";
+  context.lineCap = "round";
+  for (let plank = 0; plank < 15; plank += 1) {
+    const y = deskStart - 42 + plank * 28 + random(23000 + plank * 37) * 9;
+    context.lineWidth = 0.8 + random(23100 + plank * 41) * 1.5;
+    context.beginPath();
+    context.moveTo(-40, y);
+    context.bezierCurveTo(VIEW_WIDTH * 0.26, y - 18, VIEW_WIDTH * 0.72, y + 22, VIEW_WIDTH + 40, y - 8);
+    context.stroke();
+  }
+  context.restore();
+
+  context.save();
+  context.globalCompositeOperation = night ? "screen" : "soft-light";
+  const focusGlow = context.createRadialGradient(
+    VIEW_WIDTH * 0.48,
+    Math.max(130, trayTop + 40),
+    60,
+    VIEW_WIDTH * 0.48,
+    Math.max(180, trayTop + 80),
+    VIEW_WIDTH * 0.62,
+  );
+  focusGlow.addColorStop(0, night ? "rgba(104,204,204,0.13)" : rainy ? "rgba(239,246,229,0.24)" : "rgba(255,246,213,0.34)");
+  focusGlow.addColorStop(0.52, night ? "rgba(73,144,154,0.04)" : "rgba(255,216,150,0.09)");
+  focusGlow.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = focusGlow;
+  context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+  context.restore();
+
+  context.save();
+  context.globalCompositeOperation = "multiply";
+  const vignette = context.createRadialGradient(VIEW_WIDTH * 0.5, VIEW_HEIGHT * 0.5, VIEW_WIDTH * 0.34, VIEW_WIDTH * 0.5, VIEW_HEIGHT * 0.52, VIEW_WIDTH * 0.84);
+  vignette.addColorStop(0, "rgba(255,255,255,0)");
+  vignette.addColorStop(0.72, night ? "rgba(0,8,13,0.05)" : "rgba(97,67,33,0.03)");
+  vignette.addColorStop(1, night ? "rgba(0,8,13,0.2)" : "rgba(93,59,27,0.1)");
+  context.fillStyle = vignette;
+  context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
   context.restore();
 }
 
