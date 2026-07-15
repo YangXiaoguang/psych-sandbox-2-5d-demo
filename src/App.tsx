@@ -65,7 +65,7 @@ interface SceneState {
   events: SandboxEvent[];
 }
 
-const SANDBOX_CAMERA_STORAGE_KEY = "psych-sandbox:stage-camera-v15";
+const SANDBOX_CAMERA_STORAGE_KEY = "psych-sandbox:stage-camera-v16";
 
 export function App(): JSX.Element {
   const [repositoryMode, setRepositoryMode] = useState<RepositoryMode>(() => loadRepositoryMode());

@@ -9,11 +9,11 @@ export const STAGE_PITCH = 0.64;
 export const STAGE_SKEW = 0.13;
 export const STAGE_THICKNESS = 82;
 export const DEFAULT_SANDBOX_CAMERA: SandboxCameraState = {
-  panX: 8,
-  panY: -26,
-  zoom: 1.18,
-  yaw: -8,
-  pitch: 0.64,
+  panX: 0,
+  panY: -48,
+  zoom: 0.96,
+  yaw: -6,
+  pitch: 0.61,
 };
 
 export const SANDBOX_CAMERA_LIMITS = {
@@ -44,7 +44,7 @@ export const SANDBOX_CAMERA_PRESETS: Array<{
     id: "showcase",
     label: "展示",
     description: "轻微转台感，适合观察作品",
-    camera: { panX: 14, panY: -34, zoom: 1.24, yaw: -14, pitch: 0.62 },
+    camera: { panX: 0, panY: -38, zoom: 1.06, yaw: -7, pitch: 0.62 },
   },
   {
     id: "overview",
@@ -56,7 +56,7 @@ export const SANDBOX_CAMERA_PRESETS: Array<{
     id: "close",
     label: "近景",
     description: "突出沙具和沙面细节",
-    camera: { panX: -14, panY: -16, zoom: 1.28, yaw: 7, pitch: 0.64 },
+    camera: { panX: -10, panY: -28, zoom: 1.16, yaw: 7, pitch: 0.63 },
   },
 ];
 
