@@ -16369,3 +16369,78 @@ table td {
     right: 14px !important;
   }
 }
+
+/* Backpack readability guard v27:
+   Keep the asset library in a clear game-inventory scale. The shelf rail is
+   useful, but cards must never collapse into tiny 80px thumbnails. */
+@media (min-width: 1500px) {
+  .app-shell:not(.focus-mode) {
+    grid-template-columns: clamp(322px, 20.5vw, 356px) minmax(0, 1fr) clamp(300px, 18vw, 340px) !important;
+  }
+
+  .app-shell.right-panel-collapsed:not(.focus-mode) {
+    grid-template-columns: clamp(322px, 20.5vw, 356px) minmax(0, 1fr) 50px !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell:not(.focus-mode) {
+    grid-template-columns: clamp(322px, 20.5vw, 356px) minmax(680px, 1fr) clamp(300px, 18vw, 340px) !important;
+  }
+
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell.right-panel-collapsed:not(.focus-mode) {
+    grid-template-columns: clamp(322px, 20.5vw, 356px) minmax(680px, 1fr) 50px !important;
+  }
+}
+
+.asset-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(118px, 100%), 1fr)) !important;
+  gap: 12px !important;
+}
+
+.asset-category-list.compact .asset-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(96px, 100%), 1fr)) !important;
+  gap: 10px !important;
+}
+
+.asset-card,
+.asset-category-list.compact .asset-card {
+  min-width: 0 !important;
+}
+
+.asset-card-action,
+.asset-category-list.compact .asset-card-action {
+  width: 100% !important;
+}
+
+.asset-card-name,
+.asset-category-list.compact .asset-card-name {
+  min-width: 0 !important;
+  padding-inline: 2px !important;
+}
+
+.asset-card .asset-preview img,
+.asset-card .asset-preview canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: auto !important;
+  object-fit: contain !important;
+  transform: translateY(1px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.74)) !important;
+}
+
+.asset-card:hover .asset-preview img,
+.asset-card:focus-within .asset-preview img,
+.asset-card:hover .asset-preview canvas,
+.asset-card:focus-within .asset-preview canvas {
+  transform: translateY(-1px) scale(calc(var(--asset-thumbnail-scale, 1) * 0.79)) !important;
+}
+
+.asset-card .asset-preview,
+.asset-category-list.compact .asset-card .asset-preview {
+  position: relative !important;
+  display: block !important;
+  overflow: hidden !important;
+}
