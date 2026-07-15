@@ -809,6 +809,7 @@ function paintCompositeStage(
   paintRoomBackdrop(context, environment);
   paintCinematicRoomSet(context, environment);
   paintPremiumStudioDepth(context, environment);
+  paintHeroWorkspaceBackdrop(context, environment);
   paintDeskSurface(context, environment, corners);
   paintWorkbenchDepthCues(context, environment, corners);
   paintTrayShadow(context, environment, corners);
@@ -921,6 +922,133 @@ function paintRoomBackdrop(context: CanvasRenderingContext2D, environment: Sandb
     drawSoftEllipse(context, VIEW_WIDTH * 0.24, 74, 146, 34, "rgba(255,255,255,0.5)");
     drawSoftEllipse(context, VIEW_WIDTH * 0.36, 52, 84, 22, "rgba(255,255,255,0.32)");
   }
+}
+
+function paintHeroWorkspaceBackdrop(context: CanvasRenderingContext2D, environment: SandboxEnvironment): void {
+  const night = environment.light === "night";
+  const rainy = environment.weather === "rainy";
+  const cloudy = environment.weather === "cloudy";
+
+  context.save();
+
+  const wallGlow = context.createRadialGradient(
+    VIEW_WIDTH * 0.5,
+    VIEW_HEIGHT * 0.15,
+    24,
+    VIEW_WIDTH * 0.5,
+    VIEW_HEIGHT * 0.18,
+    VIEW_WIDTH * 0.68,
+  );
+  wallGlow.addColorStop(0, night ? "rgba(115,188,196,0.11)" : rainy ? "rgba(234,244,231,0.35)" : "rgba(255,255,245,0.58)");
+  wallGlow.addColorStop(0.46, night ? "rgba(54,99,114,0.06)" : cloudy ? "rgba(244,236,207,0.22)" : "rgba(255,226,168,0.2)");
+  wallGlow.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = wallGlow;
+  context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT * 0.72);
+
+  context.save();
+  context.filter = "blur(18px)";
+  context.globalCompositeOperation = night ? "screen" : "soft-light";
+  context.globalAlpha = night ? 0.38 : rainy ? 0.42 : cloudy ? 0.5 : 0.72;
+  const windowBeam = context.createLinearGradient(VIEW_WIDTH * 0.16, 0, VIEW_WIDTH * 0.68, VIEW_HEIGHT * 0.7);
+  windowBeam.addColorStop(0, night ? "rgba(110,187,205,0.28)" : "rgba(255,255,248,0.72)");
+  windowBeam.addColorStop(0.45, night ? "rgba(74,132,155,0.1)" : rainy ? "rgba(225,238,229,0.2)" : "rgba(255,229,166,0.24)");
+  windowBeam.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = windowBeam;
+  context.beginPath();
+  context.moveTo(VIEW_WIDTH * 0.2, -20);
+  context.lineTo(VIEW_WIDTH * 0.48, -20);
+  context.lineTo(VIEW_WIDTH * 0.73, VIEW_HEIGHT * 0.68);
+  context.lineTo(VIEW_WIDTH * 0.48, VIEW_HEIGHT * 0.72);
+  context.closePath();
+  context.fill();
+  context.restore();
+
+  context.save();
+  context.filter = "blur(10px)";
+  context.globalAlpha = night ? 0.18 : rainy ? 0.24 : 0.33;
+  const propColors = night
+    ? ["#285e64", "#1a4852", "#6a5535"]
+    : rainy
+      ? ["#7c9678", "#769288", "#b5905d"]
+      : cloudy
+        ? ["#91a878", "#94ad8b", "#c39d62"]
+        : ["#76aa68", "#9ac980", "#d0a260"];
+
+  [
+    { x: -8, y: 190, mirror: 1 },
+    { x: VIEW_WIDTH + 10, y: 184, mirror: -1 },
+  ].forEach((prop, propIndex) => {
+    context.save();
+    context.translate(prop.x, prop.y);
+    context.scale(prop.mirror, 1);
+    for (let leaf = 0; leaf < 9; leaf += 1) {
+      context.fillStyle = propColors[(leaf + propIndex) % propColors.length];
+      context.beginPath();
+      context.ellipse(
+        58 + random(propIndex * 181 + leaf * 37) * 52,
+        12 + random(propIndex * 191 + leaf * 41) * 104,
+        28 + random(propIndex * 197 + leaf * 43) * 46,
+        76 + random(propIndex * 199 + leaf * 47) * 82,
+        -0.54 + random(propIndex * 211 + leaf * 53) * 0.86,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+    }
+    context.fillStyle = night ? "#6a5438" : "#b9844e";
+    context.fillRect(54, 150, 58, 82);
+    context.restore();
+  });
+  context.restore();
+
+  context.save();
+  context.globalCompositeOperation = night ? "screen" : "source-over";
+  context.globalAlpha = night ? 0.4 : rainy ? 0.34 : cloudy ? 0.42 : 0.58;
+  if (night) {
+    for (let star = 0; star < 26; star += 1) {
+      const x = 90 + random(12000 + star * 31) * (VIEW_WIDTH - 180);
+      const y = 34 + random(12100 + star * 37) * 210;
+      const radius = 0.7 + random(12200 + star * 41) * 1.5;
+      context.fillStyle = `rgba(237,255,244,${0.18 + random(12300 + star) * 0.28})`;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+  } else if (rainy || cloudy) {
+    const cloudTone = rainy ? "rgba(100,118,122,0.24)" : "rgba(190,198,187,0.34)";
+    drawSoftEllipse(context, VIEW_WIDTH * 0.2, 86, 190, 42, cloudTone);
+    drawSoftEllipse(context, VIEW_WIDTH * 0.53, 62, 220, 48, rainy ? "rgba(96,116,123,0.18)" : "rgba(210,213,200,0.26)");
+    drawSoftEllipse(context, VIEW_WIDTH * 0.84, 95, 210, 46, cloudTone);
+    if (rainy) {
+      context.strokeStyle = "rgba(225,239,236,0.16)";
+      context.lineWidth = 1.1;
+      for (let streak = 0; streak < 20; streak += 1) {
+        const x = 80 + random(13000 + streak * 17) * (VIEW_WIDTH - 160);
+        const y = 30 + random(13100 + streak * 19) * 230;
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x + 12, y + 44);
+        context.stroke();
+      }
+    }
+  } else {
+    drawSoftEllipse(context, VIEW_WIDTH * 0.82, 84, 54, 54, "rgba(255,218,112,0.46)");
+    drawSoftEllipse(context, VIEW_WIDTH * 0.23, 78, 166, 36, "rgba(255,255,255,0.58)");
+    drawSoftEllipse(context, VIEW_WIDTH * 0.38, 55, 112, 24, "rgba(255,255,255,0.34)");
+  }
+  context.restore();
+
+  context.save();
+  context.globalCompositeOperation = "multiply";
+  const floorDepth = context.createLinearGradient(0, VIEW_HEIGHT * 0.52, 0, VIEW_HEIGHT);
+  floorDepth.addColorStop(0, "rgba(255,255,255,0)");
+  floorDepth.addColorStop(0.62, night ? "rgba(0,8,14,0.1)" : rainy ? "rgba(81,76,61,0.08)" : "rgba(120,79,34,0.07)");
+  floorDepth.addColorStop(1, night ? "rgba(0,8,14,0.3)" : "rgba(103,62,24,0.18)");
+  context.fillStyle = floorDepth;
+  context.fillRect(0, VIEW_HEIGHT * 0.48, VIEW_WIDTH, VIEW_HEIGHT * 0.52);
+  context.restore();
+
+  context.restore();
 }
 
 function paintCinematicRoomSet(context: CanvasRenderingContext2D, environment: SandboxEnvironment): void {
