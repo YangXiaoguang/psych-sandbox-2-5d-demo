@@ -261,9 +261,7 @@ export function AssetLibrary({
             </span>
             {draggingAsset ? (
               <span className="asset-drag-status">正在拿取：{draggingAsset.name}</span>
-            ) : (
-              <span className="asset-drag-status idle">拖到沙盘放置</span>
-            )}
+            ) : null}
           </div>
           {activeSections.map((section) => {
             const collapsed = section.collapsible && collapsedSet.has(section.id);
@@ -398,8 +396,17 @@ function AssetGrid({
       {assets.map((asset) => (
         <article
           key={asset.assetId}
-          className={draggingAssetId === asset.assetId ? "asset-card dragging" : "asset-card"}
+          className={[
+            "asset-card",
+            `asset-card-${asset.footprint.kind}`,
+            `asset-risk-${asset.riskTag}`,
+            draggingAssetId === asset.assetId ? "dragging" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           draggable
+          data-footprint={asset.footprint.kind}
+          data-risk={asset.riskTag}
           aria-grabbed={draggingAssetId === asset.assetId}
           onDragStart={(event) => {
             event.dataTransfer.setData(DRAG_MIME, asset.assetId);
