@@ -16444,3 +16444,176 @@ table td {
   display: block !important;
   overflow: hidden !important;
 }
+
+/* Stage Engine v2 technical slice. Kept isolated so the new 3D runway can
+   mature without adding more visual patches to the classic Konva editor. */
+.stage-engine-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  margin: -2px 0 10px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.stage-engine-mode-switch > span {
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage-engine-mode-switch button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 900;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.stage-engine-mode-switch button:hover,
+.stage-engine-mode-switch button:focus-visible,
+.stage-engine-mode-switch button.active {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.stage-v2-loading {
+  display: grid;
+  min-height: min(64vh, 680px);
+  height: clamp(520px, 62vh, 720px);
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(117, 199, 186, 0.16), transparent 30%),
+    color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--text);
+}
+
+.stage-v2-loading span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stage-v2-loading strong {
+  font-size: 1rem;
+}
+
+.stage-v2-shell {
+  position: relative;
+  min-height: min(64vh, 680px);
+  height: clamp(520px, 62vh, 720px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 244, 207, 0.34), transparent 26%),
+    linear-gradient(135deg, color-mix(in srgb, var(--panel) 72%, #f7dfb7 28%), color-mix(in srgb, var(--surface) 86%, #bddbd3 14%));
+  box-shadow: 0 22px 52px rgba(52, 39, 20, 0.18);
+}
+
+.stage-v2-canvas-wrap,
+.stage-v2-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.stage-v2-canvas {
+  display: block;
+  touch-action: none;
+}
+
+.stage-v2-panel {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  color: var(--text);
+  box-shadow: 0 18px 42px rgba(35, 28, 17, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+.stage-v2-panel-top {
+  top: 18px;
+  left: 18px;
+  justify-content: space-between;
+  min-width: min(520px, calc(100% - 36px));
+  padding: 14px 16px;
+}
+
+.stage-v2-panel-top h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0 0;
+  font-size: 1.08rem;
+}
+
+.stage-v2-panel-top > span {
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 900;
+  padding: 7px 10px;
+}
+
+.stage-v2-panel-bottom {
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(820px, calc(100% - 36px));
+  padding: 10px 14px;
+}
+
+.stage-v2-panel-bottom span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.product-shell.night-mode .stage-engine-mode-switch,
+.product-shell.night-mode .stage-v2-panel {
+  border-color: rgba(128, 169, 177, 0.42);
+  background: rgba(17, 35, 43, 0.82);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.34);
+}
+
+.product-shell.night-mode .stage-v2-shell {
+  border-color: rgba(109, 151, 161, 0.36);
+  background:
+    radial-gradient(circle at 75% 18%, rgba(112, 215, 200, 0.14), transparent 28%),
+    linear-gradient(135deg, #07131b, #122933);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.46);
+}
+
+.product-shell.night-mode .stage-v2-panel-top > span {
+  background: rgba(38, 121, 112, 0.36);
+  color: #dcfff7;
+}

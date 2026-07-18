@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Boxes, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
 import type { AdminGovernanceData } from "./admin/types";
 import { AdminDashboard } from "./components/AdminDashboard";
@@ -11,6 +11,7 @@ import { PersonalCenter } from "./components/PersonalCenter";
 import { RightPanel, type RightPanelTab } from "./components/RightPanel";
 import { SandboxEditor, type SandboxEditorHandle } from "./components/SandboxEditor";
 import { TopBar } from "./components/TopBar";
+import type { StageEngineV2Handle } from "./stage3d/components/StageEngineV2Shell";
 import { toSandboxAsset } from "./data/assets";
 import { getEnvironmentLabel } from "./data/environment";
 import { createInitialScene } from "./data/initialScene";
@@ -65,6 +66,13 @@ interface SceneState {
   events: SandboxEvent[];
 }
 
+type SandboxEngineMode = "classic" | "stage3d";
+
+const StageEngineV2Shell = lazy(async () => {
+  const module = await import("./stage3d/components/StageEngineV2Shell");
+  return { default: module.StageEngineV2Shell };
+});
+
 const SANDBOX_CAMERA_STORAGE_KEY = "psych-sandbox:stage-camera-v16";
 
 export function App(): JSX.Element {
@@ -92,7 +100,9 @@ export function App(): JSX.Element {
   const [adminGovernance, setAdminGovernance] = useState<AdminGovernanceData>(() => repositoryAdapter.admin.load(initialPersonalData));
   const [conversations, setConversations] = useState(() => repositoryAdapter.workspace.loadAgentConversations(initialPersonalData.activeUserId));
   const [draggingAssetId, setDraggingAssetId] = useState<string | null>(null);
+  const [sandboxEngineMode, setSandboxEngineMode] = useState<SandboxEngineMode>("classic");
   const editorRef = useRef<SandboxEditorHandle | null>(null);
+  const stageV2Ref = useRef<StageEngineV2Handle | null>(null);
   const activeUserId = personalData.activeUserId;
 
   const analysis = useMemo(() => analyzeScene(objects), [objects]);
@@ -363,15 +373,20 @@ export function App(): JSX.Element {
   }, [analysis, environment, events, objects]);
 
   const handleExportPng = useCallback(() => {
-    editorRef.current?.exportPng();
+    if (sandboxEngineMode === "stage3d") {
+      stageV2Ref.current?.exportPng();
+    } else {
+      editorRef.current?.exportPng();
+    }
     recordEvent({
       type: "export",
-      label: "导出 PNG 截图",
+      label: sandboxEngineMode === "stage3d" ? "导出 Stage Engine v2 PNG 截图" : "导出 PNG 截图",
       payload: {
+        engine: sandboxEngineMode,
         objectCount: objects.length,
       },
     });
-  }, [objects.length, recordEvent]);
+  }, [objects.length, recordEvent, sandboxEngineMode]);
 
   const handleEnvironmentChange = useCallback(
     (patch: Partial<SandboxEnvironment>) => {
@@ -706,23 +721,55 @@ export function App(): JSX.Element {
               onExportPng={handleExportPng}
               onClearScene={handleClearScene}
             />
-            <SandboxEditor
-              ref={editorRef}
-              objects={objects}
-              selectedId={selectedId}
-              draggingAsset={draggingAsset}
-              environment={environment}
-              camera={sandboxCamera}
-              showGuides={showGuides}
-              onSelectObject={handleSelectObject}
-              onPatchObject={patchObject}
-              onDropAsset={handleDropAsset}
-              onDeleteSelected={handleDeleteSelected}
-              onRecordEvent={recordEvent}
-              onCameraChange={handleCameraChange}
-              aiCompanionActive={sandboxFocusMode ? layoutPreferences.aiDrawerOpen : rightPanelTab === "ai"}
-              onOpenAiCompanion={handleOpenAiCompanion}
-            />
+            <div className="stage-engine-mode-switch" role="group" aria-label="选择沙盘渲染引擎">
+              <span>渲染引擎</span>
+              <button
+                type="button"
+                className={sandboxEngineMode === "classic" ? "active" : ""}
+                onClick={() => setSandboxEngineMode("classic")}
+                aria-pressed={sandboxEngineMode === "classic"}
+              >
+                Classic 2.5D
+              </button>
+              <button
+                type="button"
+                className={sandboxEngineMode === "stage3d" ? "active" : ""}
+                onClick={() => setSandboxEngineMode("stage3d")}
+                aria-pressed={sandboxEngineMode === "stage3d"}
+              >
+                Stage v2 预览
+              </button>
+            </div>
+            {sandboxEngineMode === "stage3d" ? (
+              <Suspense
+                fallback={
+                  <div className="stage-v2-loading" role="status" aria-live="polite">
+                    <span>Stage Engine v2</span>
+                    <strong>正在准备 3D 沙盘舞台...</strong>
+                  </div>
+                }
+              >
+                <StageEngineV2Shell ref={stageV2Ref} environment={environment} objectCount={objects.length} />
+              </Suspense>
+            ) : (
+              <SandboxEditor
+                ref={editorRef}
+                objects={objects}
+                selectedId={selectedId}
+                draggingAsset={draggingAsset}
+                environment={environment}
+                camera={sandboxCamera}
+                showGuides={showGuides}
+                onSelectObject={handleSelectObject}
+                onPatchObject={patchObject}
+                onDropAsset={handleDropAsset}
+                onDeleteSelected={handleDeleteSelected}
+                onRecordEvent={recordEvent}
+                onCameraChange={handleCameraChange}
+                aiCompanionActive={sandboxFocusMode ? layoutPreferences.aiDrawerOpen : rightPanelTab === "ai"}
+                onOpenAiCompanion={handleOpenAiCompanion}
+              />
+            )}
           </section>
 
           {sandboxFocusMode ? (
