@@ -16579,6 +16579,28 @@ table td {
   padding: 7px 10px;
 }
 
+.stage-v2-view-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.stage-v2-view-reset:hover,
+.stage-v2-view-reset:focus-visible {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
 .stage-v2-panel-bottom {
   left: 50%;
   bottom: 18px;
@@ -16591,9 +16613,11 @@ table td {
 
 .stage-v2-panel-selection {
   right: 18px;
-  top: 18px;
+  top: 92px;
   align-items: stretch;
+  flex-direction: column;
   padding: 12px;
+  width: 250px;
 }
 
 .stage-v2-panel-selection > div {
@@ -16614,19 +16638,39 @@ table td {
   font-weight: 850;
 }
 
-.stage-v2-panel-selection button {
+.stage-v2-transform-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.stage-v2-transform-strip button {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  border: 1px solid color-mix(in srgb, var(--danger) 44%, var(--border));
+  min-width: 0;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--danger-soft) 82%, transparent);
-  color: var(--danger);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--text);
   cursor: pointer;
 }
 
-.stage-v2-panel-selection button:hover,
-.stage-v2-panel-selection button:focus-visible {
+.stage-v2-transform-strip button:hover,
+.stage-v2-transform-strip button:focus-visible {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.stage-v2-transform-strip button.danger {
+  border-color: color-mix(in srgb, var(--danger) 44%, var(--border));
+  background: color-mix(in srgb, var(--danger-soft) 82%, transparent);
+  color: var(--danger);
+}
+
+.stage-v2-transform-strip button.danger:hover,
+.stage-v2-transform-strip button.danger:focus-visible {
   background: var(--danger);
   color: #fffaf0;
 }
@@ -16647,7 +16691,13 @@ table td {
   box-shadow: 0 20px 58px rgba(0, 0, 0, 0.34);
 }
 
-.product-shell.night-mode .stage-v2-panel-selection button {
+.product-shell.night-mode .stage-v2-view-reset,
+.product-shell.night-mode .stage-v2-transform-strip button {
+  background: rgba(9, 25, 33, 0.72);
+  color: #e9fff8;
+}
+
+.product-shell.night-mode .stage-v2-transform-strip button.danger {
   background: rgba(102, 42, 38, 0.7);
   color: #ffd8cf;
 }

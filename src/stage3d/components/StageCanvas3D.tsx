@@ -8,6 +8,7 @@ import { StageObjectsLayer3D } from "./StageObjectsLayer3D";
 import { StageWeatherSystem } from "./StageWeatherSystem";
 
 interface StageCanvas3DProps {
+  cameraResetSignal: number;
   environment: SandboxEnvironment;
   onCanvasReady: (canvas: HTMLCanvasElement) => void;
   objects: SandboxObject[];
@@ -18,6 +19,7 @@ interface StageCanvas3DProps {
 }
 
 export function StageCanvas3D({
+  cameraResetSignal,
   environment,
   objects,
   onCanvasReady,
@@ -83,7 +85,7 @@ export function StageCanvas3D({
         onRecordEvent={onRecordEvent}
         onSelectObject={onSelectObject}
       />
-      <StageCameraControls enabled={!objectDragging} />
+      <StageCameraControls enabled={!objectDragging} resetSignal={cameraResetSignal} />
     </Canvas>
   );
 }

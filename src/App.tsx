@@ -29,6 +29,7 @@ import type {
 import { BOARD_HEIGHT, BOARD_WIDTH, analyzeScene, buildSnapshot, clamp } from "./utils/analysis";
 import { downloadSnapshot } from "./utils/download";
 import { createSandboxEvent } from "./utils/events";
+import { createId } from "./utils/id";
 import { createSandboxObject } from "./utils/objectFactory";
 import { DEFAULT_SANDBOX_CAMERA, normalizeSandboxCamera } from "./utils/projection";
 import {
@@ -342,6 +343,36 @@ export function App(): JSX.Element {
       payload: {
         x: Math.round(selectedObject.x),
         y: Math.round(selectedObject.y),
+      },
+    });
+  }, [recordEvent, selectedObject]);
+
+  const handleDuplicateSelected = useCallback(() => {
+    if (!selectedObject) {
+      return;
+    }
+
+    const duplicate: SandboxObject = {
+      ...selectedObject,
+      id: createId("obj"),
+      x: clamp(selectedObject.x + 34, 24, BOARD_WIDTH - 24),
+      y: clamp(selectedObject.y + 28, 24, BOARD_HEIGHT - 24),
+      createdAt: Date.now(),
+    };
+
+    setObjects((current) => [...current, duplicate]);
+    setSelectedId(duplicate.id);
+    recordEvent({
+      type: "add",
+      objectId: duplicate.id,
+      assetId: duplicate.assetId,
+      label: `复制沙具: ${duplicate.name}`,
+      payload: {
+        sourceObjectId: selectedObject.id,
+        position: {
+          x: Math.round(duplicate.x),
+          y: Math.round(duplicate.y),
+        },
       },
     });
   }, [recordEvent, selectedObject]);
@@ -756,7 +787,9 @@ export function App(): JSX.Element {
                   objects={objects}
                   selectedId={selectedId}
                   onDeleteSelected={handleDeleteSelected}
+                  onDuplicateSelected={handleDuplicateSelected}
                   onPatchObject={patchObject}
+                  onPatchSelected={handlePatchSelected}
                   onRecordEvent={recordEvent}
                   onSelectObject={handleSelectObject}
                 />
