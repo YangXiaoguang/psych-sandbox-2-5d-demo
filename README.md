@@ -14,6 +14,9 @@ npm run dev
 - [项目开发手册与技术说明书](docs/project-development-manual.md)
 - [详细开发文档与技术规格参考](docs/development-and-technical-spec.md)
 - [Stage Engine v2 开发目标与任务书](docs/stage-engine-v2-goals-and-tasks.md)
+- [Stage Engine v2 视觉圣经](docs/visual-bible.md)
+- [Stage Engine v2 场景合同](docs/scene-contracts.md)
+- [Stage Engine v2 质量门](docs/quality-gates.md)
 
 ## 能力
 
