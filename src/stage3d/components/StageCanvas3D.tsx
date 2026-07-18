@@ -1,17 +1,32 @@
 import { Canvas } from "@react-three/fiber";
+import { useState } from "react";
 import type { WebGLRenderer } from "three";
-import type { SandboxEnvironment } from "../../types";
+import type { SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../../types";
 import { SandTrayMesh } from "./SandTrayMesh";
 import { StageCameraControls } from "./StageCameraControls";
+import { StageObjectsLayer3D } from "./StageObjectsLayer3D";
 import { StageWeatherSystem } from "./StageWeatherSystem";
-import { ToyObject3D } from "./ToyObject3D";
 
 interface StageCanvas3DProps {
   environment: SandboxEnvironment;
   onCanvasReady: (canvas: HTMLCanvasElement) => void;
+  objects: SandboxObject[];
+  onPatchObject: (objectId: string, patch: Partial<SandboxObject>) => void;
+  onRecordEvent: (draft: SandboxEventDraft) => void;
+  onSelectObject: (objectId: string | null) => void;
+  selectedId: string | null;
 }
 
-export function StageCanvas3D({ environment, onCanvasReady }: StageCanvas3DProps): JSX.Element {
+export function StageCanvas3D({
+  environment,
+  objects,
+  onCanvasReady,
+  onPatchObject,
+  onRecordEvent,
+  onSelectObject,
+  selectedId,
+}: StageCanvas3DProps): JSX.Element {
+  const [objectDragging, setObjectDragging] = useState(false);
   const night = environment.light === "night";
   const rainy = environment.weather === "rainy";
   const cloudy = environment.weather === "cloudy";
@@ -29,6 +44,11 @@ export function StageCanvas3D({ environment, onCanvasReady }: StageCanvas3DProps
       onCreated={({ gl }: { gl: WebGLRenderer }) => {
         gl.setClearColor(background);
         onCanvasReady(gl.domElement);
+      }}
+      onPointerMissed={() => {
+        if (!objectDragging) {
+          onSelectObject(null);
+        }
       }}
     >
       <color attach="background" args={[background]} />
@@ -55,10 +75,15 @@ export function StageCanvas3D({ environment, onCanvasReady }: StageCanvas3DProps
 
       <StageWeatherSystem environment={environment} />
       <SandTrayMesh environment={environment} />
-      <ToyObject3D kind="house" position={[-1.7, 0.5, -1.25]} rotation={[0, 0.35, 0]} scale={0.82} />
-      <ToyObject3D kind="person" position={[0.65, 0.46, 0.1]} rotation={[0, -0.45, 0]} scale={0.72} />
-      <ToyObject3D kind="tree" position={[-2.7, 0.5, 0.7]} rotation={[0, -0.2, 0]} scale={0.86} />
-      <StageCameraControls />
+      <StageObjectsLayer3D
+        objects={objects}
+        selectedId={selectedId}
+        onDragStateChange={setObjectDragging}
+        onPatchObject={onPatchObject}
+        onRecordEvent={onRecordEvent}
+        onSelectObject={onSelectObject}
+      />
+      <StageCameraControls enabled={!objectDragging} />
     </Canvas>
   );
 }

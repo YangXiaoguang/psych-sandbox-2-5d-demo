@@ -749,7 +749,17 @@ export function App(): JSX.Element {
                   </div>
                 }
               >
-                <StageEngineV2Shell ref={stageV2Ref} environment={environment} objectCount={objects.length} />
+                <StageEngineV2Shell
+                  ref={stageV2Ref}
+                  environment={environment}
+                  objectCount={objects.length}
+                  objects={objects}
+                  selectedId={selectedId}
+                  onDeleteSelected={handleDeleteSelected}
+                  onPatchObject={patchObject}
+                  onRecordEvent={recordEvent}
+                  onSelectObject={handleSelectObject}
+                />
               </Suspense>
             ) : (
               <SandboxEditor

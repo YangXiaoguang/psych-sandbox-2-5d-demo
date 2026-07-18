@@ -2,7 +2,11 @@ import { useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-export function StageCameraControls(): null {
+interface StageCameraControlsProps {
+  enabled: boolean;
+}
+
+export function StageCameraControls({ enabled }: StageCameraControlsProps): null {
   const { camera, gl } = useThree();
   const controls = useMemo(() => new OrbitControls(camera, gl.domElement), [camera, gl.domElement]);
 
@@ -21,8 +25,11 @@ export function StageCameraControls(): null {
     return () => controls.dispose();
   }, [controls]);
 
+  useEffect(() => {
+    controls.enabled = enabled;
+  }, [controls, enabled]);
+
   useFrame(() => controls.update());
 
   return null;
 }
-
