@@ -90,7 +90,7 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
   }));
 
   return (
-    <section className="stage-v2-shell" aria-label="Stage Engine v2 真实 3D 沙盘技术预览">
+    <section className={`stage-v2-shell${selectedObject ? " has-stage-selection" : ""}`} aria-label="Stage Engine v2 真实 3D 沙盘">
       <div className="stage-v2-canvas-wrap">
         <StageCanvas3D
           environment={environment}
@@ -111,10 +111,10 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
           <p className="eyebrow">Stage Engine v2</p>
           <h3>
             <Cuboid size={18} />
-            真实 3D 沙盘技术切片
+            3D 沙盘舞台
           </h3>
         </div>
-        <span>{objectCount} 个作品对象已桥接</span>
+        <span>{objectCount} 个对象</span>
         <button
           className="stage-v2-view-reset"
           type="button"
