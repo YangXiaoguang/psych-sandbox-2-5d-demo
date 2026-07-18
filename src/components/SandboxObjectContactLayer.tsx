@@ -1,6 +1,7 @@
 import { Circle, Ellipse, Group, Line } from "react-konva";
 import type { SandboxCameraState, SandboxEnvironment, SandboxObject } from "../types";
-import { BOARD_HEIGHT, BOARD_WIDTH, clamp } from "../utils/analysis";
+import { clamp } from "../utils/analysis";
+import { clipIsland } from "../utils/islandStage";
 import { getDepthScale, projectPoint } from "../utils/projection";
 
 interface SandboxObjectContactLayerProps {
@@ -8,8 +9,6 @@ interface SandboxObjectContactLayerProps {
   camera: SandboxCameraState;
   environment: SandboxEnvironment;
 }
-
-const sandInset = { x: 72, y: 64, width: BOARD_WIDTH - 144, height: BOARD_HEIGHT - 128 };
 
 export function SandboxObjectContactLayer({
   objects,
@@ -22,7 +21,7 @@ export function SandboxObjectContactLayer({
   const sorted = [...objects].sort((a, b) => a.y - b.y || a.createdAt - b.createdAt);
 
   return (
-    <Group listening={false} clipFunc={(ctx: any) => clipBoardSand(ctx, camera)}>
+    <Group listening={false} clipFunc={(ctx: any) => clipIsland(ctx, camera)}>
       {sorted.map((object) => {
         const projected = projectPoint(object, camera);
         const depthScale = getDepthScale(object, camera);
@@ -144,25 +143,6 @@ export function SandboxObjectContactLayer({
       })}
     </Group>
   );
-}
-
-function clipBoardSand(ctx: {
-  beginPath: () => void;
-  moveTo: (x: number, y: number) => void;
-  lineTo: (x: number, y: number) => void;
-  closePath: () => void;
-}, camera: SandboxCameraState): void {
-  const topLeft = projectPoint({ x: sandInset.x, y: sandInset.y }, camera);
-  const topRight = projectPoint({ x: sandInset.x + sandInset.width, y: sandInset.y }, camera);
-  const bottomRight = projectPoint({ x: sandInset.x + sandInset.width, y: sandInset.y + sandInset.height }, camera);
-  const bottomLeft = projectPoint({ x: sandInset.x, y: sandInset.y + sandInset.height }, camera);
-
-  ctx.beginPath();
-  ctx.moveTo(topLeft.x, topLeft.y);
-  ctx.lineTo(topRight.x, topRight.y);
-  ctx.lineTo(bottomRight.x, bottomRight.y);
-  ctx.lineTo(bottomLeft.x, bottomLeft.y);
-  ctx.closePath();
 }
 
 function hashString(value: string): number {

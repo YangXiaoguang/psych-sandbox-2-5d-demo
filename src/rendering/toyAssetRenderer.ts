@@ -30,7 +30,7 @@ interface MeshOptions {
   opacity?: number;
 }
 
-const SPRITE_VERSION = "toy-render-v53-premium-miniature-toy-assets-v1";
+const SPRITE_VERSION = "toy-render-v54-borderless-island-premium-toy-sprites";
 const SPRITE_LOGICAL_FRAME_FILL = 0.55;
 const spriteCache = new Map<string, Promise<ToyAssetSprite>>();
 let renderQueue: Promise<void> = Promise.resolve();
@@ -100,7 +100,7 @@ function renderSprite({
 
   const pixelRatio = Math.min(Math.max(window.devicePixelRatio || 1, 2.18), 2.72);
   const renderer = getSharedRenderer(width, height, pixelRatio);
-  renderer.toneMappingExposure = 1.03;
+  renderer.toneMappingExposure = 1.08;
 
   const scene = new THREE.Scene();
   scene.environment = getStudioEnvironmentTexture();
@@ -1098,6 +1098,80 @@ function buildToyModelFromRecipe(group: THREE.Group, recipe: ToyModelRecipe, ris
       buildFallback(group, riskTag);
       break;
   }
+
+  addRecipeSignatureDetail(group, recipe.kind);
+}
+
+function addRecipeSignatureDetail(group: THREE.Group, kind: ToyModelRecipe["kind"]): void {
+  switch (kind) {
+    case "person":
+      addSphere(group, [-0.22, 1.34, 0.39], [0.034, 0.011, 0.006], "#ffffff", [-0.08, 0, -0.18], false, true);
+      addSphere(group, [0.18, 1.32, 0.39], [0.026, 0.009, 0.005], "#ffffff", [-0.08, 0, -0.18], false, true);
+      break;
+    case "dog":
+      addSphere(group, [0.04, 0.69, 0.43], [0.028, 0.028, 0.012], "#fff7d6", [0, 0, 0], true, true);
+      addTube(group, [[-0.68, 0.15, 0.25], [-0.48, 0.11, 0.31], [-0.28, 0.14, 0.27]], "#fff1cf", 0.007);
+      break;
+    case "bird":
+      addTube(group, [[-0.32, 0.64, 0.27], [-0.2, 0.58, 0.31], [-0.08, 0.62, 0.28]], "#e8ffff", 0.008);
+      addSphere(group, [0.46, 0.73, 0.3], [0.04, 0.012, 0.006], "#fff3c6", [-0.08, 0, -0.16], false, true);
+      break;
+    case "fish":
+      addSphere(group, [0.34, 0.62, 0.34], [0.032, 0.026, 0.008], "#f7ffff", [-0.1, 0, -0.18], false, true);
+      addTube(group, [[-0.44, 0.5, 0.32], [-0.12, 0.55, 0.36], [0.24, 0.52, 0.33]], "#ffffff", 0.007);
+      break;
+    case "lion":
+      addSphere(group, [0.36, 0.94, 0.34], [0.07, 0.02, 0.01], "#f8d681", [-0.08, 0, -0.18], false, true);
+      addSphere(group, [0.76, 0.9, 0.28], [0.05, 0.018, 0.009], "#ffd98a", [-0.08, 0, -0.16], false, true);
+      break;
+    case "house":
+      addSphere(group, [0.06, 0.34, 0.64], [0.026, 0.026, 0.01], "#ffe7a3", [0, 0, 0], true, true);
+      addTube(group, [[-0.6, 1.5, 0.22], [-0.24, 1.6, 0.32], [0.22, 1.56, 0.26], [0.58, 1.48, 0.16]], "#fff0c8", 0.006);
+      break;
+    case "bridge":
+      addSphere(group, [-0.68, 0.5, 0.32], [0.032, 0.014, 0.008], "#fff2c8", [0, 0, -0.14], false, true);
+      addSphere(group, [0.64, 0.54, 0.31], [0.028, 0.012, 0.007], "#ffe0a4", [0, 0, -0.14], false, true);
+      break;
+    case "fence":
+      addTube(group, [[-0.9, 0.78, 0.14], [-0.38, 0.82, 0.2], [0.2, 0.78, 0.18], [0.9, 0.82, 0.14]], "#ffe0a5", 0.007);
+      break;
+    case "tower":
+      addSphere(group, [0.08, 1.0, 0.42], [0.035, 0.016, 0.008], "#fff8d8", [-0.08, 0, -0.18], false, true);
+      addSphere(group, [0.38, 2.42, 0.12], [0.035, 0.018, 0.008], "#ffd36c", [0, 0, 0], true, true);
+      break;
+    case "tree":
+      addSphere(group, [0.24, 1.46, 0.42], [0.05, 0.018, 0.008], "#fff7ce", [-0.08, 0, -0.18], false, true);
+      addTube(group, [[-0.32, 0.22, 0.36], [-0.12, 0.18, 0.42], [0.12, 0.2, 0.38], [0.34, 0.16, 0.34]], "#f4dda6", 0.007);
+      break;
+    case "water":
+      addTube(group, [[-0.78, 0.37, 0.36], [-0.38, 0.4, 0.46], [0.08, 0.37, 0.39], [0.58, 0.4, 0.3]], "#ffffff", 0.008);
+      addSphere(group, [0.72, 0.32, 0.22], [0.04, 0.014, 0.008], "#f8ffff", [-0.1, 0, -0.18], false, true);
+      break;
+    case "rock":
+      addSphere(group, [0.18, 0.76, 0.32], [0.12, 0.024, 0.014], "#dde3d4", [-0.1, 0, -0.22], false, true);
+      break;
+    case "sun":
+      addGlowSphere(group, [0, 0.9, 0.1], [0.64, 0.64, 0.08], "#ffd76c", 0.08);
+      break;
+    case "monster":
+      addSphere(group, [-0.36, 0.84, 0.42], [0.05, 0.018, 0.008], "#f0e8ff", [-0.08, 0, -0.18], false, true);
+      addSphere(group, [0.22, 0.98, 0.38], [0.042, 0.016, 0.008], "#fff0c2", [-0.08, 0, -0.16], false, true);
+      break;
+    case "robot":
+      addGlowSphere(group, [0, 0.56, 0.46], [0.38, 0.08, 0.018], "#8ffff5", 0.11);
+      addSphere(group, [-0.34, 0.92, 0.34], [0.035, 0.014, 0.008], "#ffffff", [-0.08, 0, -0.16], false, true);
+      break;
+    case "skull":
+      addSphere(group, [-0.16, 0.84, 0.38], [0.05, 0.018, 0.008], "#fff6d9", [-0.08, 0, -0.16], false, true);
+      addTube(group, [[-0.2, 0.44, 0.4], [-0.04, 0.4, 0.42], [0.12, 0.44, 0.4]], "#d6c6a6", 0.007);
+      break;
+    case "light":
+      addGlowSphere(group, [0, 1.22, 0.18], [0.36, 0.36, 0.1], "#fff1a8", 0.13);
+      break;
+    default:
+      addSoftGlossPatch(group, [-0.16, 0.86, 0.28], [0.16, 0.03, 0.012], 0.28);
+      break;
+  }
 }
 
 function normalizeModel(group: THREE.Group, spec: ToyAssetSpec): void {
@@ -1135,11 +1209,12 @@ function applyModelStudioFinish(group: THREE.Group): void {
 
       const isTransparent = material.transparent || material.opacity < 1;
       const isMetal = material.metalness > 0.18;
-      material.envMapIntensity = isTransparent ? 1.08 : isMetal ? 0.9 : 0.84;
-      material.roughness = Math.min(isTransparent ? 0.3 : 0.58, Math.max(0.22, material.roughness * 0.86));
-      material.clearcoat = Math.min(0.86, Math.max(isTransparent ? 0.46 : 0.6, material.clearcoat * 0.94));
-      material.clearcoatRoughness = Math.min(0.52, Math.max(0.24, material.clearcoatRoughness * 0.96));
-      material.specularIntensity = Math.min(0.86, Math.max(0.56, material.specularIntensity * 0.98));
+      material.envMapIntensity = isTransparent ? 1.18 : isMetal ? 0.98 : 0.92;
+      material.roughness = Math.min(isTransparent ? 0.28 : 0.55, Math.max(0.2, material.roughness * 0.8));
+      material.clearcoat = Math.min(0.9, Math.max(isTransparent ? 0.5 : 0.66, material.clearcoat * 0.98));
+      material.clearcoatRoughness = Math.min(0.48, Math.max(0.2, material.clearcoatRoughness * 0.9));
+      material.specularIntensity = Math.min(0.92, Math.max(0.62, material.specularIntensity * 1.04));
+      material.bumpScale = Math.min(isTransparent ? 0.002 : isMetal ? 0.003 : 0.0095, material.bumpScale * 1.08);
       material.needsUpdate = true;
     });
   });
@@ -2296,30 +2371,30 @@ function createMaterial({
   const materialColor = new THREE.Color(color);
   const isMetal = metalness > 0.18;
   const softenedColor = isMetal ? materialColor : materialColor.lerp(new THREE.Color("#fff8e8"), 0.012);
-  const resolvedRoughness = Math.min(0.66, Math.max(0.22, isMetal ? roughness * 0.72 : roughness * 0.78));
-  const resolvedClearcoat = transparent ? clearcoat * 0.48 : Math.min(0.82, Math.max(0.5, clearcoat + 0.1));
+  const resolvedRoughness = Math.min(0.62, Math.max(0.2, isMetal ? roughness * 0.68 : roughness * 0.74));
+  const resolvedClearcoat = transparent ? clearcoat * 0.52 : Math.min(0.88, Math.max(0.56, clearcoat + 0.14));
 
   return new THREE.MeshPhysicalMaterial({
     alphaTest: transparent ? 0.02 : 0,
     bumpMap: clayBump,
     bumpScale: transparent ? 0.0018 : isMetal ? 0.0025 : 0.008,
     clearcoat: resolvedClearcoat,
-    clearcoatRoughness: isMetal ? 0.24 : 0.3,
+    clearcoatRoughness: isMetal ? 0.22 : 0.27,
     color: softenedColor,
     emissive: emissive ?? "#000000",
     emissiveIntensity,
-    envMapIntensity: transparent ? 1.02 : isMetal ? 0.86 : 0.78,
+    envMapIntensity: transparent ? 1.12 : isMetal ? 0.94 : 0.86,
     ior: 1.42,
     metalness,
     opacity,
-    reflectivity: isMetal ? 0.68 : 0.58,
+    reflectivity: isMetal ? 0.72 : 0.62,
     roughness: resolvedRoughness,
     roughnessMap: clayRoughness,
-    sheen: isMetal ? sheen * 0.26 : Math.min(0.62, sheen + 0.14),
+    sheen: isMetal ? sheen * 0.28 : Math.min(0.68, sheen + 0.18),
     sheenColor: new THREE.Color("#fff2d8"),
     sheenRoughness: 0.7,
     specularColor: new THREE.Color("#fff8e5"),
-    specularIntensity: isMetal ? 0.72 : 0.68,
+    specularIntensity: isMetal ? 0.78 : 0.74,
     transparent,
   });
 }

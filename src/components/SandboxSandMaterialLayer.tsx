@@ -1,8 +1,16 @@
 import { useMemo } from "react";
 import { Circle, Ellipse, Group, Image as KonvaImage, Line } from "react-konva";
 import type { SandboxCameraState, SandboxEnvironment } from "../types";
-import { BOARD_HEIGHT, BOARD_WIDTH } from "../utils/analysis";
-import { projectPoint, projectRect } from "../utils/projection";
+import { BOARD_WIDTH } from "../utils/analysis";
+import {
+  clipProjectedPolygon,
+  flattenProjectedPoints,
+  getPointBounds,
+  getProjectedIslandPoints,
+  isInsideIslandRectPoint,
+  SAND_ISLAND_RECT,
+} from "../utils/islandStage";
+import { projectPoint } from "../utils/projection";
 
 interface SandboxSandMaterialLayerProps {
   camera: SandboxCameraState;
@@ -26,7 +34,7 @@ interface DuneSeed {
   lift: number;
 }
 
-const sandInset = { x: 72, y: 64, width: BOARD_WIDTH - 144, height: BOARD_HEIGHT - 128 };
+const sandInset = SAND_ISLAND_RECT;
 const duneSeeds: DuneSeed[] = [
   { id: "dune-nw", x: 0.18, y: 0.2, radiusX: 0.2, radiusY: 0.11, rotation: -8, lift: 1 },
   { id: "dune-n", x: 0.43, y: 0.25, radiusX: 0.25, radiusY: 0.1, rotation: 3, lift: 0.9 },
@@ -36,18 +44,18 @@ const duneSeeds: DuneSeed[] = [
   { id: "dune-e-basin", x: 0.81, y: 0.64, radiusX: 0.2, radiusY: 0.1, rotation: 11, lift: -0.75 },
   { id: "dune-s", x: 0.35, y: 0.82, radiusX: 0.24, radiusY: 0.08, rotation: 4, lift: 0.58 },
 ];
-const grainSeeds = createBoardSeeds(680, 9103, 86, 76, BOARD_WIDTH - 172, BOARD_HEIGHT - 152);
-const sparkleSeeds = createBoardSeeds(96, 2159, 96, 82, BOARD_WIDTH - 192, BOARD_HEIGHT - 164);
-const rakeSeeds = createBoardSeeds(22, 6197, 84, 88, BOARD_WIDTH - 168, BOARD_HEIGHT - 176);
+const grainSeeds = createBoardSeeds(520, 9103, sandInset.x + 18, sandInset.y + 16, sandInset.x + sandInset.width - 18, sandInset.y + sandInset.height - 16);
+const sparkleSeeds = createBoardSeeds(118, 2159, sandInset.x + 24, sandInset.y + 18, sandInset.x + sandInset.width - 24, sandInset.y + sandInset.height - 18);
+const rakeSeeds = createBoardSeeds(16, 6197, sandInset.x + 22, sandInset.y + 26, sandInset.x + sandInset.width - 22, sandInset.y + sandInset.height - 26);
 
 export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMaterialLayerProps): JSX.Element {
   const texture = useMemo(() => createSandTexture(environment), [environment.light, environment.weather]);
   const night = environment.light === "night";
   const rainy = environment.weather === "rainy";
   const cloudy = environment.weather === "cloudy";
-  const sand = projectRect(sandInset.x, sandInset.y, sandInset.width, sandInset.height, camera);
-  const sandPoints = toPointObjects(sand);
-  const bounds = getBounds(sandPoints);
+  const sandPoints = getProjectedIslandPoints(camera);
+  const sand = flattenProjectedPoints(sandPoints);
+  const bounds = getPointBounds(sandPoints);
   const width = Math.max(1, bounds.maxX - bounds.minX);
   const height = Math.max(1, bounds.maxY - bounds.minY);
   const atmosphere = night ? 0.62 : rainy ? 0.72 : cloudy ? 0.86 : 1;
@@ -69,7 +77,7 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
         opacity={night ? 0.88 : 1}
       />
 
-      <Group clipFunc={(ctx: any) => clipPolygon(ctx, sandPoints)}>
+      <Group clipFunc={(ctx: any) => clipProjectedPolygon(ctx, sandPoints)}>
         {texture ? (
           <KonvaImage
             image={texture}
@@ -77,7 +85,7 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
             y={bounds.minY}
             width={width}
             height={height}
-            opacity={night ? 0.64 : rainy ? 0.88 : 0.96}
+            opacity={night ? 0.12 : rainy ? 0.15 : 0.14}
           />
         ) : null}
 
@@ -144,7 +152,7 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
           const start = projectPoint({ x: sandInset.x + 16, y: seed.y }, camera);
           const mid = projectPoint({ x: BOARD_WIDTH * (0.35 + seed.tone * 0.28), y: seed.y - 18 + seed.tone * 36 }, camera);
           const end = projectPoint({ x: BOARD_WIDTH - sandInset.x - 18, y: seed.y + 6 - seed.tone * 24 }, camera);
-          const opacity = (index % 3 === 0 ? 0.19 : 0.12) * atmosphere;
+          const opacity = (index % 3 === 0 ? 0.08 : 0.052) * atmosphere;
 
           return (
             <Group key={seed.id}>
@@ -152,7 +160,7 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
                 points={[start.x + 1.4, start.y + 2.4, mid.x + 1, mid.y + 2, end.x + 1.2, end.y + 2.2]}
                 tension={0.45}
                 stroke={night ? "rgba(0,9,12,0.05)" : `rgba(96,61,27,${opacity * 0.55})`}
-                strokeWidth={1.2 + seed.tone * 1.5}
+                strokeWidth={0.7 + seed.tone * 0.9}
                 lineCap="round"
                 lineJoin="round"
               />
@@ -160,7 +168,7 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
                 points={[start.x - 0.8, start.y - 0.8, mid.x - 0.6, mid.y - 1, end.x - 0.8, end.y - 0.8]}
                 tension={0.45}
                 stroke={night ? "rgba(212,240,216,0.035)" : `rgba(255,248,211,${0.08 * atmosphere})`}
-                strokeWidth={0.8 + seed.tone * 0.8}
+                strokeWidth={0.55 + seed.tone * 0.52}
                 lineCap="round"
                 lineJoin="round"
               />
@@ -181,7 +189,7 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
               radiusX={radiusX}
               radiusY={radiusY}
               rotation={-28 + grain.tone * 58 + camera.yaw * 0.12}
-              fill={night ? `rgba(0,8,10,${0.045 * atmosphere})` : `rgba(104,68,31,${0.092 * atmosphere})`}
+              fill={night ? `rgba(0,8,10,${0.018 * atmosphere})` : `rgba(130,87,38,${0.024 * atmosphere})`}
             />
           );
         })}
@@ -202,9 +210,9 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
         <Line
           points={sand}
           closed
-          stroke={night ? "rgba(0,7,9,0.28)" : "rgba(100,66,31,0.2)"}
+          stroke={night ? "rgba(0,7,9,0.26)" : "rgba(136,89,38,0.2)"}
           strokeWidth={18}
-          opacity={night ? 0.32 : 0.44}
+          opacity={night ? 0.3 : 0.4}
         />
         <Line
           points={sand}
@@ -218,48 +226,27 @@ export function SandboxSandMaterialLayer({ camera, environment }: SandboxSandMat
   );
 }
 
-function toPointObjects(points: number[]): Array<{ x: number; y: number }> {
-  const result: Array<{ x: number; y: number }> = [];
-  for (let index = 0; index < points.length; index += 2) {
-    result.push({ x: points[index], y: points[index + 1] });
-  }
-  return result;
-}
-
-function clipPolygon(ctx: { beginPath: () => void; moveTo: (x: number, y: number) => void; lineTo: (x: number, y: number) => void; closePath: () => void }, points: Array<{ x: number; y: number }>): void {
-  ctx.beginPath();
-  points.forEach((point, index) => {
-    if (index === 0) {
-      ctx.moveTo(point.x, point.y);
-      return;
-    }
-    ctx.lineTo(point.x, point.y);
-  });
-  ctx.closePath();
-}
-
-function getBounds(points: Array<{ x: number; y: number }>): { minX: number; minY: number; maxX: number; maxY: number } {
-  return points.reduce(
-    (bounds, point) => ({
-      minX: Math.min(bounds.minX, point.x),
-      minY: Math.min(bounds.minY, point.y),
-      maxX: Math.max(bounds.maxX, point.x),
-      maxY: Math.max(bounds.maxY, point.y),
-    }),
-    { minX: Number.POSITIVE_INFINITY, minY: Number.POSITIVE_INFINITY, maxX: Number.NEGATIVE_INFINITY, maxY: Number.NEGATIVE_INFINITY },
-  );
-}
-
 function createBoardSeeds(count: number, seed: number, minX: number, minY: number, maxX: number, maxY: number): BoardSeed[] {
-  return Array.from({ length: count }, (_, index) => {
+  const seeds: BoardSeed[] = [];
+  let index = 0;
+
+  while (seeds.length < count && index < count * 4) {
     const idSeed = seed + index * 47;
-    return {
+    const candidate = {
       id: `sand-seed-${seed}-${index}`,
       x: minX + random(idSeed) * (maxX - minX),
       y: minY + random(idSeed + 11) * (maxY - minY),
       tone: random(idSeed + 29),
     };
-  });
+
+    if (isInsideIslandRectPoint(candidate)) {
+      seeds.push(candidate);
+    }
+
+    index += 1;
+  }
+
+  return seeds;
 }
 
 function createSandTexture(environment: SandboxEnvironment): HTMLCanvasElement | null {
@@ -284,9 +271,9 @@ function createSandTexture(environment: SandboxEnvironment): HTMLCanvasElement |
   const image = context.createImageData(width, height);
   const data = image.data;
   const lightStrength = night ? 0.42 : rainy ? 0.72 : cloudy ? 0.88 : 1.1;
-  const base = night ? [174, 158, 120] : rainy ? [218, 184, 129] : cloudy ? [233, 195, 133] : [244, 205, 136];
-  const highlight = night ? [212, 216, 178] : [255, 242, 188];
-  const shadeColor = night ? [69, 61, 48] : rainy ? [125, 91, 54] : [148, 96, 49];
+  const base = night ? [176, 160, 119] : rainy ? [224, 189, 124] : cloudy ? [241, 202, 130] : [250, 210, 122];
+  const highlight = night ? [220, 222, 178] : [255, 246, 194];
+  const shadeColor = night ? [70, 61, 47] : rainy ? [134, 95, 52] : [159, 101, 45];
   const heightAt = (u: number, v: number): number => {
     const clampedU = Math.max(0, Math.min(1, u));
     const clampedV = Math.max(0, Math.min(1, v));
@@ -300,11 +287,13 @@ function createSandTexture(environment: SandboxEnvironment): HTMLCanvasElement |
       gaussian(clampedU, clampedV, 0.76, 0.24, 0.2, 0.09) * 0.12 -
       gaussian(clampedU, clampedV, 0.23, 0.58, 0.2, 0.1) * 0.12 -
       gaussian(clampedU, clampedV, 0.78, 0.62, 0.22, 0.11) * 0.11;
-    const rake = Math.sin(clampedV * 52 + Math.sin(clampedU * 7) * 2.4) * 0.006;
+    const granular =
+      Math.sin((clampedU * 137.8 + clampedV * 43.4) * Math.PI) * 0.0028 +
+      Math.sin((clampedU * 37.6 - clampedV * 83.2) * Math.PI) * 0.0024;
     const edge =
       Math.exp(-Math.min(clampedU, 1 - clampedU) * 16) * 0.06 +
       Math.exp(-Math.min(clampedV, 1 - clampedV) * 18) * 0.055;
-    return broad + mounds + rake + edge;
+    return broad + mounds + granular + edge;
   };
 
   for (let y = 0; y < height; y += 1) {
@@ -315,16 +304,17 @@ function createSandTexture(environment: SandboxEnvironment): HTMLCanvasElement |
       const dx = heightAt(u + 0.002, v) - heightAt(u - 0.002, v);
       const dy = heightAt(u, v + 0.0025) - heightAt(u, v - 0.0025);
       const fine = noise2d(x, y);
+      const micro = noise2d(Math.floor(x * 1.7), Math.floor(y * 1.7));
       const coarse = noise2d(Math.floor(x / 3), Math.floor(y / 3));
-      const shade = (-dx * 34 - dy * 18 + h * 0.52 + (fine - 0.5) * 0.24 + (coarse - 0.5) * 0.1) * lightStrength;
+      const shade = (-dx * 22 - dy * 12 + h * 0.46 + (fine - 0.5) * 0.1 + (micro - 0.5) * 0.035 + (coarse - 0.5) * 0.06) * lightStrength;
       const pixel = (y * width + x) * 4;
       const mix = shade >= 0 ? Math.min(1, shade * 1.9) : Math.min(1, Math.abs(shade) * 1.6);
       const target = shade >= 0 ? highlight : shadeColor;
       const warmth = 1 + Math.sin(u * Math.PI) * 0.05 - v * 0.035;
 
-      data[pixel] = clampColor((base[0] * (1 - mix) + target[0] * mix) * warmth + (fine - 0.5) * 18);
-      data[pixel + 1] = clampColor((base[1] * (1 - mix) + target[1] * mix) * warmth + (fine - 0.5) * 15);
-      data[pixel + 2] = clampColor((base[2] * (1 - mix) + target[2] * mix) * warmth + (fine - 0.5) * 10);
+      data[pixel] = clampColor((base[0] * (1 - mix) + target[0] * mix) * warmth + (fine - 0.5) * 12 + (micro - 0.5) * 4);
+      data[pixel + 1] = clampColor((base[1] * (1 - mix) + target[1] * mix) * warmth + (fine - 0.5) * 9 + (micro - 0.5) * 3);
+      data[pixel + 2] = clampColor((base[2] * (1 - mix) + target[2] * mix) * warmth + (fine - 0.5) * 7 + (micro - 0.5) * 3);
       data[pixel + 3] = 245;
     }
   }
@@ -342,10 +332,10 @@ function createSandTexture(environment: SandboxEnvironment): HTMLCanvasElement |
   context.restore();
 
   context.save();
-  context.globalAlpha = night ? 0.035 : 0.055;
+  context.globalAlpha = night ? 0.01 : 0.014;
   context.strokeStyle = night ? "#d6ead0" : "#fff1bd";
   context.lineCap = "round";
-  for (let index = 0; index < 16; index += 1) {
+  for (let index = 0; index < 5; index += 1) {
     const seed = 44700 + index * 71;
     const y = height * (0.12 + random(seed) * 0.76);
     context.lineWidth = 0.8 + random(seed + 5) * 1.2;

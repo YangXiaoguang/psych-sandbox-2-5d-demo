@@ -27,10 +27,10 @@ import {
 import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
+import { OceanWaterLayer } from "./OceanWaterLayer";
 import { SandboxSandMaterialLayer } from "./SandboxSandMaterialLayer";
 import { SandboxObjectShape } from "./SandboxObjectShape";
 import { SandboxObjectContactLayer } from "./SandboxObjectContactLayer";
-import { ThreeSandboxStageLayer } from "./ThreeSandboxStageLayer";
 import { SandboxTrayPolishLayer } from "./SandboxTrayPolishLayer";
 import { WeatherLayer } from "./WeatherLayer";
 
@@ -926,7 +926,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             onTouchEnd={handleStageMouseUp}
           >
             <Layer ref={objectLayerRef} scaleX={scale} scaleY={scale}>
-              <ThreeSandboxStageLayer environment={environment} camera={camera} />
+              <OceanWaterLayer environment={environment} camera={camera} />
               <SandboxSandMaterialLayer environment={environment} camera={camera} />
               <SandboxTrayPolishLayer environment={environment} camera={camera} />
               <SandboxGuideLayer environment={environment} camera={camera} showGuides={showGuides} renderBackdrop={false} />
