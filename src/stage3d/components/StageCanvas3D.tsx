@@ -38,7 +38,7 @@ export function StageCanvas3D({
   return (
     <Canvas
       className="stage-v2-canvas"
-      shadows
+      shadows="percentage"
       dpr={[1, 2]}
       orthographic
       camera={{ position: [6.8, 6.2, 8.2], zoom: 82, near: 0.1, far: 120 }}
