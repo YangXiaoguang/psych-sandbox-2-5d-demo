@@ -31,6 +31,7 @@ coverage/
 .nyc_output/
 playwright-report/
 test-results/
+artifacts/
 
 # Editor and OS files
 .DS_Store

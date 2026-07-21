@@ -1,43 +1,58 @@
-# Stage Engine v2 场景合同
+# Stage Engine v2 Scene Contracts
 
-文档版本：v1.0  
-更新日期：2026-07-18  
-适用范围：Stage Engine v2 真实 3D 沙盘、Classic 2.5D 回退、数据桥接、对象交互
-
----
-
-## 1. 合同目标
-
-场景合同用于明确 Stage Engine v2 必须包含哪些结构、数据、交互和导出能力。任何渲染实现都必须满足这些合同，避免出现“画面变好但核心编辑能力丢失”的问题。
+Document version: v2.0 RC
+Updated: 2026-07-21
+Scope: Stage Engine v2 3D sandplay editor, classic fallback, shared data, interaction, export, and visual QA.
 
 ---
 
-## 2. 引擎边界
+## 1. Purpose
 
-系统进入双引擎过渡期：
+This contract defines the non-negotiable structure and behavior of Stage Engine v2. It exists to prevent the recurring failure mode where visual upgrades accidentally remove editing, export, or analysis features.
 
-| 引擎 | 职责 | 状态 |
-|---|---|---|
-| `Classic 2.5D Editor` | 当前 Konva 编辑器、稳定回退、旧 PNG 导出 | 保留 |
-| `Stage Engine v2` | 真实 3D 沙盘、鼠标拖拽、真实光影、未来默认舞台 | 新建 |
-
-Stage Engine v2 不得重写以下业务层：
-
-- `SandboxObject` 数据。
-- 事件流。
-- 九宫格分析。
-- 资产目录。
-- AI 伙伴上下文摘要。
-- 个人中心归档。
-- 管理后台资产配置。
+Stage Engine v2 is the premium 3D stage for the sandplay product. It is not a standalone game and must keep the existing product shell, React state, object model, event stream, insight panel, AI companion, Memory OS, and admin configuration compatible.
 
 ---
 
-## 3. 数据合同
+## 2. Product Boundary
 
-### 3.1 输入对象
+Stage Engine v2 may replace the central rendering surface, but it must not replace these product systems:
 
-Stage Engine v2 必须以现有 `SandboxObject` 为唯一对象数据源：
+- `SandboxObject` data model.
+- Asset catalog and managed asset directory.
+- Event stream.
+- 3x3 region analysis.
+- JSON export.
+- AI companion context summary.
+- Agent conversation system.
+- Personal Memory OS archive.
+- Admin console.
+- `Classic 2.5D` fallback.
+
+Classic 2.5D remains the stable fallback until Stage v2 passes the RC quality gates.
+
+---
+
+## 3. Current Visual Contract
+
+Stage v2 no longer uses the old rectangular wood-frame tray as its primary visual target. The current RC direction is:
+
+- Borderless miniature sand island.
+- Textured yellow sand with height, grain, shells, stones, ridges, and contact darkening.
+- Animated surrounding seawater with waves, highlights, foam, and shoreline motion.
+- Warm toy-like 3D props with soft plastic, clay, wood, ceramic, glass-water, and toy-metal materials.
+- Orthographic camera with controlled pan, zoom, and rotate.
+- Weather and light modes that affect the scene without preventing object reading or dragging.
+
+The scene should feel like a premium, touchable miniature diorama inside a professional sandplay editor.
+
+---
+
+## 4. Data Contract
+
+### 4.1 Input Objects
+
+Stage v2 must use existing `SandboxObject` instances as the authoritative source:
 
 ```ts
 interface SandboxObject {
@@ -58,16 +73,18 @@ interface SandboxObject {
 }
 ```
 
-### 3.2 坐标合同
+Three.js runtime objects are render-only projections of this data. They must never become a second source of truth.
 
-业务坐标继续使用二维沙盘坐标：
+### 4.2 Coordinate Mapping
 
-- `x`: 0 到 `BOARD_WIDTH`
-- `y`: 0 到 `BOARD_HEIGHT`
-- 左上为 `(0, 0)`
-- 右下为 `(BOARD_WIDTH, BOARD_HEIGHT)`
+Business coordinates remain 2D:
 
-Stage Engine v2 内部可以使用 Three.js 坐标，但必须提供稳定映射：
+- `x`: `0..BOARD_WIDTH`
+- `y`: `0..BOARD_HEIGHT`
+- top-left is `(0, 0)`
+- bottom-right is `(BOARD_WIDTH, BOARD_HEIGHT)`
+
+Stage v2 mapping:
 
 ```text
 Sandbox x -> Three X
@@ -75,26 +92,28 @@ Sandbox y -> Three Z
 Object vertical -> Three Y
 ```
 
-任何对象拖拽完成后，必须写回二维 `x/y`，保证分析和导出不变。
+After moving an object in 3D, Stage v2 must write the final 2D `x/y` back to React state.
 
-### 3.3 事件合同
+### 4.3 Event Contract
 
-所有编辑行为必须继续写入 `SandboxEvent`：
+Every edit must continue to record a `SandboxEvent`.
 
-| 行为 | 事件类型 | 必须 payload |
-|---|---|---|
-| 新增沙具 | `add` | assetId, position, environment |
-| 移动沙具 | `move` | from, to |
-| 旋转沙具 | `rotate` | from, to |
-| 缩放沙具 | `scale` | from, to |
-| 删除沙具 | `delete` | objectId, assetId |
-| 环境变化 | `environment` | weather, light |
+| Behavior | Event label requirement |
+|---|---|
+| Add asset | include asset name and target position |
+| Move asset | include old and new position when available |
+| Rotate asset | include object name and new rotation |
+| Scale asset | include object name and new scale |
+| Delete asset | include object name |
+| Change weather/light | include weather and light mode |
+
+Event labels may be localized Chinese UI text, but they must remain searchable and understandable.
 
 ---
 
-## 4. 场景节点合同
+## 5. Scene Structure Contract
 
-Stage Engine v2 场景必须包含：
+The runtime scene must contain these logical layers:
 
 ```text
 StageEngineV2Scene
@@ -104,119 +123,136 @@ StageEngineV2Scene
 │   ├── AmbientLight
 │   ├── HemisphereLight
 │   └── DirectionalLight
-├── SandTrayRoot
-│   ├── TrayFrame
-│   ├── TrayInnerLiner
-│   ├── SandSurface
-│   ├── SandBoundaryPlane
-│   └── ContactShadowReceiver
+├── EnvironmentRoot
+│   ├── OceanSurface
+│   ├── ShorelineFoam
+│   ├── SandIsland
+│   ├── SandGrainDetails
+│   ├── ShellStoneDetails
+│   └── ContactShadowReceivers
 ├── ObjectRoot
 │   └── ToyObject3D[]
 ├── InteractionRoot
-│   ├── RaycastPlane
-│   ├── SelectionOutline
-│   ├── DragGhost
-│   └── TransformControls
+│   ├── RaycastSandPlane
+│   ├── DragPreview
+│   ├── SelectionIndicator
+│   └── TransformActionBridge
 ├── WeatherRoot
-│   ├── CloudLayer
 │   ├── RainLayer
+│   ├── CloudLayer
 │   ├── StarLayer
-│   └── MoonSunLayer
+│   └── SunMoonLayer
 └── CaptureBridge
 ```
 
-### 4.1 监听合同
-
-- `RaycastPlane` 可接收 pointer events。
-- 沙盘装饰背景不得拦截拖拽。
-- 天气粒子不得拦截拖拽。
-- AI 伙伴浮层不得阻断舞台核心操作，除非用户明确打开对话抽屉。
+Implementation file names may differ, but these responsibilities must be present.
 
 ---
 
-## 5. 相机合同
+## 6. Pointer and Camera Contract
 
-### 5.1 默认相机
+### 6.1 Object Interaction
 
-```ts
-interface Stage3DCameraState {
-  targetX: number;
-  targetZ: number;
-  zoom: number;
-  azimuth: number;
-  polar: number;
-}
-```
+- Pointer down on a toy selects it.
+- Dragging a selected or hit toy moves it across the sand plane.
+- Weather, ocean, background, labels, and decorative particles must not steal object drag events.
+- Drag end writes back 2D `x/y` and records an event.
+- Selection state must stay synchronized with the right panel.
 
-默认范围：
+### 6.2 Camera Interaction
 
-| 参数 | 建议范围 |
-|---|---|
-| `zoom` | 0.75 到 1.55 |
-| `azimuth` | -18 到 18 度 |
-| `polar` | 48 到 58 度 |
-| `targetX` | 不得让沙盘主体完全离屏 |
-| `targetZ` | 不得让沙盘主体完全离屏 |
+The stage must support:
 
-### 5.2 相机操作
+- Mouse wheel zoom.
+- Mouse drag pan for moving the sandbox view.
+- Controlled rotate action by UI button or modified gesture.
+- Reset camera button.
 
-- 鼠标滚轮：缩放。
-- 空格 + 左键或中键：平移。
-- Shift + 滚轮或专用按钮：轻量旋转。
-- 双击空白：回到默认视角。
-- 全屏模式保留所有相机操作。
+Camera limits must prevent the sand island from being completely lost offscreen.
 
----
+### 6.3 Fullscreen Interaction
 
-## 6. 沙盘合同
+Fullscreen mode must keep:
 
-### 6.1 方形木框
+- Object drag.
+- Camera pan/zoom/rotate.
+- Asset drawer access.
+- Insight drawer access.
+- A single AI companion panel.
 
-必须具备：
-
-- 真实厚度。
-- 倒角。
-- 外侧木纹。
-- 内侧蓝色衬边。
-- 前沿可见厚度。
-
-### 6.2 沙面
-
-必须具备：
-
-- 独立 mesh 或可接收 raycast 的 plane。
-- 程序化材质。
-- 可接收阴影。
-- 可提供对象落点。
-- 可叠加足迹和接触暗部。
-
-### 6.3 沙盘区域
-
-九宫格分析仍使用二维业务坐标。Stage Engine v2 需要能显示：
-
-- 3x3 辅助线。
-- 中心区域。
-- 边界区域。
-- 选中区域提示。
-
-辅助线默认可关闭，不能压过沙具。
+It must not show duplicate AI panels or create unclear two-person conversation surfaces inside the editor.
 
 ---
 
-## 7. 沙具合同
+## 7. Transform Contract
 
-### 7.1 资产模型
+When an object is selected, users must be able to:
 
-每个 v2 资产必须提供：
+- Move by direct mouse drag.
+- Rotate.
+- Scale.
+- Delete.
+- Inspect properties.
+
+The first RC may use toolbar buttons and panel controls instead of a full 3D gizmo. However, the feature surface must remain equivalent to the classic editor.
+
+---
+
+## 8. Weather and Lighting Contract
+
+Required weather:
+
+- Sunny
+- Cloudy
+- Rainy
+
+Required light modes:
+
+- Day
+- Night
+
+Scene impact:
+
+- Day mode: higher saturation, readable toy materials, visible warm highlights.
+- Night mode: darker environment, visible stars/moon when appropriate, readable toys, no unreadable UI.
+- Cloudy mode: softer shadows and cloud presence.
+- Rainy mode: rain motion and wet atmosphere, but toys remain selectable and readable.
+
+UI impact:
+
+- Night mode must synchronize the system theme.
+- Text, placeholders, disabled buttons, tags, tables, and inputs must remain readable.
+
+---
+
+## 9. Export Contract
+
+### 9.1 JSON
+
+JSON export remains based on product data, not Three.js internals.
+
+### 9.2 PNG
+
+Stage v2 PNG export must capture the current WebGL stage canvas. It must not include:
+
+- AI companion floating card.
+- Admin panels.
+- Browser UI.
+- Debug overlays.
+
+Selection indicators may be excluded by default unless an explicit future option says otherwise.
+
+---
+
+## 10. Asset Contract
+
+Each Stage v2 toy asset should be represented by a stable recipe:
 
 ```ts
 interface StageToyAssetSpec {
   assetId: string;
-  name: string;
-  category: string;
-  riskTag: RiskTag;
-  semanticTags: string[];
-  symbolicCandidates: string[];
+  visualFamily: "person" | "animal" | "environment" | "nature" | "symbol";
+  materialFamily: "softPlastic" | "clay" | "paintedWood" | "ceramic" | "toyMetal" | "glassWater";
   footprint: {
     type: "ellipse" | "rect" | "wide" | "small";
     width: number;
@@ -227,154 +263,41 @@ interface StageToyAssetSpec {
     z: number;
   };
   thumbnailScale: number;
-  modelRecipe: ToyModelRecipe3D;
+  semanticTags: string[];
 }
 ```
 
-### 7.2 12 个 Hero 沙具
-
-第一批必须优先完成：
-
-- `person_child`
-- `person_adult`
-- `person_elder`
-- `animal_dog`
-- `animal_bird`
-- `animal_fish`
-- `nature_tree`
-- `nature_water`
-- `building_house`
-- `building_fence`
-- `special_robot`
-- `nature_light`
-
-### 7.3 交互边界
-
-每个沙具必须有：
-
-- 可点击 hit area。
-- 可拖拽根节点。
-- 可计算 footprint。
-- 可显示 selection outline。
-- 可生成接触阴影。
+The source code should move toward separate model families instead of one ever-growing `ToyObject3D.tsx`.
 
 ---
 
-## 8. 拖拽合同
+## 11. RC Quality Gates
 
-### 8.1 拖拽新增
+Stage v2 RC is not acceptable until all gates pass:
 
-从左侧资产库拖到沙盘：
-
-1. 资产库发出 `draggingAsset`。
-2. Stage Engine v2 通过 raycast 计算沙面落点。
-3. 显示放置预览。
-4. drop 后调用现有 `onDropAsset(assetId, { x, y })`。
-
-### 8.2 拖拽移动
-
-移动已有沙具：
-
-1. pointer down 命中对象。
-2. 锁定对象 id。
-3. pointer move raycast 到沙面。
-4. 更新预览位置。
-5. pointer up 写回 `x/y`。
-6. 记录 `move` 事件。
-
-### 8.3 禁止行为
-
-- 不允许拖拽时对象跳到错误区域。
-- 不允许拖拽结束后 UI 面板状态不同步。
-- 不允许天气层或背景层抢 pointer。
-- 不允许选中框阻止对象继续拖拽。
+- `npm run build` succeeds.
+- Stage v2 renders without a blank WebGL canvas.
+- Ocean animation has visible frame-to-frame movement.
+- Object drag updates position and records an event.
+- Camera pan, zoom, rotate, and reset are usable.
+- Weather and light switching updates scene appearance.
+- Night UI is readable.
+- PNG export downloads a valid image.
+- JSON export remains compatible.
+- Classic editor remains switchable.
+- Browser console has no uncaught errors during smoke QA.
 
 ---
 
-## 9. Transform 合同
+## 12. Regression Rules
 
-选中对象后必须支持：
+Future changes are not allowed to:
 
-- 删除。
-- 旋转。
-- 缩放。
-- 复制。
-- 查看属性。
+- Remove existing object drag, rotate, scale, delete, JSON export, or PNG export.
+- Hide asset card names or risk tags.
+- Reintroduce duplicate AI companion panels.
+- Make weather layers intercept pointer events.
+- Make the right panel cover the playable stage in fullscreen.
+- Increase visual complexity without preserving readability and performance.
 
-第一版可以使用底部工具栏和快捷按钮实现，不强制实现完整三轴 gizmo。
-
-快捷键建议：
-
-| 快捷键 | 功能 |
-|---|---|
-| Delete / Backspace | 删除 |
-| R | 旋转模式 |
-| S | 缩放模式 |
-| V | 选择/移动模式 |
-| Cmd/Ctrl + D | 复制 |
-| Esc | 取消选择 |
-
----
-
-## 10. 天气与昼夜合同
-
-### 10.1 天气
-
-必须支持：
-
-- 晴天
-- 阴天
-- 雨天
-
-### 10.2 光照
-
-必须支持：
-
-- 白天
-- 黑夜
-
-### 10.3 UI 同步
-
-黑夜模式必须同步切换 UI 主题，不允许出现浅色卡片配浅色文字、输入内容不可见、按钮 disabled 不可辨认等问题。
-
----
-
-## 11. 导出合同
-
-### 11.1 JSON
-
-JSON 导出继续使用现有作品数据，不应包含 Three.js 内部临时对象。
-
-### 11.2 PNG
-
-Stage Engine v2 PNG 导出必须至少支持：
-
-- 导出当前 WebGL 沙盘画面。
-- 保持透明/背景策略一致。
-- 不导出控制框，除非用户开启“包含编辑辅助线”。
-- 不导出 AI 浮层和管理 UI。
-
----
-
-## 12. 回退合同
-
-任何 Stage Engine v2 开发阶段都必须保留：
-
-- Classic 2.5D 可切换。
-- 当前数据可在 Classic 和 v2 间共享。
-- v2 出现错误时不破坏 localStorage 数据。
-
----
-
-## 13. 完成定义
-
-一个 Stage Engine v2 任务只有同时满足以下条件才算完成：
-
-- 构建通过。
-- 场景合同未破坏。
-- 核心交互回归通过。
-- 固定截图输出。
-- 日夜主题可读性通过。
-- 没有新增明显 console error。
-- 旧 Classic 编辑器仍可用。
-
+If any rule is violated, fix it before adding new polish.
