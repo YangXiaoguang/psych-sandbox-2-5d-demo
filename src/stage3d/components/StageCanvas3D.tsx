@@ -1,5 +1,7 @@
 import { Canvas } from "@react-three/fiber";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import type { WebGLRenderer } from "three";
 import type { SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../../types";
 import { SandTrayMesh } from "./SandTrayMesh";
@@ -32,8 +34,9 @@ export function StageCanvas3D({
   const night = environment.light === "night";
   const rainy = environment.weather === "rainy";
   const cloudy = environment.weather === "cloudy";
-  const background = night ? "#0b1923" : rainy ? "#c9d8d0" : cloudy ? "#e7ebdc" : "#f7ead2";
+  const background = night ? "#061822" : rainy ? "#75bbc7" : cloudy ? "#9bd9d8" : "#8de8ec";
   const keyLight = night ? 1.25 : rainy ? 1.45 : cloudy ? 1.55 : 2.25;
+  const exposure = night ? 0.92 : rainy ? 0.98 : 1.06;
 
   return (
     <Canvas
@@ -44,7 +47,8 @@ export function StageCanvas3D({
       camera={{ position: [6.8, 6.2, 8.2], zoom: 82, near: 0.1, far: 120 }}
       gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
       onCreated={({ gl }: { gl: WebGLRenderer }) => {
-        gl.setClearColor(background);
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+        gl.toneMapping = THREE.ACESFilmicToneMapping;
         onCanvasReady(gl.domElement);
       }}
       onPointerMissed={() => {
@@ -53,10 +57,11 @@ export function StageCanvas3D({
         }
       }}
     >
+      <StageRenderSettings background={background} exposure={exposure} />
       <color attach="background" args={[background]} />
-      <fog attach="fog" args={[night ? "#0b1923" : background, 14, 28]} />
+      <fog attach="fog" args={[night ? "#061822" : background, 18, 34]} />
 
-      <ambientLight intensity={night ? 0.42 : cloudy || rainy ? 0.62 : 0.5} color={night ? "#9fc8de" : "#fff4df"} />
+      <ambientLight intensity={night ? 0.38 : cloudy || rainy ? 0.56 : 0.46} color={night ? "#9fc8de" : "#fff4df"} />
       <hemisphereLight
         args={[night ? "#9fc8ff" : "#fff7df", night ? "#162b33" : "#8aa189", night ? 0.82 : 0.58]}
       />
@@ -74,6 +79,17 @@ export function StageCanvas3D({
         shadow-camera-far={28}
         shadow-bias={-0.00025}
       />
+      <directionalLight
+        position={night ? [3.8, 3.5, -5.4] : [4.2, 4.6, -5.2]}
+        intensity={night ? 0.48 : rainy ? 0.26 : cloudy ? 0.32 : 0.42}
+        color={night ? "#7fbfff" : "#d7fff3"}
+      />
+      <pointLight
+        position={night ? [1.8, 2.2, 1.4] : [-2.6, 1.6, 1.8]}
+        intensity={night ? 0.45 : 0.16}
+        color={night ? "#8ff7d9" : "#fff3cc"}
+        distance={7}
+      />
 
       <StageWeatherSystem environment={environment} />
       <SandTrayMesh environment={environment} />
@@ -88,4 +104,15 @@ export function StageCanvas3D({
       <StageCameraControls enabled={!objectDragging} resetSignal={cameraResetSignal} />
     </Canvas>
   );
+}
+
+function StageRenderSettings({ background, exposure }: { background: string; exposure: number }): null {
+  const { gl } = useThree();
+
+  useEffect(() => {
+    gl.setClearColor(background);
+    gl.toneMappingExposure = exposure;
+  }, [background, exposure, gl]);
+
+  return null;
 }

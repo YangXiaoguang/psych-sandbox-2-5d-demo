@@ -85,7 +85,7 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
       if (!canvas) {
         return;
       }
-      downloadDataUrl(`stage-engine-v2-${safeTimestamp()}.png`, canvas.toDataURL("image/png"));
+      downloadDataUrl(canvas.toDataURL("image/png"), `stage-engine-v2-${safeTimestamp()}.png`);
     },
   }));
 
@@ -161,7 +161,7 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
       <div className="stage-v2-panel stage-v2-panel-bottom">
         <span>
           <MousePointer2 size={15} />
-          拖动沙具可移动；拖动空白处可转动，滚轮缩放
+          拖动沙具可移动；拖动空白处平移沙盘，右键转动，滚轮缩放
         </span>
         <span>
           <Boxes size={15} />
