@@ -18643,3 +18643,207 @@ table td {
     justify-content: center;
   }
 }
+
+/* Backpack simplification v1:
+   The inventory should read like a game item bag: image first, name second,
+   risk state third. Persistent drag copy is hidden until the user is actually
+   carrying an item. */
+.game-side-drawer .asset-drag-status.idle,
+.focus-asset-drawer .asset-drag-status.idle {
+  display: none !important;
+}
+
+.game-side-drawer .asset-shelf-status,
+.focus-asset-drawer .asset-shelf-status {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.game-side-drawer .asset-card,
+.game-side-drawer .asset-category-list.compact .asset-card,
+.focus-asset-drawer .asset-card,
+.focus-asset-drawer .asset-category-list.compact .asset-card {
+  min-height: 190px !important;
+  overflow: visible !important;
+  border-radius: 18px !important;
+}
+
+.game-side-drawer .asset-card-action,
+.game-side-drawer .asset-category-list.compact .asset-card-action,
+.focus-asset-drawer .asset-card-action,
+.focus-asset-drawer .asset-category-list.compact .asset-card-action {
+  display: grid !important;
+  grid-template-rows: 112px 58px !important;
+  min-height: 180px !important;
+  height: 180px !important;
+  gap: 8px !important;
+  overflow: visible !important;
+  padding: 8px !important;
+}
+
+.game-side-drawer .asset-preview,
+.game-side-drawer .asset-category-list.compact .asset-preview,
+.focus-asset-drawer .asset-preview,
+.focus-asset-drawer .asset-category-list.compact .asset-preview {
+  height: 112px !important;
+  min-height: 112px !important;
+  max-height: 112px !important;
+}
+
+.game-side-drawer .asset-card-main,
+.game-side-drawer .asset-category-list.compact .asset-card-main,
+.focus-asset-drawer .asset-card-main,
+.focus-asset-drawer .asset-category-list.compact .asset-card-main {
+  display: grid !important;
+  grid-template-rows: 28px 22px !important;
+  width: 100% !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+  padding: 4px 8px !important;
+  border-radius: 13px !important;
+}
+
+.game-side-drawer .asset-card-name,
+.game-side-drawer .asset-category-list.compact .asset-card-name,
+.focus-asset-drawer .asset-card-name,
+.focus-asset-drawer .asset-category-list.compact .asset-card-name {
+  display: block !important;
+  width: 100% !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  overflow: hidden !important;
+  color: #172623 !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  line-height: 28px !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.game-side-drawer .asset-card-meta,
+.game-side-drawer .asset-category-list.compact .asset-card-meta,
+.focus-asset-drawer .asset-card-meta,
+.focus-asset-drawer .asset-category-list.compact .asset-card-meta {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 22px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.game-side-drawer .asset-card .risk-badge,
+.game-side-drawer .asset-category-list.compact .asset-card .risk-badge,
+.focus-asset-drawer .asset-card .risk-badge,
+.focus-asset-drawer .asset-category-list.compact .asset-card .risk-badge {
+  position: static !important;
+  display: inline-flex !important;
+  max-width: 100% !important;
+  height: 21px !important;
+  min-height: 21px !important;
+  max-height: 21px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 0 9px !important;
+  font-size: 10px !important;
+  line-height: 20px !important;
+  text-overflow: ellipsis !important;
+  transform: none !important;
+  white-space: nowrap !important;
+}
+
+.game-side-drawer .asset-card-pocket-label,
+.focus-asset-drawer .asset-card-pocket-label {
+  top: 8px !important;
+  left: 8px !important;
+  max-width: calc(100% - 54px) !important;
+  min-height: 22px !important;
+  padding: 3px 8px !important;
+  font-size: 10px !important;
+  line-height: 14px !important;
+}
+
+.game-side-drawer .asset-favorite,
+.focus-asset-drawer .asset-favorite {
+  top: 8px !important;
+  right: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.game-side-drawer .asset-card-grip,
+.focus-asset-drawer .asset-card-grip {
+  display: none !important;
+}
+
+.game-side-drawer .asset-card.dragging,
+.focus-asset-drawer .asset-card.dragging {
+  border-color: rgba(109, 233, 214, 0.95) !important;
+  filter: saturate(1.16) contrast(1.04) !important;
+  transform: translateY(-4px) scale(1.01) !important;
+}
+
+.game-side-drawer .asset-library.is-picking-asset::after,
+.focus-asset-drawer .asset-library.is-picking-asset::after {
+  right: 18px !important;
+  bottom: 18px !important;
+  left: auto !important;
+  width: auto !important;
+  min-width: 148px !important;
+  max-width: calc(100% - 36px) !important;
+  padding: 10px 14px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  box-shadow: 0 16px 34px rgba(26, 92, 83, 0.26) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card-name,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-card-name,
+.product-shell.night-mode .focus-asset-drawer .asset-card-name,
+.product-shell.night-mode .focus-asset-drawer .asset-category-list.compact .asset-card-name {
+  color: #f7fffb !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card .risk-badge,
+.product-shell.night-mode .focus-asset-drawer .asset-card .risk-badge {
+  border-color: rgba(132, 234, 219, 0.54) !important;
+  background: rgba(33, 100, 91, 0.9) !important;
+  color: #f1fffb !important;
+}
+
+@media (max-width: 1500px) {
+  .game-side-drawer .asset-card,
+  .game-side-drawer .asset-category-list.compact .asset-card,
+  .focus-asset-drawer .asset-card,
+  .focus-asset-drawer .asset-category-list.compact .asset-card {
+    min-height: 176px !important;
+  }
+
+  .game-side-drawer .asset-card-action,
+  .game-side-drawer .asset-category-list.compact .asset-card-action,
+  .focus-asset-drawer .asset-card-action,
+  .focus-asset-drawer .asset-category-list.compact .asset-card-action {
+    grid-template-rows: 96px 56px !important;
+    min-height: 164px !important;
+    height: 164px !important;
+  }
+
+  .game-side-drawer .asset-preview,
+  .game-side-drawer .asset-category-list.compact .asset-preview,
+  .focus-asset-drawer .asset-preview,
+  .focus-asset-drawer .asset-category-list.compact .asset-preview {
+    height: 96px !important;
+    min-height: 96px !important;
+    max-height: 96px !important;
+  }
+}

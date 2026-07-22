@@ -207,7 +207,7 @@ export function AssetLibrary({
         <div>
           <p className="eyebrow">Asset Library</p>
           <h1>沙具背包</h1>
-          <span className="asset-library-subtitle">点击放入中心，也可以拖到沙盘指定位置。</span>
+          <span className="asset-library-subtitle">点击放入中心，拖拽可精确摆放。</span>
         </div>
         <span className="asset-count">{assets.length}</span>
       </div>
@@ -261,9 +261,9 @@ export function AssetLibrary({
               <em>{visibleAssetCount} 个可用沙具</em>
             </span>
             {draggingAsset ? (
-              <span className="asset-drag-status">正在拿取：{draggingAsset.name}</span>
+              <span className="asset-drag-status">已拿起：{draggingAsset.name}</span>
             ) : (
-              <span className="asset-drag-status idle">拖到沙盘</span>
+              <span className="asset-drag-status idle">拖拽放置</span>
             )}
           </div>
           {activeSections.map((section) => {
@@ -426,7 +426,7 @@ function AssetGrid({
             <i />
             <i />
           </span>
-          <button className="asset-card-action" type="button" onClick={() => onAddAsset(asset)}>
+          <button className="asset-card-action" type="button" onClick={() => onAddAsset(asset)} aria-label={`放置 ${asset.name}`}>
             <AssetPreview asset={asset} />
             <span className="asset-card-main">
               <span className="asset-card-name">{asset.name}</span>
