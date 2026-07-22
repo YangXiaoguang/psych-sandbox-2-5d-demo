@@ -19006,3 +19006,238 @@ table td {
 .product-shell.night-mode .right-panel:not(.collapsed) .ai-stream-status {
   color: rgba(219, 239, 233, 0.76) !important;
 }
+
+/* Large asset administration v1:
+   The catalog is the primary surface. Filters stay narrow, details open as a
+   drawer, and bulk operations live in the toolbar instead of taking another
+   permanent panel row. */
+.asset-admin-layout,
+.product-shell.night-mode .asset-admin-layout {
+  grid-template-columns: minmax(230px, 280px) minmax(760px, 1fr) !important;
+  align-items: stretch !important;
+}
+
+.asset-catalog-panel {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+  min-height: min(720px, calc(100vh - 230px)) !important;
+  overflow: hidden !important;
+}
+
+.asset-catalog-toolbar {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+}
+
+.asset-toolbar-main {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.asset-toolbar-main > label {
+  display: grid !important;
+  grid-template-columns: auto minmax(132px, 180px) !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.asset-result-count {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.asset-bulk-bar {
+  display: flex !important;
+  min-height: 38px !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 8px 10px !important;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 62%, var(--line)) !important;
+  border-radius: 12px !important;
+  background:
+    radial-gradient(circle at 4% 0%, rgba(122, 220, 203, 0.22), transparent 34%),
+    color-mix(in srgb, var(--accent-soft) 72%, var(--surface)) !important;
+}
+
+.asset-bulk-bar strong {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.asset-bulk-bar button,
+.asset-bulk-bar select {
+  min-height: 30px !important;
+  border-radius: 9px !important;
+  white-space: nowrap !important;
+}
+
+.asset-table-wrap {
+  min-height: 0 !important;
+  overflow: auto !important;
+}
+
+.asset-table {
+  min-width: 900px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.asset-table th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 3 !important;
+}
+
+.asset-table th:last-child,
+.asset-table td:last-child {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 2 !important;
+  min-width: 118px !important;
+  background: inherit !important;
+  box-shadow: -10px 0 18px rgba(52, 42, 27, 0.06) !important;
+}
+
+.asset-table th:last-child {
+  z-index: 4 !important;
+}
+
+.asset-row-actions {
+  justify-content: flex-end !important;
+}
+
+.asset-row-actions button {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 10px !important;
+}
+
+.asset-detail-drawer {
+  width: min(460px, calc(100vw - 36px)) !important;
+}
+
+.asset-detail-scrim {
+  backdrop-filter: blur(2px);
+}
+
+.product-shell.night-mode .asset-result-count {
+  border-color: rgba(132, 214, 202, 0.3);
+  background: rgba(9, 25, 34, 0.76);
+  color: rgba(224, 245, 239, 0.84);
+}
+
+.product-shell.night-mode .asset-bulk-bar {
+  border-color: rgba(124, 236, 217, 0.46) !important;
+  background:
+    radial-gradient(circle at 4% 0%, rgba(120, 233, 214, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(20, 67, 63, 0.78), rgba(8, 28, 37, 0.88)) !important;
+}
+
+.product-shell.night-mode .asset-bulk-bar strong {
+  background: rgba(121, 229, 214, 0.14);
+  color: #dffff7;
+}
+
+.product-shell.night-mode .asset-table {
+  background: rgba(8, 20, 28, 0.96) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .asset-table th,
+.product-shell.night-mode .asset-table td {
+  border-color: rgba(82, 111, 118, 0.72) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .asset-table th,
+.product-shell.night-mode .asset-table th:last-child {
+  background: #142b35 !important;
+  color: #dff3ed !important;
+}
+
+.product-shell.night-mode .asset-table tbody tr,
+.product-shell.night-mode .asset-table tbody tr:nth-child(even),
+.product-shell.night-mode .asset-table tbody tr td,
+.product-shell.night-mode .asset-table tbody tr:nth-child(even) td {
+  background: #0d1d26 !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .asset-table tbody tr:nth-child(even),
+.product-shell.night-mode .asset-table tbody tr:nth-child(even) td {
+  background: #11252f !important;
+}
+
+.product-shell.night-mode .asset-table tbody tr.active,
+.product-shell.night-mode .asset-table tbody tr.active td {
+  background:
+    linear-gradient(90deg, rgba(105, 202, 185, 0.18), rgba(105, 202, 185, 0.04)),
+    #14343a !important;
+  color: #f7fffb !important;
+}
+
+.product-shell.night-mode .asset-table td {
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .asset-table .asset-name-button {
+  color: #f2faf6 !important;
+}
+
+.product-shell.night-mode .asset-table .asset-name-button strong {
+  color: #f8fffc !important;
+}
+
+.product-shell.night-mode .asset-table .asset-name-button em {
+  color: rgba(205, 226, 220, 0.78) !important;
+}
+
+.product-shell.night-mode .asset-row-actions button {
+  border-color: rgba(132, 178, 185, 0.44) !important;
+  background: rgba(8, 24, 33, 0.96) !important;
+  color: #edf8f3 !important;
+}
+
+.product-shell.night-mode .asset-row-actions button:hover,
+.product-shell.night-mode .asset-row-actions button:focus-visible {
+  border-color: rgba(124, 236, 217, 0.72) !important;
+  background: rgba(25, 91, 84, 0.94) !important;
+  color: #f7fffb !important;
+}
+
+@media (max-width: 1180px) {
+  .asset-admin-layout,
+  .product-shell.night-mode .asset-admin-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .asset-filter-panel {
+    max-height: none !important;
+  }
+
+  .asset-toolbar-main {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}

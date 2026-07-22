@@ -2124,10 +2124,10 @@ function AssetAdminPanel({
           </div>
         </div>
         <div className="asset-catalog-toolbar">
-          <span>
-            显示 {filteredAssets.length} / {assets.length} 个沙具
-          </span>
-          <div>
+          <div className="asset-toolbar-main">
+            <span className="asset-result-count">
+              显示 {filteredAssets.length} / {assets.length} 个沙具
+            </span>
             <label>
               排序
               <select value={sortKey} onChange={(event) => setSortKey(event.target.value as AssetSortKey)}>
@@ -2142,47 +2142,46 @@ function AssetAdminPanel({
               {sortDirection === "asc" ? "升序" : "降序"}
             </button>
           </div>
-        </div>
-
-        {bulkTargets.length > 0 ? (
-          <div className="asset-bulk-bar">
-            <strong>{selectedAssetIds.length > 0 ? selectedAssetIds.length : 1} 个已选择</strong>
-            <button type="button" onClick={() => updateManyAssets(bulkTargets, { enabled: true, deletedAt: undefined })}>
-              启用
-            </button>
-            <button type="button" onClick={() => updateManyAssets(bulkTargets, { enabled: false })}>
-              停用
-            </button>
-            <button type="button" onClick={() => markAssetsDeleted(bulkTargets)}>
-              隐藏
-            </button>
-            <button type="button" onClick={() => restoreAssets(bulkTargets)}>
-              恢复
-            </button>
-            <select
-              aria-label="批量设置风险标签"
-              defaultValue=""
-              onChange={(event) => {
-                if (event.target.value) {
-                  updateManyAssets(bulkTargets, { riskTag: event.target.value as RiskTag });
-                  event.target.value = "";
-                }
-              }}
-            >
-              <option value="">批量风险</option>
-              {RISK_OPTIONS.map((riskTag) => (
-                <option key={riskTag} value={riskTag}>
-                  {RISK_LABELS[riskTag]}
-                </option>
-              ))}
-            </select>
-            {selectedAssetIds.length > 0 ? (
-              <button type="button" onClick={() => setSelectedAssetIds([])}>
-                取消选择
+          {bulkTargets.length > 0 ? (
+            <div className="asset-bulk-bar" aria-live="polite">
+              <strong>{selectedAssetIds.length > 0 ? selectedAssetIds.length : 1} 个已选择</strong>
+              <button type="button" onClick={() => updateManyAssets(bulkTargets, { enabled: true, deletedAt: undefined })}>
+                启用
               </button>
-            ) : null}
-          </div>
-        ) : null}
+              <button type="button" onClick={() => updateManyAssets(bulkTargets, { enabled: false })}>
+                停用
+              </button>
+              <button type="button" onClick={() => markAssetsDeleted(bulkTargets)}>
+                隐藏
+              </button>
+              <button type="button" onClick={() => restoreAssets(bulkTargets)}>
+                恢复
+              </button>
+              <select
+                aria-label="批量设置风险标签"
+                defaultValue=""
+                onChange={(event) => {
+                  if (event.target.value) {
+                    updateManyAssets(bulkTargets, { riskTag: event.target.value as RiskTag });
+                    event.target.value = "";
+                  }
+                }}
+              >
+                <option value="">批量风险</option>
+                {RISK_OPTIONS.map((riskTag) => (
+                  <option key={riskTag} value={riskTag}>
+                    {RISK_LABELS[riskTag]}
+                  </option>
+                ))}
+              </select>
+              {selectedAssetIds.length > 0 ? (
+                <button type="button" onClick={() => setSelectedAssetIds([])}>
+                  取消选择
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {viewMode === "table" ? (
           <div className="asset-table-wrap">
@@ -2259,7 +2258,7 @@ function AssetAdminPanel({
                     <td>
                       <div className="asset-row-actions" aria-label={`${asset.name} 操作`}>
                         <button type="button" onClick={() => openAssetDetail(asset.assetId)} aria-label={`查看并编辑 ${asset.name}`}>
-                          <Eye size={14} />
+                          <Pencil size={14} />
                         </button>
                         <button
                           type="button"
