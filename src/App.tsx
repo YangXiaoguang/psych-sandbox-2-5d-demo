@@ -781,17 +781,19 @@ export function App(): JSX.Element {
             </>
           ) : (
             <>
-              <button
-                className="game-floating-button game-inventory-toggle"
-                type="button"
-                onClick={handleToggleAssetPanel}
-                aria-label={assetPanelCollapsed ? "打开沙具背包" : "关闭沙具背包"}
-                aria-expanded={!assetPanelCollapsed}
-              >
-                {assetPanelCollapsed ? <Boxes size={18} /> : <X size={18} />}
-                <span>{assetPanelCollapsed ? "背包" : "关闭"}</span>
-                <em>{visibleAssets.length}</em>
-              </button>
+              {assetPanelCollapsed ? (
+                <button
+                  className="game-floating-button game-inventory-toggle"
+                  type="button"
+                  onClick={handleToggleAssetPanel}
+                  aria-label="打开沙具背包"
+                  aria-expanded={false}
+                >
+                  <Boxes size={18} />
+                  <span>背包</span>
+                  <em>{visibleAssets.length}</em>
+                </button>
+              ) : null}
               {!assetPanelCollapsed ? (
                 <>
                   <button
@@ -801,6 +803,14 @@ export function App(): JSX.Element {
                     onClick={() => patchLayoutPreferences({ assetPanelCollapsed: true })}
                   />
                   <div className="game-side-drawer game-side-drawer-left" aria-label="沙具背包抽屉">
+                    <button
+                      className="game-drawer-close"
+                      type="button"
+                      onClick={() => patchLayoutPreferences({ assetPanelCollapsed: true })}
+                      aria-label="关闭沙具背包"
+                    >
+                      <X size={17} />
+                    </button>
                     <AssetLibrary
                       assets={visibleAssets}
                       onAddAsset={addAssetToScene}

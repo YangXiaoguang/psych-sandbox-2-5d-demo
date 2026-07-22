@@ -206,7 +206,8 @@ export function AssetLibrary({
       <div className="panel-header">
         <div>
           <p className="eyebrow">Asset Library</p>
-          <h1>沙具库</h1>
+          <h1>沙具背包</h1>
+          <span className="asset-library-subtitle">点击放入中心，也可以拖到沙盘指定位置。</span>
         </div>
         <span className="asset-count">{assets.length}</span>
       </div>
@@ -261,7 +262,9 @@ export function AssetLibrary({
             </span>
             {draggingAsset ? (
               <span className="asset-drag-status">正在拿取：{draggingAsset.name}</span>
-            ) : null}
+            ) : (
+              <span className="asset-drag-status idle">拖到沙盘</span>
+            )}
           </div>
           {activeSections.map((section) => {
             const collapsed = section.collapsible && collapsedSet.has(section.id);

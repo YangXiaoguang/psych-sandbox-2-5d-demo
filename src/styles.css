@@ -17726,6 +17726,31 @@ table td {
   animation: gameDrawerIn 180ms ease both;
 }
 
+.game-drawer-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 160;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm), var(--inner-highlight);
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+}
+
+.game-drawer-close:hover,
+.game-drawer-close:focus-visible {
+  border-color: var(--accent-line);
+  background: color-mix(in srgb, var(--accent-soft) 86%, transparent);
+  color: var(--accent-dark);
+}
+
 .game-side-drawer-left {
   --drawer-offset: -18px;
   left: 0;
@@ -17824,6 +17849,12 @@ table td {
   background: rgba(2, 10, 16, 0.28);
 }
 
+.product-shell.night-mode .game-drawer-close {
+  border-color: rgba(142, 178, 184, 0.4);
+  background: rgba(13, 31, 40, 0.88);
+  color: #effbf7;
+}
+
 @media (max-width: 1500px) {
   .game-navigation {
     grid-template-columns: auto minmax(180px, 1fr) auto auto;
@@ -17872,4 +17903,410 @@ table td {
   max-width: none !important;
   height: auto !important;
   min-height: 54px !important;
+}
+
+/* Game HUD drawer polish v2:
+   Inventory and insight now behave like quick in-game overlays. The stage
+   remains dominant; drawers expose only the controls needed at that moment. */
+.game-side-drawer-left {
+  width: min(430px, 35vw);
+}
+
+.game-side-drawer-right {
+  width: min(384px, 31vw);
+}
+
+.game-side-drawer .asset-library,
+.game-side-drawer .right-panel {
+  border-color: color-mix(in srgb, var(--line) 74%, transparent) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.74), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--panel) 92%, transparent)) !important;
+}
+
+.game-side-drawer .asset-library .panel-header {
+  min-height: 74px !important;
+  padding: 15px 16px 12px !important;
+}
+
+.game-side-drawer .asset-library .asset-count {
+  display: none !important;
+}
+
+.asset-library-subtitle {
+  display: block;
+  max-width: 280px;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-side-drawer .asset-library-tools {
+  gap: 9px !important;
+  padding: 12px 14px !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 54%, transparent) !important;
+  background: color-mix(in srgb, var(--surface) 72%, transparent) !important;
+}
+
+.game-side-drawer .asset-search {
+  min-height: 38px !important;
+  border-radius: 13px !important;
+}
+
+.game-side-drawer .asset-filter-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+}
+
+.game-side-drawer .segmented-mini {
+  min-height: 36px !important;
+  padding: 3px !important;
+}
+
+.game-side-drawer .asset-backpack {
+  min-height: 0 !important;
+}
+
+.game-side-drawer .asset-shelf-rail {
+  width: 58px !important;
+  padding: 12px 8px !important;
+  border-right: 1px solid color-mix(in srgb, var(--line) 54%, transparent) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 34%, transparent), transparent 42%),
+    color-mix(in srgb, var(--surface) 38%, transparent) !important;
+}
+
+.game-side-drawer .asset-shelf-rail button {
+  width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  border-radius: 14px !important;
+}
+
+.game-side-drawer .asset-shelf-rail button em {
+  top: -6px !important;
+  right: -6px !important;
+  min-width: 19px !important;
+  height: 19px !important;
+  font-size: 10px !important;
+}
+
+.game-side-drawer .asset-category-list {
+  gap: 12px !important;
+  padding: 12px 12px 22px !important;
+}
+
+.game-side-drawer .asset-shelf-status {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  min-height: 46px !important;
+  padding: 9px 10px !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.game-side-drawer .asset-category {
+  padding: 0 !important;
+}
+
+.game-side-drawer .asset-category-header {
+  min-height: 34px !important;
+  padding: 0 5px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.game-side-drawer .asset-category-header strong {
+  color: var(--ink) !important;
+  font-size: 15px !important;
+}
+
+.game-side-drawer .asset-category-header em {
+  min-width: 26px !important;
+  height: 26px !important;
+  border-radius: 10px !important;
+}
+
+.game-side-drawer .asset-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.game-side-drawer .asset-category-list.compact .asset-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.game-side-drawer .asset-card,
+.game-side-drawer .asset-category-list.compact .asset-card {
+  min-height: 174px !important;
+  border-radius: 17px !important;
+}
+
+.game-side-drawer .asset-card-action,
+.game-side-drawer .asset-category-list.compact .asset-card-action {
+  grid-template-rows: 110px 46px !important;
+  min-height: 166px !important;
+  height: 166px !important;
+  padding: 8px !important;
+}
+
+.game-side-drawer .asset-preview,
+.game-side-drawer .asset-category-list.compact .asset-preview {
+  height: 110px !important;
+  min-height: 110px !important;
+  max-height: 110px !important;
+}
+
+.game-side-drawer .asset-card-main,
+.game-side-drawer .asset-category-list.compact .asset-card-main {
+  grid-template-rows: 24px 17px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+}
+
+.game-side-drawer .asset-card-name,
+.game-side-drawer .asset-category-list.compact .asset-card-name {
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  color: #182624 !important;
+  font-size: 13px !important;
+  line-height: 24px !important;
+}
+
+.game-side-drawer .asset-category-list.compact .asset-card,
+.game-side-drawer .asset-category-list.compact .asset-card-action {
+  min-height: 146px !important;
+  height: 146px !important;
+}
+
+.game-side-drawer .asset-category-list.compact .asset-card-action {
+  grid-template-rows: 86px 42px !important;
+}
+
+.game-side-drawer .asset-category-list.compact .asset-preview {
+  height: 86px !important;
+  min-height: 86px !important;
+  max-height: 86px !important;
+}
+
+.game-side-drawer .asset-card:hover,
+.game-side-drawer .asset-card:focus-within {
+  transform: translateY(-2px) !important;
+}
+
+.game-side-drawer .right-panel .panel-header {
+  min-height: 74px !important;
+  padding: 15px 16px 12px !important;
+}
+
+.game-side-drawer .right-panel .panel-tabs {
+  padding: 10px 14px !important;
+  gap: 8px !important;
+}
+
+.game-side-drawer .right-panel .panel-tabs button {
+  min-height: 38px !important;
+  border-radius: 12px !important;
+}
+
+.game-side-drawer .insight-drawer {
+  gap: 12px !important;
+  padding: 12px 14px 20px !important;
+}
+
+.game-side-drawer .insight-overview {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.game-side-drawer .insight-overview-item {
+  min-height: 76px !important;
+  padding: 10px 6px !important;
+  border-radius: 14px !important;
+}
+
+.game-side-drawer .insight-overview-item strong {
+  font-size: 25px !important;
+}
+
+.insight-selected-snapshot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.78), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--panel) 84%, transparent));
+  box-shadow: var(--shadow-sm), var(--inner-highlight);
+}
+
+.insight-selected-snapshot.empty {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.insight-selected-snapshot > svg {
+  color: var(--accent-dark);
+}
+
+.insight-selected-snapshot > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.insight-selected-snapshot strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 950;
+  line-height: 1.16;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insight-selected-snapshot em {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insight-selected-snapshot button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--danger) 42%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger-soft) 80%, transparent);
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.insight-selected-snapshot button:hover,
+.insight-selected-snapshot button:focus-visible {
+  background: var(--danger);
+  color: #fffaf0;
+}
+
+.game-side-drawer .insight-section {
+  overflow: hidden !important;
+  border-radius: 15px !important;
+}
+
+.game-side-drawer .insight-section summary {
+  min-height: 52px !important;
+  padding: 0 12px !important;
+}
+
+.game-side-drawer .insight-section:not([open]) {
+  min-height: 52px !important;
+}
+
+.game-side-drawer .insight-section[open] {
+  padding-bottom: 12px !important;
+}
+
+.game-side-drawer .insight-section[open] .insight-snapshot-panel,
+.game-side-drawer .insight-section[open] .insight-event-preview {
+  margin: 0 12px 10px !important;
+}
+
+.game-side-drawer .insight-section[open] .side-section,
+.game-side-drawer .insight-section[open] .structured-panel,
+.game-side-drawer .insight-section[open] .event-list {
+  margin-inline: 12px !important;
+}
+
+.game-side-drawer .insight-snapshot-panel {
+  min-height: 190px !important;
+}
+
+.game-side-drawer .insight-event-preview {
+  min-height: auto !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-library,
+.product-shell.night-mode .game-side-drawer .right-panel {
+  border-color: rgba(132, 178, 185, 0.44) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(116, 232, 214, 0.13), transparent 34%),
+    linear-gradient(180deg, rgba(19, 39, 49, 0.98), rgba(8, 21, 30, 0.98)) !important;
+}
+
+.product-shell.night-mode .asset-library-subtitle,
+.product-shell.night-mode .insight-selected-snapshot em {
+  color: rgba(224, 245, 239, 0.76) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-library-tools,
+.product-shell.night-mode .game-side-drawer .asset-shelf-rail {
+  border-color: rgba(132, 178, 185, 0.32) !important;
+  background: rgba(12, 30, 39, 0.72) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-category-header strong,
+.product-shell.night-mode .insight-selected-snapshot strong {
+  color: #f5fffb !important;
+}
+
+.product-shell.night-mode .insight-selected-snapshot {
+  border-color: rgba(132, 214, 202, 0.34) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(123, 233, 214, 0.16), transparent 40%),
+    linear-gradient(180deg, rgba(20, 48, 56, 0.98), rgba(8, 25, 34, 0.98)) !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card-name,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-card-name {
+  color: #f7fffb !important;
+}
+
+@media (max-width: 1500px) {
+  .game-side-drawer-left {
+    width: min(380px, 42vw);
+  }
+
+  .game-side-drawer-right {
+    width: min(360px, 39vw);
+  }
+
+  .game-side-drawer .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .game-side-drawer .asset-category-list.compact .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .game-side-drawer-left,
+  .game-side-drawer-right {
+    width: min(420px, calc(100% - 68px));
+  }
+
+  .game-side-drawer .asset-grid,
+  .game-side-drawer .asset-category-list.compact .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }

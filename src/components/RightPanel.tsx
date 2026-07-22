@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Bot, ChevronLeft, ChevronRight, Clock3, Database, LayoutDashboard, MousePointer2 } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight, Clock3, Database, LayoutDashboard, MousePointer2, Trash2 } from "lucide-react";
 import { RISK_COLORS, RISK_LABELS } from "../data/assets";
 import type { LlmProviderConfig, RiskTag, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
@@ -177,14 +177,13 @@ function SceneInsightDrawer({
         </div>
       </section>
 
-      <InsightHeatmapSummary analysis={analysis} />
-      <RecentEventPreview events={events} />
+      <SelectedObjectSnapshot selectedObject={selectedObject} onDeleteSelected={onDeleteSelected} />
 
-      <details className="insight-section" open={Boolean(selectedObject)}>
+      <details className="insight-section">
         <summary>
           <span>
             <MousePointer2 size={15} />
-            当前选中
+            选中沙具属性
           </span>
           <em>{selectedObject?.name ?? "未选择"}</em>
         </summary>
@@ -199,10 +198,11 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <LayoutDashboard size={15} />
-            作品洞察
+            空间热力与风险
           </span>
-          <em>九宫格 / 风险</em>
+          <em>{analysis.centerObjects.length} 个中心对象</em>
         </summary>
+        <InsightHeatmapSummary analysis={analysis} />
         <AnalysisPanel analysis={analysis} objects={objects} />
       </details>
 
@@ -210,10 +210,11 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <Clock3 size={15} />
-            事件时间线
+            最近事件
           </span>
           <em>{events.length} 条</em>
         </summary>
+        <RecentEventPreview events={events} />
         <EventStream events={events} />
       </details>
 
@@ -228,6 +229,42 @@ function SceneInsightDrawer({
         <StructuredDataPanel objects={objects} analysis={analysis} selectedObject={selectedObject} />
       </details>
     </div>
+  );
+}
+
+function SelectedObjectSnapshot({
+  selectedObject,
+  onDeleteSelected,
+}: {
+  selectedObject: SandboxObject | null;
+  onDeleteSelected: () => void;
+}): JSX.Element {
+  if (!selectedObject) {
+    return (
+      <section className="insight-selected-snapshot empty" aria-label="当前选中沙具摘要">
+        <MousePointer2 size={18} />
+        <div>
+          <span className="eyebrow">Selected Toy</span>
+          <strong>未选择沙具</strong>
+          <em>点击沙盘中的沙具后，可在这里快速查看状态。</em>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="insight-selected-snapshot" aria-label="当前选中沙具摘要">
+      <div>
+        <span className="eyebrow">Selected Toy</span>
+        <strong>{selectedObject.name}</strong>
+        <em>
+          X {Math.round(selectedObject.x)} / Y {Math.round(selectedObject.y)} · {RISK_LABELS[selectedObject.riskTag]}
+        </em>
+      </div>
+      <button type="button" onClick={onDeleteSelected} aria-label={`删除 ${selectedObject.name}`}>
+        <Trash2 size={16} />
+      </button>
+    </section>
   );
 }
 
