@@ -3,15 +3,25 @@ import {
   Bot,
   Boxes,
   ChevronRight,
+  Copy,
   Ellipsis,
+  Grid3X3,
   LayoutDashboard,
   LogOut,
+  Maximize2,
+  Minimize2,
+  MousePointer2,
+  Move,
   PanelRightOpen,
+  RefreshCcw,
+  RotateCcw,
+  RotateCw,
   Settings,
-  SlidersHorizontal,
   Trash2,
   UserRound,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import type { AdminGovernanceData } from "./admin/types";
 import { AdminDashboard } from "./components/AdminDashboard";
@@ -467,6 +477,14 @@ export function App(): JSX.Element {
     setSandboxCamera(DEFAULT_SANDBOX_CAMERA);
   }, []);
 
+  const handleActiveViewReset = useCallback(() => {
+    if (sandboxEngineMode === "stage3d") {
+      stageV2Ref.current?.resetView();
+      return;
+    }
+    handleCameraReset();
+  }, [handleCameraReset, sandboxEngineMode]);
+
   const patchLayoutPreferences = useCallback((patch: Partial<SandboxLayoutPreferences>) => {
     setLayoutPreferences((current) => ({ ...current, ...patch }));
   }, []);
@@ -876,10 +894,7 @@ export function App(): JSX.Element {
                   objectCount={objects.length}
                   objects={objects}
                   selectedId={selectedId}
-                  onDeleteSelected={handleDeleteSelected}
-                  onDuplicateSelected={handleDuplicateSelected}
                   onPatchObject={patchObject}
-                  onPatchSelected={handlePatchSelected}
                   onRecordEvent={recordEvent}
                   onSelectObject={handleSelectObject}
                 />
@@ -903,16 +918,22 @@ export function App(): JSX.Element {
                 onOpenAiCompanion={handleOpenAiCompanion}
               />
             )}
+            <SandboxGameToolbelt
+              engineMode={sandboxEngineMode}
+              selectedObject={selectedObject}
+              showGuides={showGuides}
+              focusMode={sandboxFocusMode}
+              onCameraReset={handleActiveViewReset}
+              onToggleGuides={() => setShowGuides((current) => !current)}
+              onToggleFocusMode={handleToggleFocusMode}
+              onPatchSelected={handlePatchSelected}
+              onDuplicateSelected={handleDuplicateSelected}
+              onDeleteSelected={handleDeleteSelected}
+            />
           </section>
 
           {sandboxFocusMode ? (
-            !layoutPreferences.aiDrawerOpen ? (
-              <FocusSelectionCard
-                selectedObject={selectedObject}
-                onPatchSelected={handlePatchSelected}
-                onDeleteSelected={handleDeleteSelected}
-              />
-            ) : null
+            null
           ) : rightPanelCollapsed ? (
             <button
               className="game-floating-button game-insight-toggle"
@@ -1126,66 +1147,141 @@ function FocusAiCompanionDrawer({
   );
 }
 
-function FocusSelectionCard({
+function SandboxGameToolbelt({
+  engineMode,
   selectedObject,
+  showGuides,
+  focusMode,
+  onCameraReset,
+  onToggleGuides,
+  onToggleFocusMode,
   onPatchSelected,
+  onDuplicateSelected,
   onDeleteSelected,
 }: {
+  engineMode: SandboxEngineMode;
   selectedObject: SandboxObject | null;
+  showGuides: boolean;
+  focusMode: boolean;
+  onCameraReset: () => void;
+  onToggleGuides: () => void;
+  onToggleFocusMode: () => void;
   onPatchSelected: (patch: Partial<SandboxObject>, label: string) => void;
+  onDuplicateSelected: () => void;
   onDeleteSelected: () => void;
 }): JSX.Element {
-  if (!selectedObject) {
-    return (
-      <aside className="focus-selection-card empty" aria-label="全屏对象快捷属性">
-        <SlidersHorizontal size={17} />
-        <span>选择一个沙具后，可在这里快速调整旋转、缩放或删除。</span>
-      </aside>
+  const rotateSelected = (delta: number) => {
+    if (!selectedObject) {
+      return;
+    }
+    onPatchSelected(
+      { rotation: normalizeRotation(selectedObject.rotation + delta) },
+      `快捷工具旋转沙具: ${selectedObject.name}`,
     );
-  }
+  };
+
+  const scaleSelected = (delta: number) => {
+    if (!selectedObject) {
+      return;
+    }
+    onPatchSelected(
+      { scale: Number(clamp(selectedObject.scale + delta, 0.35, 2.4).toFixed(2)) },
+      `快捷工具缩放沙具: ${selectedObject.name}`,
+    );
+  };
 
   return (
-    <aside className="focus-selection-card" aria-label="全屏对象快捷属性">
-      <div>
-        <p className="eyebrow">Selected Toy</p>
-        <h3>{selectedObject.name}</h3>
-        <span>
-          {Math.round(selectedObject.x)}, {Math.round(selectedObject.y)}
+    <nav
+      className={classNames("sandbox-game-toolbelt", selectedObject && "has-selection", focusMode && "focus-toolbelt")}
+      aria-label="沙盘快捷操作工具带"
+    >
+      <div className="toolbelt-status">
+        <span className="toolbelt-mode-icon">
+          <MousePointer2 size={18} />
         </span>
+        <div>
+          <p>{selectedObject ? selectedObject.name : "选择 / 移动画布"}</p>
+          <span>
+            {selectedObject
+              ? `${engineMode === "stage3d" ? "Stage v2" : "Classic"} · X ${Math.round(selectedObject.x)} / Y ${Math.round(
+                  selectedObject.y,
+                )}`
+              : "拖动沙具移动；拖空白处移动沙盘；滚轮缩放视角"}
+          </span>
+        </div>
       </div>
-      <label>
-        <span>旋转</span>
-        <input
-          type="range"
-          min={0}
-          max={359}
-          value={Math.round(selectedObject.rotation)}
-          onChange={(event) =>
-            onPatchSelected({ rotation: Number(event.target.value) }, `旋转沙具: ${selectedObject.name}`)
-          }
-        />
-        <strong>{Math.round(selectedObject.rotation)}°</strong>
-      </label>
-      <label>
-        <span>缩放</span>
-        <input
-          type="range"
-          min={0.35}
-          max={2.4}
-          step={0.05}
-          value={selectedObject.scale}
-          onChange={(event) =>
-            onPatchSelected({ scale: Number(event.target.value) }, `缩放沙具: ${selectedObject.name}`)
-          }
-        />
-        <strong>{selectedObject.scale.toFixed(2)}</strong>
-      </label>
-      <button className="icon-button danger" type="button" onClick={onDeleteSelected}>
-        <Trash2 size={16} />
-        <span>删除</span>
-      </button>
-    </aside>
+
+      <div className="toolbelt-actions" role="group" aria-label="视图快捷操作">
+        <button type="button" onClick={onCameraReset} aria-label="重置沙盘视角" title="重置视角">
+          <RefreshCcw size={18} />
+          <span>复位</span>
+        </button>
+        <button
+          type="button"
+          className={showGuides ? "active" : ""}
+          onClick={onToggleGuides}
+          aria-pressed={showGuides}
+          aria-label="切换九宫格辅助区域"
+          title="辅助区域"
+        >
+          <Grid3X3 size={18} />
+          <span>网格</span>
+        </button>
+        <button
+          type="button"
+          className={focusMode ? "active" : ""}
+          onClick={onToggleFocusMode}
+          aria-label={focusMode ? "退出沙盘全屏模式" : "进入沙盘全屏模式"}
+          title={focusMode ? "退出全屏" : "全屏"}
+        >
+          {focusMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          <span>{focusMode ? "退出" : "全屏"}</span>
+        </button>
+      </div>
+
+      {selectedObject ? (
+        <div className="toolbelt-actions selected-actions" role="group" aria-label={`${selectedObject.name} 快捷变换`}>
+          <button type="button" onClick={() => rotateSelected(-15)} aria-label={`向左旋转 ${selectedObject.name} 15 度`} title="左转">
+            <RotateCcw size={18} />
+            <span>左转</span>
+          </button>
+          <button type="button" onClick={() => rotateSelected(15)} aria-label={`向右旋转 ${selectedObject.name} 15 度`} title="右转">
+            <RotateCw size={18} />
+            <span>右转</span>
+          </button>
+          <button type="button" onClick={() => scaleSelected(-0.1)} aria-label={`缩小 ${selectedObject.name}`} title="缩小">
+            <ZoomOut size={18} />
+            <span>缩小</span>
+          </button>
+          <button type="button" onClick={() => scaleSelected(0.1)} aria-label={`放大 ${selectedObject.name}`} title="放大">
+            <ZoomIn size={18} />
+            <span>放大</span>
+          </button>
+          <button type="button" onClick={onDuplicateSelected} aria-label={`复制 ${selectedObject.name}`} title="复制">
+            <Copy size={18} />
+            <span>复制</span>
+          </button>
+          <button className="danger" type="button" onClick={onDeleteSelected} aria-label={`删除 ${selectedObject.name}`} title="删除">
+            <Trash2 size={18} />
+            <span>删除</span>
+          </button>
+        </div>
+      ) : (
+        <div className="toolbelt-hints" aria-label="鼠标操作提示">
+          <span>
+            <Move size={15} />
+            空白平移
+          </span>
+          <span>右键转动</span>
+          <span>滚轮缩放</span>
+        </div>
+      )}
+    </nav>
   );
+}
+
+function normalizeRotation(rotation: number): number {
+  return ((rotation % 360) + 360) % 360;
 }
 
 function classNames(...values: Array<string | false | null | undefined>): string {
