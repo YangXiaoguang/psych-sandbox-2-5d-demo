@@ -16,6 +16,7 @@ export interface SandboxCameraState {
 }
 
 export interface SandboxLayoutPreferences {
+  assetPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
   focusMode: boolean;
   assetDrawerOpen: boolean;

@@ -1,5 +1,18 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Boxes, PanelRightOpen, SlidersHorizontal, Trash2, X } from "lucide-react";
+import {
+  Bot,
+  Boxes,
+  ChevronRight,
+  Ellipsis,
+  LayoutDashboard,
+  LogOut,
+  PanelRightOpen,
+  Settings,
+  SlidersHorizontal,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
 import type { AdminGovernanceData } from "./admin/types";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
@@ -123,6 +136,7 @@ export function App(): JSX.Element {
     [objects, selectedId],
   );
   const sandboxFocusMode = activeView === "sandbox" && layoutPreferences.focusMode;
+  const assetPanelCollapsed = layoutPreferences.assetPanelCollapsed;
   const rightPanelCollapsed = layoutPreferences.rightPanelCollapsed;
   const activeProfile = useMemo(() => getActiveProfile(personalData), [personalData]);
   const personalContextPacket = useMemo(
@@ -180,7 +194,7 @@ export function App(): JSX.Element {
         return;
       }
 
-      if (event.key === "Escape" && layoutPreferences.focusMode) {
+      if (event.key === "Escape") {
         event.preventDefault();
         setLayoutPreferences((current) => {
           if (current.aiDrawerOpen) {
@@ -189,7 +203,16 @@ export function App(): JSX.Element {
           if (current.assetDrawerOpen) {
             return { ...current, assetDrawerOpen: false };
           }
-          return { ...current, focusMode: false, assetDrawerOpen: false, aiDrawerOpen: false };
+          if (!current.assetPanelCollapsed) {
+            return { ...current, assetPanelCollapsed: true };
+          }
+          if (!current.rightPanelCollapsed) {
+            return { ...current, rightPanelCollapsed: true };
+          }
+          if (current.focusMode) {
+            return { ...current, focusMode: false, assetDrawerOpen: false, aiDrawerOpen: false };
+          }
+          return current;
         });
       }
 
@@ -207,15 +230,17 @@ export function App(): JSX.Element {
         event.preventDefault();
         setLayoutPreferences((current) => ({
           ...current,
+          assetPanelCollapsed: true,
           rightPanelCollapsed: !current.rightPanelCollapsed,
         }));
       }
 
-      if (event.key.toLowerCase() === "a" && layoutPreferences.focusMode) {
+      if (event.key.toLowerCase() === "a") {
         event.preventDefault();
         setLayoutPreferences((current) => ({
           ...current,
-          assetDrawerOpen: !current.assetDrawerOpen,
+          assetPanelCollapsed: current.focusMode ? current.assetPanelCollapsed : !current.assetPanelCollapsed,
+          assetDrawerOpen: current.focusMode ? !current.assetDrawerOpen : current.assetDrawerOpen,
           aiDrawerOpen: false,
         }));
       }
@@ -450,7 +475,18 @@ export function App(): JSX.Element {
     setLayoutPreferences((current) => ({
       ...current,
       focusMode: !current.focusMode,
+      assetPanelCollapsed: true,
+      rightPanelCollapsed: true,
       assetDrawerOpen: false,
+      aiDrawerOpen: false,
+    }));
+  }, []);
+
+  const handleToggleAssetPanel = useCallback(() => {
+    setLayoutPreferences((current) => ({
+      ...current,
+      assetPanelCollapsed: !current.assetPanelCollapsed,
+      rightPanelCollapsed: true,
       aiDrawerOpen: false,
     }));
   }, []);
@@ -459,6 +495,7 @@ export function App(): JSX.Element {
     setLayoutPreferences((current) => ({
       ...current,
       rightPanelCollapsed: !current.rightPanelCollapsed,
+      assetPanelCollapsed: true,
     }));
   }, []);
 
@@ -473,7 +510,7 @@ export function App(): JSX.Element {
     }
 
     setRightPanelTab("ai");
-    setLayoutPreferences((current) => ({ ...current, rightPanelCollapsed: false }));
+    setLayoutPreferences((current) => ({ ...current, assetPanelCollapsed: true, rightPanelCollapsed: false }));
   }, [sandboxFocusMode]);
 
   const handleRepositoryModeChange = useCallback((mode: RepositoryMode) => {
@@ -489,6 +526,8 @@ export function App(): JSX.Element {
     setEnvironment(repositoryAdapter.workspace.loadEnvironment(userId));
     setLayoutPreferences({
       ...repositoryAdapter.workspace.loadLayout(userId),
+      assetPanelCollapsed: true,
+      rightPanelCollapsed: true,
       focusMode: false,
       assetDrawerOpen: false,
       aiDrawerOpen: false,
@@ -595,6 +634,8 @@ export function App(): JSX.Element {
     setAuthSession(null);
     setLayoutPreferences((current) => ({
       ...current,
+      assetPanelCollapsed: true,
+      rightPanelCollapsed: true,
       focusMode: false,
       assetDrawerOpen: false,
       aiDrawerOpen: false,
@@ -621,6 +662,8 @@ export function App(): JSX.Element {
     setRightPanelTab("scene");
     setLayoutPreferences((current) => ({
       ...current,
+      assetPanelCollapsed: true,
+      rightPanelCollapsed: true,
       focusMode: false,
       assetDrawerOpen: false,
       aiDrawerOpen: false,
@@ -640,13 +683,22 @@ export function App(): JSX.Element {
       )}
     >
       {!sandboxFocusMode && activeView !== "auth" ? (
-        <AppNavigation
-          activeView={activeView}
-          onViewChange={setActiveView}
-          activeUserName={activeProfile.displayName}
-          authSession={authSession}
-          onLogout={handleLogout}
-        />
+        activeView === "sandbox" ? (
+          <SandboxGameNavigation
+            activeUserName={activeProfile.displayName}
+            authSession={authSession}
+            onViewChange={setActiveView}
+            onLogout={handleLogout}
+          />
+        ) : (
+          <AppNavigation
+            activeView={activeView}
+            onViewChange={setActiveView}
+            activeUserName={activeProfile.displayName}
+            authSession={authSession}
+            onLogout={handleLogout}
+          />
+        )
       ) : null}
 
       {activeView === "auth" ? (
@@ -663,8 +715,11 @@ export function App(): JSX.Element {
         <div
           className={classNames(
             "app-shell",
+            !sandboxFocusMode && "game-hud-layout",
             rightPanelCollapsed && !sandboxFocusMode && "right-panel-collapsed",
             sandboxFocusMode && "focus-mode",
+            !sandboxFocusMode && !assetPanelCollapsed && "asset-panel-open",
+            !sandboxFocusMode && !rightPanelCollapsed && "insight-panel-open",
             sandboxFocusMode && layoutPreferences.assetDrawerOpen && "asset-drawer-open",
             sandboxFocusMode && layoutPreferences.aiDrawerOpen && "ai-drawer-open",
           )}
@@ -725,12 +780,37 @@ export function App(): JSX.Element {
               ) : null}
             </>
           ) : (
-            <AssetLibrary
-              assets={visibleAssets}
-              onAddAsset={addAssetToScene}
-              onBeginDragAsset={(asset) => setDraggingAssetId(asset.assetId)}
-              onEndDragAsset={() => setDraggingAssetId(null)}
-            />
+            <>
+              <button
+                className="game-floating-button game-inventory-toggle"
+                type="button"
+                onClick={handleToggleAssetPanel}
+                aria-label={assetPanelCollapsed ? "打开沙具背包" : "关闭沙具背包"}
+                aria-expanded={!assetPanelCollapsed}
+              >
+                {assetPanelCollapsed ? <Boxes size={18} /> : <X size={18} />}
+                <span>{assetPanelCollapsed ? "背包" : "关闭"}</span>
+                <em>{visibleAssets.length}</em>
+              </button>
+              {!assetPanelCollapsed ? (
+                <>
+                  <button
+                    className="game-drawer-scrim"
+                    type="button"
+                    aria-label="点击舞台遮罩关闭沙具背包"
+                    onClick={() => patchLayoutPreferences({ assetPanelCollapsed: true })}
+                  />
+                  <div className="game-side-drawer game-side-drawer-left" aria-label="沙具背包抽屉">
+                    <AssetLibrary
+                      assets={visibleAssets}
+                      onAddAsset={addAssetToScene}
+                      onBeginDragAsset={(asset) => setDraggingAssetId(asset.assetId)}
+                      onEndDragAsset={() => setDraggingAssetId(null)}
+                    />
+                  </div>
+                </>
+              ) : null}
+            </>
           )}
 
           <section className="workspace-column" aria-label="沙盘编辑区">
@@ -823,21 +903,43 @@ export function App(): JSX.Element {
                 onDeleteSelected={handleDeleteSelected}
               />
             ) : null
+          ) : rightPanelCollapsed ? (
+            <button
+              className="game-floating-button game-insight-toggle"
+              type="button"
+              onClick={handleToggleRightPanel}
+              aria-label="打开作品洞察"
+              aria-expanded={false}
+            >
+              <LayoutDashboard size={18} />
+              <span>洞察</span>
+              <em>{objects.length}</em>
+            </button>
           ) : (
-            <RightPanel
-              objects={objects}
-              selectedObject={selectedObject}
-              events={events}
-              analysis={analysis}
-              llmProviders={llmProviders}
-              personalMemoryContext={personalMemoryContext}
-              activeTab={rightPanelTab}
-              collapsed={rightPanelCollapsed}
-              onTabChange={setRightPanelTab}
-              onToggleCollapsed={handleToggleRightPanel}
-              onPatchSelected={handlePatchSelected}
-              onDeleteSelected={handleDeleteSelected}
-            />
+            <>
+              <button
+                className="game-drawer-scrim right"
+                type="button"
+                aria-label="点击舞台遮罩关闭作品洞察"
+                onClick={() => patchLayoutPreferences({ rightPanelCollapsed: true })}
+              />
+              <div className="game-side-drawer game-side-drawer-right" aria-label="作品洞察抽屉">
+                <RightPanel
+                  objects={objects}
+                  selectedObject={selectedObject}
+                  events={events}
+                  analysis={analysis}
+                  llmProviders={llmProviders}
+                  personalMemoryContext={personalMemoryContext}
+                  activeTab={rightPanelTab}
+                  collapsed={false}
+                  onTabChange={setRightPanelTab}
+                  onToggleCollapsed={handleToggleRightPanel}
+                  onPatchSelected={handlePatchSelected}
+                  onDeleteSelected={handleDeleteSelected}
+                />
+              </div>
+            </>
           )}
         </div>
       ) : null}
@@ -889,6 +991,82 @@ export function App(): JSX.Element {
         />
       ) : null}
     </div>
+  );
+}
+
+function SandboxGameNavigation({
+  activeUserName,
+  authSession,
+  onViewChange,
+  onLogout,
+}: {
+  activeUserName?: string;
+  authSession: LocalAuthSession | null;
+  onViewChange: (view: AppView) => void;
+  onLogout: () => void;
+}): JSX.Element {
+  return (
+    <header className="game-navigation" aria-label="沙盘舞台导航">
+      <div className="game-brand-mark">
+        <Boxes size={20} />
+      </div>
+      <div className="game-brand-copy">
+        <h1>2.5D 心理沙盘协作系统</h1>
+        <div className="game-brand-meta" aria-label="系统状态">
+          <span>本地原型</span>
+          <span>{activeUserName ? `当前：${activeUserName}` : "本地来访者"}</span>
+          <span className="saved">已保存</span>
+        </div>
+      </div>
+
+      <div className="game-navigation-spacer" />
+
+      <details className="game-portal-menu">
+        <summary aria-label="打开功能菜单">
+          <Ellipsis size={18} />
+          <span>更多</span>
+        </summary>
+        <div className="game-portal-popover">
+          <button type="button" onClick={() => onViewChange("agentChat")}>
+            <Bot size={17} />
+            <span>
+              <strong>对话 Agent</strong>
+              <em>心理学家会话</em>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+          <button type="button" onClick={() => onViewChange("personal")}>
+            <UserRound size={17} />
+            <span>
+              <strong>个人中心</strong>
+              <em>记忆与档案</em>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+          <button type="button" onClick={() => onViewChange("admin")}>
+            <Settings size={17} />
+            <span>
+              <strong>管理后台</strong>
+              <em>配置与资产</em>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </details>
+
+      <div className="game-auth-chip" aria-label="当前登录身份">
+        <span>
+          <UserRound size={16} />
+        </span>
+        <div>
+          <strong>{authSession?.displayName ?? activeUserName ?? "本地来访者"}</strong>
+          <em>{authSession?.authMode === "password" ? authSession.email : "本地访客模式"}</em>
+        </div>
+        <button type="button" onClick={onLogout} aria-label="退出登录">
+          <LogOut size={15} />
+        </button>
+      </div>
+    </header>
   );
 }
 

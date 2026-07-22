@@ -20,10 +20,11 @@ const LLM_PROVIDERS_KEY = "psych-sandbox-2-5d-demo.llm-providers.v1";
 const PSYCH_AGENTS_KEY = "psych-sandbox-2-5d-demo.psych-agents.v1";
 const AGENT_CONVERSATIONS_KEY = "psych-sandbox-2-5d-demo.agent-conversations.v1";
 const SANDBOX_ENVIRONMENT_KEY = "psych-sandbox-2-5d-demo.environment.v1";
-const SANDBOX_LAYOUT_KEY = "psych-sandbox-2-5d-demo.layout.v1";
+const SANDBOX_LAYOUT_KEY = "psych-sandbox-2-5d-demo.layout.v2";
 
 const DEFAULT_LAYOUT_PREFERENCES: SandboxLayoutPreferences = {
-  rightPanelCollapsed: false,
+  assetPanelCollapsed: true,
+  rightPanelCollapsed: true,
   focusMode: false,
   assetDrawerOpen: false,
   aiDrawerOpen: false,
@@ -107,10 +108,11 @@ export function loadSandboxLayoutPreferences(): SandboxLayoutPreferences {
   return {
     ...DEFAULT_LAYOUT_PREFERENCES,
     ...(parsed ?? {}),
-    rightPanelCollapsed: Boolean(parsed?.rightPanelCollapsed),
-    focusMode: Boolean(parsed?.focusMode),
-    assetDrawerOpen: Boolean(parsed?.assetDrawerOpen),
-    aiDrawerOpen: Boolean(parsed?.aiDrawerOpen),
+    assetPanelCollapsed: parsed?.assetPanelCollapsed ?? DEFAULT_LAYOUT_PREFERENCES.assetPanelCollapsed,
+    rightPanelCollapsed: parsed?.rightPanelCollapsed ?? DEFAULT_LAYOUT_PREFERENCES.rightPanelCollapsed,
+    focusMode: parsed?.focusMode ?? DEFAULT_LAYOUT_PREFERENCES.focusMode,
+    assetDrawerOpen: parsed?.assetDrawerOpen ?? DEFAULT_LAYOUT_PREFERENCES.assetDrawerOpen,
+    aiDrawerOpen: parsed?.aiDrawerOpen ?? DEFAULT_LAYOUT_PREFERENCES.aiDrawerOpen,
   };
 }
 
@@ -126,10 +128,11 @@ export function loadSandboxLayoutPreferencesForUser(userId: string): SandboxLayo
   return {
     ...DEFAULT_LAYOUT_PREFERENCES,
     ...(parsed ?? {}),
-    rightPanelCollapsed: Boolean(parsed?.rightPanelCollapsed),
-    focusMode: Boolean(parsed?.focusMode),
-    assetDrawerOpen: Boolean(parsed?.assetDrawerOpen),
-    aiDrawerOpen: Boolean(parsed?.aiDrawerOpen),
+    assetPanelCollapsed: parsed?.assetPanelCollapsed ?? DEFAULT_LAYOUT_PREFERENCES.assetPanelCollapsed,
+    rightPanelCollapsed: parsed?.rightPanelCollapsed ?? DEFAULT_LAYOUT_PREFERENCES.rightPanelCollapsed,
+    focusMode: parsed?.focusMode ?? DEFAULT_LAYOUT_PREFERENCES.focusMode,
+    assetDrawerOpen: parsed?.assetDrawerOpen ?? DEFAULT_LAYOUT_PREFERENCES.assetDrawerOpen,
+    aiDrawerOpen: parsed?.aiDrawerOpen ?? DEFAULT_LAYOUT_PREFERENCES.aiDrawerOpen,
   };
 }
 

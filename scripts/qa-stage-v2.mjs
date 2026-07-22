@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
   repositoryMode: "psych-sandbox-2-5d-demo.repository-mode.v1",
   sceneBase: "psych-sandbox-2-5d-demo.scene.v6",
   environmentBase: "psych-sandbox-2-5d-demo.environment.v1",
-  layoutBase: "psych-sandbox-2-5d-demo.layout.v1",
+  layoutBase: "psych-sandbox-2-5d-demo.layout.v2",
 };
 
 const userScopedKey = (key, userId = DEFAULT_USER_ID) => `${key}.user.${encodeURIComponent(userId)}`;
@@ -96,8 +96,8 @@ async function runStageV2Smoke() {
     await page.goto(BASE_URL, { waitUntil: "networkidle" });
     await assertNoErrorOverlay(page, "initial load");
 
-    await page.getByRole("button", { name: /沙盘编辑/ }).click().catch(() => undefined);
-    await page.getByRole("button", { name: /Stage v2/ }).click();
+    await clickButtonByMatcher(page, /沙盘编辑/).catch(() => undefined);
+    await clickButtonByMatcher(page, /Stage v2/);
     await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
     const canvas = page.locator(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas").first();
     await canvas.waitFor({ state: "visible", timeout: 20_000 });
@@ -108,8 +108,8 @@ async function runStageV2Smoke() {
 
   await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-initial.png") });
 
-  await page.getByLabel("切换天气：雨天").click();
-  await page.getByLabel("切换光照：黑夜").click();
+  await clickButtonByMatcher(page, /切换天气：雨天|雨/);
+  await clickButtonByMatcher(page, /切换光照：黑夜|夜/);
   await page.waitForSelector(".product-shell.weather-rainy.light-night.night-mode", { timeout: 5000 });
   pushResult("Rainy night environment applies shell theme", true);
 
@@ -130,24 +130,24 @@ async function runStageV2Smoke() {
 
   const pngDownload = await Promise.all([
     page.waitForEvent("download", { timeout: 10_000 }),
-    page.getByLabel("导出 PNG 截图").click(),
+    clickButtonByMatcher(page, /导出 PNG 截图|导出 Stage Engine v2 PNG 截图/),
   ]).then(([download]) => download);
   const pngPath = await pngDownload.path();
   pushResult("Stage v2 PNG export downloads an image", Boolean(pngPath), pngDownload.suggestedFilename());
 
   const jsonDownload = await Promise.all([
     page.waitForEvent("download", { timeout: 10_000 }),
-    page.getByLabel("导出 JSON 快照").click(),
+    clickButtonByMatcher(page, /导出 JSON 快照/),
   ]).then(([download]) => download);
   const jsonPath = await jsonDownload.path();
   pushResult("JSON export still downloads a snapshot", Boolean(jsonPath), jsonDownload.suggestedFilename());
 
-  await page.getByLabel("切换天气：晴天").click();
-  await page.getByLabel("切换光照：白天").click();
+  await clickButtonByMatcher(page, /切换天气：晴天|晴/);
+  await clickButtonByMatcher(page, /切换光照：白天|日/);
   await page.waitForSelector(".product-shell.weather-sunny.light-day:not(.night-mode)", { timeout: 5000 });
   pushResult("Sunny day environment applies shell theme", true);
 
-  await page.getByRole("button", { name: /Classic 2.5D/ }).click();
+  await clickButtonByMatcher(page, /Classic 2\.5D/);
   await page.waitForSelector(".sandbox-editor", { timeout: 10_000 });
   pushResult("Classic 2.5D fallback remains switchable", true);
 
@@ -160,6 +160,34 @@ async function runStageV2Smoke() {
   } finally {
     await browser.close();
   }
+}
+
+async function clickButtonByMatcher(page, matcher) {
+  const found = await page.evaluate(
+    ({ source, flags }) => {
+      const pattern = new RegExp(source, flags);
+      const buttons = Array.from(document.querySelectorAll("button"));
+      const button = buttons.find((element) => {
+        const label = element.getAttribute("aria-label") ?? "";
+        const text = element.textContent ?? "";
+        return pattern.test(`${label} ${text}`);
+      });
+
+      if (!button) {
+        return false;
+      }
+
+      button.click();
+      return true;
+    },
+    { source: matcher.source, flags: matcher.flags },
+  );
+
+  if (!found) {
+    throw new Error(`Button not found: ${matcher}`);
+  }
+
+  await delay(120);
 }
 
 async function tryDragObject(page, canvas) {
