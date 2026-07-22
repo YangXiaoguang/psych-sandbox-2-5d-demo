@@ -202,8 +202,16 @@ function SceneInsightDrawer({
           </span>
           <em>{analysis.centerObjects.length} 个中心对象</em>
         </summary>
-        <InsightHeatmapSummary analysis={analysis} />
-        <AnalysisPanel analysis={analysis} objects={objects} />
+        <div className="insight-section-body">
+          <InsightHeatmapSummary analysis={analysis} />
+          <details className="insight-advanced-section">
+            <summary>
+              <span>完整区域分析</span>
+              <em>分类 / 层级</em>
+            </summary>
+            <AnalysisPanel analysis={analysis} objects={objects} />
+          </details>
+        </div>
       </details>
 
       <details className="insight-section">
@@ -214,8 +222,16 @@ function SceneInsightDrawer({
           </span>
           <em>{events.length} 条</em>
         </summary>
-        <RecentEventPreview events={events} />
-        <EventStream events={events} />
+        <div className="insight-section-body">
+          <RecentEventPreview events={events} />
+          <details className="insight-advanced-section">
+            <summary>
+              <span>查看完整事件流</span>
+              <em>最多 14 条</em>
+            </summary>
+            <EventStream events={events} />
+          </details>
+        </div>
       </details>
 
       <details className="insight-section">
@@ -246,7 +262,7 @@ function SelectedObjectSnapshot({
         <div>
           <span className="eyebrow">Selected Toy</span>
           <strong>未选择沙具</strong>
-          <em>点击沙盘中的沙具后，可在这里快速查看状态。</em>
+          <em>点选沙具后显示位置、风险与快捷操作。</em>
         </div>
       </section>
     );
