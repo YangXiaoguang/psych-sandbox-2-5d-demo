@@ -112,6 +112,21 @@ async function runShellQa() {
     pushResult("Sandbox 1280px HUD avoids Stage v2 title", !sandboxNarrow.topbarOverlapsStagePanelTop, formatMetrics(sandboxNarrow));
 
     await page.setViewportSize({ width: 1680, height: 980 });
+    await delay(300);
+    await clickByText(page, /进入沙盘全屏模式|全屏/);
+    await page.waitForSelector(".product-shell.focus-mode", { timeout: 5000 });
+    await delay(500);
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-focus-night-desktop.png"), fullPage: true });
+    const focusMetrics = await readSandboxShellMetrics(page);
+    pushResult("Focus mode has no horizontal document overflow", focusMetrics.scrollWidth <= focusMetrics.viewportWidth + 2, formatMetrics(focusMetrics));
+    pushResult("Focus mode floating HUD stays compact", focusMetrics.topbarHeight <= 64, `height=${focusMetrics.topbarHeight}`);
+    pushResult("Focus mode lets Stage v2 fill the viewport", focusMetrics.stageHeight >= focusMetrics.viewportHeight - 48, formatMetrics(focusMetrics));
+    pushResult("Focus mode HUD avoids Stage v2 title", !focusMetrics.topbarOverlapsStagePanelTop, formatMetrics(focusMetrics));
+    await clickByText(page, /退出沙盘全屏模式|退出/);
+    await page.waitForSelector(".product-shell:not(.focus-mode)", { timeout: 5000 });
+    await delay(300);
+
+    await page.setViewportSize({ width: 1680, height: 980 });
     await openGamePortal(page, /管理后台/);
     await page.waitForSelector(".admin-shell", { timeout: 10_000 });
     await delay(400);
@@ -157,11 +172,14 @@ async function readSandboxShellMetrics(page) {
     const topbar = box(".workspace-column .topbar");
     const modeSwitch = box(".stage-engine-mode-switch");
     const stagePanelTop = box(".stage-v2-panel-top");
+    const stage = box(".stage-v2-shell");
     return {
       viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
       scrollWidth: document.documentElement.scrollWidth,
       navHeight: nav?.height ?? 0,
       topbarHeight: topbar?.height ?? 0,
+      stageHeight: stage?.height ?? 0,
       topbarOverlapsModeSwitch: intersects(topbar, modeSwitch),
       topbarOverlapsStagePanelTop: intersects(topbar, stagePanelTop),
       modeSwitchOverlapsStagePanelTop: intersects(modeSwitch, stagePanelTop),

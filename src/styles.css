@@ -19527,3 +19527,158 @@ table td {
     display: none !important;
   }
 }
+
+/* Stage-first fullscreen phase 2:
+   Focus mode is an immersive stage. The stage owns the layout; every control is
+   a HUD overlay and must not reserve normal document flow height. */
+.product-shell.focus-mode .app-shell.focus-mode .workspace-column {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .sandbox-editor,
+.product-shell.focus-mode .app-shell.focus-mode .stage-v2-shell {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 16px !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .stage-host {
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .topbar,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar,
+.product-shell.night-mode .app-shell.focus-mode .topbar {
+  position: absolute !important;
+  top: 16px !important;
+  right: auto !important;
+  left: 50% !important;
+  z-index: 160 !important;
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: min(620px, calc(100% - 260px)) !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+  transform: translateX(-50%) !important;
+  backdrop-filter: blur(18px) saturate(1.12) !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .topbar-primary,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar-primary {
+  display: none !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .topbar-hud,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar-hud {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 0 !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .camera-hud,
+.product-shell.focus-mode .app-shell.focus-mode .view-hud,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .camera-hud,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .view-hud {
+  display: none !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .hud-cluster,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .hud-cluster {
+  min-height: 38px !important;
+  padding: 3px !important;
+  border-radius: 14px !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .hud-segment,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .hud-segment {
+  gap: 3px !important;
+  padding: 2px !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode .hud-segment button,
+.product-shell.focus-mode .app-shell.focus-mode .action-hud .icon-button,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .hud-segment button,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .action-hud .icon-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 11px !important;
+}
+
+.product-shell.focus-mode .focus-floating-button {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(18px) saturate(1.12) !important;
+}
+
+.product-shell.focus-mode .focus-asset-toggle {
+  top: 50% !important;
+  left: 18px !important;
+  transform: translateY(-50%) !important;
+}
+
+.product-shell.focus-mode .focus-panel-toggle {
+  top: 50% !important;
+  right: 18px !important;
+  transform: translateY(-50%) !important;
+}
+
+.product-shell.focus-mode .stage-engine-mode-switch {
+  display: none !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode.ai-drawer-open .workspace-column {
+  padding-right: calc(var(--focus-ai-drawer-width) + (var(--focus-ai-drawer-gap) * 2)) !important;
+}
+
+.product-shell.focus-mode .app-shell.focus-mode.ai-drawer-open .topbar,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode.ai-drawer-open .topbar {
+  left: calc((100% - var(--focus-ai-drawer-width) - (var(--focus-ai-drawer-gap) * 2)) / 2) !important;
+  max-width: min(520px, calc(100% - var(--focus-ai-drawer-width) - 280px)) !important;
+  transform: translateX(-50%) !important;
+}
+
+@media (max-width: 1180px) {
+  .product-shell.focus-mode .app-shell.focus-mode .topbar,
+  .product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar {
+    top: 12px !important;
+    max-width: calc(100% - 118px) !important;
+  }
+
+  .product-shell.focus-mode .app-shell.focus-mode.ai-drawer-open .topbar,
+  .product-shell.night-mode.focus-mode .app-shell.focus-mode.ai-drawer-open .topbar {
+    left: 50% !important;
+    max-width: calc(100% - 118px) !important;
+  }
+
+  .product-shell.focus-mode .focus-floating-button span {
+    display: none !important;
+  }
+
+  .product-shell.focus-mode .focus-floating-button {
+    width: 48px !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+}
