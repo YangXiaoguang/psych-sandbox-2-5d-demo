@@ -91,27 +91,53 @@ async function runShellQa() {
 
     await page.goto(BASE_URL, { waitUntil: "networkidle" });
     await assertNoErrorOverlay(page, "initial load");
-    await clickByText(page, /Stage v2/);
+    await clickStageEngineMode(page, "stage3d");
     await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
     await delay(1000);
 
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-night-desktop.png"), fullPage: true });
+    await captureShellScreenshot(page, "sandbox-night-desktop.png");
     const sandboxDesktop = await readSandboxShellMetrics(page);
     pushResult("Sandbox desktop has no horizontal document overflow", sandboxDesktop.scrollWidth <= sandboxDesktop.viewportWidth + 2, formatMetrics(sandboxDesktop));
     pushResult("Sandbox game navigation stays compact", sandboxDesktop.navHeight <= 80, `height=${sandboxDesktop.navHeight}`);
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
     pushResult("Sandbox ambient HUD stays narrow", sandboxDesktop.topbarWidth <= 430, formatMetrics(sandboxDesktop));
     pushResult("Sandbox exports live in the bottom dock", sandboxDesktop.outputDockButtons >= 3 && !sandboxDesktop.topbarExportVisible, formatMetrics(sandboxDesktop));
+    pushResult(
+      "Sandbox idle dock is compact and contextual",
+      sandboxDesktop.toolbeltMode.includes("context-idle") &&
+        sandboxDesktop.toolbeltWidth <= 920 &&
+        sandboxDesktop.selectedActionButtons === 0 &&
+        sandboxDesktop.hintsVisible &&
+        /选择|移动画布/.test(sandboxDesktop.toolbeltStatusText),
+      formatMetrics(sandboxDesktop),
+    );
     pushResult("Sandbox side HUD entries stay compact", sandboxDesktop.sideHudEntriesCompact, formatMetrics(sandboxDesktop));
     pushResult("Sandbox side HUD entries hug viewport edges", sandboxDesktop.sideHudEntriesAtEdges, formatMetrics(sandboxDesktop));
     pushResult("Sandbox HUD does not cover engine switch", !sandboxDesktop.topbarOverlapsModeSwitch, formatMetrics(sandboxDesktop));
     pushResult("Engine switch does not cover Stage v2 title", !sandboxDesktop.modeSwitchOverlapsStagePanelTop, formatMetrics(sandboxDesktop));
     pushResult("Engine switch avoids the game toolbelt", !sandboxDesktop.modeSwitchOverlapsToolbelt, formatMetrics(sandboxDesktop));
 
+    const selectedStageToy = await trySelectStageToy(page);
+    await delay(300);
+    const selectedDock = await readSandboxShellMetrics(page);
+    if (selectedStageToy) {
+      await captureShellScreenshot(page, "sandbox-selected-dock-night-desktop.png");
+    }
+    pushResult(
+      "Sandbox selected dock promotes toy transform actions",
+      selectedStageToy &&
+        selectedDock.toolbeltMode.includes("context-selected") &&
+        selectedDock.selectedActionButtons >= 6 &&
+        selectedDock.selectedActionsWidth > selectedDock.outputActionsWidth &&
+        selectedDock.outputDockButtons >= 3 &&
+        /正在编辑/.test(selectedDock.toolbeltStatusText),
+      formatMetrics(selectedDock),
+    );
+
     await clickSelector(page, ".game-inventory-toggle");
     await page.waitForSelector(".game-side-drawer-left .asset-library", { timeout: 5000 });
     await delay(400);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-backpack-night-desktop.png"), fullPage: true });
+    await captureShellScreenshot(page, "sandbox-backpack-night-desktop.png");
     const backpackDesktop = await readBackpackMetrics(page);
     pushResult("Backpack drawer fits desktop viewport", backpackDesktop.drawerFitsViewport, formatMetrics(backpackDesktop));
     pushResult("Backpack drawer opens as a stage sheet", backpackDesktop.drawerHasStageGutter, formatMetrics(backpackDesktop));
@@ -124,7 +150,7 @@ async function runShellQa() {
 
     await page.setViewportSize({ width: 1280, height: 820 });
     await delay(500);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-night-1280.png"), fullPage: true });
+    await captureShellScreenshot(page, "sandbox-night-1280.png");
     const sandboxNarrow = await readSandboxShellMetrics(page);
     pushResult("Sandbox 1280px has no horizontal document overflow", sandboxNarrow.scrollWidth <= sandboxNarrow.viewportWidth + 2, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px navigation stays compact", sandboxNarrow.navHeight <= 80, `height=${sandboxNarrow.navHeight}`);
@@ -135,7 +161,7 @@ async function runShellQa() {
     await clickSelector(page, ".game-insight-toggle");
     await page.waitForSelector(".game-side-drawer-right .right-panel", { timeout: 5000 });
     await delay(400);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-insight-night-1280.png"), fullPage: true });
+    await captureShellScreenshot(page, "sandbox-insight-night-1280.png");
     const insightNarrow = await readInsightDrawerMetrics(page);
     pushResult("Insight drawer fits 1280px viewport", insightNarrow.drawerFitsViewport, formatMetrics(insightNarrow));
     pushResult("Insight drawer opens as a stage sheet", insightNarrow.drawerHasStageGutter, formatMetrics(insightNarrow));
@@ -151,7 +177,7 @@ async function runShellQa() {
     await clickByText(page, /进入沙盘全屏模式|全屏/);
     await page.waitForSelector(".product-shell.focus-mode", { timeout: 5000 });
     await delay(500);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-focus-night-desktop.png"), fullPage: true });
+    await captureShellScreenshot(page, "sandbox-focus-night-desktop.png");
     const focusMetrics = await readSandboxShellMetrics(page);
     pushResult("Focus mode has no horizontal document overflow", focusMetrics.scrollWidth <= focusMetrics.viewportWidth + 2, formatMetrics(focusMetrics));
     pushResult("Focus mode floating HUD stays compact", focusMetrics.topbarHeight <= 64, `height=${focusMetrics.topbarHeight}`);
@@ -166,14 +192,14 @@ async function runShellQa() {
     await openGamePortal(page, /管理后台/);
     await page.waitForSelector(".admin-shell", { timeout: 10_000 });
     await delay(400);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "admin-night-desktop.png"), fullPage: true });
+    await captureShellScreenshot(page, "admin-night-desktop.png");
     const adminMetrics = await readGenericShellMetrics(page, ".app-navigation");
     pushResult("Admin desktop has no horizontal document overflow", adminMetrics.scrollWidth <= adminMetrics.viewportWidth + 2, formatMetrics(adminMetrics));
     pushResult("Admin navigation stays compact", adminMetrics.navHeight <= 82, `height=${adminMetrics.navHeight}`);
 
     await page.setViewportSize({ width: 1280, height: 820 });
     await delay(400);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "admin-night-1280.png"), fullPage: true });
+    await captureShellScreenshot(page, "admin-night-1280.png");
     const adminNarrowMetrics = await readGenericShellMetrics(page, ".app-navigation");
     pushResult("Admin 1280px has no horizontal document overflow", adminNarrowMetrics.scrollWidth <= adminNarrowMetrics.viewportWidth + 2, formatMetrics(adminNarrowMetrics));
     pushResult("Admin 1280px navigation stays compact", adminNarrowMetrics.navHeight <= 90, `height=${adminNarrowMetrics.navHeight}`);
@@ -210,8 +236,17 @@ async function readSandboxShellMetrics(page) {
     const stagePanelTop = box(".stage-v2-panel-top");
     const stage = box(".stage-v2-shell");
     const toolbelt = box(".sandbox-game-toolbelt");
+    const selectedActions = box(".sandbox-game-toolbelt .selected-actions");
+    const viewActions = box(".sandbox-game-toolbelt .view-actions");
+    const outputActions = box(".sandbox-game-toolbelt .output-actions");
     const inventoryToggle = box(".game-inventory-toggle");
     const insightToggle = box(".game-insight-toggle");
+    const visibleButtons = (selector) =>
+      Array.from(document.querySelectorAll(selector)).filter((button) => {
+        const rect = button.getBoundingClientRect();
+        const style = window.getComputedStyle(button);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      });
     const isVisible = (selector) => {
       const element = document.querySelector(selector);
       if (!element) return false;
@@ -233,11 +268,16 @@ async function readSandboxShellMetrics(page) {
       topbarWidth: topbar?.width ?? 0,
       topbarHeight: topbar?.height ?? 0,
       stageHeight: stage?.height ?? 0,
-      outputDockButtons: Array.from(document.querySelectorAll(".sandbox-game-toolbelt .output-actions button")).filter((button) => {
-        const rect = button.getBoundingClientRect();
-        const style = window.getComputedStyle(button);
-        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
-      }).length,
+      toolbeltWidth: toolbelt?.width ?? 0,
+      toolbeltMode: document.querySelector(".sandbox-game-toolbelt")?.className ?? "",
+      toolbeltStatusText: document.querySelector(".toolbelt-status p")?.textContent?.trim() ?? "",
+      viewActionButtons: visibleButtons(".sandbox-game-toolbelt .view-actions button").length,
+      selectedActionButtons: visibleButtons(".sandbox-game-toolbelt .selected-actions button").length,
+      outputDockButtons: visibleButtons(".sandbox-game-toolbelt .output-actions button").length,
+      viewActionsWidth: viewActions?.width ?? 0,
+      selectedActionsWidth: selectedActions?.width ?? 0,
+      outputActionsWidth: outputActions?.width ?? 0,
+      hintsVisible: isVisible(".sandbox-game-toolbelt .toolbelt-hints"),
       topbarExportVisible: isVisible(".workspace-column .export-hud"),
       inventoryToggle,
       insightToggle,
@@ -252,6 +292,43 @@ async function readSandboxShellMetrics(page) {
       modeSwitchOverlapsStagePanelTop: intersects(modeSwitch, stagePanelTop),
       modeSwitchOverlapsToolbelt: intersects(modeSwitch, toolbelt),
     };
+  });
+}
+
+async function trySelectStageToy(page) {
+  const canvas = page.locator(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas").first();
+  const box = await canvas.boundingBox();
+  if (!box) {
+    return false;
+  }
+
+  const candidates = [
+    [0.5, 0.5],
+    [0.46, 0.48],
+    [0.56, 0.53],
+    [0.38, 0.54],
+    [0.66, 0.48],
+    [0.58, 0.39],
+    [0.42, 0.62],
+  ];
+
+  for (const [xRatio, yRatio] of candidates) {
+    await page.mouse.click(box.x + box.width * xRatio, box.y + box.height * yRatio);
+    await delay(220);
+    const selected = await page.evaluate(() => Boolean(document.querySelector(".sandbox-game-toolbelt.has-selection")));
+    if (selected) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function captureShellScreenshot(page, filename) {
+  await page.screenshot({
+    path: path.join(ARTIFACT_DIR, filename),
+    fullPage: false,
+    timeout: 60_000,
   });
 }
 
@@ -414,6 +491,36 @@ async function clickByText(page, matcher) {
   if (!found) {
     throw new Error(`Could not find control matching ${matcher}`);
   }
+}
+
+async function clickStageEngineMode(page, mode) {
+  await page.waitForSelector(".stage-engine-mode-switch button", { state: "visible", timeout: 10_000 });
+  await delay(500);
+  const found = await page.evaluate((targetMode) => {
+    const buttons = Array.from(document.querySelectorAll(".stage-engine-mode-switch button"));
+    const button = buttons.find((element) => {
+      const text = element.textContent ?? "";
+      return targetMode === "stage3d" ? /Stage v2/.test(text) : /Classic 2\.5D/.test(text);
+    });
+    if (!(button instanceof HTMLElement)) return false;
+    button.click();
+    return true;
+  }, mode);
+
+  if (!found) {
+    throw new Error(`Could not find stage engine mode button: ${mode}`);
+  }
+
+  await page
+    .waitForFunction(
+      (targetMode) => {
+        const activeText = document.querySelector(".stage-engine-mode-switch button.active")?.textContent ?? "";
+        return targetMode === "stage3d" ? /Stage v2/.test(activeText) : /Classic 2\.5D/.test(activeText);
+      },
+      mode,
+      { timeout: 5_000 },
+    )
+    .catch(() => undefined);
 }
 
 async function clickSelector(page, selector) {

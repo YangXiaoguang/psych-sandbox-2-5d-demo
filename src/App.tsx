@@ -1203,26 +1203,28 @@ function SandboxGameToolbelt({
 
   return (
     <nav
-      className={classNames("sandbox-game-toolbelt", selectedObject && "has-selection", focusMode && "focus-toolbelt")}
+      className={classNames(
+        "sandbox-game-toolbelt",
+        selectedObject ? "has-selection context-selected" : "context-idle",
+        focusMode && "focus-toolbelt",
+      )}
       aria-label="沙盘快捷操作工具带"
     >
-      <div className="toolbelt-status">
+      <div className={classNames("toolbelt-status", selectedObject ? "selected-status" : "idle-status")}>
         <span className="toolbelt-mode-icon">
           <MousePointer2 size={18} />
         </span>
         <div>
-          <p>{selectedObject ? selectedObject.name : "选择 / 移动画布"}</p>
+          <p>{selectedObject ? `正在编辑：${selectedObject.name}` : "选择 / 移动画布"}</p>
           <span>
             {selectedObject
-              ? `${engineMode === "stage3d" ? "Stage v2" : "Classic"} · X ${Math.round(selectedObject.x)} / Y ${Math.round(
-                  selectedObject.y,
-                )}`
-              : "拖动沙具移动；拖空白处移动沙盘；滚轮缩放视角"}
+              ? `旋转 ${Math.round(selectedObject.rotation)}° · 缩放 ${selectedObject.scale.toFixed(2)}x`
+              : "拖空白处平移 · 滚轮缩放 · 右键转动"}
           </span>
         </div>
       </div>
 
-      <div className="toolbelt-actions" role="group" aria-label="视图快捷操作">
+      <div className="toolbelt-actions view-actions" role="group" aria-label="视图快捷操作">
         <button type="button" onClick={onCameraReset} aria-label="重置沙盘视角" title="重置视角">
           <RefreshCcw size={18} />
           <span>复位</span>
@@ -1250,23 +1252,8 @@ function SandboxGameToolbelt({
         </button>
       </div>
 
-      <div className="toolbelt-actions output-actions" role="group" aria-label="作品输出">
-        <button type="button" onClick={onExportJson} aria-label="导出 JSON 快照" title="导出 JSON">
-          <FileDown size={18} />
-          <span>JSON</span>
-        </button>
-        <button type="button" onClick={onExportPng} aria-label="导出 PNG 截图" title="导出 PNG">
-          <ImageDown size={18} />
-          <span>PNG</span>
-        </button>
-        <button className="danger" type="button" onClick={onClearScene} aria-label="清空当前作品" title="清空作品">
-          <Trash2 size={18} />
-          <span>清空</span>
-        </button>
-      </div>
-
       {selectedObject ? (
-        <div className="toolbelt-actions selected-actions" role="group" aria-label={`${selectedObject.name} 快捷变换`}>
+        <div className="toolbelt-actions selected-actions primary-actions" role="group" aria-label={`${selectedObject.name} 快捷变换`}>
           <button type="button" onClick={() => rotateSelected(-15)} aria-label={`向左旋转 ${selectedObject.name} 15 度`} title="左转">
             <RotateCcw size={18} />
             <span>左转</span>
@@ -1302,6 +1289,21 @@ function SandboxGameToolbelt({
           <span>滚轮缩放</span>
         </div>
       )}
+
+      <div className="toolbelt-actions output-actions secondary-actions" role="group" aria-label="作品输出">
+        <button type="button" onClick={onExportJson} aria-label="导出 JSON 快照" title="导出 JSON">
+          <FileDown size={18} />
+          <span>JSON</span>
+        </button>
+        <button type="button" onClick={onExportPng} aria-label="导出 PNG 截图" title="导出 PNG">
+          <ImageDown size={18} />
+          <span>PNG</span>
+        </button>
+        <button className="danger" type="button" onClick={onClearScene} aria-label="清空当前作品" title="清空作品">
+          <Trash2 size={18} />
+          <span>清空</span>
+        </button>
+      </div>
     </nav>
   );
 }

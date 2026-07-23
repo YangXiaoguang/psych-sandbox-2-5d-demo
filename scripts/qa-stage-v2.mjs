@@ -98,7 +98,7 @@ async function runStageV2Smoke() {
     await assertNoErrorOverlay(page, "initial load");
 
     await clickButtonByMatcher(page, /沙盘编辑/).catch(() => undefined);
-    await clickButtonByMatcher(page, /Stage v2/);
+    await clickStageEngineMode(page, "stage3d");
     await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
     const canvas = page.locator(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas").first();
     await canvas.waitFor({ state: "visible", timeout: 20_000 });
@@ -148,7 +148,7 @@ async function runStageV2Smoke() {
   await page.waitForSelector(".product-shell.weather-sunny.light-day:not(.night-mode)", { timeout: 5000 });
   pushResult("Sunny day environment applies shell theme", true);
 
-  await clickButtonByMatcher(page, /Classic 2\.5D/);
+  await clickStageEngineMode(page, "classic");
   await page.waitForSelector(".sandbox-editor", { timeout: 10_000 });
   pushResult("Classic 2.5D fallback remains switchable", true);
 
@@ -188,6 +188,41 @@ async function clickButtonByMatcher(page, matcher) {
     throw new Error(`Button not found: ${matcher}`);
   }
 
+  await delay(120);
+}
+
+async function clickStageEngineMode(page, mode) {
+  await page.waitForSelector(".stage-engine-mode-switch button", { state: "attached", timeout: 10_000 });
+  await delay(500);
+  const found = await page.evaluate((targetMode) => {
+    const buttons = Array.from(document.querySelectorAll(".stage-engine-mode-switch button"));
+    const button = buttons.find((element) => {
+      const text = element.textContent ?? "";
+      return targetMode === "stage3d" ? /Stage v2/.test(text) : /Classic 2\.5D/.test(text);
+    });
+
+    if (!(button instanceof HTMLElement)) {
+      return false;
+    }
+
+    button.click();
+    return true;
+  }, mode);
+
+  if (!found) {
+    throw new Error(`Stage engine mode button not found: ${mode}`);
+  }
+
+  await page
+    .waitForFunction(
+      (targetMode) => {
+        const activeText = document.querySelector(".stage-engine-mode-switch button.active")?.textContent ?? "";
+        return targetMode === "stage3d" ? /Stage v2/.test(activeText) : /Classic 2\.5D/.test(activeText);
+      },
+      mode,
+      { timeout: 5_000 },
+    )
+    .catch(() => undefined);
   await delay(120);
 }
 
