@@ -103,6 +103,19 @@ async function runShellQa() {
     pushResult("Sandbox HUD does not cover engine switch", !sandboxDesktop.topbarOverlapsModeSwitch, formatMetrics(sandboxDesktop));
     pushResult("Engine switch does not cover Stage v2 title", !sandboxDesktop.modeSwitchOverlapsStagePanelTop, formatMetrics(sandboxDesktop));
 
+    await clickSelector(page, ".game-inventory-toggle");
+    await page.waitForSelector(".game-side-drawer-left .asset-library", { timeout: 5000 });
+    await delay(400);
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-backpack-night-desktop.png"), fullPage: true });
+    const backpackDesktop = await readBackpackMetrics(page);
+    pushResult("Backpack drawer fits desktop viewport", backpackDesktop.drawerFitsViewport, formatMetrics(backpackDesktop));
+    pushResult("Backpack drawer hides stage mode switch", !backpackDesktop.modeSwitchVisible, formatMetrics(backpackDesktop));
+    pushResult("Backpack cards keep names readable", backpackDesktop.cards.every((card) => card.nameReadable), formatMetrics(backpackDesktop.cards));
+    pushResult("Backpack card badges do not cover names", backpackDesktop.cards.every((card) => !card.riskOverlapsName), formatMetrics(backpackDesktop.cards));
+    await clickSelector(page, ".game-drawer-close");
+    await page.waitForSelector(".game-side-drawer-left", { state: "detached", timeout: 5000 });
+    await delay(250);
+
     await page.setViewportSize({ width: 1280, height: 820 });
     await delay(500);
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-night-1280.png"), fullPage: true });
@@ -198,6 +211,77 @@ async function readGenericShellMetrics(page, navSelector) {
   }, navSelector);
 }
 
+async function readBackpackMetrics(page) {
+  return page.evaluate(() => {
+    const box = (selectorOrElement) => {
+      const element =
+        typeof selectorOrElement === "string" ? document.querySelector(selectorOrElement) : selectorOrElement;
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        right: Math.round(rect.right),
+        bottom: Math.round(rect.bottom),
+      };
+    };
+    const intersects = (a, b) => Boolean(a && b && a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y);
+    const isVisible = (element) => {
+      if (!element) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity) > 0.02
+      );
+    };
+
+    const drawer = box(".game-side-drawer-left");
+    const modeSwitch = document.querySelector(".stage-engine-mode-switch");
+    const modeSwitchBox = box(modeSwitch);
+    const cards = Array.from(document.querySelectorAll(".game-side-drawer-left .asset-card"))
+      .slice(0, 8)
+      .map((card) => {
+        const name = card.querySelector(".asset-card-name");
+        const risk = card.querySelector(".risk-badge");
+        const nameBox = box(name);
+        const cardBox = box(card);
+        const riskBox = box(risk);
+        const nameStyle = name ? window.getComputedStyle(name) : null;
+        const nameText = name?.textContent?.trim() ?? "";
+        return {
+          title: card.getAttribute("title") ?? "",
+          nameText,
+          nameColor: nameStyle?.color ?? "",
+          nameHeight: nameBox?.height ?? 0,
+          nameInsideCard: Boolean(nameBox && cardBox && nameBox.y >= cardBox.y && nameBox.bottom <= cardBox.bottom),
+          nameReadable:
+            nameText.length > 0 &&
+            Boolean(nameBox && nameBox.height >= 18) &&
+            Boolean(nameStyle && nameStyle.visibility !== "hidden" && Number(nameStyle.opacity) > 0.5) &&
+            Boolean(nameBox && cardBox && nameBox.y >= cardBox.y && nameBox.bottom <= cardBox.bottom),
+          riskOverlapsName: intersects(nameBox, riskBox),
+        };
+      });
+
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+      drawer,
+      drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
+      modeSwitchVisible: isVisible(modeSwitch),
+      modeSwitchIntersectsDrawer: intersects(modeSwitchBox, drawer),
+      cards,
+    };
+  });
+}
+
 async function clickByText(page, matcher) {
   const found = await page.evaluate(
     ({ source, flags }) => {
@@ -217,6 +301,19 @@ async function clickByText(page, matcher) {
 
   if (!found) {
     throw new Error(`Could not find control matching ${matcher}`);
+  }
+}
+
+async function clickSelector(page, selector) {
+  const found = await page.evaluate((targetSelector) => {
+    const control = document.querySelector(targetSelector);
+    if (!(control instanceof HTMLElement)) return false;
+    control.click();
+    return true;
+  }, selector);
+
+  if (!found) {
+    throw new Error(`Could not find control matching selector ${selector}`);
   }
 }
 

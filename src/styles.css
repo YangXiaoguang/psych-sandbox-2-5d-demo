@@ -19682,3 +19682,65 @@ table td {
     padding: 0 !important;
   }
 }
+
+/* Backpack phase 3 guardrails:
+   Side drawers are transient game overlays. When one is open, stage-only
+   controls must step back so the inventory reads as a clean item bag. */
+.app-shell.game-hud-layout.asset-panel-open .stage-engine-mode-switch,
+.app-shell.game-hud-layout.insight-panel-open .stage-engine-mode-switch {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(8px) scale(0.98) !important;
+}
+
+.app-shell.game-hud-layout.asset-panel-open .game-side-drawer,
+.app-shell.game-hud-layout.insight-panel-open .game-side-drawer {
+  z-index: 176 !important;
+}
+
+.app-shell.game-hud-layout.asset-panel-open .game-drawer-scrim,
+.app-shell.game-hud-layout.insight-panel-open .game-drawer-scrim {
+  z-index: 154 !important;
+}
+
+.app-shell.game-hud-layout.asset-panel-open .game-drawer-close,
+.app-shell.game-hud-layout.insight-panel-open .game-drawer-close {
+  z-index: 188 !important;
+}
+
+.game-side-drawer .asset-card-action,
+.focus-asset-drawer .asset-card-action {
+  cursor: grab !important;
+}
+
+.game-side-drawer .asset-card:active .asset-card-action,
+.focus-asset-drawer .asset-card:active .asset-card-action,
+.game-side-drawer .asset-card.dragging .asset-card-action,
+.focus-asset-drawer .asset-card.dragging .asset-card-action {
+  cursor: grabbing !important;
+}
+
+.game-side-drawer .asset-card-main,
+.game-side-drawer .asset-category-list.compact .asset-card-main,
+.focus-asset-drawer .asset-card-main,
+.focus-asset-drawer .asset-category-list.compact .asset-card-main {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.2), transparent 44%),
+    linear-gradient(180deg, rgba(7, 24, 31, 0.84), rgba(5, 18, 25, 0.94)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 -1px 0 rgba(129, 218, 205, 0.12) !important;
+}
+
+.product-shell:not(.night-mode) .game-side-drawer .asset-card-main,
+.product-shell:not(.night-mode) .game-side-drawer .asset-category-list.compact .asset-card-main,
+.product-shell:not(.night-mode) .focus-asset-drawer .asset-card-main,
+.product-shell:not(.night-mode) .focus-asset-drawer .asset-category-list.compact .asset-card-main {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.68), transparent 46%),
+    linear-gradient(180deg, rgba(255, 250, 237, 0.94), rgba(247, 233, 200, 0.98)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    0 -1px 0 rgba(157, 116, 61, 0.08) !important;
+}
