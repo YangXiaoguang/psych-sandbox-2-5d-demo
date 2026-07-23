@@ -19241,3 +19241,289 @@ table td {
     align-items: center;
   }
 }
+
+/* Game shell phase 1:
+   The sandbox view should read as a game stage, not a document workspace.
+   Keep the global shell compact and turn the sandbox topbar into a floating HUD. */
+.game-navigation {
+  min-height: 54px !important;
+  padding: 7px 9px !important;
+  grid-template-columns: auto minmax(190px, 1fr) minmax(12px, 0.35fr) auto auto !important;
+}
+
+.game-brand-mark,
+.game-auth-chip > span {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+}
+
+.game-brand-copy h1 {
+  max-width: 340px !important;
+  font-size: 18px !important;
+}
+
+.game-brand-meta span {
+  max-width: 118px !important;
+  min-height: 18px !important;
+  padding: 0 7px !important;
+  font-size: 10px !important;
+}
+
+.game-auth-chip {
+  min-width: 188px !important;
+  min-height: 44px !important;
+  padding: 4px 6px !important;
+  border-radius: 14px !important;
+}
+
+.game-auth-chip button {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.app-navigation {
+  min-height: 58px !important;
+  padding: 7px 10px !important;
+}
+
+.app-brand {
+  min-width: 220px !important;
+  max-width: 330px !important;
+  gap: 2px !important;
+}
+
+.app-brand .eyebrow {
+  margin: 0 !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+.app-brand h1 {
+  font-size: 18px !important;
+  line-height: 1.08 !important;
+}
+
+.app-brand-meta span {
+  min-height: 18px !important;
+  max-width: 112px !important;
+  padding: 0 7px !important;
+  font-size: 10px !important;
+}
+
+.app-nav-tabs {
+  gap: 8px !important;
+}
+
+.app-nav-tabs button {
+  min-width: 118px !important;
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  border-radius: 13px !important;
+}
+
+.app-auth-chip {
+  min-width: 188px !important;
+  min-height: 42px !important;
+  padding: 5px !important;
+}
+
+.app-shell.game-hud-layout .workspace-column {
+  grid-template-rows: minmax(0, 1fr) !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .topbar,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar,
+.product-shell:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar,
+.product-shell.night-mode:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar {
+  position: absolute !important;
+  top: 12px !important;
+  left: 50% !important;
+  z-index: 132 !important;
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: min(620px, calc(100% - 260px)) !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+  transform: translateX(-50%) !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .topbar-primary,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar-primary {
+  display: none !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .topbar-hud,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar-hud {
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100% !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .environment-hud,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .environment-hud,
+.app-shell.game-hud-layout .workspace-column .export-hud,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .export-hud {
+  flex: 0 0 auto !important;
+  max-width: none !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .camera-hud,
+.app-shell.game-hud-layout .workspace-column .view-hud,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .camera-hud,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .view-hud {
+  display: none !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .hud-cluster,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .hud-cluster {
+  min-height: 38px !important;
+  padding: 3px !important;
+  border-radius: 14px !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .hud-segment,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .hud-segment {
+  padding: 2px !important;
+  gap: 3px !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .hud-segment button,
+.app-shell.game-hud-layout .workspace-column .action-hud .icon-button,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .hud-segment button,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .action-hud .icon-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 11px !important;
+}
+
+.app-shell.game-hud-layout .stage-engine-mode-switch {
+  top: auto !important;
+  bottom: 24px !important;
+  left: 14px !important;
+  z-index: 133 !important;
+  max-width: min(330px, calc(50% - 250px)) !important;
+}
+
+.app-shell.game-hud-layout .stage-engine-mode-switch button {
+  min-height: 30px !important;
+  padding: 0 9px !important;
+  font-size: 11px !important;
+}
+
+@media (max-width: 1500px) {
+  .app-navigation-actions {
+    gap: 8px !important;
+  }
+
+  .app-nav-tabs button {
+    min-width: 48px !important;
+    width: 48px !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .app-nav-tabs button span {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+  }
+
+  .app-auth-chip {
+    grid-template-columns: 34px minmax(80px, 1fr) 32px !important;
+    min-width: 164px !important;
+  }
+
+  .app-auth-chip em,
+  .game-auth-chip em {
+    display: none !important;
+  }
+
+  .game-portal-menu summary span {
+    display: none !important;
+  }
+
+  .game-portal-menu summary {
+    width: 42px !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .game-auth-chip {
+    min-width: 150px !important;
+  }
+
+  .app-shell.game-hud-layout .workspace-column .topbar,
+  .product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar,
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar,
+  .product-shell.night-mode:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar {
+    max-width: min(520px, calc(100% - 188px)) !important;
+  }
+
+  .app-shell.game-hud-layout .stage-engine-mode-switch {
+    max-width: 170px !important;
+  }
+
+  .app-shell.game-hud-layout .stage-engine-mode-switch button:first-of-type {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1120px) {
+  .game-brand-meta span:not(.saved),
+  .app-brand-meta span:not(.app-save-status) {
+    display: none !important;
+  }
+
+  .game-brand-copy h1,
+  .app-brand h1 {
+    font-size: 16px !important;
+  }
+
+  .game-auth-chip,
+  .app-auth-chip {
+    min-width: 48px !important;
+    width: 48px !important;
+    grid-template-columns: 34px !important;
+    justify-content: center !important;
+  }
+
+  .game-auth-chip > div,
+  .app-auth-chip div {
+    display: none !important;
+  }
+
+  .game-auth-chip button,
+  .app-auth-chip button {
+    display: none !important;
+  }
+
+  .app-shell.game-hud-layout .workspace-column .topbar,
+  .product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar,
+  .product-shell:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar,
+  .product-shell.night-mode:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar {
+    top: 10px !important;
+    max-width: calc(100% - 118px) !important;
+  }
+
+  .app-shell.game-hud-layout .stage-engine-mode-switch {
+    display: none !important;
+  }
+}
