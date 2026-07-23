@@ -5,7 +5,9 @@ import {
   ChevronRight,
   Copy,
   Ellipsis,
+  FileDown,
   Grid3X3,
+  ImageDown,
   LayoutDashboard,
   LogOut,
   Maximize2,
@@ -926,6 +928,9 @@ export function App(): JSX.Element {
               onCameraReset={handleActiveViewReset}
               onToggleGuides={() => setShowGuides((current) => !current)}
               onToggleFocusMode={handleToggleFocusMode}
+              onExportJson={handleExportJson}
+              onExportPng={handleExportPng}
+              onClearScene={handleClearScene}
               onPatchSelected={handlePatchSelected}
               onDuplicateSelected={handleDuplicateSelected}
               onDeleteSelected={handleDeleteSelected}
@@ -1155,6 +1160,9 @@ function SandboxGameToolbelt({
   onCameraReset,
   onToggleGuides,
   onToggleFocusMode,
+  onExportJson,
+  onExportPng,
+  onClearScene,
   onPatchSelected,
   onDuplicateSelected,
   onDeleteSelected,
@@ -1166,6 +1174,9 @@ function SandboxGameToolbelt({
   onCameraReset: () => void;
   onToggleGuides: () => void;
   onToggleFocusMode: () => void;
+  onExportJson: () => void;
+  onExportPng: () => void;
+  onClearScene: () => void;
   onPatchSelected: (patch: Partial<SandboxObject>, label: string) => void;
   onDuplicateSelected: () => void;
   onDeleteSelected: () => void;
@@ -1236,6 +1247,21 @@ function SandboxGameToolbelt({
         >
           {focusMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           <span>{focusMode ? "退出" : "全屏"}</span>
+        </button>
+      </div>
+
+      <div className="toolbelt-actions output-actions" role="group" aria-label="作品输出">
+        <button type="button" onClick={onExportJson} aria-label="导出 JSON 快照" title="导出 JSON">
+          <FileDown size={18} />
+          <span>JSON</span>
+        </button>
+        <button type="button" onClick={onExportPng} aria-label="导出 PNG 截图" title="导出 PNG">
+          <ImageDown size={18} />
+          <span>PNG</span>
+        </button>
+        <button className="danger" type="button" onClick={onClearScene} aria-label="清空当前作品" title="清空作品">
+          <Trash2 size={18} />
+          <span>清空</span>
         </button>
       </div>
 

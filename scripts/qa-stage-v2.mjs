@@ -93,7 +93,8 @@ async function runStageV2Smoke() {
       diagnostics.requestFailures.push(`${request.method()} ${request.url()} ${failure}`);
     });
 
-    await page.goto(BASE_URL, { waitUntil: "networkidle" });
+    await page.goto(BASE_URL, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await page.waitForLoadState("load", { timeout: 10_000 }).catch(() => undefined);
     await assertNoErrorOverlay(page, "initial load");
 
     await clickButtonByMatcher(page, /沙盘编辑/).catch(() => undefined);

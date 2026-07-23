@@ -100,8 +100,11 @@ async function runShellQa() {
     pushResult("Sandbox desktop has no horizontal document overflow", sandboxDesktop.scrollWidth <= sandboxDesktop.viewportWidth + 2, formatMetrics(sandboxDesktop));
     pushResult("Sandbox game navigation stays compact", sandboxDesktop.navHeight <= 80, `height=${sandboxDesktop.navHeight}`);
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
+    pushResult("Sandbox ambient HUD stays narrow", sandboxDesktop.topbarWidth <= 430, formatMetrics(sandboxDesktop));
+    pushResult("Sandbox exports live in the bottom dock", sandboxDesktop.outputDockButtons >= 3 && !sandboxDesktop.topbarExportVisible, formatMetrics(sandboxDesktop));
     pushResult("Sandbox HUD does not cover engine switch", !sandboxDesktop.topbarOverlapsModeSwitch, formatMetrics(sandboxDesktop));
     pushResult("Engine switch does not cover Stage v2 title", !sandboxDesktop.modeSwitchOverlapsStagePanelTop, formatMetrics(sandboxDesktop));
+    pushResult("Engine switch avoids the game toolbelt", !sandboxDesktop.modeSwitchOverlapsToolbelt, formatMetrics(sandboxDesktop));
 
     await clickSelector(page, ".game-inventory-toggle");
     await page.waitForSelector(".game-side-drawer-left .asset-library", { timeout: 5000 });
@@ -122,6 +125,7 @@ async function runShellQa() {
     const sandboxNarrow = await readSandboxShellMetrics(page);
     pushResult("Sandbox 1280px has no horizontal document overflow", sandboxNarrow.scrollWidth <= sandboxNarrow.viewportWidth + 2, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px navigation stays compact", sandboxNarrow.navHeight <= 80, `height=${sandboxNarrow.navHeight}`);
+    pushResult("Sandbox 1280px exports remain reachable", sandboxNarrow.outputDockButtons >= 3, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px HUD avoids Stage v2 title", !sandboxNarrow.topbarOverlapsStagePanelTop, formatMetrics(sandboxNarrow));
 
     await clickSelector(page, ".game-insight-toggle");
@@ -146,6 +150,7 @@ async function runShellQa() {
     const focusMetrics = await readSandboxShellMetrics(page);
     pushResult("Focus mode has no horizontal document overflow", focusMetrics.scrollWidth <= focusMetrics.viewportWidth + 2, formatMetrics(focusMetrics));
     pushResult("Focus mode floating HUD stays compact", focusMetrics.topbarHeight <= 64, `height=${focusMetrics.topbarHeight}`);
+    pushResult("Focus mode exports remain reachable", focusMetrics.outputDockButtons >= 3, formatMetrics(focusMetrics));
     pushResult("Focus mode lets Stage v2 fill the viewport", focusMetrics.stageHeight >= focusMetrics.viewportHeight - 48, formatMetrics(focusMetrics));
     pushResult("Focus mode HUD avoids Stage v2 title", !focusMetrics.topbarOverlapsStagePanelTop, formatMetrics(focusMetrics));
     await clickByText(page, /退出沙盘全屏模式|退出/);
@@ -199,16 +204,38 @@ async function readSandboxShellMetrics(page) {
     const modeSwitch = box(".stage-engine-mode-switch");
     const stagePanelTop = box(".stage-v2-panel-top");
     const stage = box(".stage-v2-shell");
+    const toolbelt = box(".sandbox-game-toolbelt");
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity) > 0.02
+      );
+    };
     return {
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
       scrollWidth: document.documentElement.scrollWidth,
       navHeight: nav?.height ?? 0,
+      topbarWidth: topbar?.width ?? 0,
       topbarHeight: topbar?.height ?? 0,
       stageHeight: stage?.height ?? 0,
+      outputDockButtons: Array.from(document.querySelectorAll(".sandbox-game-toolbelt .output-actions button")).filter((button) => {
+        const rect = button.getBoundingClientRect();
+        const style = window.getComputedStyle(button);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      }).length,
+      topbarExportVisible: isVisible(".workspace-column .export-hud"),
       topbarOverlapsModeSwitch: intersects(topbar, modeSwitch),
       topbarOverlapsStagePanelTop: intersects(topbar, stagePanelTop),
       modeSwitchOverlapsStagePanelTop: intersects(modeSwitch, stagePanelTop),
+      modeSwitchOverlapsToolbelt: intersects(modeSwitch, toolbelt),
     };
   });
 }
