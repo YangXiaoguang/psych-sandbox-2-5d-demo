@@ -135,7 +135,7 @@ async function runShellQa() {
     );
 
     await clickSelector(page, ".game-inventory-toggle");
-    await page.waitForSelector(".game-side-drawer-left .asset-library", { timeout: 5000 });
+    await waitForVisibleBox(page, ".game-side-drawer-left .asset-library");
     await delay(400);
     await captureShellScreenshot(page, "sandbox-backpack-night-desktop.png");
     const backpackDesktop = await readBackpackMetrics(page);
@@ -159,7 +159,7 @@ async function runShellQa() {
     pushResult("Sandbox 1280px HUD avoids Stage v2 title", !sandboxNarrow.topbarOverlapsStagePanelTop, formatMetrics(sandboxNarrow));
 
     await clickSelector(page, ".game-insight-toggle");
-    await page.waitForSelector(".game-side-drawer-right .right-panel", { timeout: 5000 });
+    await waitForVisibleBox(page, ".game-side-drawer-right .right-panel");
     await delay(400);
     await captureShellScreenshot(page, "sandbox-insight-night-1280.png");
     const insightNarrow = await readInsightDrawerMetrics(page);
@@ -341,6 +341,32 @@ async function readGenericShellMetrics(page, navSelector) {
       navHeight: nav ? Math.round(nav.getBoundingClientRect().height) : 0,
     };
   }, navSelector);
+}
+
+async function waitForVisibleBox(page, selector, timeout = 5000) {
+  await page.waitForFunction(
+    (targetSelector) => {
+      const element = document.querySelector(targetSelector);
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 24 &&
+        rect.height > 24 &&
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < window.innerHeight &&
+        rect.left < window.innerWidth &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.01
+      );
+    },
+    selector,
+    { timeout },
+  );
 }
 
 async function readBackpackMetrics(page) {

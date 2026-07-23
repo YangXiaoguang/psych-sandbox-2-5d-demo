@@ -26,6 +26,7 @@ const diagnostics = {
   consoleErrors: [],
   pageErrors: [],
   requestFailures: [],
+  step: "boot",
 };
 
 let serverProcess = null;
@@ -84,7 +85,10 @@ async function runStageV2Smoke() {
     const page = await context.newPage();
     page.on("console", (message) => {
       if (message.type() === "error") {
-        diagnostics.consoleErrors.push(message.text());
+        const location = message.location();
+        diagnostics.consoleErrors.push(
+          `[${diagnostics.step}] ${message.text()} @ ${location.url || "unknown"}:${location.lineNumber}:${location.columnNumber}`,
+        );
       }
     });
     page.on("pageerror", (error) => diagnostics.pageErrors.push(error.message));
@@ -93,10 +97,12 @@ async function runStageV2Smoke() {
       diagnostics.requestFailures.push(`${request.method()} ${request.url()} ${failure}`);
     });
 
+    markQaStep("load app");
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded", timeout: 30_000 });
     await page.waitForLoadState("load", { timeout: 10_000 }).catch(() => undefined);
     await assertNoErrorOverlay(page, "initial load");
 
+    markQaStep("open sandbox");
     await clickButtonByMatcher(page, /沙盘编辑/).catch(() => undefined);
     await clickStageEngineMode(page, "stage3d");
     await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
@@ -106,6 +112,13 @@ async function runStageV2Smoke() {
 
   await assertNoErrorOverlay(page, "stage v2 load");
   pushResult("Stage v2 shell renders", true);
+
+  const initialInteraction = await readStageInteraction(page);
+  pushResult(
+    "Stage v2 interaction HUD renders",
+    /移动沙盘视角|已选中/.test(initialInteraction.text),
+    initialInteraction.text,
+  );
 
   await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-initial.png") });
 
@@ -120,15 +133,26 @@ async function runStageV2Smoke() {
   const waterDiff = byteDiff(waterBefore, waterAfter);
   pushResult("Ocean/weather animation changes frame", waterDiff > 1000, `byteDiff=${waterDiff}`);
 
+  markQaStep("drag toy");
   const dragResult = await tryDragObject(page, canvas);
   pushResult("Mouse drag moves a Stage v2 toy and writes scene state", dragResult.ok, dragResult.detail);
+  pushResult(
+    "Toy drag exposes Stage v2 interaction state",
+    dragResult.modeSeen,
+    dragResult.modeDetail ?? "drag HUD state not observed",
+  );
 
+  markQaStep("pan camera");
   const cameraResult = await tryMoveCamera(page, canvas);
   pushResult("Mouse can move the Stage v2 camera view", cameraResult.ok, cameraResult.detail);
+  pushResult("Mouse pan exposes Stage v2 interaction state", cameraResult.modeSeen, cameraResult.modeDetail);
 
+  markQaStep("zoom camera");
   const zoomResult = await tryZoomCamera(page, canvas);
   pushResult("Mouse wheel zoom changes the Stage v2 camera view", zoomResult.ok, zoomResult.detail);
+  pushResult("Mouse wheel exposes Stage v2 zoom state", zoomResult.modeSeen, zoomResult.modeDetail);
 
+  markQaStep("export png");
   const pngDownload = await Promise.all([
     page.waitForEvent("download", { timeout: 10_000 }),
     clickButtonByMatcher(page, /导出 PNG 截图|导出 Stage Engine v2 PNG 截图/),
@@ -136,6 +160,7 @@ async function runStageV2Smoke() {
   const pngPath = await pngDownload.path();
   pushResult("Stage v2 PNG export downloads an image", Boolean(pngPath), pngDownload.suggestedFilename());
 
+  markQaStep("export json");
   const jsonDownload = await Promise.all([
     page.waitForEvent("download", { timeout: 10_000 }),
     clickButtonByMatcher(page, /导出 JSON 快照/),
@@ -143,11 +168,13 @@ async function runStageV2Smoke() {
   const jsonPath = await jsonDownload.path();
   pushResult("JSON export still downloads a snapshot", Boolean(jsonPath), jsonDownload.suggestedFilename());
 
+  markQaStep("switch environment");
   await clickButtonByMatcher(page, /切换天气：晴天|晴/);
   await clickButtonByMatcher(page, /切换光照：白天|日/);
   await page.waitForSelector(".product-shell.weather-sunny.light-day:not(.night-mode)", { timeout: 5000 });
   pushResult("Sunny day environment applies shell theme", true);
 
+  markQaStep("switch classic");
   await clickStageEngineMode(page, "classic");
   await page.waitForSelector(".sandbox-editor", { timeout: 10_000 });
   pushResult("Classic 2.5D fallback remains switchable", true);
@@ -242,12 +269,20 @@ async function tryDragObject(page, canvas) {
     [0.43, 0.42],
   ];
 
+  let modeSeen = false;
+  let modeDetail = "";
+
   for (const [xFactor, yFactor] of points) {
     const x = box.x + box.width * xFactor;
     const y = box.y + box.height * yFactor;
     await page.mouse.move(x, y);
     await page.mouse.down({ button: "left" });
     await page.mouse.move(x + 90, y + 24, { steps: 14 });
+    const interaction = await readStageInteraction(page);
+    if (/正在移动/.test(interaction.text) || /is-stage-drag-toy/.test(interaction.className)) {
+      modeSeen = true;
+      modeDetail = interaction.text || interaction.className;
+    }
     await page.mouse.up({ button: "left" });
     await delay(450);
 
@@ -257,11 +292,13 @@ async function tryDragObject(page, canvas) {
       return {
         ok: true,
         detail: `${movement.name ?? movement.objectId}: ${movement.dx.toFixed(1)}, ${movement.dy.toFixed(1)}`,
+        modeSeen,
+        modeDetail,
       };
     }
   }
 
-  return { ok: false, detail: "no persisted object movement detected after candidate drags" };
+  return { ok: false, detail: "no persisted object movement detected after candidate drags", modeSeen, modeDetail };
 }
 
 async function tryMoveCamera(page, canvas) {
@@ -276,21 +313,34 @@ async function tryMoveCamera(page, canvas) {
   await page.mouse.move(x, y);
   await page.mouse.down({ button: "left" });
   await page.mouse.move(x + 130, y + 60, { steps: 16 });
+  const interaction = await readStageInteraction(page);
   await page.mouse.up({ button: "left" });
   await delay(650);
   const after = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-camera-after.png") });
   const diff = byteDiff(before, after);
-  return { ok: diff > 1000, detail: `byteDiff=${diff}` };
+  return {
+    ok: diff > 1000,
+    detail: `byteDiff=${diff}`,
+    modeSeen: /正在平移/.test(interaction.text) || /is-stage-pan/.test(interaction.className),
+    modeDetail: interaction.text || interaction.className,
+  };
 }
 
 async function tryZoomCamera(page, canvas) {
   const before = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-zoom-before.png") });
   await canvas.hover();
   await page.mouse.wheel(0, -520);
-  await delay(500);
+  await delay(100);
+  const interaction = await readStageInteraction(page);
+  await delay(420);
   const after = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-zoom-after.png") });
   const diff = byteDiff(before, after);
-  return { ok: diff > 1000, detail: `byteDiff=${diff}` };
+  return {
+    ok: diff > 1000,
+    detail: `byteDiff=${diff}`,
+    modeSeen: /正在缩放/.test(interaction.text) || /is-stage-zoom/.test(interaction.className),
+    modeDetail: interaction.text || interaction.className,
+  };
 }
 
 async function readScene(page) {
@@ -320,6 +370,17 @@ function findObjectMovement(before, after) {
   return null;
 }
 
+async function readStageInteraction(page) {
+  return page.evaluate(() => {
+    const shell = document.querySelector(".stage-v2-shell");
+    const hud = document.querySelector(".stage-v2-interaction-hud");
+    return {
+      className: shell?.className ?? "",
+      text: hud?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+    };
+  });
+}
+
 async function assertNoErrorOverlay(page, label) {
   const overlayCount = await page.locator("vite-error-overlay, .vite-error-overlay").count();
   pushResult(`No Vite error overlay: ${label}`, overlayCount === 0, `overlayCount=${overlayCount}`);
@@ -340,6 +401,10 @@ function pushResult(name, ok, detail = "") {
   results.push({ name, ok, detail });
   const mark = ok ? "PASS" : "FAIL";
   console.log(`[${mark}] ${name}${detail ? ` - ${detail}` : ""}`);
+}
+
+function markQaStep(step) {
+  diagnostics.step = step;
 }
 
 function printSummary() {

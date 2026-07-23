@@ -20167,6 +20167,173 @@ table td {
   color: #dffff7;
 }
 
+/* Stage v2 interaction polish phase 4:
+   Keep the 3D tray feeling like a playable scene by surfacing mouse intent
+   directly on the stage instead of adding more office-style controls. */
+.stage-v2-shell.is-stage-pan,
+.stage-v2-shell.is-stage-rotate,
+.stage-v2-shell.is-stage-zoom,
+.stage-v2-shell.is-stage-drag-toy {
+  border-color: color-mix(in srgb, var(--accent-line) 66%, var(--line));
+  box-shadow:
+    0 24px 62px rgba(46, 119, 108, 0.2),
+    0 0 0 1px color-mix(in srgb, var(--accent-line) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.stage-v2-shell.is-stage-pan .stage-v2-canvas,
+.stage-v2-shell.is-stage-drag-toy .stage-v2-canvas {
+  cursor: grabbing;
+}
+
+.stage-v2-shell.is-stage-rotate .stage-v2-canvas {
+  cursor: alias;
+}
+
+.stage-v2-shell.is-stage-zoom .stage-v2-canvas {
+  cursor: zoom-in;
+}
+
+.stage-v2-interaction-hud {
+  left: 14px;
+  bottom: 14px;
+  width: min(430px, calc(100% - 28px));
+  min-height: 62px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 13px;
+  pointer-events: none;
+}
+
+.stage-v2-interaction-hud > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.stage-v2-interaction-hud strong,
+.stage-v2-interaction-hud span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stage-v2-interaction-hud strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.stage-v2-interaction-hud div > span {
+  color: var(--ink-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  line-height: 1.28;
+}
+
+.stage-v2-interaction-orb {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 56%, transparent);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.78), transparent 34%),
+    linear-gradient(145deg, #85dfce, #2c8b7c);
+  box-shadow:
+    0 12px 24px rgba(47, 122, 111, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.54);
+}
+
+.stage-v2-interaction-orb::before,
+.stage-v2-interaction-orb::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+}
+
+.stage-v2-interaction-orb::before {
+  inset: 10px;
+  background: color-mix(in srgb, white 86%, var(--accent) 14%);
+}
+
+.stage-v2-interaction-orb::after {
+  inset: -5px;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 48%, transparent);
+  opacity: 0;
+  transform: scale(0.84);
+}
+
+.stage-v2-shell.is-stage-pan .stage-v2-interaction-orb::after,
+.stage-v2-shell.is-stage-rotate .stage-v2-interaction-orb::after,
+.stage-v2-shell.is-stage-zoom .stage-v2-interaction-orb::after,
+.stage-v2-shell.is-stage-drag-toy .stage-v2-interaction-orb::after {
+  animation: stage-v2-orb-pulse 920ms ease-out infinite;
+}
+
+.stage-v2-shell.is-stage-drag-toy .stage-v2-interaction-orb {
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.78), transparent 34%),
+    linear-gradient(145deg, #ffd973, #d9912d);
+}
+
+.stage-v2-shell.is-stage-drag-toy .stage-v2-interaction-orb::before {
+  background: #fff4c7;
+}
+
+@keyframes stage-v2-orb-pulse {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.84);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+
+.product-shell.night-mode .stage-v2-interaction-hud {
+  border-color: rgba(118, 180, 190, 0.52);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(119, 239, 219, 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(20, 44, 54, 0.86), rgba(8, 24, 33, 0.78));
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-shell.night-mode .stage-v2-interaction-hud strong {
+  color: #f0fff9;
+}
+
+.product-shell.night-mode .stage-v2-interaction-hud div > span {
+  color: rgba(214, 241, 236, 0.82);
+}
+
+.product-shell.night-mode .stage-v2-shell.is-stage-pan,
+.product-shell.night-mode .stage-v2-shell.is-stage-rotate,
+.product-shell.night-mode .stage-v2-shell.is-stage-zoom,
+.product-shell.night-mode .stage-v2-shell.is-stage-drag-toy {
+  border-color: rgba(117, 236, 217, 0.5);
+  box-shadow:
+    0 24px 68px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(117, 236, 217, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 1180px) {
+  .stage-v2-interaction-hud {
+    width: min(360px, calc(100% - 28px));
+  }
+
+  .stage-v2-interaction-hud div > span {
+    display: none;
+  }
+}
+
 @media (max-width: 1500px) {
   .sandbox-game-toolbelt.context-idle {
     max-width: min(760px, calc(100% - 148px)) !important;

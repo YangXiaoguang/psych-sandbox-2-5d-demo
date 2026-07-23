@@ -1,9 +1,10 @@
-import { Canvas } from "@react-three/fiber";
+import { Canvas, events as createPointerEvents } from "@react-three/fiber";
 import { useEffect, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { WebGLRenderer } from "three";
 import type { SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../../types";
+import type { StageInteractionMode } from "../types";
 import { SandTrayMesh } from "./SandTrayMesh";
 import { StageCameraControls } from "./StageCameraControls";
 import { StageObjectsLayer3D } from "./StageObjectsLayer3D";
@@ -17,6 +18,8 @@ interface StageCanvas3DProps {
   onPatchObject: (objectId: string, patch: Partial<SandboxObject>) => void;
   onRecordEvent: (draft: SandboxEventDraft) => void;
   onSelectObject: (objectId: string | null) => void;
+  onInteractionModeChange?: (mode: StageInteractionMode) => void;
+  onToyDragLabelChange?: (label: string | null) => void;
   selectedId: string | null;
 }
 
@@ -28,6 +31,8 @@ export function StageCanvas3D({
   onPatchObject,
   onRecordEvent,
   onSelectObject,
+  onInteractionModeChange,
+  onToyDragLabelChange,
   selectedId,
 }: StageCanvas3DProps): JSX.Element {
   const [objectDragging, setObjectDragging] = useState(false);
@@ -37,10 +42,16 @@ export function StageCanvas3D({
   const background = night ? "#061822" : rainy ? "#75bbc7" : cloudy ? "#9bd9d8" : "#8de8ec";
   const keyLight = night ? 1.25 : rainy ? 1.45 : cloudy ? 1.55 : 2.25;
   const exposure = night ? 0.92 : rainy ? 0.98 : 1.06;
+  const handleDragStateChange = (dragging: boolean, label?: string) => {
+    setObjectDragging(dragging);
+    onToyDragLabelChange?.(dragging ? label ?? null : null);
+    onInteractionModeChange?.(dragging ? "drag-toy" : "idle");
+  };
 
   return (
     <Canvas
       className="stage-v2-canvas"
+      events={createStagePointerEvents}
       shadows="percentage"
       dpr={[1, 2]}
       orthographic
@@ -96,14 +107,36 @@ export function StageCanvas3D({
       <StageObjectsLayer3D
         objects={objects}
         selectedId={selectedId}
-        onDragStateChange={setObjectDragging}
+        onDragStateChange={handleDragStateChange}
         onPatchObject={onPatchObject}
         onRecordEvent={onRecordEvent}
         onSelectObject={onSelectObject}
       />
-      <StageCameraControls enabled={!objectDragging} resetSignal={cameraResetSignal} />
+      <StageCameraControls
+        enabled={!objectDragging}
+        resetSignal={cameraResetSignal}
+        onInteractionModeChange={onInteractionModeChange}
+      />
     </Canvas>
   );
+}
+
+function createStagePointerEvents(
+  store: Parameters<typeof createPointerEvents>[0],
+): ReturnType<typeof createPointerEvents> {
+  const manager = createPointerEvents(store);
+  const baseConnect = manager.connect?.bind(manager);
+
+  manager.connect = (target) => {
+    baseConnect?.(target);
+    const wheelHandler = store.getState().events.handlers?.onWheel;
+    if (target instanceof HTMLElement && wheelHandler) {
+      target.removeEventListener("wheel", wheelHandler);
+      target.addEventListener("wheel", wheelHandler, { passive: false });
+    }
+  };
+
+  return manager;
 }
 
 function StageRenderSettings({ background, exposure }: { background: string; exposure: number }): null {

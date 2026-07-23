@@ -9,7 +9,7 @@ import { ToyObject3D } from "./ToyObject3D";
 interface StageObjectsLayer3DProps {
   objects: SandboxObject[];
   selectedId: string | null;
-  onDragStateChange: (dragging: boolean) => void;
+  onDragStateChange: (dragging: boolean, objectName?: string) => void;
   onPatchObject: (objectId: string, patch: Partial<SandboxObject>) => void;
   onRecordEvent: (draft: SandboxEventDraft) => void;
   onSelectObject: (objectId: string | null) => void;
@@ -122,7 +122,7 @@ export function StageObjectsLayer3D({
 
       event.stopPropagation();
       onSelectObject(object.id);
-      onDragStateChange(true);
+      onDragStateChange(true, object.name);
       document.body.style.cursor = "grabbing";
 
       const objectStage = boardToStage(object);
