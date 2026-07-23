@@ -102,6 +102,8 @@ async function runShellQa() {
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
     pushResult("Sandbox ambient HUD stays narrow", sandboxDesktop.topbarWidth <= 430, formatMetrics(sandboxDesktop));
     pushResult("Sandbox exports live in the bottom dock", sandboxDesktop.outputDockButtons >= 3 && !sandboxDesktop.topbarExportVisible, formatMetrics(sandboxDesktop));
+    pushResult("Sandbox side HUD entries stay compact", sandboxDesktop.sideHudEntriesCompact, formatMetrics(sandboxDesktop));
+    pushResult("Sandbox side HUD entries hug viewport edges", sandboxDesktop.sideHudEntriesAtEdges, formatMetrics(sandboxDesktop));
     pushResult("Sandbox HUD does not cover engine switch", !sandboxDesktop.topbarOverlapsModeSwitch, formatMetrics(sandboxDesktop));
     pushResult("Engine switch does not cover Stage v2 title", !sandboxDesktop.modeSwitchOverlapsStagePanelTop, formatMetrics(sandboxDesktop));
     pushResult("Engine switch avoids the game toolbelt", !sandboxDesktop.modeSwitchOverlapsToolbelt, formatMetrics(sandboxDesktop));
@@ -112,6 +114,7 @@ async function runShellQa() {
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-backpack-night-desktop.png"), fullPage: true });
     const backpackDesktop = await readBackpackMetrics(page);
     pushResult("Backpack drawer fits desktop viewport", backpackDesktop.drawerFitsViewport, formatMetrics(backpackDesktop));
+    pushResult("Backpack drawer opens as a stage sheet", backpackDesktop.drawerHasStageGutter, formatMetrics(backpackDesktop));
     pushResult("Backpack drawer hides stage mode switch", !backpackDesktop.modeSwitchVisible, formatMetrics(backpackDesktop));
     pushResult("Backpack cards keep names readable", backpackDesktop.cards.every((card) => card.nameReadable), formatMetrics(backpackDesktop.cards));
     pushResult("Backpack card badges do not cover names", backpackDesktop.cards.every((card) => !card.riskOverlapsName), formatMetrics(backpackDesktop.cards));
@@ -125,6 +128,7 @@ async function runShellQa() {
     const sandboxNarrow = await readSandboxShellMetrics(page);
     pushResult("Sandbox 1280px has no horizontal document overflow", sandboxNarrow.scrollWidth <= sandboxNarrow.viewportWidth + 2, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px navigation stays compact", sandboxNarrow.navHeight <= 80, `height=${sandboxNarrow.navHeight}`);
+    pushResult("Sandbox 1280px side HUD entries stay compact", sandboxNarrow.sideHudEntriesCompact, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px exports remain reachable", sandboxNarrow.outputDockButtons >= 3, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px HUD avoids Stage v2 title", !sandboxNarrow.topbarOverlapsStagePanelTop, formatMetrics(sandboxNarrow));
 
@@ -134,6 +138,7 @@ async function runShellQa() {
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-insight-night-1280.png"), fullPage: true });
     const insightNarrow = await readInsightDrawerMetrics(page);
     pushResult("Insight drawer fits 1280px viewport", insightNarrow.drawerFitsViewport, formatMetrics(insightNarrow));
+    pushResult("Insight drawer opens as a stage sheet", insightNarrow.drawerHasStageGutter, formatMetrics(insightNarrow));
     pushResult("Insight drawer hides stage mode switch", !insightNarrow.modeSwitchVisible, formatMetrics(insightNarrow));
     pushResult("Insight drawer keeps secondary sections collapsed", insightNarrow.sections.every((section) => !section.open), formatMetrics(insightNarrow.sections));
     pushResult("Insight drawer heading remains readable", insightNarrow.headingReadable, formatMetrics(insightNarrow));
@@ -205,6 +210,8 @@ async function readSandboxShellMetrics(page) {
     const stagePanelTop = box(".stage-v2-panel-top");
     const stage = box(".stage-v2-shell");
     const toolbelt = box(".sandbox-game-toolbelt");
+    const inventoryToggle = box(".game-inventory-toggle");
+    const insightToggle = box(".game-insight-toggle");
     const isVisible = (selector) => {
       const element = document.querySelector(selector);
       if (!element) return false;
@@ -232,6 +239,14 @@ async function readSandboxShellMetrics(page) {
         return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
       }).length,
       topbarExportVisible: isVisible(".workspace-column .export-hud"),
+      inventoryToggle,
+      insightToggle,
+      sideHudEntriesCompact:
+        Boolean(inventoryToggle && inventoryToggle.width <= 72 && inventoryToggle.height <= 86) &&
+        Boolean(insightToggle && insightToggle.width <= 72 && insightToggle.height <= 86),
+      sideHudEntriesAtEdges:
+        Boolean(inventoryToggle && inventoryToggle.x <= 20) &&
+        Boolean(insightToggle && insightToggle.right >= window.innerWidth - 20),
       topbarOverlapsModeSwitch: intersects(topbar, modeSwitch),
       topbarOverlapsStagePanelTop: intersects(topbar, stagePanelTop),
       modeSwitchOverlapsStagePanelTop: intersects(modeSwitch, stagePanelTop),
@@ -315,6 +330,7 @@ async function readBackpackMetrics(page) {
       scrollWidth: document.documentElement.scrollWidth,
       drawer,
       drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
+      drawerHasStageGutter: Boolean(drawer && drawer.x >= 10 && drawer.bottom <= window.innerHeight - 10),
       modeSwitchVisible: isVisible(modeSwitch),
       modeSwitchIntersectsDrawer: intersects(modeSwitchBox, drawer),
       cards,
@@ -367,6 +383,7 @@ async function readInsightDrawerMetrics(page) {
       scrollWidth: document.documentElement.scrollWidth,
       drawer,
       drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
+      drawerHasStageGutter: Boolean(drawer && drawer.right <= window.innerWidth - 10 && drawer.bottom <= window.innerHeight - 10),
       modeSwitchVisible: isVisible(document.querySelector(".stage-engine-mode-switch")),
       headingText: heading?.textContent?.trim() ?? "",
       headingReadable:

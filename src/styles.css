@@ -19860,3 +19860,157 @@ table td {
     display: none !important;
   }
 }
+
+/* Stage-first shell phase 2:
+   Collapsed inventory and insight are edge tabs, not side panels. Drawers open
+   as temporary game sheets inside a safe visual gutter so the stage still owns
+   the screen. */
+.app-shell.game-hud-layout .game-floating-button {
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  height: 72px !important;
+  min-height: 72px !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border-color: color-mix(in srgb, var(--accent-line) 42%, var(--line)) !important;
+  background:
+    radial-gradient(circle at 42% 16%, rgba(255, 255, 255, 0.74), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, transparent), color-mix(in srgb, var(--accent-soft) 52%, var(--panel))) !important;
+  color: var(--accent-dark) !important;
+}
+
+.app-shell.game-hud-layout .game-inventory-toggle {
+  left: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  transform: translateY(-50%) !important;
+}
+
+.app-shell.game-hud-layout .game-insight-toggle {
+  right: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  transform: translateY(-50%) !important;
+}
+
+.app-shell.game-hud-layout .game-floating-button > svg {
+  width: 22px !important;
+  height: 22px !important;
+  stroke-width: 2.35 !important;
+}
+
+.app-shell.game-hud-layout .game-floating-button > span {
+  position: absolute !important;
+  top: 50% !important;
+  display: inline-flex !important;
+  min-height: 34px !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent) !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--surface) 92%, transparent) !important;
+  color: var(--ink) !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  box-shadow: var(--shadow-sm), var(--inner-highlight) !important;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease !important;
+}
+
+.app-shell.game-hud-layout .game-inventory-toggle > span {
+  left: calc(100% + 10px) !important;
+  transform: translate(-6px, -50%) !important;
+}
+
+.app-shell.game-hud-layout .game-insight-toggle > span {
+  right: calc(100% + 10px) !important;
+  transform: translate(6px, -50%) !important;
+}
+
+.app-shell.game-hud-layout .game-floating-button:hover > span,
+.app-shell.game-hud-layout .game-floating-button:focus-visible > span {
+  opacity: 1 !important;
+  transform: translate(0, -50%) !important;
+}
+
+.app-shell.game-hud-layout .game-floating-button > em {
+  position: absolute !important;
+  top: -8px !important;
+  right: -8px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  border: 2px solid color-mix(in srgb, var(--surface) 92%, transparent) !important;
+  box-shadow: 0 8px 16px rgba(31, 111, 101, 0.24) !important;
+}
+
+.app-shell.game-hud-layout .game-insight-toggle > em {
+  right: auto !important;
+  left: -8px !important;
+}
+
+.app-shell.game-hud-layout .game-side-drawer {
+  top: 14px !important;
+  bottom: 14px !important;
+  overflow: visible !important;
+}
+
+.app-shell.game-hud-layout .game-side-drawer-left {
+  left: 14px !important;
+  width: clamp(356px, 28vw, 418px) !important;
+}
+
+.app-shell.game-hud-layout .game-side-drawer-right {
+  right: 14px !important;
+  width: clamp(336px, 25vw, 386px) !important;
+}
+
+.app-shell.game-hud-layout .game-side-drawer .asset-library,
+.app-shell.game-hud-layout .game-side-drawer .right-panel {
+  overflow: hidden !important;
+  border-radius: 22px !important;
+}
+
+.app-shell.game-hud-layout .game-drawer-close {
+  top: 12px !important;
+  right: 12px !important;
+}
+
+.app-shell.game-hud-layout .game-drawer-scrim {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(12, 24, 29, 0.02), transparent 42%),
+    rgba(8, 19, 21, 0.1) !important;
+  backdrop-filter: blur(0.5px) !important;
+}
+
+.product-shell.night-mode .app-shell.game-hud-layout .game-floating-button {
+  border-color: rgba(126, 236, 219, 0.44) !important;
+  background:
+    radial-gradient(circle at 42% 12%, rgba(143, 255, 235, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(23, 55, 60, 0.94), rgba(8, 25, 34, 0.96)) !important;
+  color: #dffff7 !important;
+}
+
+.product-shell.night-mode .app-shell.game-hud-layout .game-floating-button > span {
+  border-color: rgba(136, 181, 188, 0.44) !important;
+  background: rgba(12, 29, 38, 0.94) !important;
+  color: #f4fffb !important;
+}
+
+.product-shell.night-mode .app-shell.game-hud-layout .game-floating-button > em {
+  border-color: rgba(8, 25, 34, 0.96) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.36) !important;
+}
+
+@media (max-width: 900px) {
+  .app-shell.game-hud-layout .game-side-drawer-left,
+  .app-shell.game-hud-layout .game-side-drawer-right {
+    right: 12px !important;
+    left: 12px !important;
+    width: auto !important;
+  }
+}
