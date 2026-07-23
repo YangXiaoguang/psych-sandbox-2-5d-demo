@@ -19709,6 +19709,17 @@ table td {
   z-index: 188 !important;
 }
 
+.game-side-drawer .right-panel .panel-header h1 {
+  min-height: 26px !important;
+  color: var(--ink) !important;
+  font-size: 20px !important;
+  line-height: 26px !important;
+}
+
+.product-shell.night-mode .game-side-drawer .right-panel .panel-header h1 {
+  color: #f7fffb !important;
+}
+
 .game-side-drawer .asset-card-action,
 .focus-asset-drawer .asset-card-action {
   cursor: grab !important;

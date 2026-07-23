@@ -86,8 +86,8 @@ export function RightPanel({
     <aside className="right-panel" aria-label="作品与 AI 伙伴面板">
       <div className="panel-header">
         <div>
-          <p className="eyebrow">{activeTab === "ai" ? "AI Companion" : "Scene Data"}</p>
-          <h1>{activeTab === "ai" ? "AI 伙伴" : "作品面板"}</h1>
+          <p className="eyebrow">{activeTab === "ai" ? "AI 伙伴" : "实时洞察"}</p>
+          <h1>{activeTab === "ai" ? "AI 伙伴" : "洞察面板"}</h1>
         </div>
         <button
           className="small-icon-button"
@@ -260,7 +260,7 @@ function SelectedObjectSnapshot({
       <section className="insight-selected-snapshot empty" aria-label="当前选中沙具摘要">
         <MousePointer2 size={18} />
         <div>
-          <span className="eyebrow">Selected Toy</span>
+          <span className="eyebrow">当前选中</span>
           <strong>未选择沙具</strong>
           <em>点选沙具后显示位置、风险与快捷操作。</em>
         </div>
@@ -271,7 +271,7 @@ function SelectedObjectSnapshot({
   return (
     <section className="insight-selected-snapshot" aria-label="当前选中沙具摘要">
       <div>
-        <span className="eyebrow">Selected Toy</span>
+        <span className="eyebrow">当前选中</span>
         <strong>{selectedObject.name}</strong>
         <em>
           X {Math.round(selectedObject.x)} / Y {Math.round(selectedObject.y)} · {RISK_LABELS[selectedObject.riskTag]}
@@ -291,7 +291,7 @@ function InsightHeatmapSummary({ analysis }: { analysis: SandboxAnalysis }): JSX
     <section className="insight-snapshot-panel" aria-label="九宫格与风险摘要">
       <div className="insight-snapshot-header">
         <div>
-          <span className="eyebrow">Live Map</span>
+          <span className="eyebrow">实时地图</span>
           <h2>空间热力与风险</h2>
         </div>
         <span>{analysis.totalObjects} 个对象</span>
@@ -343,7 +343,7 @@ function RecentEventPreview({ events }: { events: SandboxEvent[] }): JSX.Element
     <section className="insight-event-preview" aria-label="最近事件摘要">
       <div className="insight-snapshot-header compact">
         <div>
-          <span className="eyebrow">Timeline</span>
+          <span className="eyebrow">事件时间线</span>
           <h2>最近事件</h2>
         </div>
         <span>{events.length} 条</span>

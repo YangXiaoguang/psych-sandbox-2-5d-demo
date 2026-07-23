@@ -124,6 +124,19 @@ async function runShellQa() {
     pushResult("Sandbox 1280px navigation stays compact", sandboxNarrow.navHeight <= 80, `height=${sandboxNarrow.navHeight}`);
     pushResult("Sandbox 1280px HUD avoids Stage v2 title", !sandboxNarrow.topbarOverlapsStagePanelTop, formatMetrics(sandboxNarrow));
 
+    await clickSelector(page, ".game-insight-toggle");
+    await page.waitForSelector(".game-side-drawer-right .right-panel", { timeout: 5000 });
+    await delay(400);
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, "sandbox-insight-night-1280.png"), fullPage: true });
+    const insightNarrow = await readInsightDrawerMetrics(page);
+    pushResult("Insight drawer fits 1280px viewport", insightNarrow.drawerFitsViewport, formatMetrics(insightNarrow));
+    pushResult("Insight drawer hides stage mode switch", !insightNarrow.modeSwitchVisible, formatMetrics(insightNarrow));
+    pushResult("Insight drawer keeps secondary sections collapsed", insightNarrow.sections.every((section) => !section.open), formatMetrics(insightNarrow.sections));
+    pushResult("Insight drawer heading remains readable", insightNarrow.headingReadable, formatMetrics(insightNarrow));
+    await clickSelector(page, ".game-side-drawer-right .small-icon-button");
+    await page.waitForSelector(".game-side-drawer-right", { state: "detached", timeout: 5000 });
+    await delay(250);
+
     await page.setViewportSize({ width: 1680, height: 980 });
     await delay(300);
     await clickByText(page, /进入沙盘全屏模式|全屏/);
@@ -278,6 +291,61 @@ async function readBackpackMetrics(page) {
       modeSwitchVisible: isVisible(modeSwitch),
       modeSwitchIntersectsDrawer: intersects(modeSwitchBox, drawer),
       cards,
+    };
+  });
+}
+
+async function readInsightDrawerMetrics(page) {
+  return page.evaluate(() => {
+    const box = (selectorOrElement) => {
+      const element =
+        typeof selectorOrElement === "string" ? document.querySelector(selectorOrElement) : selectorOrElement;
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        right: Math.round(rect.right),
+        bottom: Math.round(rect.bottom),
+      };
+    };
+    const isVisible = (element) => {
+      if (!element) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity) > 0.02
+      );
+    };
+
+    const drawer = box(".game-side-drawer-right");
+    const heading = document.querySelector(".game-side-drawer-right .panel-header h1");
+    const headingBox = box(heading);
+    const headingStyle = heading ? window.getComputedStyle(heading) : null;
+    const sections = Array.from(document.querySelectorAll(".game-side-drawer-right .insight-section")).map((section) => ({
+      open: section.hasAttribute("open"),
+      summaryHeight: box(section.querySelector("summary"))?.height ?? 0,
+      label: section.querySelector("summary")?.textContent?.trim().replace(/\s+/g, " ") ?? "",
+    }));
+
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+      drawer,
+      drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
+      modeSwitchVisible: isVisible(document.querySelector(".stage-engine-mode-switch")),
+      headingText: heading?.textContent?.trim() ?? "",
+      headingReadable:
+        Boolean(headingBox && headingBox.height >= 24) &&
+        Boolean(headingStyle && headingStyle.visibility !== "hidden" && Number(headingStyle.opacity) > 0.5),
+      sections,
     };
   });
 }
