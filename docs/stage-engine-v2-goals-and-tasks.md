@@ -1,7 +1,7 @@
 # Stage Engine v2 Release Candidate Plan
 
 Document version: v2.0 RC
-Updated: 2026-07-21
+Updated: 2026-07-24
 Project: 2.5D psychological sandplay collaboration system
 
 ---
@@ -118,7 +118,15 @@ src/stage3d/
 │   ├── StageWeatherSystem.tsx
 │   ├── SandTrayMesh.tsx
 │   ├── ToyObject3D.tsx
-│   └── RoundedBoxMesh.tsx
+│   ├── RoundedBoxMesh.tsx
+│   └── toys/
+│       ├── toyPrimitives.tsx
+│       ├── toyRegistry.tsx
+│       ├── PersonToy.tsx
+│       ├── AnimalToys.tsx
+│       ├── EnvironmentToys.tsx
+│       ├── NatureToys.tsx
+│       └── SymbolToys.tsx
 └── utils/
     └── stageMapping.ts
 ```
@@ -202,6 +210,8 @@ Acceptance:
 
 ### Phase RC-3: Toy Model Boundary
 
+Status: complete.
+
 Deliverables:
 
 - Extract shared toy materials/helpers from `ToyObject3D.tsx`.
@@ -212,6 +222,13 @@ Acceptance:
 
 - `ToyObject3D.tsx` becomes an orchestrator/registry rather than the only place future assets can live.
 - Build stays green.
+
+Evidence:
+
+- `ToyObject3D.tsx` now owns interaction wrapper behavior, selection halo, and drop shadow only.
+- `toyRegistry.tsx` maps `ToyModelRecipe` to model families and centralizes footprint shadow radius.
+- Person, animal, environment, nature, and symbol toy families live under `src/stage3d/components/toys/`.
+- `npm run build` passed after the split.
 
 ### Phase RC-4: Product UI Stabilization
 

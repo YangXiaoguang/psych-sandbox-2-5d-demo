@@ -1,7 +1,7 @@
 # Stage Engine v2 Scene Contracts
 
-Document version: v2.0 RC
-Updated: 2026-07-21
+Document version: v2.1 RC
+Updated: 2026-07-24
 Scope: Stage Engine v2 3D sandplay editor, classic fallback, shared data, interaction, export, and visual QA.
 
 ---
@@ -266,6 +266,25 @@ interface StageToyAssetSpec {
   semanticTags: string[];
 }
 ```
+
+### 10.1 Toy Module Boundary
+
+`ToyObject3D.tsx` is the interaction wrapper and must remain small. It may own hover, drag, selection halo, and contact shadow behavior, but it must not become the long-term home for every toy model.
+
+Current Stage v2 toy module contract:
+
+```text
+src/stage3d/components/toys/
+├── toyPrimitives.tsx      shared materials, faces, highlights, primitive helpers
+├── toyRegistry.tsx        recipe-to-model switch and shadow sizing policy
+├── PersonToy.tsx          person family
+├── AnimalToys.tsx         dog, bird, fish, lion
+├── EnvironmentToys.tsx    house, bridge, fence, tower
+├── NatureToys.tsx         tree, water, rock, sun
+└── SymbolToys.tsx         monster, robot, skull, light, fallback
+```
+
+Future assets should enter through a family module and `toyRegistry.tsx`; object dragging, selection, camera controls, export, and analysis code should not need to change for a new toy model.
 
 The source code should move toward separate model families instead of one ever-growing `ToyObject3D.tsx`.
 

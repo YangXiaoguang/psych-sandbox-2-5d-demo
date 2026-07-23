@@ -175,7 +175,7 @@ async function runShellQa() {
     await page.setViewportSize({ width: 1680, height: 980 });
     await delay(300);
     await clickByText(page, /进入沙盘全屏模式|全屏/);
-    await page.waitForSelector(".product-shell.focus-mode", { timeout: 5000 });
+    await waitForVisibleBox(page, ".product-shell.focus-mode");
     await delay(500);
     await captureShellScreenshot(page, "sandbox-focus-night-desktop.png");
     const focusMetrics = await readSandboxShellMetrics(page);
@@ -185,7 +185,7 @@ async function runShellQa() {
     pushResult("Focus mode lets Stage v2 fill the viewport", focusMetrics.stageHeight >= focusMetrics.viewportHeight - 48, formatMetrics(focusMetrics));
     pushResult("Focus mode HUD avoids Stage v2 title", !focusMetrics.topbarOverlapsStagePanelTop, formatMetrics(focusMetrics));
     await clickByText(page, /退出沙盘全屏模式|退出/);
-    await page.waitForSelector(".product-shell:not(.focus-mode)", { timeout: 5000 });
+    await waitForVisibleBox(page, ".product-shell:not(.focus-mode)");
     await delay(300);
 
     await page.setViewportSize({ width: 1680, height: 980 });
