@@ -184,6 +184,24 @@ async function runShellQa() {
     pushResult("Focus mode exports remain reachable", focusMetrics.outputDockButtons >= 3, formatMetrics(focusMetrics));
     pushResult("Focus mode lets Stage v2 fill the viewport", focusMetrics.stageHeight >= focusMetrics.viewportHeight - 48, formatMetrics(focusMetrics));
     pushResult("Focus mode HUD avoids Stage v2 title", !focusMetrics.topbarOverlapsStagePanelTop, formatMetrics(focusMetrics));
+    await clickSelector(page, ".ai-stage-companion");
+    await waitForVisibleBox(page, "[data-testid='focus-ai-drawer']");
+    await delay(350);
+    await captureShellScreenshot(page, "sandbox-focus-ai-night-desktop.png");
+    const focusAiMetrics = await readFocusAiMetrics(page);
+    pushResult(
+      "Focus AI opens as one dedicated companion drawer",
+      focusAiMetrics.drawerCount === 1 &&
+        focusAiMetrics.aiPanelCount === 1 &&
+        !focusAiMetrics.rightPanelVisible &&
+        !focusAiMetrics.rightDrawerVisible,
+      formatMetrics(focusAiMetrics),
+    );
+    pushResult("Focus AI drawer fits viewport", focusAiMetrics.drawerFitsViewport, formatMetrics(focusAiMetrics));
+    pushResult("Focus AI keeps night-mode text readable", focusAiMetrics.minimumContrast >= 4.4, formatMetrics(focusAiMetrics));
+    pushResult("Focus AI composer remains operable", focusAiMetrics.composerVisible && focusAiMetrics.sendButtonVisible, formatMetrics(focusAiMetrics));
+    await clickSelector(page, "[data-testid='focus-ai-drawer'] .small-icon-button");
+    await page.waitForSelector("[data-testid='focus-ai-drawer']", { state: "detached", timeout: 5000 });
     await clickByText(page, /退出沙盘全屏模式|退出/);
     await waitForVisibleBox(page, ".product-shell:not(.focus-mode)");
     await delay(300);
@@ -493,6 +511,118 @@ async function readInsightDrawerMetrics(page) {
         Boolean(headingBox && headingBox.height >= 24) &&
         Boolean(headingStyle && headingStyle.visibility !== "hidden" && Number(headingStyle.opacity) > 0.5),
       sections,
+    };
+  });
+}
+
+async function readFocusAiMetrics(page) {
+  return page.evaluate(() => {
+    const box = (selectorOrElement) => {
+      const element =
+        typeof selectorOrElement === "string" ? document.querySelector(selectorOrElement) : selectorOrElement;
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        right: Math.round(rect.right),
+        bottom: Math.round(rect.bottom),
+      };
+    };
+    const isVisible = (selectorOrElement) => {
+      const element =
+        typeof selectorOrElement === "string" ? document.querySelector(selectorOrElement) : selectorOrElement;
+      if (!element) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.02
+      );
+    };
+    const parseColor = (value) => {
+      const match = value.match(/rgba?\(([^)]+)\)/);
+      if (!match) return null;
+      const [r, g, b, a = "1"] = match[1].split(",").map((part) => part.trim());
+      return { r: Number(r), g: Number(g), b: Number(b), a: Number(a) };
+    };
+    const channel = (component) => {
+      const value = component / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (color) => 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
+    const contrast = (foreground, background) => {
+      const lighter = Math.max(luminance(foreground), luminance(background));
+      const darker = Math.min(luminance(foreground), luminance(background));
+      return Number(((lighter + 0.05) / (darker + 0.05)).toFixed(2));
+    };
+    const effectiveBackground = (element) => {
+      let current = element;
+      while (current && current instanceof Element) {
+        const color = parseColor(window.getComputedStyle(current).backgroundColor);
+        if (color && color.a > 0.12) {
+          return color;
+        }
+        current = current.parentElement;
+      }
+      return { r: 7, g: 17, b: 25, a: 1 };
+    };
+    const readableSamples = [
+      ".focus-ai-drawer-header h2",
+      ".focus-ai-drawer .ai-hero h2",
+      ".focus-ai-drawer .ai-hero p:not(.eyebrow)",
+      ".focus-ai-drawer .ai-context-card h2",
+      ".focus-ai-drawer .ai-context-metric strong",
+      ".focus-ai-drawer .ai-context-metric em",
+      ".focus-ai-drawer .ai-context-chips span",
+      ".focus-ai-drawer .ai-quick-section h2",
+      ".focus-ai-drawer .ai-quick-list button",
+      ".focus-ai-drawer .ai-stream-status",
+      ".focus-ai-drawer .ai-composer textarea",
+      ".focus-ai-drawer .ai-safety-note",
+    ]
+      .map((selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return { selector, present: false, contrast: 0, text: "" };
+        const foreground = parseColor(window.getComputedStyle(element).color) ?? { r: 255, g: 255, b: 255, a: 1 };
+        return {
+          selector,
+          present: true,
+          contrast: contrast(foreground, effectiveBackground(element)),
+          text: element.textContent?.trim().replace(/\s+/g, " ").slice(0, 40) ?? "",
+        };
+      })
+      .filter((sample) => sample.present);
+    const minimumContrast = readableSamples.reduce(
+      (minimum, sample) => Math.min(minimum, sample.contrast),
+      readableSamples.length > 0 ? Number.POSITIVE_INFINITY : 0,
+    );
+    const drawer = box("[data-testid='focus-ai-drawer']");
+
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      drawer,
+      drawerCount: document.querySelectorAll("[data-testid='focus-ai-drawer']").length,
+      aiPanelCount: document.querySelectorAll("[data-testid='focus-ai-drawer'] .ai-panel").length,
+      rightPanelVisible: isVisible(".right-panel"),
+      rightDrawerVisible: isVisible(".game-side-drawer-right"),
+      composerVisible: isVisible(".focus-ai-drawer .ai-composer textarea"),
+      sendButtonVisible: isVisible(".focus-ai-drawer .ai-composer button"),
+      drawerFitsViewport: Boolean(
+        drawer &&
+          drawer.x >= 0 &&
+          drawer.y >= 0 &&
+          drawer.right <= window.innerWidth + 1 &&
+          drawer.bottom <= window.innerHeight + 1,
+      ),
+      minimumContrast: Number.isFinite(minimumContrast) ? minimumContrast : 0,
+      readableSamples,
     };
   });
 }

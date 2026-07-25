@@ -29,6 +29,7 @@ import type { AdminGovernanceData } from "./admin/types";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthScreen } from "./components/AuthScreen";
 import { AiCompanionPanel } from "./components/AiCompanionPanel";
+import { AiCompanionAvatar } from "./components/AiCompanionAvatar";
 import { AgentChatView } from "./components/AgentChatView";
 import { AppNavigation, type AppView } from "./components/AppNavigation";
 import { AssetLibrary } from "./components/AssetLibrary";
@@ -916,10 +917,12 @@ export function App(): JSX.Element {
                 onDeleteSelected={handleDeleteSelected}
                 onRecordEvent={recordEvent}
                 onCameraChange={handleCameraChange}
-                aiCompanionActive={sandboxFocusMode ? layoutPreferences.aiDrawerOpen : rightPanelTab === "ai"}
-                onOpenAiCompanion={handleOpenAiCompanion}
               />
             )}
+            <AiCompanionAvatar
+              active={sandboxFocusMode ? layoutPreferences.aiDrawerOpen : rightPanelTab === "ai"}
+              onOpen={handleOpenAiCompanion}
+            />
             <SandboxGameToolbelt
               engineMode={sandboxEngineMode}
               selectedObject={selectedObject}

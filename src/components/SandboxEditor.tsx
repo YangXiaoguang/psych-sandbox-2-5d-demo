@@ -24,7 +24,6 @@ import {
   VIEW_HEIGHT,
   VIEW_WIDTH,
 } from "../utils/projection";
-import { AiCompanionAvatar } from "./AiCompanionAvatar";
 import { DRAG_MIME } from "./AssetLibrary";
 import { SandboxGuideLayer } from "./SandboxGuideLayer";
 import { OceanWaterLayer } from "./OceanWaterLayer";
@@ -51,8 +50,6 @@ interface SandboxEditorProps {
   onDeleteSelected: () => void;
   onRecordEvent: (draft: SandboxEventDraft) => void;
   onCameraChange: (patch: Partial<SandboxCameraState>) => void;
-  aiCompanionActive: boolean;
-  onOpenAiCompanion: () => void;
 }
 
 interface TransformState {
@@ -92,8 +89,6 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     onDeleteSelected,
     onRecordEvent,
     onCameraChange,
-    aiCompanionActive,
-    onOpenAiCompanion,
   },
   ref,
 ) {
@@ -1160,7 +1155,6 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
         onResetCamera={() => onCameraChange(DEFAULT_SANDBOX_CAMERA)}
         onDeleteSelected={onDeleteSelected}
       />
-      <AiCompanionAvatar active={aiCompanionActive} onOpen={onOpenAiCompanion} />
     </main>
   );
 });

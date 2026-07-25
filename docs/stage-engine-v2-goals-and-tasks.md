@@ -243,6 +243,13 @@ Acceptance:
 
 - No known text clipping or unreadable controls in the main Stage v2 path.
 
+Evidence:
+
+- `AI 伙伴` entry now lives at the workspace shell level, so Classic 2.5D and Stage v2 share the same companion entry instead of binding it to the Konva editor only.
+- `qa:ui-shell` opens fullscreen Stage v2, clicks the AI companion entry, and verifies exactly one `[data-testid="focus-ai-drawer"]` plus one embedded `.ai-panel`.
+- `qa:ui-shell` verifies the fullscreen AI drawer stays inside the viewport, does not reveal the right inspector drawer, keeps the composer operable, and maintains night-mode text contrast above the readability gate.
+- `npm run build`, `npm run qa:ui-shell`, and `npm run qa:stage-v2` passed after the shell-level AI entry change.
+
 ### Phase RC-5: Final Verification
 
 Deliverables:
