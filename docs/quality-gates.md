@@ -38,6 +38,20 @@ git status --short --branch
 - 不包含无关文件。
 - 不包含临时截图、debug dump、构建产物，除非任务明确要求。
 
+### 2.3 固定视觉基线
+
+```bash
+npm run qa:visual-baseline
+```
+
+通过标准：
+
+- 能启动或连接本地 Vite 服务。
+- 能生成固定场景截图和 `manifest.json`。
+- 截图过程无 Vite error overlay、无浏览器 runtime error。
+- 每个固定场景无水平页面溢出，关键根节点可见。
+- 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
+
 ---
 
 ## 3. 浏览器运行检查
@@ -96,6 +110,14 @@ http://localhost:5174/
 ```text
 artifacts/visual-regression/YYYY-MM-DD/<scene-id>.png
 ```
+
+当前项目已提供固定截图命令：
+
+```bash
+npm run qa:visual-baseline
+```
+
+该命令会同时写入 `manifest.json`，记录截图时间、场景 ID、环境状态、视口尺寸和关键节点位置。后续视觉 polish 必须先生成新基线，再与上一个 checkpoint 的截图人工或工具化对比。
 
 ---
 
@@ -317,4 +339,3 @@ Stage Engine v2 第一版性能目标：
 下一步：
 - ...
 ```
-
