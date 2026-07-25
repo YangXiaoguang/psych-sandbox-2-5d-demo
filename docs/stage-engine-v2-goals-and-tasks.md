@@ -262,8 +262,15 @@ Deliverables:
 Suggested final tag:
 
 ```text
-checkpoint/stage-v2-rc-accepted-2026-07-21
+checkpoint/stage-v2-rc-accepted-2026-07-25
 ```
+
+Evidence:
+
+- `qa:ui-shell` includes smoke checks for Agent chat, Memory OS, and Admin navigation surfaces.
+- Classic fallback is verified by `qa:stage-v2` switching back from Stage v2 to `Classic 2.5D`.
+- Final RC acceptance requires `npm run build`, `npm run qa:ui-shell`, and `npm run qa:stage-v2` to pass on the accepted commit.
+- 2026-07-25 RC-5 local verification: `npm run build` passed, `npm run qa:ui-shell` passed 49/49 gates, and `npm run qa:stage-v2` passed 18/18 gates. Stage v2 QA artifacts are written to `artifacts/stage-v2-qa`.
 
 ---
 

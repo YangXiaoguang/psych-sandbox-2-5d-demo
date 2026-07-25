@@ -207,6 +207,26 @@ async function runShellQa() {
     await delay(300);
 
     await page.setViewportSize({ width: 1680, height: 980 });
+    await openGamePortal(page, /对话 Agent/);
+    await page.waitForSelector(".agent-chat-shell", { timeout: 10_000 });
+    await delay(400);
+    await captureShellScreenshot(page, "agent-chat-night-desktop.png");
+    const agentSmokeMetrics = await readProductViewSmokeMetrics(page, ".agent-chat-shell");
+    pushResult("Agent chat smoke renders primary surface", agentSmokeMetrics.rootVisible, formatMetrics(agentSmokeMetrics));
+    pushResult("Agent chat smoke has no horizontal overflow", agentSmokeMetrics.scrollWidth <= agentSmokeMetrics.viewportWidth + 2, formatMetrics(agentSmokeMetrics));
+    pushResult("Agent chat smoke keeps navigation compact", agentSmokeMetrics.navHeight <= 82, formatMetrics(agentSmokeMetrics));
+    pushResult("Agent chat smoke exposes conversation controls", agentSmokeMetrics.visibleControls >= 3, formatMetrics(agentSmokeMetrics));
+
+    await openGamePortal(page, /个人中心/);
+    await page.waitForSelector(".personal-shell", { timeout: 10_000 });
+    await delay(400);
+    await captureShellScreenshot(page, "personal-memory-night-desktop.png");
+    const memorySmokeMetrics = await readProductViewSmokeMetrics(page, ".personal-shell");
+    pushResult("Memory OS smoke renders primary surface", memorySmokeMetrics.rootVisible, formatMetrics(memorySmokeMetrics));
+    pushResult("Memory OS smoke has no horizontal overflow", memorySmokeMetrics.scrollWidth <= memorySmokeMetrics.viewportWidth + 2, formatMetrics(memorySmokeMetrics));
+    pushResult("Memory OS smoke keeps navigation compact", memorySmokeMetrics.navHeight <= 82, formatMetrics(memorySmokeMetrics));
+    pushResult("Memory OS smoke exposes profile controls", memorySmokeMetrics.visibleControls >= 3, formatMetrics(memorySmokeMetrics));
+
     await openGamePortal(page, /管理后台/);
     await page.waitForSelector(".admin-shell", { timeout: 10_000 });
     await delay(400);
@@ -359,6 +379,48 @@ async function readGenericShellMetrics(page, navSelector) {
       navHeight: nav ? Math.round(nav.getBoundingClientRect().height) : 0,
     };
   }, navSelector);
+}
+
+async function readProductViewSmokeMetrics(page, rootSelector) {
+  return page.evaluate((selector) => {
+    const root = document.querySelector(selector);
+    const nav = document.querySelector(".app-navigation, .game-navigation");
+    const rectOf = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        right: Math.round(rect.right),
+        bottom: Math.round(rect.bottom),
+      };
+    };
+    const visibleControls = root
+      ? Array.from(root.querySelectorAll("button, input, textarea, select, summary")).filter((element) => {
+          const rect = element.getBoundingClientRect();
+          const style = window.getComputedStyle(element);
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            Number(style.opacity || "1") > 0.02
+          );
+        }).length
+      : 0;
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+      navHeight: nav ? Math.round(nav.getBoundingClientRect().height) : 0,
+      rootBox: rectOf(root),
+      rootVisible: Boolean(root && rectOf(root)?.width && rectOf(root)?.height),
+      headings: root ? Array.from(root.querySelectorAll("h1, h2")).map((heading) => heading.textContent?.trim() ?? "").slice(0, 6) : [],
+      visibleControls,
+    };
+  }, rootSelector);
 }
 
 async function waitForVisibleBox(page, selector, timeout = 5000) {
