@@ -39,9 +39,9 @@ export function StageCanvas3D({
   const night = environment.light === "night";
   const rainy = environment.weather === "rainy";
   const cloudy = environment.weather === "cloudy";
-  const background = night ? "#061822" : rainy ? "#75bbc7" : cloudy ? "#9bd9d8" : "#8de8ec";
-  const keyLight = night ? 1.25 : rainy ? 1.45 : cloudy ? 1.55 : 2.25;
-  const exposure = night ? 0.92 : rainy ? 0.98 : 1.06;
+  const background = night ? "#082331" : rainy ? "#75bbc7" : cloudy ? "#9bd9d8" : "#8de8ec";
+  const keyLight = night ? 1.55 : rainy ? 1.45 : cloudy ? 1.55 : 2.25;
+  const exposure = night ? 1.02 : rainy ? 0.98 : 1.06;
   const handleDragStateChange = (dragging: boolean, label?: string) => {
     setObjectDragging(dragging);
     onToyDragLabelChange?.(dragging ? label ?? null : null);
@@ -55,7 +55,7 @@ export function StageCanvas3D({
       shadows="percentage"
       dpr={[1, 2]}
       orthographic
-      camera={{ position: [6.8, 6.2, 8.2], zoom: 82, near: 0.1, far: 120 }}
+      camera={{ position: [6.8, 6.2, 8.2], zoom: 110, near: 0.1, far: 120 }}
       gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
       onCreated={({ gl }: { gl: WebGLRenderer }) => {
         gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -70,11 +70,11 @@ export function StageCanvas3D({
     >
       <StageRenderSettings background={background} exposure={exposure} />
       <color attach="background" args={[background]} />
-      <fog attach="fog" args={[night ? "#061822" : background, 18, 34]} />
+      <fog attach="fog" args={[night ? "#082331" : background, 20, 38]} />
 
-      <ambientLight intensity={night ? 0.38 : cloudy || rainy ? 0.56 : 0.46} color={night ? "#9fc8de" : "#fff4df"} />
+      <ambientLight intensity={night ? 0.52 : cloudy || rainy ? 0.56 : 0.46} color={night ? "#b8dff0" : "#fff4df"} />
       <hemisphereLight
-        args={[night ? "#9fc8ff" : "#fff7df", night ? "#162b33" : "#8aa189", night ? 0.82 : 0.58]}
+        args={[night ? "#b7dcff" : "#fff7df", night ? "#243a3b" : "#8aa189", night ? 0.96 : 0.58]}
       />
       <directionalLight
         castShadow
@@ -92,12 +92,12 @@ export function StageCanvas3D({
       />
       <directionalLight
         position={night ? [3.8, 3.5, -5.4] : [4.2, 4.6, -5.2]}
-        intensity={night ? 0.48 : rainy ? 0.26 : cloudy ? 0.32 : 0.42}
+        intensity={night ? 0.66 : rainy ? 0.26 : cloudy ? 0.32 : 0.42}
         color={night ? "#7fbfff" : "#d7fff3"}
       />
       <pointLight
         position={night ? [1.8, 2.2, 1.4] : [-2.6, 1.6, 1.8]}
-        intensity={night ? 0.45 : 0.16}
+        intensity={night ? 0.56 : 0.16}
         color={night ? "#8ff7d9" : "#fff3cc"}
         distance={7}
       />

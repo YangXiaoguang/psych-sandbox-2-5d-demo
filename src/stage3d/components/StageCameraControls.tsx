@@ -12,7 +12,7 @@ interface StageCameraControlsProps {
 }
 
 const DEFAULT_STAGE_CAMERA_POSITION = [6.8, 6.2, 8.2] as const;
-const DEFAULT_STAGE_CAMERA_ZOOM = 82;
+const DEFAULT_STAGE_CAMERA_ZOOM = 110;
 const DEFAULT_STAGE_CAMERA_TARGET = [0, 0.12, 0] as const;
 const MAX_TARGET_X = 1.72;
 const MAX_TARGET_Z = 1.24;

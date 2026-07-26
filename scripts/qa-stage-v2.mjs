@@ -120,16 +120,16 @@ async function runStageV2Smoke() {
     initialInteraction.text,
   );
 
-  await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-initial.png") });
+  await captureLocator(page, canvas, "stage-v2-initial.png");
 
   await clickButtonByMatcher(page, /切换天气：雨天|雨/);
   await clickButtonByMatcher(page, /切换光照：黑夜|夜/);
   await page.waitForSelector(".product-shell.weather-rainy.light-night.night-mode", { timeout: 5000 });
   pushResult("Rainy night environment applies shell theme", true);
 
-  const waterBefore = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-water-before.png") });
+  const waterBefore = await captureLocator(page, canvas, "stage-v2-water-before.png");
   await delay(1000);
-  const waterAfter = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-water-after.png") });
+  const waterAfter = await captureLocator(page, canvas, "stage-v2-water-after.png");
   const waterDiff = byteDiff(waterBefore, waterAfter);
   pushResult("Ocean/weather animation changes frame", waterDiff > 1000, `byteDiff=${waterDiff}`);
 
@@ -307,7 +307,7 @@ async function tryMoveCamera(page, canvas) {
     return { ok: false, detail: "canvas bounding box missing" };
   }
 
-  const before = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-camera-before.png") });
+  const before = await captureLocator(page, canvas, "stage-v2-camera-before.png");
   const x = box.x + box.width * 0.2;
   const y = box.y + box.height * 0.22;
   await page.mouse.move(x, y);
@@ -316,7 +316,7 @@ async function tryMoveCamera(page, canvas) {
   const interaction = await readStageInteraction(page);
   await page.mouse.up({ button: "left" });
   await delay(650);
-  const after = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-camera-after.png") });
+  const after = await captureLocator(page, canvas, "stage-v2-camera-after.png");
   const diff = byteDiff(before, after);
   return {
     ok: diff > 1000,
@@ -327,13 +327,13 @@ async function tryMoveCamera(page, canvas) {
 }
 
 async function tryZoomCamera(page, canvas) {
-  const before = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-zoom-before.png") });
+  const before = await captureLocator(page, canvas, "stage-v2-zoom-before.png");
   await canvas.hover();
   await page.mouse.wheel(0, -520);
   await delay(100);
   const interaction = await readStageInteraction(page);
   await delay(420);
-  const after = await canvas.screenshot({ path: path.join(ARTIFACT_DIR, "stage-v2-zoom-after.png") });
+  const after = await captureLocator(page, canvas, "stage-v2-zoom-after.png");
   const diff = byteDiff(before, after);
   return {
     ok: diff > 1000,
@@ -341,6 +341,23 @@ async function tryZoomCamera(page, canvas) {
     modeSeen: /正在缩放/.test(interaction.text) || /is-stage-zoom/.test(interaction.className),
     modeDetail: interaction.text || interaction.className,
   };
+}
+
+async function captureLocator(page, locator, filename) {
+  const box = await locator.boundingBox();
+  if (!box) {
+    throw new Error(`Cannot capture ${filename}: locator bounding box missing`);
+  }
+
+  return page.screenshot({
+    path: path.join(ARTIFACT_DIR, filename),
+    clip: {
+      x: Math.max(0, box.x),
+      y: Math.max(0, box.y),
+      width: Math.max(1, box.width),
+      height: Math.max(1, box.height),
+    },
+  });
 }
 
 async function readScene(page) {

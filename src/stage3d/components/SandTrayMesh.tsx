@@ -38,10 +38,10 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
     foamTexture.offset.set(-elapsed * 0.035, elapsed * 0.014);
   });
 
-  const waterColor = night ? "#24515f" : rainy ? "#6cb8c8" : cloudy ? "#83d3d7" : "#5ed4dc";
-  const waterEmissive = night ? "#061820" : "#0a3640";
-  const sandColor = night ? "#c5b58d" : rainy ? "#d8bd83" : "#f0cc78";
-  const wetSandColor = night ? "#9f9878" : rainy ? "#c79d65" : "#dfb05d";
+  const waterColor = night ? "#2c6571" : rainy ? "#6cb8c8" : cloudy ? "#83d3d7" : "#5ed4dc";
+  const waterEmissive = night ? "#082936" : "#0a3640";
+  const sandColor = night ? "#d5c895" : rainy ? "#d8bd83" : "#f0cc78";
+  const wetSandColor = night ? "#b9ad82" : rainy ? "#c79d65" : "#dfb05d";
 
   return (
     <group>
@@ -50,7 +50,7 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
           bumpScale={rainy ? 0.07 : 0.045}
           color={waterColor}
           emissive={waterEmissive}
-          emissiveIntensity={night ? 0.18 : 0.05}
+          emissiveIntensity={night ? 0.24 : 0.05}
           rainy={rainy}
           texture={oceanTexture}
         />
@@ -60,7 +60,7 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
       <mesh geometry={islandSideGeometry} castShadow receiveShadow>
         <meshStandardMaterial
           map={sandSideTexture}
-          color={night ? "#9d8760" : rainy ? "#c99c61" : "#d7a15b"}
+          color={night ? "#af9666" : rainy ? "#c99c61" : "#d7a15b"}
           roughness={0.88}
           metalness={0}
         />
@@ -304,10 +304,10 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
     const night = environment.light === "night";
     const rainy = environment.weather === "rainy";
     const base = context.createRadialGradient(260, 190, 24, 540, 580, 850);
-    base.addColorStop(0, night ? "#d1c39a" : rainy ? "#e8c985" : "#f7d889");
-    base.addColorStop(0.38, night ? "#c3b58b" : rainy ? "#ddbb79" : "#f0c96f");
-    base.addColorStop(0.72, night ? "#aa966d" : rainy ? "#bd9360" : "#d39b50");
-    base.addColorStop(1, night ? "#8c7652" : rainy ? "#a57849" : "#b97738");
+    base.addColorStop(0, night ? "#efe0ad" : rainy ? "#e8c985" : "#f7d889");
+    base.addColorStop(0.38, night ? "#d7c48d" : rainy ? "#ddbb79" : "#f0c96f");
+    base.addColorStop(0.72, night ? "#b99a62" : rainy ? "#bd9360" : "#d39b50");
+    base.addColorStop(1, night ? "#8d6941" : rainy ? "#a57849" : "#b97738");
     context.fillStyle = base;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -317,7 +317,7 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
       const radius = 42 + seeded(patch * 83) * 128;
       const gradient = context.createRadialGradient(x, y, 2, x, y, radius);
       const light = seeded(patch * 17) > 0.52;
-      gradient.addColorStop(0, light ? "rgba(255,239,170,0.13)" : "rgba(91,58,24,0.11)");
+      gradient.addColorStop(0, light ? (night ? "rgba(255,238,174,0.18)" : "rgba(255,239,170,0.13)") : "rgba(91,58,24,0.11)");
       gradient.addColorStop(1, "rgba(255,255,255,0)");
       context.fillStyle = gradient;
       context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
@@ -326,7 +326,7 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
     for (let index = 0; index < 11800; index += 1) {
       const x = seeded(index * 31) * canvas.width;
       const y = seeded(index * 47) * canvas.height;
-      const alpha = 0.018 + seeded(index * 59) * 0.095;
+      const alpha = 0.022 + seeded(index * 59) * (night ? 0.12 : 0.095);
       const warm = seeded(index * 19);
       context.fillStyle =
         warm > 0.68
@@ -355,8 +355,8 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
     context.lineCap = "round";
     for (let ridge = 0; ridge < 34; ridge += 1) {
       const y = 42 + ridge * 27 + seeded(ridge * 13) * 18;
-      const shade = rainy ? "rgba(255,255,255,0.075)" : "rgba(117,75,31,0.12)";
-      const shine = rainy ? "rgba(226,244,232,0.075)" : "rgba(255,232,151,0.13)";
+      const shade = rainy ? "rgba(255,255,255,0.075)" : night ? "rgba(91,65,35,0.14)" : "rgba(117,75,31,0.12)";
+      const shine = rainy ? "rgba(226,244,232,0.075)" : night ? "rgba(255,233,169,0.16)" : "rgba(255,232,151,0.13)";
       context.lineWidth = 1.2 + seeded(ridge * 19) * 1.8;
       context.strokeStyle = shade;
       context.beginPath();
@@ -417,13 +417,13 @@ function createOceanTexture(environment: SandboxEnvironment): THREE.CanvasTextur
   if (context) {
     const night = environment.light === "night";
     const rainy = environment.weather === "rainy";
-    context.fillStyle = night ? "#12323f" : rainy ? "#58adbd" : "#26c4d0";
+    context.fillStyle = night ? "#164050" : rainy ? "#58adbd" : "#26c4d0";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     const depth = context.createRadialGradient(156, 122, 20, 286, 304, 440);
-    depth.addColorStop(0, night ? "rgba(92,156,170,0.2)" : rainy ? "rgba(178,236,232,0.16)" : "rgba(202,255,240,0.18)");
+    depth.addColorStop(0, night ? "rgba(113,184,197,0.25)" : rainy ? "rgba(178,236,232,0.16)" : "rgba(202,255,240,0.18)");
     depth.addColorStop(0.55, "rgba(255,255,255,0)");
-    depth.addColorStop(1, night ? "rgba(0,10,18,0.2)" : "rgba(0,82,112,0.2)");
+    depth.addColorStop(1, night ? "rgba(0,16,26,0.18)" : "rgba(0,82,112,0.2)");
     context.fillStyle = depth;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
