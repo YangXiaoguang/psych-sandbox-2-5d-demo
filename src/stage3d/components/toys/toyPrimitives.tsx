@@ -136,3 +136,81 @@ export function ToyHighlight({
     </mesh>
   );
 }
+
+export function ToyStud({
+  color = "#fff2d2",
+  opacity = 1,
+  position,
+  preset = "warmCeramic",
+  size = 0.018,
+}: {
+  color?: string;
+  opacity?: number;
+  position: Vec3;
+  preset?: MaterialPreset;
+  size?: number;
+}): JSX.Element {
+  return (
+    <mesh position={position} castShadow>
+      <sphereGeometry args={[size, 12, 8]} />
+      <ToyMaterial preset={preset} color={color} opacity={opacity} />
+    </mesh>
+  );
+}
+
+export function ToyStripe({
+  color = "#fff1c8",
+  length = 0.18,
+  opacity = 1,
+  position,
+  radius = 0.008,
+  rotation = [0, 0, Math.PI / 2] as Vec3,
+  preset = "warmCeramic",
+}: {
+  color?: string;
+  length?: number;
+  opacity?: number;
+  position: Vec3;
+  radius?: number;
+  rotation?: Vec3;
+  preset?: MaterialPreset;
+}): JSX.Element {
+  return (
+    <mesh position={position} rotation={rotation} castShadow>
+      <capsuleGeometry args={[radius, length, 4, 8]} />
+      <ToyMaterial preset={preset} color={color} opacity={opacity} />
+    </mesh>
+  );
+}
+
+export function ToyBeadRow({
+  color = "#fff2d2",
+  count = 5,
+  end,
+  opacity = 1,
+  preset = "warmCeramic",
+  size = 0.014,
+  start,
+}: {
+  color?: string;
+  count?: number;
+  end: Vec3;
+  opacity?: number;
+  preset?: MaterialPreset;
+  size?: number;
+  start: Vec3;
+}): JSX.Element {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, index) => {
+        const progress = count === 1 ? 0 : index / (count - 1);
+        const position: Vec3 = [
+          start[0] + (end[0] - start[0]) * progress,
+          start[1] + (end[1] - start[1]) * progress,
+          start[2] + (end[2] - start[2]) * progress,
+        ];
+        return <ToyStud key={`${position.join("-")}-${index}`} position={position} color={color} opacity={opacity} preset={preset} size={size} />;
+      })}
+    </>
+  );
+}

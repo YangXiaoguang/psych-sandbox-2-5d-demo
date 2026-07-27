@@ -1,5 +1,5 @@
 import { RoundedBoxMesh } from "../RoundedBoxMesh";
-import { Cheeks, EyePair, Smile, ToyHighlight, ToyMaterial } from "./toyPrimitives";
+import { Cheeks, EyePair, Smile, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
 
 export function MonsterToy(): JSX.Element {
   return (
@@ -18,12 +18,16 @@ export function MonsterToy(): JSX.Element {
           <ToyMaterial preset="softPlastic" color="#f4d875" />
         </mesh>
       ))}
+      <ToyStud position={[-0.19, 0.78, -0.035]} color="#fff0a5" preset="softPlastic" size={0.018} opacity={0.8} />
+      <ToyStud position={[0.19, 0.78, -0.035]} color="#fff0a5" preset="softPlastic" size={0.018} opacity={0.8} />
       {[-0.1, 0.1].map((x) => (
         <mesh key={x} position={[x, 0.42, -0.25]} castShadow>
           <sphereGeometry args={[0.045, 16, 12]} />
           <ToyMaterial preset="softPlastic" color="#192222" />
         </mesh>
       ))}
+      <ToyStripe position={[-0.1, 0.49, -0.265]} rotation={[Math.PI / 2, 0, 0.14]} length={0.095} radius={0.006} preset="softPlastic" color="#342f5a" opacity={0.8} />
+      <ToyStripe position={[0.1, 0.49, -0.265]} rotation={[Math.PI / 2, 0, -0.14]} length={0.095} radius={0.006} preset="softPlastic" color="#342f5a" opacity={0.8} />
       <Cheeks y={0.34} z={-0.255} width={0.16} />
       <Smile position={[0, 0.27, -0.265]} scale={[0.78, 0.5, 0.78]} />
       {[-0.04, 0.04].map((x) => (
@@ -66,6 +70,7 @@ export function RobotToy(): JSX.Element {
       <RoundedBoxMesh size={[0.42, 0.48, 0.32]} radius={0.09} smoothness={6} position={[0, 0.2, 0]} castShadow receiveShadow>
         <ToyMaterial preset="toyMetal" color="#aebec3" />
       </RoundedBoxMesh>
+      <ToyBeadRow start={[-0.16, 0.38, -0.18]} end={[0.16, 0.38, -0.18]} count={4} color="#e9f7f4" preset="toyMetal" size={0.011} opacity={0.86} />
       <ToyHighlight position={[-0.11, 0.34, -0.13]} scale={[0.9, 0.42, 0.26]} opacity={0.16} />
       <RoundedBoxMesh size={[0.46, 0.34, 0.36]} radius={0.1} smoothness={6} position={[0, 0.62, 0]} castShadow receiveShadow>
         <ToyMaterial preset="toyMetal" color="#d4e0de" />
@@ -79,6 +84,7 @@ export function RobotToy(): JSX.Element {
       <RoundedBoxMesh size={[0.18, 0.1, 0.018]} radius={0.018} smoothness={3} position={[-0.015, 0.205, -0.194]} castShadow>
         <ToyMaterial preset="glassWater" color="#15333b" emissive="#55d7d0" emissiveIntensity={0.18} opacity={0.88} />
       </RoundedBoxMesh>
+      <ToyStripe position={[-0.02, 0.22, -0.209]} rotation={[0, 0, Math.PI / 2]} length={0.12} radius={0.004} preset="glassWater" color="#9ef7f2" opacity={0.58} />
       <mesh position={[0.06, 0.205, -0.194]} castShadow>
         <sphereGeometry args={[0.014, 10, 8]} />
         <ToyMaterial preset="softPlastic" color="#e9f8e8" emissive="#9decc4" emissiveIntensity={0.08} />
@@ -161,6 +167,7 @@ export function SkullToy(): JSX.Element {
         <capsuleGeometry args={[0.006, 0.16, 4, 8]} />
         <ToyMaterial preset="sandMatte" color="#b9ad98" />
       </mesh>
+      <ToyStripe position={[-0.08, 0.54, -0.232]} rotation={[Math.PI / 2, 0, 0.38]} length={0.13} radius={0.004} preset="sandMatte" color="#aaa08e" opacity={0.76} />
       <mesh position={[0.15, 0.5, -0.225]} rotation={[0, 0, 0.85]} castShadow>
         <capsuleGeometry args={[0.005, 0.08, 4, 8]} />
         <ToyMaterial preset="sandMatte" color="#b9ad98" />
@@ -196,6 +203,9 @@ export function LightToy(): JSX.Element {
         <cylinderGeometry args={[0.22, 0.26, 0.08, 24]} />
         <ToyMaterial preset="paintedWood" color="#a57a4d" />
       </mesh>
+      {[-0.09, 0.09].map((x) => (
+        <ToyStud key={`lamp-base-screw-${x}`} position={[x, 0.07, -0.17]} color="#f1d39a" preset="toyMetal" size={0.012} />
+      ))}
       <mesh position={[0, 0.58, 0]} castShadow receiveShadow>
         <sphereGeometry args={[0.22, 32, 18]} />
         <ToyMaterial preset="warmCeramic" color="#ffe19b" emissive="#f5b64f" emissiveIntensity={0.35} />
@@ -241,6 +251,8 @@ export function FallbackToy(): JSX.Element {
         <ToyMaterial preset="softPlastic" color="#b9e2d6" />
       </RoundedBoxMesh>
       <ToyHighlight position={[-0.08, 0.42, -0.2]} scale={[0.78, 0.34, 0.22]} opacity={0.2} />
+      <ToyStud position={[-0.17, 0.5, -0.04]} color="#d9fbef" preset="softPlastic" size={0.04} opacity={0.82} />
+      <ToyStud position={[0.17, 0.5, -0.04]} color="#d9fbef" preset="softPlastic" size={0.04} opacity={0.82} />
       <EyePair left={-0.08} right={0.08} y={0.32} z={-0.265} size={0.022} />
       <Smile position={[0, 0.24, -0.272]} scale={[0.52, 0.32, 0.52]} />
     </group>

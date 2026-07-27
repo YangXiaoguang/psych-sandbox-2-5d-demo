@@ -1,5 +1,5 @@
 import { RoundedBoxMesh } from "../RoundedBoxMesh";
-import { ToyHighlight, ToyMaterial } from "./toyPrimitives";
+import { ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
 
 export function HouseToy(): JSX.Element {
   return (
@@ -14,6 +14,17 @@ export function HouseToy(): JSX.Element {
         <coneGeometry args={[0.76, 0.48, 4]} />
         <ToyMaterial preset="softPlastic" color="#de6845" />
       </mesh>
+      {[-0.2, -0.04, 0.12].map((z, index) => (
+        <ToyStripe
+          key={`roof-rib-${z}`}
+          position={[0.02, 0.85 + index * 0.015, z]}
+          rotation={[0.3, 0, Math.PI / 2]}
+          length={0.56 - index * 0.08}
+          radius={0.008}
+          preset="softPlastic"
+          color="#f18a58"
+        />
+      ))}
       <RoundedBoxMesh size={[1.04, 0.055, 0.11]} radius={0.026} smoothness={4} position={[0, 0.64, -0.42]} castShadow receiveShadow>
         <ToyMaterial preset="softPlastic" color="#f08a56" />
       </RoundedBoxMesh>
@@ -36,6 +47,7 @@ export function HouseToy(): JSX.Element {
       <RoundedBoxMesh size={[0.22, 0.34, 0.035]} radius={0.025} smoothness={4} position={[0, 0.13, -0.405]} castShadow>
         <ToyMaterial preset="paintedWood" color="#8b542f" />
       </RoundedBoxMesh>
+      <ToyStripe position={[0, 0.25, -0.43]} rotation={[0, 0, Math.PI / 2]} length={0.18} radius={0.006} preset="paintedWood" color="#c98a4f" />
       <mesh position={[0.06, 0.13, -0.428]} castShadow>
         <sphereGeometry args={[0.018, 12, 8]} />
         <ToyMaterial preset="toyMetal" color="#f0c167" />
@@ -79,6 +91,8 @@ export function HouseToy(): JSX.Element {
           <ToyMaterial preset="softPlastic" color="#74bf76" />
         </mesh>
       ))}
+      <ToyBeadRow start={[-0.39, 0.24, -0.48]} end={[-0.31, 0.26, -0.48]} count={3} color="#f8d35d" preset="softPlastic" size={0.012} />
+      <ToyBeadRow start={[0.31, 0.24, -0.48]} end={[0.39, 0.26, -0.48]} count={3} color="#f07d73" preset="softPlastic" size={0.012} />
       {[-0.39, 0.33, 0.42].map((x, index) => (
         <mesh key={x} position={[x, 0.2 + index * 0.015, -0.51]} castShadow>
           <sphereGeometry args={[0.023, 10, 8]} />
@@ -99,6 +113,9 @@ export function BridgeToy(): JSX.Element {
         <RoundedBoxMesh key={x} size={[0.08, 0.06, 0.42]} radius={0.02} smoothness={4} position={[x, 0.28, 0]} castShadow receiveShadow>
           <ToyMaterial preset="paintedWood" color="#edc17e" />
         </RoundedBoxMesh>
+      ))}
+      {[-0.56, -0.28, 0, 0.28, 0.56].map((x) => (
+        <ToyStud key={`bridge-peg-${x}`} position={[x, 0.325, -0.18]} color="#f7d69b" preset="paintedWood" size={0.014} />
       ))}
       {[-0.56, -0.28, 0, 0.28, 0.56].map((x, index) => (
         <RoundedBoxMesh key={`plank-${x}`} size={[0.06, 0.032, 0.32]} radius={0.012} smoothness={3} position={[x, 0.285, -0.025]} castShadow>
@@ -174,6 +191,9 @@ export function FenceToy(): JSX.Element {
           <ToyMaterial preset="paintedWood" color="#f4dca8" />
         </mesh>
       ))}
+      {[-0.48, -0.16, 0.16, 0.48].map((x) => (
+        <ToyStud key={`fence-nail-${x}`} position={[x, 0.33, -0.075]} color="#fff0c5" preset="paintedWood" size={0.012} />
+      ))}
       {[-0.5, 0.5].map((x) => (
         <mesh key={`grass-${x}`} position={[x, 0.03, -0.13]} rotation={[0.08, 0, x > 0 ? -0.35 : 0.35]} castShadow>
           <capsuleGeometry args={[0.014, 0.2, 4, 8]} />
@@ -191,6 +211,12 @@ export function TowerToy(): JSX.Element {
         <cylinderGeometry args={[0.27, 0.34, 0.84, 24]} />
         <ToyMaterial preset="warmCeramic" color="#d7c6ad" />
       </mesh>
+      {[0.12, 0.72].map((y) => (
+        <mesh key={`tower-band-${y}`} position={[0, y, -0.27]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <torusGeometry args={[0.305, 0.009, 8, 32]} />
+          <ToyMaterial preset="warmCeramic" color="#efe2c9" />
+        </mesh>
+      ))}
       {[0.22, 0.42, 0.62].map((y, row) =>
         [-0.18, 0, 0.18].map((x, column) => (
           <RoundedBoxMesh

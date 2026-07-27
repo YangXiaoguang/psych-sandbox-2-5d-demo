@@ -1,5 +1,5 @@
 import { RoundedBoxMesh } from "../RoundedBoxMesh";
-import { Cheeks, EyePair, Smile, ToyHighlight, ToyMaterial } from "./toyPrimitives";
+import { Cheeks, EyePair, Smile, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
 
 interface PersonToyProps {
   bodyScale: number;
@@ -39,8 +39,30 @@ export function PersonToy({ bodyScale, cloth, elder, skin }: PersonToyProps): JS
         <sphereGeometry args={[0.24, 32, 24]} />
         <ToyMaterial preset="claySkin" color={skin} />
       </mesh>
+      {[-0.245, 0.245].map((x) => (
+        <mesh key={`ear-${x}`} position={[x, 0.72, -0.02]} scale={[0.72, 1.12, 0.52]} castShadow receiveShadow>
+          <sphereGeometry args={[0.055, 16, 10]} />
+          <ToyMaterial preset="claySkin" color={skin} />
+        </mesh>
+      ))}
       <ToyHighlight position={[-0.075, 0.79, -0.17]} scale={[0.85, 0.48, 0.28]} opacity={0.2} />
       <EyePair y={0.755} z={-0.207} size={0.027} />
+      <ToyStripe
+        position={[-0.08, 0.82, -0.226]}
+        rotation={[Math.PI / 2, 0, isChild ? 0.16 : 0.08]}
+        length={0.08}
+        radius={0.0065}
+        preset="softPlastic"
+        color={elder ? "#d8d0c5" : "#3b251a"}
+      />
+      <ToyStripe
+        position={[0.08, 0.82, -0.226]}
+        rotation={[Math.PI / 2, 0, isChild ? -0.16 : -0.08]}
+        length={0.08}
+        radius={0.0065}
+        preset="softPlastic"
+        color={elder ? "#d8d0c5" : "#3b251a"}
+      />
       {isAdult ? (
         <>
           {[-0.075, 0.075].map((x) => (
@@ -60,6 +82,16 @@ export function PersonToy({ bodyScale, cloth, elder, skin }: PersonToyProps): JS
         <ToyMaterial preset="claySkin" color="#e6a673" />
       </mesh>
       <Smile position={[0, 0.66, -0.225]} scale={[0.62, 0.42, 0.62]} />
+      <ToyStripe position={[0, 0.35, -0.175]} rotation={[0, 0, 0]} length={0.32} radius={0.006} preset="softPlastic" color="#fff6e8" opacity={0.82} />
+      {[0.23, 0.31, 0.39].map((y, index) => (
+        <ToyStud
+          key={`button-${y}`}
+          position={[isAdult ? 0.045 : 0, y, -0.188]}
+          color={isAdult ? "#523122" : index === 1 ? "#ffcf60" : "#f8efe1"}
+          preset={isAdult ? "paintedWood" : "warmCeramic"}
+          size={isAdult ? 0.014 : 0.012}
+        />
+      ))}
       <mesh position={[0, 0.86, 0.03]} castShadow>
         <sphereGeometry args={[0.245, 32, 12, 0, Math.PI * 2, 0, Math.PI * 0.48]} />
         <ToyMaterial preset="softPlastic" color={elder ? "#f2ede0" : "#49301f"} />

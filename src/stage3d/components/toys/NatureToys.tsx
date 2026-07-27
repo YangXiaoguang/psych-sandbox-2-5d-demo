@@ -1,4 +1,4 @@
-import { Cheeks, EyePair, Smile, ToyHighlight, ToyMaterial, type Vec3 } from "./toyPrimitives";
+import { Cheeks, EyePair, Smile, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud, type Vec3 } from "./toyPrimitives";
 
 export function TreeToy(): JSX.Element {
   return (
@@ -13,6 +13,7 @@ export function TreeToy(): JSX.Element {
           <ToyMaterial preset="paintedWood" color="#84512e" />
         </mesh>
       ))}
+      <ToyStripe position={[0.045, 0.26, -0.145]} rotation={[0.1, 0, -0.16]} length={0.36} radius={0.006} preset="paintedWood" color="#7c4c2b" opacity={0.82} />
       <mesh position={[0, 0.04, 0]} scale={[1.35, 0.28, 1.08]} castShadow receiveShadow>
         <sphereGeometry args={[0.18, 18, 10]} />
         <ToyMaterial preset="sandMatte" color="#af8054" />
@@ -47,6 +48,13 @@ export function TreeToy(): JSX.Element {
           <ToyMaterial preset="softPlastic" color="#e7774f" />
         </mesh>
       ))}
+      {([
+        [-0.22, 0.88, -0.23],
+        [0.02, 0.72, -0.24],
+        [0.18, 0.86, -0.2],
+      ] as Vec3[]).map((position) => (
+        <ToyStud key={`leaf-dot-${position.join("-")}`} position={position} color="#d5f7a1" preset="softPlastic" size={0.018} opacity={0.76} />
+      ))}
     </group>
   );
 }
@@ -65,6 +73,8 @@ export function WaterToy(): JSX.Element {
           <ToyMaterial preset="glassWater" color="#e5fbff" opacity={0.46} />
         </mesh>
       ))}
+      <ToyBeadRow start={[-0.6, 0.12, -0.23]} end={[-0.22, 0.13, -0.31]} count={6} color="#eaffff" preset="glassWater" size={0.013} opacity={0.66} />
+      <ToyBeadRow start={[0.25, 0.13, 0.3]} end={[0.66, 0.12, 0.18]} count={6} color="#eaffff" preset="glassWater" size={0.013} opacity={0.62} />
       {[0.18, 0.48, 0.66].map((radius, index) => (
         <mesh
           key={`inner-${radius}`}
@@ -127,6 +137,8 @@ export function RockToy(): JSX.Element {
           <ToyMaterial preset="sandMatte" color={index === 1 ? "#7d786e" : "#888277"} />
         </mesh>
       ))}
+      <ToyStripe position={[-0.12, 0.3, -0.24]} rotation={[Math.PI / 2, 0, -0.38]} length={0.18} radius={0.005} preset="sandMatte" color="#756f66" opacity={0.78} />
+      <ToyStripe position={[0.16, 0.25, -0.235]} rotation={[Math.PI / 2, 0, 0.34]} length={0.16} radius={0.0045} preset="sandMatte" color="#837a6d" opacity={0.72} />
     </group>
   );
 }
@@ -138,6 +150,9 @@ export function SunToy(): JSX.Element {
         <sphereGeometry args={[0.28, 32, 22]} />
         <ToyMaterial preset="softPlastic" color="#ffd65a" emissive="#d9911d" emissiveIntensity={0.18} />
       </mesh>
+      {[-0.11, 0, 0.11].map((x, index) => (
+        <ToyStud key={`sun-spark-${x}`} position={[x, 0.64 - index * 0.025, -0.24]} color="#fff4a5" preset="softPlastic" size={0.014} opacity={0.82} />
+      ))}
       <ToyHighlight position={[-0.09, 0.58, -0.2]} scale={[1.1, 0.46, 0.28]} opacity={0.28} color="#fff8bc" />
       <EyePair left={-0.08} right={0.08} y={0.53} z={-0.25} size={0.024} />
       <Cheeks y={0.47} z={-0.26} width={0.13} />

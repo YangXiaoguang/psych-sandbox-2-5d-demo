@@ -79,3 +79,22 @@ Non-regression:
 
 - These changes must not change object data, drag behavior, camera controls, export logic, or analysis logic.
 - Validation still relies on `npm run build`, `npm run qa:stage-v2`, and `npm run qa:visual-baseline`.
+
+## Next Sprint: Toy Detail Language V1
+
+Goal:
+
+- Make Stage v2 toys read as individual handcrafted miniatures rather than generic primitives.
+- Add visible close-up detail while preserving the low-poly / soft toy performance envelope.
+- Keep inventory thumbnails and stage models consistent in silhouette and symbolic identity.
+
+Implemented direction:
+
+- Add reusable tiny toy details: studs, short stripes, and bead rows.
+- Add face, clothing, collar, scale, roof, wood, leaf, water, stone, robot, skull, and light details across existing model families.
+- Use small geometry only; no external textures, GLB files, CDN assets, or schema changes.
+
+Non-regression:
+
+- Toy details are purely visual mesh children. They must not change sandbox object data, transform handles, hit testing, exports, localStorage, or analysis.
+- Validation still relies on `npm run build`, `npm run qa:stage-v2`, and `npm run qa:visual-baseline`.

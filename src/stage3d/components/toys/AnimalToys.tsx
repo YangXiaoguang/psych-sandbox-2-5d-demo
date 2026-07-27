@@ -1,4 +1,4 @@
-import { Cheeks, EyePair, TOY_DARK, ToyHighlight, ToyMaterial } from "./toyPrimitives";
+import { Cheeks, EyePair, TOY_DARK, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
 
 export function DogToy(): JSX.Element {
   return (
@@ -24,11 +24,18 @@ export function DogToy(): JSX.Element {
         <sphereGeometry args={[0.035, 14, 10]} />
         <ToyMaterial preset="softPlastic" color={TOY_DARK} />
       </mesh>
+      <ToyStud position={[0.535, 0.386, -0.205]} color="#ffffff" preset="warmCeramic" size={0.009} opacity={0.92} />
       <mesh position={[0.66, 0.31, -0.165]} castShadow>
         <sphereGeometry args={[0.026, 12, 8]} />
         <ToyMaterial preset="softPlastic" color="#2c2520" />
       </mesh>
       <Cheeks y={0.29} z={-0.175} width={0.085} />
+      {[-0.2, 0.04].map((x, index) => (
+        <mesh key={`dog-spot-${x}`} position={[x, 0.43 - index * 0.035, -0.16]} scale={[1.08, 0.66, 0.2]} castShadow>
+          <sphereGeometry args={[0.055, 12, 8]} />
+          <ToyMaterial preset="softPlastic" color={index === 0 ? "#b7723e" : "#f2d79e"} opacity={0.8} />
+        </mesh>
+      ))}
       {[0.32, 0.5].map((x, index) => (
         <mesh key={x} position={[x, 0.48, index === 0 ? 0.08 : -0.02]} rotation={[0.32, 0, index === 0 ? -0.45 : 0.45]} castShadow>
           <capsuleGeometry args={[0.055, 0.22, 5, 12]} />
@@ -53,6 +60,7 @@ export function DogToy(): JSX.Element {
         <torusGeometry args={[0.18, 0.018, 8, 28]} />
         <ToyMaterial preset="softPlastic" color="#4ea7c8" />
       </mesh>
+      <ToyBeadRow start={[-0.03, 0.405, -0.18]} end={[0.22, 0.405, -0.18]} count={4} color="#ffe28f" preset="warmCeramic" size={0.012} />
       <mesh position={[0.14, 0.22, -0.3]} castShadow>
         <sphereGeometry args={[0.035, 12, 8]} />
         <ToyMaterial preset="softPlastic" color="#f4cf65" />
@@ -92,6 +100,9 @@ export function BirdToy(): JSX.Element {
         <capsuleGeometry args={[0.055, 0.34, 5, 14]} />
         <ToyMaterial preset="softPlastic" color="#3fa3c4" />
       </mesh>
+      {[-0.22, 0.22].map((x) => (
+        <ToyStripe key={`bird-wing-mark-${x}`} position={[x, 0.28, -0.12]} rotation={[0.28, 0, x > 0 ? -0.7 : 0.7]} length={0.17} radius={0.006} preset="glassWater" color="#d8fbff" opacity={0.78} />
+      ))}
       <mesh position={[0.22, 0.25, 0.02]} rotation={[0.2, 0, -0.75]} castShadow>
         <capsuleGeometry args={[0.055, 0.34, 5, 14]} />
         <ToyMaterial preset="softPlastic" color="#3fa3c4" />
@@ -154,6 +165,8 @@ export function FishToy(): JSX.Element {
         <torusGeometry args={[0.042, 0.006, 6, 18, Math.PI]} />
         <ToyMaterial preset="glassWater" color="#398e9d" />
       </mesh>
+      <ToyBeadRow start={[-0.18, 0.34, -0.205]} end={[0.22, 0.31, -0.205]} count={5} color="#d8fcff" preset="glassWater" size={0.016} opacity={0.84} />
+      <ToyBeadRow start={[-0.12, 0.24, -0.21]} end={[0.16, 0.22, -0.21]} count={4} color="#4bb5c6" preset="glassWater" size={0.011} opacity={0.78} />
       {[0.02, 0.16, 0.3].map((x) => (
         <mesh key={x} position={[x, 0.3, -0.18]} rotation={[0.1, 0, 0.35]} scale={[0.34, 0.78, 0.12]} castShadow>
           <sphereGeometry args={[0.085, 16, 10]} />
@@ -191,6 +204,12 @@ export function LionToy(): JSX.Element {
         <sphereGeometry args={[0.18, 24, 16]} />
         <ToyMaterial preset="softPlastic" color="#e8b45b" />
       </mesh>
+      {[-0.15, 0.15].map((offset) => (
+        <mesh key={`lion-ear-${offset}`} position={[0.43 + offset, 0.57, -0.04]} rotation={[0, 0, offset > 0 ? -0.36 : 0.36]} castShadow>
+          <coneGeometry args={[0.065, 0.14, 18]} />
+          <ToyMaterial preset="softPlastic" color="#eeb464" />
+        </mesh>
+      ))}
       <ToyHighlight position={[0.36, 0.48, -0.13]} scale={[0.86, 0.42, 0.28]} opacity={0.17} />
       {Array.from({ length: 9 }).map((_, index) => {
         const angle = (index / 9) * Math.PI * 2;
@@ -215,6 +234,12 @@ export function LionToy(): JSX.Element {
           <torusGeometry args={[0.055, 0.006, 6, 14, Math.PI]} />
           <ToyMaterial preset="paintedWood" color="#6b3d25" />
         </mesh>
+      ))}
+      {[-0.055, 0, 0.055].map((offset) => (
+        <ToyStripe key={`lion-whisker-left-${offset}`} position={[0.46, 0.34 + offset, -0.246]} rotation={[Math.PI / 2, 0, 0.25]} length={0.16} radius={0.0038} preset="paintedWood" color="#6b3d25" opacity={0.82} />
+      ))}
+      {[-0.055, 0, 0.055].map((offset) => (
+        <ToyStripe key={`lion-whisker-right-${offset}`} position={[0.58, 0.34 + offset, -0.246]} rotation={[Math.PI / 2, 0, -0.25]} length={0.16} radius={0.0038} preset="paintedWood" color="#6b3d25" opacity={0.82} />
       ))}
       <mesh position={[-0.44, 0.43, 0]} rotation={[0, 0, 0.72]} castShadow>
         <capsuleGeometry args={[0.035, 0.34, 5, 10]} />
