@@ -161,6 +161,18 @@ async function runShellQa() {
     const backpackDesktop = await readBackpackMetrics(page);
     pushResult("Backpack drawer fits desktop viewport", backpackDesktop.drawerFitsViewport, formatMetrics(backpackDesktop));
     pushResult("Backpack drawer opens as a stage sheet", backpackDesktop.drawerHasStageGutter, formatMetrics(backpackDesktop));
+    pushResult("Backpack drawer preserves stage-first width", backpackDesktop.drawerWidthRatio <= 0.26, formatMetrics(backpackDesktop));
+    pushResult(
+      "Backpack idle state hides instructional clutter",
+      !backpackDesktop.idleDragStatusVisible && backpackDesktop.toolsHeight <= 132,
+      formatMetrics(backpackDesktop),
+    );
+    pushResult(
+      "Backpack category rail reads as icon slots",
+      backpackDesktop.railButtons.length >= 4 &&
+        backpackDesktop.railButtons.every((button) => button.width <= 46 && button.height <= 46),
+      formatMetrics(backpackDesktop.railButtons),
+    );
     pushResult("Backpack drawer hides stage mode switch", !backpackDesktop.modeSwitchVisible, formatMetrics(backpackDesktop));
     pushResult("Backpack cards keep names readable", backpackDesktop.cards.every((card) => card.nameReadable), formatMetrics(backpackDesktop.cards));
     pushResult("Backpack card badges do not cover names", backpackDesktop.cards.every((card) => !card.riskOverlapsName), formatMetrics(backpackDesktop.cards));
@@ -567,8 +579,16 @@ async function readBackpackMetrics(page) {
     };
 
     const drawer = box(".game-side-drawer-left");
+    const tools = box(".game-side-drawer-left .asset-library-tools");
     const modeSwitch = document.querySelector(".stage-engine-mode-switch");
     const modeSwitchBox = box(modeSwitch);
+    const railButtons = Array.from(document.querySelectorAll(".game-side-drawer-left .asset-shelf-rail button"))
+      .slice(0, 10)
+      .map((button) => ({
+        label: button.getAttribute("data-label") ?? "",
+        active: button.classList.contains("active"),
+        ...box(button),
+      }));
     const cards = Array.from(document.querySelectorAll(".game-side-drawer-left .asset-card"))
       .slice(0, 8)
       .map((card) => {
@@ -599,6 +619,10 @@ async function readBackpackMetrics(page) {
       viewportHeight: window.innerHeight,
       scrollWidth: document.documentElement.scrollWidth,
       drawer,
+      drawerWidthRatio: drawer ? Number((drawer.width / window.innerWidth).toFixed(3)) : 0,
+      toolsHeight: tools?.height ?? 0,
+      idleDragStatusVisible: isVisible(document.querySelector(".game-side-drawer-left .asset-drag-status.idle")),
+      railButtons,
       drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
       drawerHasStageGutter: Boolean(drawer && drawer.x >= 10 && drawer.bottom <= window.innerHeight - 10),
       modeSwitchVisible: isVisible(modeSwitch),

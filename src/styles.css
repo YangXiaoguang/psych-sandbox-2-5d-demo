@@ -20372,3 +20372,358 @@ table td {
     display: none !important;
   }
 }
+
+/* Backpack game bag polish v2:
+   The drawer should feel like a quick-access inventory. Keep the stage visible,
+   make toys the dominant signal, and reveal helper copy only as feedback. */
+.game-side-drawer-left {
+  width: min(398px, 30vw) !important;
+}
+
+.game-side-drawer .asset-library .panel-header,
+.focus-asset-drawer .asset-library .panel-header {
+  min-height: 58px !important;
+  padding: 12px 14px 10px !important;
+}
+
+.game-side-drawer .asset-library .panel-header .eyebrow,
+.focus-asset-drawer .asset-library .panel-header .eyebrow,
+.game-side-drawer .asset-library-subtitle,
+.focus-asset-drawer .asset-library-subtitle {
+  display: none !important;
+}
+
+.game-side-drawer .asset-library .panel-header h1,
+.focus-asset-drawer .asset-library .panel-header h1 {
+  font-size: 20px !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0 !important;
+}
+
+.game-side-drawer .asset-library-tools,
+.focus-asset-drawer .asset-library-tools {
+  display: grid !important;
+  gap: 6px !important;
+  padding: 8px 12px !important;
+}
+
+.game-side-drawer .asset-search,
+.focus-asset-drawer .asset-search {
+  min-height: 34px !important;
+}
+
+.game-side-drawer .asset-filter-row select,
+.focus-asset-drawer .asset-filter-row select {
+  min-height: 34px !important;
+}
+
+.game-side-drawer .asset-filter-row,
+.focus-asset-drawer .asset-filter-row {
+  grid-template-columns: minmax(0, 1fr) 44px !important;
+}
+
+.game-side-drawer .asset-tool-toggle,
+.focus-asset-drawer .asset-tool-toggle {
+  width: 44px !important;
+  min-width: 44px !important;
+  min-height: 34px !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.game-side-drawer .asset-tool-toggle svg,
+.focus-asset-drawer .asset-tool-toggle svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.game-side-drawer .asset-tool-toggle:not(.active),
+.focus-asset-drawer .asset-tool-toggle:not(.active) {
+  color: var(--ink-muted) !important;
+}
+
+.game-side-drawer .asset-tool-toggle,
+.focus-asset-drawer .asset-tool-toggle {
+  font-size: 0 !important;
+}
+
+.game-side-drawer .segmented-mini,
+.focus-asset-drawer .segmented-mini {
+  min-height: 30px !important;
+  border-radius: 13px !important;
+}
+
+.game-side-drawer .segmented-mini button,
+.focus-asset-drawer .segmented-mini button {
+  min-height: 24px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+}
+
+.game-side-drawer .asset-backpack,
+.focus-asset-drawer .asset-backpack {
+  --backpack-rail-width: 54px;
+  grid-template-columns: var(--backpack-rail-width) minmax(0, 1fr) !important;
+}
+
+.game-side-drawer .asset-shelf-rail,
+.focus-asset-drawer .asset-shelf-rail {
+  width: var(--backpack-rail-width) !important;
+  min-width: var(--backpack-rail-width) !important;
+  gap: 9px !important;
+  padding: 10px 7px !important;
+}
+
+.game-side-drawer .asset-shelf-rail button,
+.focus-asset-drawer .asset-shelf-rail button {
+  width: 40px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  border-radius: 15px !important;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease !important;
+}
+
+.game-side-drawer .asset-shelf-rail button::after,
+.focus-asset-drawer .asset-shelf-rail button::after {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 9px);
+  z-index: 30;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 44%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--ink);
+  content: attr(data-label);
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-4px, -50%);
+  transition: opacity 130ms ease, transform 130ms ease;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.game-side-drawer .asset-shelf-rail button:hover,
+.game-side-drawer .asset-shelf-rail button:focus-visible,
+.focus-asset-drawer .asset-shelf-rail button:hover,
+.focus-asset-drawer .asset-shelf-rail button:focus-visible {
+  transform: translateY(-1px) scale(1.03) !important;
+}
+
+.game-side-drawer .asset-shelf-rail button:hover::after,
+.game-side-drawer .asset-shelf-rail button:focus-visible::after,
+.focus-asset-drawer .asset-shelf-rail button:hover::after,
+.focus-asset-drawer .asset-shelf-rail button:focus-visible::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+.game-side-drawer .asset-shelf-status,
+.focus-asset-drawer .asset-shelf-status {
+  min-height: 40px !important;
+  margin: -12px -12px 10px !important;
+  padding: 8px 10px !important;
+}
+
+.game-side-drawer .asset-shelf-status-main strong,
+.focus-asset-drawer .asset-shelf-status-main strong {
+  font-size: 15px !important;
+  line-height: 1.05 !important;
+}
+
+.game-side-drawer .asset-shelf-status-main em,
+.focus-asset-drawer .asset-shelf-status-main em {
+  font-size: 11px !important;
+}
+
+.game-side-drawer .asset-category-header,
+.focus-asset-drawer .asset-category-header {
+  min-height: 32px !important;
+  margin-top: 2px !important;
+}
+
+.game-side-drawer .asset-grid,
+.focus-asset-drawer .asset-grid {
+  gap: 10px !important;
+}
+
+.game-side-drawer .asset-card,
+.game-side-drawer .asset-category-list.compact .asset-card,
+.focus-asset-drawer .asset-card,
+.focus-asset-drawer .asset-category-list.compact .asset-card {
+  min-height: 178px !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 14px 28px rgba(31, 49, 45, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64) !important;
+}
+
+.game-side-drawer .asset-card::before,
+.focus-asset-drawer .asset-card::before {
+  opacity: 0.9 !important;
+}
+
+.game-side-drawer .asset-card::after,
+.focus-asset-drawer .asset-card::after {
+  opacity: 0.34 !important;
+}
+
+.game-side-drawer .asset-card-action,
+.game-side-drawer .asset-category-list.compact .asset-card-action,
+.focus-asset-drawer .asset-card-action,
+.focus-asset-drawer .asset-category-list.compact .asset-card-action {
+  grid-template-rows: 108px 54px !important;
+  min-height: 170px !important;
+  height: 170px !important;
+  gap: 7px !important;
+}
+
+.game-side-drawer .asset-preview,
+.game-side-drawer .asset-category-list.compact .asset-preview,
+.focus-asset-drawer .asset-preview,
+.focus-asset-drawer .asset-category-list.compact .asset-preview {
+  height: 108px !important;
+  min-height: 108px !important;
+  max-height: 108px !important;
+  border: 1px solid color-mix(in srgb, var(--line) 48%, transparent) !important;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.92), transparent 30%),
+    radial-gradient(ellipse at 50% 88%, rgba(56, 46, 27, 0.18), transparent 46%),
+    linear-gradient(180deg, rgba(255, 235, 179, 0.54), rgba(230, 190, 110, 0.36)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -16px 24px rgba(145, 111, 50, 0.1) !important;
+}
+
+.game-side-drawer .asset-preview img,
+.game-side-drawer .asset-preview canvas,
+.focus-asset-drawer .asset-preview img,
+.focus-asset-drawer .asset-preview canvas {
+  filter: drop-shadow(0 12px 12px rgba(33, 45, 39, 0.22));
+  transform: scale(1.04);
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.game-side-drawer .asset-card:hover .asset-preview img,
+.game-side-drawer .asset-card:focus-within .asset-preview img,
+.game-side-drawer .asset-card:hover .asset-preview canvas,
+.game-side-drawer .asset-card:focus-within .asset-preview canvas,
+.focus-asset-drawer .asset-card:hover .asset-preview img,
+.focus-asset-drawer .asset-card:focus-within .asset-preview img,
+.focus-asset-drawer .asset-card:hover .asset-preview canvas,
+.focus-asset-drawer .asset-card:focus-within .asset-preview canvas {
+  filter: drop-shadow(0 16px 16px rgba(33, 45, 39, 0.28));
+  transform: scale(1.1) translateY(-2px);
+}
+
+.game-side-drawer .asset-card-action::after,
+.focus-asset-drawer .asset-card-action::after {
+  position: absolute;
+  right: 12px;
+  bottom: 64px;
+  z-index: 7;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft) 86%, var(--surface));
+  color: var(--accent-dark);
+  content: "点击放入";
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(5px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.game-side-drawer .asset-card:hover .asset-card-action::after,
+.game-side-drawer .asset-card:focus-within .asset-card-action::after,
+.focus-asset-drawer .asset-card:hover .asset-card-action::after,
+.focus-asset-drawer .asset-card:focus-within .asset-card-action::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.game-side-drawer .asset-card.dragging .asset-card-action::after,
+.focus-asset-drawer .asset-card.dragging .asset-card-action::after {
+  content: "拖到沙盘";
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.product-shell.night-mode .game-side-drawer .asset-shelf-rail button::after,
+.product-shell.night-mode .focus-asset-drawer .asset-shelf-rail button::after {
+  border-color: rgba(117, 236, 217, 0.42);
+  background: rgba(12, 30, 39, 0.96);
+  color: #f4fffb;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-card,
+.product-shell.night-mode .focus-asset-drawer .asset-card,
+.product-shell.night-mode .focus-asset-drawer .asset-category-list.compact .asset-card {
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-preview,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-preview,
+.product-shell.night-mode .focus-asset-drawer .asset-preview,
+.product-shell.night-mode .focus-asset-drawer .asset-category-list.compact .asset-preview {
+  border-color: rgba(132, 214, 202, 0.28) !important;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(226, 255, 244, 0.24), transparent 30%),
+    radial-gradient(ellipse at 50% 88%, rgba(0, 0, 0, 0.36), transparent 48%),
+    linear-gradient(180deg, rgba(44, 74, 77, 0.66), rgba(9, 24, 33, 0.76)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -18px 28px rgba(0, 0, 0, 0.16) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card-action::after,
+.product-shell.night-mode .focus-asset-drawer .asset-card-action::after {
+  border-color: rgba(117, 236, 217, 0.58);
+  background: rgba(21, 86, 80, 0.94);
+  color: #edfffb;
+}
+
+@media (max-width: 1500px) {
+  .game-side-drawer-left {
+    width: min(374px, 40vw) !important;
+  }
+
+  .game-side-drawer .asset-card,
+  .game-side-drawer .asset-category-list.compact .asset-card,
+  .focus-asset-drawer .asset-card,
+  .focus-asset-drawer .asset-category-list.compact .asset-card {
+    min-height: 164px !important;
+  }
+
+  .game-side-drawer .asset-card-action,
+  .game-side-drawer .asset-category-list.compact .asset-card-action,
+  .focus-asset-drawer .asset-card-action,
+  .focus-asset-drawer .asset-category-list.compact .asset-card-action {
+    grid-template-rows: 92px 52px !important;
+    min-height: 156px !important;
+    height: 156px !important;
+  }
+
+  .game-side-drawer .asset-preview,
+  .game-side-drawer .asset-category-list.compact .asset-preview,
+  .focus-asset-drawer .asset-preview,
+  .focus-asset-drawer .asset-category-list.compact .asset-preview {
+    height: 92px !important;
+    min-height: 92px !important;
+    max-height: 92px !important;
+  }
+}

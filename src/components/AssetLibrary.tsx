@@ -328,7 +328,10 @@ function AssetShelfRail({
             key={item.id}
             type="button"
             className={activeShelf === item.id ? "active" : ""}
+            data-label={item.label}
+            data-count={item.count}
             onClick={() => onChange(item.id)}
+            aria-current={activeShelf === item.id ? "true" : undefined}
             aria-label={`${item.label}，${item.count} 个沙具`}
             title={`${item.label} · ${item.count}`}
           >
