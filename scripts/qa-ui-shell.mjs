@@ -116,6 +116,26 @@ async function runShellQa() {
     pushResult("Sandbox HUD does not cover engine switch", !sandboxDesktop.topbarOverlapsModeSwitch, formatMetrics(sandboxDesktop));
     pushResult("Engine switch does not cover Stage v2 title", !sandboxDesktop.modeSwitchOverlapsStagePanelTop, formatMetrics(sandboxDesktop));
     pushResult("Engine switch avoids the game toolbelt", !sandboxDesktop.modeSwitchOverlapsToolbelt, formatMetrics(sandboxDesktop));
+    pushResult(
+      "Sandbox stage remains the dominant game surface",
+      sandboxDesktop.stageAreaRatio >= 0.52 &&
+        sandboxDesktop.stageVisibleWidthRatio >= 0.7 &&
+        sandboxDesktop.stageVisibleHeightRatio >= 0.64,
+      formatMetrics(sandboxDesktop),
+    );
+    pushResult(
+      "Sandbox HUD keeps the stage center clear",
+      sandboxDesktop.hudKeepsStageCenterClear && sandboxDesktop.topbarInTopSafeZone,
+      formatMetrics(sandboxDesktop),
+    );
+    pushResult(
+      "Sandbox bottom dock stays in a game safe zone",
+      sandboxDesktop.toolbeltInBottomSafeZone &&
+        sandboxDesktop.toolbeltBottomGap >= -2 &&
+        sandboxDesktop.toolbeltBottomGap <= 56,
+      formatMetrics(sandboxDesktop),
+    );
+    pushResult("Sandbox edge HUD stays inside the viewport", sandboxDesktop.sideHudInsideViewport, formatMetrics(sandboxDesktop));
 
     const selectedStageToy = await trySelectStageToy(page);
     await delay(300);
@@ -157,6 +177,18 @@ async function runShellQa() {
     pushResult("Sandbox 1280px side HUD entries stay compact", sandboxNarrow.sideHudEntriesCompact, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px exports remain reachable", sandboxNarrow.outputDockButtons >= 3, formatMetrics(sandboxNarrow));
     pushResult("Sandbox 1280px HUD avoids Stage v2 title", !sandboxNarrow.topbarOverlapsStagePanelTop, formatMetrics(sandboxNarrow));
+    pushResult(
+      "Sandbox 1280px stage remains the dominant game surface",
+      sandboxNarrow.stageAreaRatio >= 0.48 &&
+        sandboxNarrow.stageVisibleWidthRatio >= 0.66 &&
+        sandboxNarrow.stageVisibleHeightRatio >= 0.58,
+      formatMetrics(sandboxNarrow),
+    );
+    pushResult(
+      "Sandbox 1280px HUD keeps the stage center clear",
+      sandboxNarrow.hudKeepsStageCenterClear && sandboxNarrow.topbarInTopSafeZone,
+      formatMetrics(sandboxNarrow),
+    );
 
     await clickSelector(page, ".game-insight-toggle");
     await waitForVisibleBox(page, ".game-side-drawer-right .right-panel");
@@ -184,6 +216,18 @@ async function runShellQa() {
     pushResult("Focus mode exports remain reachable", focusMetrics.outputDockButtons >= 3, formatMetrics(focusMetrics));
     pushResult("Focus mode lets Stage v2 fill the viewport", focusMetrics.stageHeight >= focusMetrics.viewportHeight - 48, formatMetrics(focusMetrics));
     pushResult("Focus mode HUD avoids Stage v2 title", !focusMetrics.topbarOverlapsStagePanelTop, formatMetrics(focusMetrics));
+    pushResult(
+      "Focus mode keeps Stage v2 as the full-screen hero",
+      focusMetrics.stageAreaRatio >= 0.78 &&
+        focusMetrics.stageVisibleWidthRatio >= 0.86 &&
+        focusMetrics.stageVisibleHeightRatio >= 0.92,
+      formatMetrics(focusMetrics),
+    );
+    pushResult(
+      "Focus mode keeps controls out of the stage center",
+      focusMetrics.hudKeepsStageCenterClear && focusMetrics.toolbeltInBottomSafeZone,
+      formatMetrics(focusMetrics),
+    );
     await clickSelector(page, ".ai-stage-companion");
     await waitForVisibleBox(page, "[data-testid='focus-ai-drawer']");
     await delay(350);
@@ -279,6 +323,37 @@ async function readSandboxShellMetrics(page) {
     const outputActions = box(".sandbox-game-toolbelt .output-actions");
     const inventoryToggle = box(".game-inventory-toggle");
     const insightToggle = box(".game-insight-toggle");
+    const area = (rect) => (rect ? rect.width * rect.height : 0);
+    const viewportArea = window.innerWidth * window.innerHeight;
+    const stageCore = stage
+      ? {
+          x: Math.round(stage.x + stage.width * 0.22),
+          y: Math.round(stage.y + stage.height * 0.18),
+          width: Math.round(stage.width * 0.56),
+          height: Math.round(stage.height * 0.52),
+          right: Math.round(stage.x + stage.width * 0.78),
+          bottom: Math.round(stage.y + stage.height * 0.7),
+        }
+      : null;
+    const topbarBottomLimit = stage ? stage.y + 104 : 120;
+    const topbarTopLimit = stage ? stage.y + 48 : 48;
+    const toolbeltBottomGap = toolbelt ? Math.round(window.innerHeight - toolbelt.bottom) : null;
+    const topbarInTopSafeZone = Boolean(!topbar || (topbar.y <= topbarTopLimit && topbar.bottom <= topbarBottomLimit));
+    const toolbeltInBottomSafeZone = Boolean(
+      toolbelt && toolbelt.bottom <= window.innerHeight + 2 && toolbelt.y >= window.innerHeight - 170,
+    );
+    const sideHudInsideViewport = Boolean(
+      inventoryToggle &&
+        insightToggle &&
+        inventoryToggle.x >= -2 &&
+        inventoryToggle.y >= -2 &&
+        inventoryToggle.right <= window.innerWidth + 2 &&
+        inventoryToggle.bottom <= window.innerHeight + 2 &&
+        insightToggle.x >= -2 &&
+        insightToggle.y >= -2 &&
+        insightToggle.right <= window.innerWidth + 2 &&
+        insightToggle.bottom <= window.innerHeight + 2,
+    );
     const visibleButtons = (selector) =>
       Array.from(document.querySelectorAll(selector)).filter((button) => {
         const rect = button.getBoundingClientRect();
@@ -306,7 +381,13 @@ async function readSandboxShellMetrics(page) {
       topbarWidth: topbar?.width ?? 0,
       topbarHeight: topbar?.height ?? 0,
       stageHeight: stage?.height ?? 0,
+      stageWidth: stage?.width ?? 0,
+      stageAreaRatio: Number((area(stage) / viewportArea).toFixed(3)),
+      stageVisibleWidthRatio: Number(((stage?.width ?? 0) / window.innerWidth).toFixed(3)),
+      stageVisibleHeightRatio: Number(((stage?.height ?? 0) / window.innerHeight).toFixed(3)),
+      stageCore,
       toolbeltWidth: toolbelt?.width ?? 0,
+      toolbeltBottomGap,
       toolbeltMode: document.querySelector(".sandbox-game-toolbelt")?.className ?? "",
       toolbeltStatusText: document.querySelector(".toolbelt-status p")?.textContent?.trim() ?? "",
       viewActionButtons: visibleButtons(".sandbox-game-toolbelt .view-actions button").length,
@@ -325,6 +406,12 @@ async function readSandboxShellMetrics(page) {
       sideHudEntriesAtEdges:
         Boolean(inventoryToggle && inventoryToggle.x <= 20) &&
         Boolean(insightToggle && insightToggle.right >= window.innerWidth - 20),
+      topbarInTopSafeZone,
+      toolbeltInBottomSafeZone,
+      sideHudInsideViewport,
+      topbarCoversStageCenter: intersects(topbar, stageCore),
+      toolbeltCoversStageCenter: intersects(toolbelt, stageCore),
+      hudKeepsStageCenterClear: !intersects(topbar, stageCore) && !intersects(toolbelt, stageCore),
       topbarOverlapsModeSwitch: intersects(topbar, modeSwitch),
       topbarOverlapsStagePanelTop: intersects(topbar, stagePanelTop),
       modeSwitchOverlapsStagePanelTop: intersects(modeSwitch, stagePanelTop),

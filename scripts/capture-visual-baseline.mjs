@@ -215,7 +215,7 @@ async function openSandboxStage(page, environment) {
   await setEnvironment(page, environment);
   await openGamePortal(page, /沙盘编辑/, ".stage-engine-mode-switch");
   await clickStageEngineMode(page, "stage3d");
-  await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
+  await waitForVisibleBox(page, ".stage-v2-shell", 20_000);
   const canvas = page.locator(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas").first();
   await canvas.waitFor({ state: "visible", timeout: 20_000 });
   await page.waitForSelector(`.product-shell.weather-${environment.weather}.light-${environment.light}`, { timeout: 10_000 });
