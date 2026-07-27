@@ -59,3 +59,23 @@ Out of scope for this sprint:
 - `npm run qa:visual-baseline` captures all scenes without browser errors.
 - In rainy night mode, toys remain visually readable and draggable.
 - Default Stage v2 composition shows the island as the main subject, not a small object in a large ocean.
+
+## Next Sprint: Sand And Shoreline Polish
+
+Goal:
+
+- Make the yellow sand read as tactile material instead of a flat colored island.
+- Make the shoreline feel alive through small foam beads, moving lace, and shallow-water highlights.
+- Keep the scene readable in day, night, rain, and fullscreen states.
+
+Implemented direction:
+
+- Add procedural rake/combing marks to the sand texture.
+- Add lightweight 3D sand-surface rake mark meshes so close camera views show physical detail.
+- Add small shoreline foam flecks with subtle breathing motion.
+- Add more bead detail to the foam texture while preserving the existing ocean animation.
+
+Non-regression:
+
+- These changes must not change object data, drag behavior, camera controls, export logic, or analysis logic.
+- Validation still relies on `npm run build`, `npm run qa:stage-v2`, and `npm run qa:visual-baseline`.

@@ -31,6 +31,8 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
   const tideFoamGeometry = useMemo(() => createIslandRingGeometry(1.04, 1.18, SAND_SURFACE_Y + 0.021), []);
   const shellSeeds = useMemo(() => createShellSeeds(), []);
   const surfaceSeeds = useMemo(() => createSurfaceSandSeeds(), []);
+  const rakeSeeds = useMemo(() => createSandRakeSeeds(), []);
+  const foamFleckSeeds = useMemo(() => createFoamFleckSeeds(), []);
 
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime();
@@ -98,6 +100,7 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
         />
       </mesh>
       <TideFoam geometry={tideFoamGeometry} night={night} rainy={rainy} texture={foamTexture} />
+      <ShoreFoamFlecks seeds={foamFleckSeeds} night={night} rainy={rainy} />
 
       <mesh position={[1.58, SAND_SURFACE_Y + 0.035, 0.82]} receiveShadow>
         <cylinderGeometry args={[0.64, 0.7, 0.06, 56]} />
@@ -113,6 +116,72 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
 
       <ShoreDetails seeds={shellSeeds} night={night} />
       <SurfaceSandDetails seeds={surfaceSeeds} night={night} rainy={rainy} />
+      <SandRakeMarks seeds={rakeSeeds} night={night} rainy={rainy} />
+    </group>
+  );
+}
+
+function SandRakeMarks({ night, rainy, seeds }: { night: boolean; rainy: boolean; seeds: SandRakeSeed[] }): JSX.Element {
+  const grooveColor = night ? "#7d6741" : rainy ? "#9e7442" : "#b3762f";
+  const highlightColor = night ? "#fff0b7" : rainy ? "#ffe4a7" : "#fff0ba";
+  const grooveOpacity = night ? 0.14 : rainy ? 0.11 : 0.16;
+  const highlightOpacity = night ? 0.11 : rainy ? 0.075 : 0.13;
+
+  return (
+    <group>
+      {seeds.map((seed, index) => (
+        <group key={`${seed.x}-${seed.z}-${index}`} position={[seed.x, SAND_SURFACE_Y + 0.072 + seed.lift, seed.z]} rotation={[0, seed.rotation, 0]}>
+          {Array.from({ length: seed.lines }, (_, lineIndex) => {
+            const centered = lineIndex - (seed.lines - 1) / 2;
+            const offset = centered * seed.spacing;
+            return (
+              <group key={lineIndex} position={[0, 0, offset]}>
+                <mesh rotation={[-Math.PI / 2, 0, 0]} renderOrder={5}>
+                  <planeGeometry args={[seed.length * (0.82 + seeded(index * 71 + lineIndex * 13) * 0.28), seed.thickness]} />
+                  <meshBasicMaterial color={grooveColor} transparent opacity={grooveOpacity} depthWrite={false} />
+                </mesh>
+                <mesh position={[0.015, 0.004, seed.thickness * 1.65]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={6}>
+                  <planeGeometry args={[seed.length * 0.64, seed.thickness * 0.42]} />
+                  <meshBasicMaterial color={highlightColor} transparent opacity={highlightOpacity} depthWrite={false} />
+                </mesh>
+              </group>
+            );
+          })}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function ShoreFoamFlecks({ night, rainy, seeds }: { night: boolean; rainy: boolean; seeds: FoamFleckSeed[] }): JSX.Element {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) {
+      return;
+    }
+    const pulse = 1 + Math.sin(clock.getElapsedTime() * (rainy ? 1.24 : 0.86)) * 0.008;
+    groupRef.current.scale.set(pulse, 1, pulse);
+  });
+
+  return (
+    <group ref={groupRef}>
+      {seeds.map((seed, index) => {
+        const point = getIslandEdgePoint(seed.angle, seed.scale);
+        const opacity = night ? seed.opacity * 0.56 : rainy ? seed.opacity * 0.9 : seed.opacity;
+        return (
+          <mesh
+            key={`${seed.angle}-${index}`}
+            position={[point.x, SAND_SURFACE_Y + 0.034 + seed.lift, point.z]}
+            rotation={[-Math.PI / 2, 0, seed.angle + seed.rotation]}
+            scale={[seed.size * 2.4, seed.size * 0.62, 1]}
+            renderOrder={6}
+          >
+            <circleGeometry args={[1, 16]} />
+            <meshBasicMaterial color={night ? "#d8f1f3" : "#ffffff"} transparent opacity={opacity} depthWrite={false} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
@@ -370,6 +439,34 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
       context.bezierCurveTo(230, y - 45, 586, y + 34, 984, y - 18);
       context.stroke();
     }
+
+    for (let sweep = 0; sweep < 22; sweep += 1) {
+      const centerX = 120 + seeded(sweep * 101) * 780;
+      const centerY = 130 + seeded(sweep * 113) * 740;
+      const length = 76 + seeded(sweep * 127) * 160;
+      const gap = 6 + seeded(sweep * 139) * 5;
+      const angle = -0.62 + seeded(sweep * 151) * 1.18;
+      const lineCount = 4 + Math.floor(seeded(sweep * 163) * 4);
+      context.save();
+      context.translate(centerX, centerY);
+      context.rotate(angle);
+      for (let line = 0; line < lineCount; line += 1) {
+        const offset = (line - (lineCount - 1) / 2) * gap;
+        context.lineWidth = 1.15 + seeded(sweep * 181 + line) * 0.65;
+        context.strokeStyle = night ? "rgba(82,57,28,0.16)" : rainy ? "rgba(99,66,30,0.1)" : "rgba(111,69,26,0.14)";
+        context.beginPath();
+        context.moveTo(-length * 0.48, offset);
+        context.bezierCurveTo(-length * 0.12, offset - 10, length * 0.16, offset + 9, length * 0.48, offset - 2);
+        context.stroke();
+        context.lineWidth = 0.72;
+        context.strokeStyle = night ? "rgba(255,237,173,0.12)" : rainy ? "rgba(255,239,186,0.08)" : "rgba(255,235,166,0.14)";
+        context.beginPath();
+        context.moveTo(-length * 0.42, offset - 2.6);
+        context.bezierCurveTo(-length * 0.1, offset - 12, length * 0.18, offset + 5, length * 0.42, offset - 5);
+        context.stroke();
+      }
+      context.restore();
+    }
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
@@ -513,6 +610,17 @@ function createFoamTexture(environment: SandboxEnvironment): THREE.CanvasTexture
       context.fillStyle = `rgba(255,255,255,${alpha})`;
       context.beginPath();
       context.ellipse(x, y, radius * 1.8, radius * 0.52, seeded(index * 5) * Math.PI, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    for (let bead = 0; bead < 82; bead += 1) {
+      const x = seeded(bead * 83) * canvas.width;
+      const y = 18 + seeded(bead * 97) * 92;
+      const radius = 1.2 + seeded(bead * 109) * (rainy ? 4.2 : 3);
+      const alpha = 0.12 + seeded(bead * 127) * (rainy ? 0.34 : 0.22);
+      context.fillStyle = `rgba(255,255,255,${alpha})`;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
     }
   }
@@ -667,6 +775,26 @@ interface SurfaceSandSeed {
   size: number;
 }
 
+interface SandRakeSeed {
+  lift: number;
+  length: number;
+  lines: number;
+  rotation: number;
+  spacing: number;
+  thickness: number;
+  x: number;
+  z: number;
+}
+
+interface FoamFleckSeed {
+  angle: number;
+  lift: number;
+  opacity: number;
+  rotation: number;
+  scale: number;
+  size: number;
+}
+
 function createShellSeeds(): ShoreSeed[] {
   return Array.from({ length: 34 }, (_, index) => ({
     angle: seeded(index * 37) * Math.PI * 2,
@@ -686,6 +814,35 @@ function createSurfaceSandSeeds(): SurfaceSandSeed[] {
     rotation: seeded(index * 31 + 2) * Math.PI,
     scale: 0.18 + seeded(index * 53 + 11) * 0.68,
     size: 0.012 + seeded(index * 67 + 13) * 0.024,
+  }));
+}
+
+function createSandRakeSeeds(): SandRakeSeed[] {
+  return Array.from({ length: 13 }, (_, index) => {
+    const angle = seeded(index * 73 + 4) * Math.PI * 2;
+    const scale = 0.24 + seeded(index * 89 + 9) * 0.56;
+    const point = getIslandEdgePoint(angle, scale);
+    return {
+      lift: seeded(index * 17 + 3) * 0.01,
+      length: 0.34 + seeded(index * 37 + 1) * 0.64,
+      lines: 3 + Math.floor(seeded(index * 43 + 2) * 4),
+      rotation: seeded(index * 47 + 6) * Math.PI * 2,
+      spacing: 0.035 + seeded(index * 53 + 8) * 0.022,
+      thickness: 0.012 + seeded(index * 59 + 10) * 0.008,
+      x: point.x,
+      z: point.z,
+    };
+  });
+}
+
+function createFoamFleckSeeds(): FoamFleckSeed[] {
+  return Array.from({ length: 72 }, (_, index) => ({
+    angle: seeded(index * 31 + 12) * Math.PI * 2,
+    lift: seeded(index * 41 + 15) * 0.01,
+    opacity: 0.08 + seeded(index * 43 + 3) * 0.18,
+    rotation: seeded(index * 47 + 9) * Math.PI,
+    scale: 1.048 + seeded(index * 37 + 7) * 0.11,
+    size: 0.014 + seeded(index * 53 + 11) * 0.036,
   }));
 }
 
