@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ChevronDown,
   Cloud,
   CloudRain,
   FileDown,
@@ -103,39 +104,58 @@ export function TopBar({
       </div>
       <div className="topbar-hud" aria-label="沙盘控制台">
         <section className="hud-cluster environment-hud" aria-label="沙盘环境">
-          <p>环境</p>
-          <div className="hud-segment" role="group" aria-label="选择天气">
-            {WEATHER_OPTIONS.map((weather) => (
-              <button
-                key={weather}
-                type="button"
-                className={environment.weather === weather ? "active" : ""}
-                onClick={() => onEnvironmentChange({ weather })}
-                aria-pressed={environment.weather === weather}
-                aria-label={`切换天气：${WEATHER_LABELS[weather]}`}
-                title={WEATHER_LABELS[weather]}
-              >
-                <WeatherIcon weather={weather} />
-                <span>{getWeatherShortLabel(weather)}</span>
-              </button>
-            ))}
-          </div>
-          <div className="hud-segment compact" role="group" aria-label="选择光照">
-            {LIGHT_OPTIONS.map((light) => (
-              <button
-                key={light}
-                type="button"
-                className={environment.light === light ? "active" : ""}
-                onClick={() => onEnvironmentChange({ light })}
-                aria-pressed={environment.light === light}
-                aria-label={`切换光照：${LIGHT_LABELS[light]}`}
-                title={LIGHT_LABELS[light]}
-              >
-                {light === "night" ? <Moon size={15} /> : <Sun size={15} />}
-                <span>{light === "night" ? "夜" : "日"}</span>
-              </button>
-            ))}
-          </div>
+          <details className="environment-dock">
+            <summary aria-label={`沙盘环境：${getEnvironmentLabel(environment)}，展开切换天气与光照`}>
+              <span className="environment-current-icon">
+                <WeatherIcon weather={environment.weather} />
+              </span>
+              <span className="environment-current-copy">
+                <small>环境</small>
+                <strong>{getEnvironmentLabel(environment)}</strong>
+              </span>
+              <ChevronDown className="environment-current-caret" size={15} aria-hidden="true" />
+            </summary>
+            <div className="environment-popover" role="group" aria-label="沙盘环境快速切换">
+              <div className="environment-popover-group">
+                <p>天气</p>
+                <div className="hud-segment" role="group" aria-label="选择天气">
+                  {WEATHER_OPTIONS.map((weather) => (
+                    <button
+                      key={weather}
+                      type="button"
+                      className={environment.weather === weather ? "active" : ""}
+                      onClick={() => onEnvironmentChange({ weather })}
+                      aria-pressed={environment.weather === weather}
+                      aria-label={`切换天气：${WEATHER_LABELS[weather]}`}
+                      title={WEATHER_LABELS[weather]}
+                    >
+                      <WeatherIcon weather={weather} />
+                      <span>{getWeatherShortLabel(weather)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="environment-popover-group">
+                <p>光照</p>
+                <div className="hud-segment compact" role="group" aria-label="选择光照">
+                  {LIGHT_OPTIONS.map((light) => (
+                    <button
+                      key={light}
+                      type="button"
+                      className={environment.light === light ? "active" : ""}
+                      onClick={() => onEnvironmentChange({ light })}
+                      aria-pressed={environment.light === light}
+                      aria-label={`切换光照：${LIGHT_LABELS[light]}`}
+                      title={LIGHT_LABELS[light]}
+                    >
+                      {light === "night" ? <Moon size={15} /> : <Sun size={15} />}
+                      <span>{light === "night" ? "夜" : "日"}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </details>
         </section>
 
         <section className="hud-cluster camera-hud" aria-label="沙盘视角">

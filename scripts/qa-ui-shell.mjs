@@ -104,6 +104,16 @@ async function runShellQa() {
     pushResult("Sandbox game navigation stays compact", sandboxDesktop.navHeight <= 80, `height=${sandboxDesktop.navHeight}`);
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
     pushResult("Sandbox ambient HUD stays narrow", sandboxDesktop.topbarWidth <= 430, formatMetrics(sandboxDesktop));
+    pushResult(
+      "Sandbox ambient HUD defaults to one game capsule",
+      Boolean(sandboxDesktop.environmentSummary) &&
+        sandboxDesktop.environmentSummary.width <= 220 &&
+        sandboxDesktop.topbarVisibleButtons <= 1 &&
+        !sandboxDesktop.environmentPopoverVisible &&
+        /晴天|阴天|雨天/.test(sandboxDesktop.environmentSummaryText) &&
+        /白天|黑夜/.test(sandboxDesktop.environmentSummaryText),
+      formatMetrics(sandboxDesktop),
+    );
     pushResult("Sandbox exports live in the bottom dock", sandboxDesktop.outputDockButtons >= 3 && !sandboxDesktop.topbarExportVisible, formatMetrics(sandboxDesktop));
     pushResult(
       "Sandbox idle dock is compact and contextual",
@@ -139,8 +149,8 @@ async function runShellQa() {
       formatMetrics(sandboxDesktop),
     );
     pushResult("Sandbox edge HUD stays inside the viewport", sandboxDesktop.sideHudInsideViewport, formatMetrics(sandboxDesktop));
-    pushNightContrastResult("Game navigation night text remains readable", gameNavContrast, 20);
-    pushNightContrastResult("Sandbox top HUD night controls remain readable", sandboxTopbarContrast, 5);
+    pushNightContrastResult("Game navigation night text remains readable", gameNavContrast, 6);
+    pushNightContrastResult("Sandbox top HUD night controls remain readable", sandboxTopbarContrast, 3);
     pushNightContrastResult("Sandbox bottom toolbelt night controls remain readable", sandboxToolbeltContrast, 10);
 
     const selectedStageToy = await trySelectStageToy(page);
@@ -239,7 +249,7 @@ async function runShellQa() {
       insightNarrow.sections.length >= 4 && insightNarrow.sections.every((section) => section.summaryHeight <= 48),
       formatMetrics(insightNarrow.sections),
     );
-    pushNightContrastResult("Insight drawer night text remains readable", insightContrast, 24);
+    pushNightContrastResult("Insight drawer night text remains readable", insightContrast, 12);
     await clickSelector(page, ".game-side-drawer-right .small-icon-button");
     await page.waitForSelector(".game-side-drawer-right", { state: "detached", timeout: 5000 });
     await delay(250);
@@ -458,6 +468,7 @@ async function readSandboxShellMetrics(page) {
     const outputActions = box(".sandbox-game-toolbelt .output-actions");
     const inventoryToggle = box(".game-inventory-toggle");
     const insightToggle = box(".game-insight-toggle");
+    const environmentSummary = box(".workspace-column .environment-dock > summary");
     const area = (rect) => (rect ? rect.width * rect.height : 0);
     const viewportArea = window.innerWidth * window.innerHeight;
     const stageCore = stage
@@ -489,11 +500,23 @@ async function readSandboxShellMetrics(page) {
         insightToggle.right <= window.innerWidth + 2 &&
         insightToggle.bottom <= window.innerHeight + 2,
     );
+    const isInsideClosedDetails = (element) => {
+      const details = element.closest("details");
+      if (!details || details.open) return false;
+      const summary = details.querySelector(":scope > summary") ?? details.querySelector("summary");
+      return !summary?.contains(element);
+    };
     const visibleButtons = (selector) =>
       Array.from(document.querySelectorAll(selector)).filter((button) => {
         const rect = button.getBoundingClientRect();
         const style = window.getComputedStyle(button);
-        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+        return (
+          !isInsideClosedDetails(button) &&
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== "none" &&
+          style.visibility !== "hidden"
+        );
       });
     const isVisible = (selector) => {
       const element = document.querySelector(selector);
@@ -533,6 +556,10 @@ async function readSandboxShellMetrics(page) {
       outputActionsWidth: outputActions?.width ?? 0,
       hintsVisible: isVisible(".sandbox-game-toolbelt .toolbelt-hints"),
       topbarExportVisible: isVisible(".workspace-column .export-hud"),
+      topbarVisibleButtons: visibleButtons(".workspace-column .topbar button").length,
+      environmentSummary,
+      environmentSummaryText: document.querySelector(".workspace-column .environment-dock > summary")?.textContent?.trim().replace(/\s+/g, " ") ?? "",
+      environmentPopoverVisible: isVisible(".workspace-column .environment-popover"),
       inventoryToggle,
       insightToggle,
       sideHudEntriesCompact:
@@ -821,6 +848,13 @@ async function readNightModeContrastMetrics(page, rootSelector) {
         )
       : [];
 
+    const isInsideClosedDetails = (element) => {
+      const details = element.closest("details");
+      if (!details || details.open) return false;
+      const summary = details.querySelector(":scope > summary") ?? details.querySelector("summary");
+      return !summary?.contains(element);
+    };
+
     const samples = controls
       .map((element) => {
         const rect = element.getBoundingClientRect();
@@ -834,6 +868,7 @@ async function readNightModeContrastMetrics(page, rootSelector) {
               : "";
         const text = (formText || element.textContent || "").trim().replace(/\s+/g, " ");
         const visible =
+          !isInsideClosedDetails(element) &&
           rect.width > 0 &&
           rect.height > 0 &&
           rect.bottom > 0 &&

@@ -21070,3 +21070,270 @@ table td {
   color: #f4fffb !important;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
 }
+
+/* Game HUD phase 4:
+   The environment control is a compact in-world capsule. Full weather/light
+   controls open on demand so the stage does not read like an office toolbar. */
+.app-shell.game-hud-layout .workspace-column .topbar,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar,
+.product-shell:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar,
+.product-shell.night-mode:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar,
+.product-shell.focus-mode .app-shell.focus-mode .topbar,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar,
+.product-shell.night-mode .app-shell.focus-mode .topbar {
+  max-width: min(264px, calc(100% - 188px)) !important;
+  min-height: 48px !important;
+  padding: 5px !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .environment-hud,
+.product-shell.focus-mode .app-shell.focus-mode .environment-hud {
+  position: relative !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.environment-dock {
+  position: relative;
+  min-width: 0;
+}
+
+.environment-dock > summary {
+  display: inline-grid;
+  grid-template-columns: 28px minmax(112px, 1fr) 18px;
+  min-width: 190px;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 7px 4px 5px;
+  border: 1px solid color-mix(in srgb, var(--accent-line) 42%, var(--line));
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.62), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 86%, transparent), color-mix(in srgb, var(--panel) 78%, transparent));
+  color: var(--ink);
+  box-shadow: 0 12px 24px rgba(54, 74, 65, 0.12), var(--inner-highlight);
+  cursor: pointer;
+  list-style: none;
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.environment-dock > summary::-webkit-details-marker {
+  display: none;
+}
+
+.environment-dock > summary:hover,
+.environment-dock > summary:focus-visible,
+.environment-dock[open] > summary {
+  border-color: var(--accent-line);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.72), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 58%, var(--surface)), color-mix(in srgb, var(--panel) 88%, transparent));
+  box-shadow: 0 16px 30px rgba(54, 74, 65, 0.16), 0 0 0 4px rgba(82, 185, 168, 0.08), var(--inner-highlight);
+  transform: translateY(-1px);
+}
+
+.environment-current-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent-soft) 82%, white);
+  color: var(--accent-dark);
+}
+
+.environment-current-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.environment-current-copy small {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.environment-current-copy strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.environment-current-caret {
+  color: var(--ink-muted);
+  transition: transform 150ms ease;
+}
+
+.environment-dock[open] .environment-current-caret,
+.environment-dock:hover .environment-current-caret {
+  transform: rotate(180deg);
+}
+
+.environment-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 220;
+  display: grid;
+  width: 236px;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.74), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, transparent), color-mix(in srgb, var(--panel) 92%, transparent));
+  box-shadow: 0 22px 50px rgba(46, 56, 43, 0.2), var(--inner-highlight);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -4px) scale(0.98);
+  transform-origin: top center;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+
+.environment-dock[open] .environment-popover,
+.environment-dock:not([open]):hover .environment-popover,
+.environment-dock:not([open]):focus-within .environment-popover {
+  display: grid !important;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.environment-popover::before {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  content: "";
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.environment-popover-group {
+  display: grid;
+  gap: 5px;
+}
+
+.environment-popover-group > p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.environment-popover .hud-segment {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px !important;
+  padding: 4px !important;
+  border-radius: 13px !important;
+}
+
+.environment-popover .hud-segment.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.environment-popover .hud-segment button,
+.app-shell.game-hud-layout .workspace-column .environment-popover .hud-segment button,
+.product-shell.focus-mode .app-shell.focus-mode .environment-popover .hud-segment button {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+}
+
+.product-shell.night-mode .environment-dock > summary {
+  border-color: rgba(132, 214, 202, 0.38);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(117, 236, 217, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(22, 49, 57, 0.94), rgba(8, 24, 34, 0.94));
+  color: #f2fffb;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-shell.night-mode .environment-dock > summary:hover,
+.product-shell.night-mode .environment-dock > summary:focus-visible,
+.product-shell.night-mode .environment-dock[open] > summary {
+  border-color: rgba(130, 241, 220, 0.64);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(124, 241, 220, 0.22), transparent 36%),
+    linear-gradient(180deg, rgba(24, 76, 72, 0.96), rgba(8, 31, 40, 0.96));
+}
+
+.product-shell.night-mode .environment-current-icon {
+  background:
+    radial-gradient(circle at 35% 20%, rgba(221, 255, 244, 0.22), transparent 38%),
+    rgba(24, 87, 81, 0.92);
+  color: #aaf7e9;
+}
+
+.product-shell.night-mode .environment-current-copy small,
+.product-shell.night-mode .environment-current-caret,
+.product-shell.night-mode .environment-popover-group > p {
+  color: rgba(219, 239, 233, 0.76);
+}
+
+.product-shell.night-mode .environment-current-copy strong {
+  color: #f6fffb;
+}
+
+.product-shell.night-mode .environment-popover {
+  border-color: rgba(132, 214, 202, 0.34);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(117, 236, 216, 0.16), transparent 38%),
+    linear-gradient(180deg, rgba(18, 42, 52, 0.98), rgba(7, 22, 31, 0.98));
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-shell.night-mode .environment-popover::before {
+  border-color: rgba(132, 214, 202, 0.34);
+  background: rgba(18, 42, 52, 0.98);
+}
+
+@media (max-width: 1180px) {
+  .app-shell.game-hud-layout .workspace-column .topbar,
+  .product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar,
+  .product-shell.focus-mode .app-shell.focus-mode .topbar,
+  .product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar {
+    max-width: min(218px, calc(100% - 116px)) !important;
+  }
+
+  .environment-dock > summary {
+    grid-template-columns: 28px minmax(70px, 1fr) 16px;
+    min-width: 158px;
+  }
+
+  .environment-current-copy small {
+    display: none;
+  }
+}
