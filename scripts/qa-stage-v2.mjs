@@ -124,7 +124,7 @@ async function runStageV2Smoke() {
 
   await clickButtonByMatcher(page, /切换天气：雨天|雨/);
   await clickButtonByMatcher(page, /切换光照：黑夜|夜/);
-  await page.waitForSelector(".product-shell.weather-rainy.light-night.night-mode", { timeout: 5000 });
+  await waitForShellEnvironment(page, { weather: "rainy", light: "night", nightMode: true });
   pushResult("Rainy night environment applies shell theme", true);
 
   const waterBefore = await captureLocator(page, canvas, "stage-v2-water-before.png");
@@ -146,6 +146,12 @@ async function runStageV2Smoke() {
   const cameraResult = await tryMoveCamera(page, canvas);
   pushResult("Mouse can move the Stage v2 camera view", cameraResult.ok, cameraResult.detail);
   pushResult("Mouse pan exposes Stage v2 interaction state", cameraResult.modeSeen, cameraResult.modeDetail);
+
+  markQaStep("rotate camera");
+  const rotateResult = await tryRotateCamera(page, canvas);
+  pushResult("Mouse right-drag rotates the Stage v2 viewing angle", rotateResult.ok, rotateResult.detail);
+  pushResult("Right-drag exposes Stage v2 rotation state", rotateResult.modeSeen, rotateResult.modeDetail);
+  pushResult("Right-drag camera rotation does not move toys", rotateResult.sceneStable, rotateResult.sceneDetail);
 
   markQaStep("zoom camera");
   const zoomResult = await tryZoomCamera(page, canvas);
@@ -171,7 +177,7 @@ async function runStageV2Smoke() {
   markQaStep("switch environment");
   await clickButtonByMatcher(page, /切换天气：晴天|晴/);
   await clickButtonByMatcher(page, /切换光照：白天|日/);
-  await page.waitForSelector(".product-shell.weather-sunny.light-day:not(.night-mode)", { timeout: 5000 });
+  await waitForShellEnvironment(page, { weather: "sunny", light: "day", nightMode: false });
   pushResult("Sunny day environment applies shell theme", true);
 
   markQaStep("switch classic");
@@ -326,6 +332,44 @@ async function tryMoveCamera(page, canvas) {
   };
 }
 
+async function tryRotateCamera(page, canvas) {
+  const box = await canvas.boundingBox();
+  if (!box) {
+    return {
+      ok: false,
+      detail: "canvas bounding box missing",
+      modeSeen: false,
+      modeDetail: "",
+      sceneStable: false,
+      sceneDetail: "canvas bounding box missing",
+    };
+  }
+
+  const sceneBefore = await readScene(page);
+  const before = await captureLocator(page, canvas, "stage-v2-rotate-before.png");
+  const x = box.x + box.width * 0.72;
+  const y = box.y + box.height * 0.24;
+  await page.mouse.move(x, y);
+  await page.mouse.down({ button: "right" });
+  await page.mouse.move(x - 170, y + 18, { steps: 18 });
+  const interaction = await readStageInteraction(page);
+  await page.mouse.up({ button: "right" });
+  await delay(650);
+  const after = await captureLocator(page, canvas, "stage-v2-rotate-after.png");
+  const sceneAfter = await readScene(page);
+  const diff = byteDiff(before, after);
+  const mutation = findObjectMutation(sceneBefore, sceneAfter);
+
+  return {
+    ok: diff > 1000,
+    detail: `byteDiff=${diff}`,
+    modeSeen: /正在转动/.test(interaction.text) || /is-stage-rotate/.test(interaction.className),
+    modeDetail: interaction.text || interaction.className,
+    sceneStable: !mutation,
+    sceneDetail: mutation ?? "toy transforms unchanged",
+  };
+}
+
 async function tryZoomCamera(page, canvas) {
   const before = await captureLocator(page, canvas, "stage-v2-zoom-before.png");
   await canvas.hover();
@@ -387,6 +431,34 @@ function findObjectMovement(before, after) {
   return null;
 }
 
+function findObjectMutation(before, after) {
+  const beforeById = new Map((before.objects ?? []).map((object) => [object.id, object]));
+  for (const object of after.objects ?? []) {
+    const previous = beforeById.get(object.id);
+    if (!previous) {
+      return `new object appeared during camera rotation: ${object.name ?? object.id}`;
+    }
+
+    const moved =
+      Math.abs(Number(object.x ?? 0) - Number(previous.x ?? 0)) > 0.1 ||
+      Math.abs(Number(object.y ?? 0) - Number(previous.y ?? 0)) > 0.1;
+    const rotated = Math.abs(Number(object.rotation ?? 0) - Number(previous.rotation ?? 0)) > 0.1;
+    const scaled = Math.abs(Number(object.scale ?? 1) - Number(previous.scale ?? 1)) > 0.005;
+    if (moved || rotated || scaled) {
+      return `${object.name ?? object.id} changed while rotating camera`;
+    }
+  }
+
+  const afterIds = new Set((after.objects ?? []).map((object) => object.id));
+  for (const object of before.objects ?? []) {
+    if (!afterIds.has(object.id)) {
+      return `object disappeared during camera rotation: ${object.name ?? object.id}`;
+    }
+  }
+
+  return null;
+}
+
 async function readStageInteraction(page) {
   return page.evaluate(() => {
     const shell = document.querySelector(".stage-v2-shell");
@@ -396,6 +468,25 @@ async function readStageInteraction(page) {
       text: hud?.textContent?.replace(/\s+/g, " ").trim() ?? "",
     };
   });
+}
+
+async function waitForShellEnvironment(page, { weather, light, nightMode }) {
+  await page.waitForFunction(
+    ({ expectedWeather, expectedLight, expectedNightMode }) => {
+      const shell = document.querySelector(".product-shell");
+      if (!shell) {
+        return false;
+      }
+
+      return (
+        shell.classList.contains(`weather-${expectedWeather}`) &&
+        shell.classList.contains(`light-${expectedLight}`) &&
+        shell.classList.contains("night-mode") === expectedNightMode
+      );
+    },
+    { expectedWeather: weather, expectedLight: light, expectedNightMode: nightMode },
+    { timeout: 5000 },
+  );
 }
 
 async function assertNoErrorOverlay(page, label) {
