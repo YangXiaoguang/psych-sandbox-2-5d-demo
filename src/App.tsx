@@ -893,10 +893,12 @@ export function App(): JSX.Element {
               >
                 <StageEngineV2Shell
                   ref={stageV2Ref}
+                  draggingAsset={draggingAsset}
                   environment={environment}
                   objectCount={objects.length}
                   objects={objects}
                   selectedId={selectedId}
+                  onDropAsset={handleDropAsset}
                   onPatchObject={patchObject}
                   onRecordEvent={recordEvent}
                   onSelectObject={handleSelectObject}

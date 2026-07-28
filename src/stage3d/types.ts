@@ -1,1 +1,1 @@
-export type StageInteractionMode = "idle" | "pan" | "rotate" | "zoom" | "drag-toy";
+export type StageInteractionMode = "idle" | "pan" | "rotate" | "zoom" | "drag-toy" | "place-asset";

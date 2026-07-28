@@ -10,6 +10,7 @@ const PORT = Number(process.env.STAGE_V2_QA_PORT ?? 5173);
 const BASE_URL = process.env.STAGE_V2_QA_URL ?? `http://127.0.0.1:${PORT}/`;
 const ARTIFACT_DIR = path.resolve(process.cwd(), "artifacts", "stage-v2-qa");
 const DEFAULT_USER_ID = "local_user_default";
+const SANDBOX_ASSET_DRAG_MIME = "application/x-sandbox-asset";
 
 const STORAGE_KEYS = {
   authSession: "psych-sandbox-2-5d-demo.local-auth-session.v1",
@@ -132,6 +133,16 @@ async function runStageV2Smoke() {
   const waterAfter = await captureLocator(page, canvas, "stage-v2-water-after.png");
   const waterDiff = byteDiff(waterBefore, waterAfter);
   pushResult("Ocean/weather animation changes frame", waterDiff > 1000, `byteDiff=${waterDiff}`);
+
+  markQaStep("place toy from backpack");
+  const placementResult = await tryPlaceAssetFromBackpack(page, canvas);
+  pushResult("Backpack drag drops a new toy onto Stage v2", placementResult.ok, placementResult.detail);
+  pushResult(
+    "Backpack drag exposes Stage v2 placement state",
+    placementResult.modeSeen,
+    placementResult.modeDetail ?? "placement HUD state not observed",
+  );
+  pushResult("Backpack drop records an add event", placementResult.eventRecorded, placementResult.eventDetail);
 
   markQaStep("drag toy");
   const dragResult = await tryDragObject(page, canvas);
@@ -385,6 +396,182 @@ async function tryZoomCamera(page, canvas) {
     modeSeen: /正在缩放/.test(interaction.text) || /is-stage-zoom/.test(interaction.className),
     modeDetail: interaction.text || interaction.className,
   };
+}
+
+async function tryPlaceAssetFromBackpack(page, canvas) {
+  const before = await readScene(page);
+  const beforeObjectIds = new Set((before.objects ?? []).map((object) => object.id));
+
+  await ensureAssetBackpackOpen(page);
+  await page.waitForSelector("article.asset-card[data-asset-id]", { timeout: 10_000 });
+  const box = await canvas.boundingBox();
+  if (!box) {
+    return {
+      ok: false,
+      detail: "canvas bounding box missing",
+      modeSeen: false,
+      modeDetail: "",
+      eventRecorded: false,
+      eventDetail: "canvas bounding box missing",
+    };
+  }
+
+  const dropPoint = {
+    x: Math.round(box.x + box.width * 0.31),
+    y: Math.round(box.y + box.height * 0.42),
+  };
+
+  const dragStart = await page.evaluate(
+    ({ mime, point }) => {
+      const card = document.querySelector("article.asset-card[data-asset-id]");
+      const canvas = document.querySelector(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas");
+      if (!(card instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) {
+        return { ok: false, detail: "asset card or stage canvas missing" };
+      }
+
+      card.scrollIntoView({ block: "center", inline: "center" });
+      const assetId = card.dataset.assetId ?? "";
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData(mime, assetId);
+      dataTransfer.effectAllowed = "copy";
+      card.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer }));
+      canvas.dispatchEvent(
+        new DragEvent("dragenter", {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.x,
+          clientY: point.y,
+          dataTransfer,
+        }),
+      );
+      canvas.dispatchEvent(
+        new DragEvent("dragover", {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.x,
+          clientY: point.y,
+          dataTransfer,
+        }),
+      );
+
+      return {
+        ok: Boolean(assetId),
+        assetId,
+        detail: `${card.textContent ?? ""}`.replace(/\s+/g, " ").trim(),
+      };
+    },
+    { mime: SANDBOX_ASSET_DRAG_MIME, point: dropPoint },
+  );
+
+  if (!dragStart.ok || !dragStart.assetId) {
+    return {
+      ok: false,
+      detail: dragStart.detail ?? "asset dragstart failed",
+      modeSeen: false,
+      modeDetail: "",
+      eventRecorded: false,
+      eventDetail: "dragstart failed",
+    };
+  }
+
+  await delay(160);
+  const interaction = await readStageInteraction(page);
+
+  const dropResult = await page.evaluate(
+    ({ assetId, mime, point }) => {
+      const card = document.querySelector(`article.asset-card[data-asset-id="${CSS.escape(assetId)}"]`);
+      const canvas = document.querySelector(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas");
+      if (!(canvas instanceof HTMLCanvasElement)) {
+        return { ok: false, detail: "stage canvas missing" };
+      }
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData(mime, assetId);
+      dataTransfer.effectAllowed = "copy";
+      canvas.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.x,
+          clientY: point.y,
+          dataTransfer,
+        }),
+      );
+      card?.dispatchEvent(new DragEvent("dragend", { bubbles: true, cancelable: true, dataTransfer }));
+      return { ok: true };
+    },
+    { assetId: dragStart.assetId, mime: SANDBOX_ASSET_DRAG_MIME, point: dropPoint },
+  );
+
+  if (!dropResult.ok) {
+    return {
+      ok: false,
+      detail: dropResult.detail ?? "drop failed",
+      modeSeen: /正在放置/.test(interaction.text) || /is-stage-place-asset/.test(interaction.className),
+      modeDetail: interaction.text || interaction.className,
+      eventRecorded: false,
+      eventDetail: "drop failed",
+    };
+  }
+
+  await delay(500);
+  await closeAssetBackpack(page);
+  const after = await readScene(page);
+  const addedObject = (after.objects ?? []).find((object) => !beforeObjectIds.has(object.id));
+  const addEvent = (after.events ?? []).find(
+    (event) => event.type === "add" && event.assetId === dragStart.assetId && event.objectId === addedObject?.id,
+  );
+
+  return {
+    ok: Boolean(addedObject),
+    detail: addedObject
+      ? `${addedObject.name ?? addedObject.assetId}: x=${Number(addedObject.x).toFixed(1)}, y=${Number(addedObject.y).toFixed(1)}`
+      : `no new object after dropping ${dragStart.assetId}`,
+    modeSeen: /正在放置/.test(interaction.text) || /is-stage-place-asset/.test(interaction.className),
+    modeDetail: interaction.text || interaction.className,
+    eventRecorded: Boolean(addEvent),
+    eventDetail: addEvent?.label ?? `missing add event for ${dragStart.assetId}`,
+  };
+}
+
+async function ensureAssetBackpackOpen(page) {
+  const hasVisibleCard = await page.locator("article.asset-card[data-asset-id]").first().isVisible().catch(() => false);
+  if (hasVisibleCard) {
+    return;
+  }
+
+  const toggled = await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const button = buttons.find((element) => {
+      const label = element.getAttribute("aria-label") ?? "";
+      const text = element.textContent ?? "";
+      return /打开沙具背包|打开全屏沙具库|沙具库|背包/.test(`${label} ${text}`);
+    });
+    if (!(button instanceof HTMLElement)) {
+      return false;
+    }
+    button.click();
+    return true;
+  });
+
+  if (!toggled) {
+    throw new Error("Could not open asset backpack");
+  }
+  await page.waitForSelector("article.asset-card[data-asset-id]", { timeout: 10_000 });
+}
+
+async function closeAssetBackpack(page) {
+  await page
+    .evaluate(() => {
+      const closeButton = document.querySelector(".game-drawer-close, .focus-drawer-scrim");
+      if (closeButton instanceof HTMLElement) {
+        closeButton.click();
+        return true;
+      }
+      return false;
+    })
+    .catch(() => false);
+  await delay(160);
 }
 
 async function captureLocator(page, locator, filename) {

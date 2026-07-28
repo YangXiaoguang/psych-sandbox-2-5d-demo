@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { ASSET_CATEGORIES, RISK_LABELS } from "../data/assets";
 import type { RiskTag, SandboxAsset } from "../types";
+import { SANDBOX_ASSET_DRAG_MIME } from "../utils/dragAndDrop";
 import { AssetPreview } from "./AssetPreview";
 import { RiskTagBadge } from "./RiskTagBadge";
 
@@ -25,7 +26,7 @@ interface AssetLibraryProps {
   onEndDragAsset?: () => void;
 }
 
-const DRAG_MIME = "application/x-sandbox-asset";
+const DRAG_MIME = SANDBOX_ASSET_DRAG_MIME;
 const FAVORITES_KEY = "psych-sandbox:favorite-assets";
 const RECENT_KEY = "psych-sandbox:recent-assets";
 const COLLAPSED_KEY = "psych-sandbox:collapsed-asset-categories";
@@ -411,6 +412,7 @@ function AssetGrid({
             .filter(Boolean)
             .join(" ")}
           draggable
+          data-asset-id={asset.assetId}
           data-footprint={asset.footprint.kind}
           data-risk={asset.riskTag}
           aria-grabbed={draggingAssetId === asset.assetId}

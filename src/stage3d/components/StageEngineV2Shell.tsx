@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Cuboid, RefreshCcw } from "lucide-react";
-import type { SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../../types";
+import type { SandboxAsset, SandboxEnvironment, SandboxEventDraft, SandboxObject } from "../../types";
 import { downloadDataUrl, safeTimestamp } from "../../utils/download";
 import type { StageInteractionMode } from "../types";
 import { StageCanvas3D } from "./StageCanvas3D";
@@ -11,9 +11,11 @@ export interface StageEngineV2Handle {
 }
 
 interface StageEngineV2ShellProps {
+  draggingAsset: SandboxAsset | null;
   environment: SandboxEnvironment;
   objectCount: number;
   objects: SandboxObject[];
+  onDropAsset: (assetId: string, position: { x: number; y: number }) => void;
   onPatchObject: (objectId: string, patch: Partial<SandboxObject>) => void;
   onRecordEvent: (draft: SandboxEventDraft) => void;
   onSelectObject: (objectId: string | null) => void;
@@ -22,9 +24,11 @@ interface StageEngineV2ShellProps {
 
 export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2ShellProps>(function StageEngineV2Shell(
   {
+    draggingAsset,
     environment,
     objectCount,
     objects,
+    onDropAsset,
     onPatchObject,
     onRecordEvent,
     onSelectObject,
@@ -37,7 +41,10 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
   const [interactionMode, setInteractionMode] = useState<StageInteractionMode>("idle");
   const [draggingToyName, setDraggingToyName] = useState<string | null>(null);
   const selectedObject = objects.find((object) => object.id === selectedId) ?? null;
-  const interactionCopy = getStageInteractionCopy(interactionMode, selectedObject?.name ?? draggingToyName ?? null);
+  const interactionCopy = getStageInteractionCopy(
+    interactionMode,
+    interactionMode === "place-asset" ? draggingAsset?.name ?? null : selectedObject?.name ?? draggingToyName ?? null,
+  );
   const shellClassName = [
     "stage-v2-shell",
     selectedObject ? "has-stage-selection" : "",
@@ -64,6 +71,7 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
       <div className="stage-v2-canvas-wrap">
         <StageCanvas3D
           environment={environment}
+          draggingAsset={draggingAsset}
           objects={objects}
           selectedId={selectedId}
           cameraResetSignal={cameraResetSignal}
@@ -71,6 +79,7 @@ export const StageEngineV2Shell = forwardRef<StageEngineV2Handle, StageEngineV2S
             canvasRef.current = canvas;
           }}
           onPatchObject={onPatchObject}
+          onDropAsset={onDropAsset}
           onRecordEvent={onRecordEvent}
           onSelectObject={onSelectObject}
           onInteractionModeChange={setInteractionMode}
@@ -130,6 +139,11 @@ function getStageInteractionCopy(mode: StageInteractionMode, toyName: string | n
       return {
         title: `正在移动${toyName ? `：${toyName}` : "沙具"}`,
         hint: "拖到合适位置后松开鼠标，系统会记录这次移动。",
+      };
+    case "place-asset":
+      return {
+        title: `正在放置${toyName ? `：${toyName}` : "沙具"}`,
+        hint: "松开鼠标后会落到当前沙面位置，并写入作品事件流。",
       };
     case "idle":
     default:

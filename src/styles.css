@@ -20393,7 +20393,8 @@ table td {
 .stage-v2-shell.is-stage-pan,
 .stage-v2-shell.is-stage-rotate,
 .stage-v2-shell.is-stage-zoom,
-.stage-v2-shell.is-stage-drag-toy {
+.stage-v2-shell.is-stage-drag-toy,
+.stage-v2-shell.is-stage-place-asset {
   border-color: color-mix(in srgb, var(--accent-line) 66%, var(--line));
   box-shadow:
     0 24px 62px rgba(46, 119, 108, 0.2),
@@ -20404,6 +20405,10 @@ table td {
 .stage-v2-shell.is-stage-pan .stage-v2-canvas,
 .stage-v2-shell.is-stage-drag-toy .stage-v2-canvas {
   cursor: grabbing;
+}
+
+.stage-v2-shell.is-stage-place-asset .stage-v2-canvas {
+  cursor: copy;
 }
 
 .stage-v2-shell.is-stage-rotate .stage-v2-canvas {
@@ -20490,7 +20495,8 @@ table td {
 .stage-v2-shell.is-stage-pan .stage-v2-interaction-orb::after,
 .stage-v2-shell.is-stage-rotate .stage-v2-interaction-orb::after,
 .stage-v2-shell.is-stage-zoom .stage-v2-interaction-orb::after,
-.stage-v2-shell.is-stage-drag-toy .stage-v2-interaction-orb::after {
+.stage-v2-shell.is-stage-drag-toy .stage-v2-interaction-orb::after,
+.stage-v2-shell.is-stage-place-asset .stage-v2-interaction-orb::after {
   animation: stage-v2-orb-pulse 920ms ease-out infinite;
 }
 
@@ -20498,6 +20504,16 @@ table td {
   background:
     radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.78), transparent 34%),
     linear-gradient(145deg, #ffd973, #d9912d);
+}
+
+.stage-v2-shell.is-stage-place-asset .stage-v2-interaction-orb {
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.82), transparent 34%),
+    linear-gradient(145deg, #a9fff1, #33a99b);
+}
+
+.stage-v2-shell.is-stage-place-asset .stage-v2-interaction-orb::before {
+  background: #e9fffa;
 }
 
 .stage-v2-shell.is-stage-drag-toy .stage-v2-interaction-orb::before {
@@ -20536,7 +20552,8 @@ table td {
 .product-shell.night-mode .stage-v2-shell.is-stage-pan,
 .product-shell.night-mode .stage-v2-shell.is-stage-rotate,
 .product-shell.night-mode .stage-v2-shell.is-stage-zoom,
-.product-shell.night-mode .stage-v2-shell.is-stage-drag-toy {
+.product-shell.night-mode .stage-v2-shell.is-stage-drag-toy,
+.product-shell.night-mode .stage-v2-shell.is-stage-place-asset {
   border-color: rgba(117, 236, 217, 0.5);
   box-shadow:
     0 24px 68px rgba(0, 0, 0, 0.5),
