@@ -212,6 +212,24 @@ async function runShellQa() {
     pushResult("Insight drawer hides stage mode switch", !insightNarrow.modeSwitchVisible, formatMetrics(insightNarrow));
     pushResult("Insight drawer keeps secondary sections collapsed", insightNarrow.sections.every((section) => !section.open), formatMetrics(insightNarrow.sections));
     pushResult("Insight drawer heading remains readable", insightNarrow.headingReadable, formatMetrics(insightNarrow));
+    pushResult("Insight drawer preserves stage-first width", insightNarrow.drawerWidthRatio <= 0.29, formatMetrics(insightNarrow));
+    pushResult(
+      "Insight overview reads as compact HUD stats",
+      insightNarrow.overviewHeight <= 60 &&
+        insightNarrow.overviewItems.length === 3 &&
+        insightNarrow.overviewItems.every((item) => item.height <= 54 && item.numberReadable && item.labelReadable),
+      formatMetrics(insightNarrow.overviewItems),
+    );
+    pushResult(
+      "Insight selected snapshot stays compact",
+      insightNarrow.selectedSnapshotHeight > 0 && insightNarrow.selectedSnapshotHeight <= 72,
+      formatMetrics(insightNarrow),
+    );
+    pushResult(
+      "Insight collapsed rows stay compact",
+      insightNarrow.sections.length >= 4 && insightNarrow.sections.every((section) => section.summaryHeight <= 48),
+      formatMetrics(insightNarrow.sections),
+    );
     await clickSelector(page, ".game-side-drawer-right .small-icon-button");
     await page.waitForSelector(".game-side-drawer-right", { state: "detached", timeout: 5000 });
     await delay(250);
@@ -662,9 +680,32 @@ async function readInsightDrawerMetrics(page) {
     };
 
     const drawer = box(".game-side-drawer-right");
+    const overview = box(".game-side-drawer-right .insight-overview");
+    const selectedSnapshot = box(".game-side-drawer-right .insight-selected-snapshot");
     const heading = document.querySelector(".game-side-drawer-right .panel-header h1");
     const headingBox = box(heading);
     const headingStyle = heading ? window.getComputedStyle(heading) : null;
+    const overviewItems = Array.from(document.querySelectorAll(".game-side-drawer-right .insight-overview-item")).map(
+      (item) => {
+        const itemBox = box(item);
+        const number = item.querySelector("strong");
+        const label = item.querySelector("span");
+        const numberBox = box(number);
+        const labelBox = box(label);
+        const numberStyle = number ? window.getComputedStyle(number) : null;
+        const labelStyle = label ? window.getComputedStyle(label) : null;
+        return {
+          text: item.textContent?.trim().replace(/\s+/g, " ") ?? "",
+          height: itemBox?.height ?? 0,
+          numberReadable:
+            Boolean(numberBox && numberBox.height >= 20) &&
+            Boolean(numberStyle && numberStyle.visibility !== "hidden" && Number(numberStyle.opacity) > 0.5),
+          labelReadable:
+            Boolean(labelBox && labelBox.height >= 12) &&
+            Boolean(labelStyle && labelStyle.visibility !== "hidden" && Number(labelStyle.opacity) > 0.5),
+        };
+      },
+    );
     const sections = Array.from(document.querySelectorAll(".game-side-drawer-right .insight-section")).map((section) => ({
       open: section.hasAttribute("open"),
       summaryHeight: box(section.querySelector("summary"))?.height ?? 0,
@@ -676,6 +717,7 @@ async function readInsightDrawerMetrics(page) {
       viewportHeight: window.innerHeight,
       scrollWidth: document.documentElement.scrollWidth,
       drawer,
+      drawerWidthRatio: drawer ? Number((drawer.width / window.innerWidth).toFixed(3)) : 0,
       drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
       drawerHasStageGutter: Boolean(drawer && drawer.right <= window.innerWidth - 10 && drawer.bottom <= window.innerHeight - 10),
       modeSwitchVisible: isVisible(document.querySelector(".stage-engine-mode-switch")),
@@ -683,6 +725,9 @@ async function readInsightDrawerMetrics(page) {
       headingReadable:
         Boolean(headingBox && headingBox.height >= 24) &&
         Boolean(headingStyle && headingStyle.visibility !== "hidden" && Number(headingStyle.opacity) > 0.5),
+      overviewHeight: overview?.height ?? 0,
+      overviewItems,
+      selectedSnapshotHeight: selectedSnapshot?.height ?? 0,
       sections,
     };
   });
