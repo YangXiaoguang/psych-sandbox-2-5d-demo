@@ -315,6 +315,55 @@ async function runShellQa() {
     const adminNarrowMetrics = await readGenericShellMetrics(page, ".app-navigation");
     pushResult("Admin 1280px has no horizontal document overflow", adminNarrowMetrics.scrollWidth <= adminNarrowMetrics.viewportWidth + 2, formatMetrics(adminNarrowMetrics));
     pushResult("Admin 1280px navigation stays compact", adminNarrowMetrics.navHeight <= 90, `height=${adminNarrowMetrics.navHeight}`);
+    const adminUsersContrast = await readNightModeContrastMetrics(page, ".admin-shell");
+    pushResult(
+      "Admin users night-mode text remains readable",
+      adminUsersContrast.sampleCount >= 24 &&
+        adminUsersContrast.minimumContrast >= 4.35 &&
+        adminUsersContrast.lowContrastSamples.length === 0,
+      formatMetrics(adminUsersContrast),
+    );
+
+    await clickByText(page, /沙具资产/);
+    await page.waitForSelector(".asset-admin-layout", { timeout: 10_000 });
+    await delay(350);
+    await captureShellScreenshot(page, "admin-assets-night-1280.png");
+    const adminAssetsMetrics = await readGenericShellMetrics(page, ".app-navigation");
+    const adminAssetsContrast = await readNightModeContrastMetrics(page, ".asset-admin-layout");
+    pushResult("Admin assets 1280px has no horizontal overflow", adminAssetsMetrics.scrollWidth <= adminAssetsMetrics.viewportWidth + 2, formatMetrics(adminAssetsMetrics));
+    pushResult(
+      "Admin assets night-mode table and form text remain readable",
+      adminAssetsContrast.sampleCount >= 24 &&
+        adminAssetsContrast.minimumContrast >= 4.35 &&
+        adminAssetsContrast.lowContrastSamples.length === 0,
+      formatMetrics(adminAssetsContrast),
+    );
+
+    await clickByText(page, /LLM 配置/);
+    await page.waitForSelector(".admin-shell .provider-readiness-card", { timeout: 10_000 });
+    await delay(350);
+    await captureShellScreenshot(page, "admin-llm-night-1280.png");
+    const adminLlmContrast = await readNightModeContrastMetrics(page, ".admin-shell");
+    pushResult(
+      "Admin LLM night-mode inputs and buttons remain readable",
+      adminLlmContrast.sampleCount >= 20 &&
+        adminLlmContrast.minimumContrast >= 4.35 &&
+        adminLlmContrast.lowContrastSamples.length === 0,
+      formatMetrics(adminLlmContrast),
+    );
+
+    await clickByText(page, /Agent 配置/);
+    await page.waitForSelector(".agent-admin-grid", { timeout: 10_000 });
+    await delay(350);
+    await captureShellScreenshot(page, "admin-agents-night-1280.png");
+    const adminAgentContrast = await readNightModeContrastMetrics(page, ".agent-admin-grid");
+    pushResult(
+      "Admin Agent night-mode editor text remains readable",
+      adminAgentContrast.sampleCount >= 20 &&
+        adminAgentContrast.minimumContrast >= 4.35 &&
+        adminAgentContrast.lowContrastSamples.length === 0,
+      formatMetrics(adminAgentContrast),
+    );
 
     pushResult(
       "No browser console/page errors during UI shell QA",
@@ -536,6 +585,158 @@ async function readProductViewSmokeMetrics(page, rootSelector) {
       rootVisible: Boolean(root && rectOf(root)?.width && rectOf(root)?.height),
       headings: root ? Array.from(root.querySelectorAll("h1, h2")).map((heading) => heading.textContent?.trim() ?? "").slice(0, 6) : [],
       visibleControls,
+    };
+  }, rootSelector);
+}
+
+async function readNightModeContrastMetrics(page, rootSelector) {
+  return page.evaluate((selector) => {
+    const parseColor = (value) => {
+      if (!value || value === "transparent") return null;
+
+      const rgbMatch = value.match(/rgba?\(([^)]+)\)/);
+      if (rgbMatch) {
+        const [r, g, b, a = "1"] = rgbMatch[1].split(",").map((part) => part.trim());
+        return { r: Number(r), g: Number(g), b: Number(b), a: Number(a) };
+      }
+
+      const srgbMatch = value.match(/color\(srgb\s+([^\)]+)\)/);
+      if (srgbMatch) {
+        const normalized = srgbMatch[1].replace(/\s*\/\s*/, " / ");
+        const [channels, alpha = "1"] = normalized.split(" / ");
+        const [r, g, b] = channels.split(/\s+/).filter(Boolean).map((part) => Number(part) * 255);
+        return { r, g, b, a: Number(alpha) };
+      }
+
+      const hexMatch = value.match(/#([0-9a-f]{3}|[0-9a-f]{6})\b/i);
+      if (hexMatch) {
+        const hex = hexMatch[1].length === 3
+          ? hexMatch[1].split("").map((char) => `${char}${char}`).join("")
+          : hexMatch[1];
+        return {
+          r: Number.parseInt(hex.slice(0, 2), 16),
+          g: Number.parseInt(hex.slice(2, 4), 16),
+          b: Number.parseInt(hex.slice(4, 6), 16),
+          a: 1,
+        };
+      }
+
+      return null;
+    };
+
+    const parseBackgroundImageColor = (value) => {
+      if (!value || value === "none") return null;
+      const matches = [
+        ...value.matchAll(/rgba?\([^)]+\)|color\(srgb\s+[^)]+\)|#[0-9a-f]{3,6}\b/gi),
+      ]
+        .map((match) => parseColor(match[0]))
+        .filter((color) => color && color.a > 0.18);
+      return matches.length > 0 ? matches[matches.length - 1] : null;
+    };
+
+    const channel = (component) => {
+      const value = Math.max(0, Math.min(255, component)) / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+
+    const luminance = (color) => 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
+
+    const contrast = (foreground, background) => {
+      const lighter = Math.max(luminance(foreground), luminance(background));
+      const darker = Math.min(luminance(foreground), luminance(background));
+      return Number(((lighter + 0.05) / (darker + 0.05)).toFixed(2));
+    };
+
+    const blend = (foreground, background) => {
+      const alpha = Math.max(0, Math.min(1, foreground.a ?? 1));
+      return {
+        r: foreground.r * alpha + background.r * (1 - alpha),
+        g: foreground.g * alpha + background.g * (1 - alpha),
+        b: foreground.b * alpha + background.b * (1 - alpha),
+        a: 1,
+      };
+    };
+
+    const effectiveBackground = (element) => {
+      let current = element;
+      const layers = [];
+      while (current && current instanceof Element) {
+        const style = window.getComputedStyle(current);
+        const backgroundColor = parseColor(style.backgroundColor);
+        if (backgroundColor && backgroundColor.a > 0.12) {
+          layers.push(backgroundColor);
+        }
+        const imageColor = parseBackgroundImageColor(style.backgroundImage);
+        if (imageColor) {
+          layers.push(imageColor);
+        }
+        current = current.parentElement;
+      }
+      return layers.reduceRight((background, foreground) => blend(foreground, background), { r: 7, g: 17, b: 25, a: 1 });
+    };
+
+    const root = document.querySelector(selector);
+    const controls = root
+      ? Array.from(
+          root.querySelectorAll(
+            "h1, h2, h3, p, span, strong, em, label, button, th, td, input, select, textarea, summary",
+          ),
+        )
+      : [];
+
+    const samples = controls
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        const tagName = element.tagName.toLowerCase();
+        const formText =
+          element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
+            ? element.value || element.placeholder
+            : element instanceof HTMLSelectElement
+              ? element.selectedOptions[0]?.textContent ?? element.value
+              : "";
+        const text = (formText || element.textContent || "").trim().replace(/\s+/g, " ");
+        const visible =
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.bottom > 0 &&
+          rect.right > 0 &&
+          rect.top < window.innerHeight &&
+          rect.left < window.innerWidth &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          Number(style.opacity || "1") > 0.18;
+        if (!visible || text.length === 0) {
+          return null;
+        }
+        const foreground = parseColor(style.color);
+        if (!foreground || foreground.a <= 0.18) {
+          return null;
+        }
+        const background = effectiveBackground(element);
+        return {
+          selector: tagName,
+          text: text.slice(0, 42),
+          contrast: contrast(foreground, background),
+          color: style.color,
+          background: `rgb(${Math.round(background.r)}, ${Math.round(background.g)}, ${Math.round(background.b)})`,
+        };
+      })
+      .filter(Boolean);
+
+    const lowContrastSamples = samples
+      .filter((sample) => sample.contrast < 4.35)
+      .sort((a, b) => a.contrast - b.contrast)
+      .slice(0, 8);
+    const lowestSamples = [...samples].sort((a, b) => a.contrast - b.contrast).slice(0, 8);
+    const minimumContrast = lowestSamples[0]?.contrast ?? 0;
+
+    return {
+      rootSelector: selector,
+      sampleCount: samples.length,
+      minimumContrast,
+      lowContrastSamples,
+      lowestSamples,
     };
   }, rootSelector);
 }

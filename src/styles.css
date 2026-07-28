@@ -2997,6 +2997,17 @@ button {
   color: var(--ink-muted);
 }
 
+.product-shell.night-mode .user-name-button span {
+  border: 1px solid rgba(151, 218, 204, 0.38);
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 245, 202, 0.72), transparent 31%),
+    linear-gradient(145deg, #8ad4c1, #42897f);
+  color: #031814;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.22);
+}
+
 .product-shell.night-mode .user-status-pill,
 .product-shell.night-mode .user-auth-pill {
   border-color: var(--line);
