@@ -2800,6 +2800,14 @@ button {
   color: var(--ink);
 }
 
+.product-shell.night-mode .personal-directory-count {
+  border-color: rgba(132, 214, 202, 0.42);
+  background:
+    radial-gradient(circle at 38% 22%, rgba(121, 238, 216, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(20, 47, 56, 0.98), rgba(9, 25, 34, 0.98));
+  color: #f2fffb;
+}
+
 .product-shell.night-mode .data-panel pre {
   border-color: #456066;
   background: #071018;
@@ -2822,6 +2830,39 @@ button {
   border-color: var(--line);
   background: rgba(10, 20, 26, 0.82);
   color: var(--ink);
+}
+
+.product-shell.night-mode .personal-create-toggle,
+.product-shell.night-mode .personal-create-box button,
+.product-shell.night-mode .personal-archive-composer button {
+  border-color: rgba(124, 236, 217, 0.56);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(124, 241, 220, 0.2), transparent 38%),
+    linear-gradient(180deg, rgba(27, 88, 82, 0.96), rgba(10, 44, 52, 0.96));
+  color: #f2fffb;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.product-shell.night-mode .personal-create-toggle:hover,
+.product-shell.night-mode .personal-create-toggle:focus-visible,
+.product-shell.night-mode .personal-create-box button:hover,
+.product-shell.night-mode .personal-create-box button:focus-visible,
+.product-shell.night-mode .personal-archive-composer button:hover:not(:disabled),
+.product-shell.night-mode .personal-archive-composer button:focus-visible:not(:disabled) {
+  border-color: rgba(147, 255, 235, 0.74);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(139, 255, 235, 0.25), transparent 38%),
+    linear-gradient(180deg, rgba(33, 103, 94, 0.98), rgba(13, 56, 64, 0.98));
+  outline: none;
+}
+
+.product-shell.night-mode .personal-archive-composer button:disabled {
+  border-color: rgba(82, 111, 118, 0.58);
+  background:
+    linear-gradient(180deg, rgba(17, 33, 42, 0.98), rgba(9, 22, 31, 0.98));
+  color: #b8cbc5;
+  filter: none;
+  opacity: 1;
 }
 
 .product-shell.night-mode .personal-archive-chips span,
@@ -9813,7 +9854,10 @@ button:disabled {
 }
 
 .product-shell.night-mode .agent-stream-status {
-  color: #c9d8d2;
+  border-color: rgba(132, 178, 185, 0.38);
+  background:
+    linear-gradient(180deg, rgba(18, 35, 44, 0.94), rgba(8, 22, 30, 0.94));
+  color: #dceee8;
 }
 
 .product-shell.night-mode .agent-composer,
@@ -21002,4 +21046,27 @@ table td {
     min-height: 92px !important;
     max-height: 92px !important;
   }
+}
+
+/* Final night readability guard for the game insight drawer. */
+.product-shell.night-mode .game-side-drawer .insight-snapshot-header > span,
+.product-shell.night-mode .game-side-drawer .insight-section summary em {
+  border-color: rgba(124, 236, 217, 0.34) !important;
+  background:
+    radial-gradient(circle at 24% 0%, rgba(124, 236, 217, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(17, 50, 56, 0.98), rgba(8, 25, 34, 0.98)) !important;
+  color: #eafff9 !important;
+}
+
+.product-shell.night-mode .game-side-drawer .insight-heat-cell {
+  color: #eafff9 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
+    color-mix(in srgb, #1b6d68 var(--heat), rgba(8, 25, 34, 0.96)) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .insight-heat-cell strong,
+.product-shell.night-mode .game-side-drawer .insight-heat-cell span {
+  color: #f4fffb !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
 }

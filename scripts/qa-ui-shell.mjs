@@ -97,6 +97,9 @@ async function runShellQa() {
 
     await captureShellScreenshot(page, "sandbox-night-desktop.png");
     const sandboxDesktop = await readSandboxShellMetrics(page);
+    const gameNavContrast = await readNightModeContrastMetrics(page, ".game-navigation");
+    const sandboxTopbarContrast = await readNightModeContrastMetrics(page, ".workspace-column .topbar");
+    const sandboxToolbeltContrast = await readNightModeContrastMetrics(page, ".sandbox-game-toolbelt");
     pushResult("Sandbox desktop has no horizontal document overflow", sandboxDesktop.scrollWidth <= sandboxDesktop.viewportWidth + 2, formatMetrics(sandboxDesktop));
     pushResult("Sandbox game navigation stays compact", sandboxDesktop.navHeight <= 80, `height=${sandboxDesktop.navHeight}`);
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
@@ -136,6 +139,9 @@ async function runShellQa() {
       formatMetrics(sandboxDesktop),
     );
     pushResult("Sandbox edge HUD stays inside the viewport", sandboxDesktop.sideHudInsideViewport, formatMetrics(sandboxDesktop));
+    pushNightContrastResult("Game navigation night text remains readable", gameNavContrast, 20);
+    pushNightContrastResult("Sandbox top HUD night controls remain readable", sandboxTopbarContrast, 5);
+    pushNightContrastResult("Sandbox bottom toolbelt night controls remain readable", sandboxToolbeltContrast, 10);
 
     const selectedStageToy = await trySelectStageToy(page);
     await delay(300);
@@ -159,6 +165,7 @@ async function runShellQa() {
     await delay(400);
     await captureShellScreenshot(page, "sandbox-backpack-night-desktop.png");
     const backpackDesktop = await readBackpackMetrics(page);
+    const backpackContrast = await readNightModeContrastMetrics(page, ".game-side-drawer-left .asset-library");
     pushResult("Backpack drawer fits desktop viewport", backpackDesktop.drawerFitsViewport, formatMetrics(backpackDesktop));
     pushResult("Backpack drawer opens as a stage sheet", backpackDesktop.drawerHasStageGutter, formatMetrics(backpackDesktop));
     pushResult("Backpack drawer preserves stage-first width", backpackDesktop.drawerWidthRatio <= 0.26, formatMetrics(backpackDesktop));
@@ -176,6 +183,7 @@ async function runShellQa() {
     pushResult("Backpack drawer hides stage mode switch", !backpackDesktop.modeSwitchVisible, formatMetrics(backpackDesktop));
     pushResult("Backpack cards keep names readable", backpackDesktop.cards.every((card) => card.nameReadable), formatMetrics(backpackDesktop.cards));
     pushResult("Backpack card badges do not cover names", backpackDesktop.cards.every((card) => !card.riskOverlapsName), formatMetrics(backpackDesktop.cards));
+    pushNightContrastResult("Backpack drawer night text remains readable", backpackContrast, 32);
     await clickSelector(page, ".game-drawer-close");
     await page.waitForSelector(".game-side-drawer-left", { state: "detached", timeout: 5000 });
     await delay(250);
@@ -207,6 +215,7 @@ async function runShellQa() {
     await delay(400);
     await captureShellScreenshot(page, "sandbox-insight-night-1280.png");
     const insightNarrow = await readInsightDrawerMetrics(page);
+    const insightContrast = await readNightModeContrastMetrics(page, ".game-side-drawer-right .right-panel");
     pushResult("Insight drawer fits 1280px viewport", insightNarrow.drawerFitsViewport, formatMetrics(insightNarrow));
     pushResult("Insight drawer opens as a stage sheet", insightNarrow.drawerHasStageGutter, formatMetrics(insightNarrow));
     pushResult("Insight drawer hides stage mode switch", !insightNarrow.modeSwitchVisible, formatMetrics(insightNarrow));
@@ -230,6 +239,7 @@ async function runShellQa() {
       insightNarrow.sections.length >= 4 && insightNarrow.sections.every((section) => section.summaryHeight <= 48),
       formatMetrics(insightNarrow.sections),
     );
+    pushNightContrastResult("Insight drawer night text remains readable", insightContrast, 24);
     await clickSelector(page, ".game-side-drawer-right .small-icon-button");
     await page.waitForSelector(".game-side-drawer-right", { state: "detached", timeout: 5000 });
     await delay(250);
@@ -286,20 +296,24 @@ async function runShellQa() {
     await delay(400);
     await captureShellScreenshot(page, "agent-chat-night-desktop.png");
     const agentSmokeMetrics = await readProductViewSmokeMetrics(page, ".agent-chat-shell");
+    const agentContrast = await readNightModeContrastMetrics(page, ".agent-chat-shell");
     pushResult("Agent chat smoke renders primary surface", agentSmokeMetrics.rootVisible, formatMetrics(agentSmokeMetrics));
     pushResult("Agent chat smoke has no horizontal overflow", agentSmokeMetrics.scrollWidth <= agentSmokeMetrics.viewportWidth + 2, formatMetrics(agentSmokeMetrics));
     pushResult("Agent chat smoke keeps navigation compact", agentSmokeMetrics.navHeight <= 82, formatMetrics(agentSmokeMetrics));
     pushResult("Agent chat smoke exposes conversation controls", agentSmokeMetrics.visibleControls >= 3, formatMetrics(agentSmokeMetrics));
+    pushNightContrastResult("Agent chat night text and composer remain readable", agentContrast, 18);
 
     await openGamePortal(page, /个人中心/);
     await page.waitForSelector(".personal-shell", { timeout: 10_000 });
     await delay(400);
     await captureShellScreenshot(page, "personal-memory-night-desktop.png");
     const memorySmokeMetrics = await readProductViewSmokeMetrics(page, ".personal-shell");
+    const memoryContrast = await readNightModeContrastMetrics(page, ".personal-shell");
     pushResult("Memory OS smoke renders primary surface", memorySmokeMetrics.rootVisible, formatMetrics(memorySmokeMetrics));
     pushResult("Memory OS smoke has no horizontal overflow", memorySmokeMetrics.scrollWidth <= memorySmokeMetrics.viewportWidth + 2, formatMetrics(memorySmokeMetrics));
     pushResult("Memory OS smoke keeps navigation compact", memorySmokeMetrics.navHeight <= 82, formatMetrics(memorySmokeMetrics));
     pushResult("Memory OS smoke exposes profile controls", memorySmokeMetrics.visibleControls >= 3, formatMetrics(memorySmokeMetrics));
+    pushNightContrastResult("Memory OS night text and forms remain readable", memoryContrast, 32);
 
     await openGamePortal(page, /管理后台/);
     await page.waitForSelector(".admin-shell", { timeout: 10_000 });
@@ -1286,6 +1300,16 @@ async function ensureServer() {
 
 function pushResult(name, ok, detail = "") {
   results.push({ name, ok, detail });
+}
+
+function pushNightContrastResult(name, metrics, minimumSamples = 20) {
+  pushResult(
+    name,
+    metrics.sampleCount >= minimumSamples &&
+      metrics.minimumContrast >= 4.35 &&
+      metrics.lowContrastSamples.length === 0,
+    formatMetrics(metrics),
+  );
 }
 
 function printSummary() {
