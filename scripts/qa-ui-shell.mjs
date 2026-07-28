@@ -330,6 +330,7 @@ async function runShellQa() {
     await captureShellScreenshot(page, "admin-assets-night-1280.png");
     const adminAssetsMetrics = await readGenericShellMetrics(page, ".app-navigation");
     const adminAssetsContrast = await readNightModeContrastMetrics(page, ".asset-admin-layout");
+    const adminAssetScale = await readAssetAdminMetrics(page);
     pushResult("Admin assets 1280px has no horizontal overflow", adminAssetsMetrics.scrollWidth <= adminAssetsMetrics.viewportWidth + 2, formatMetrics(adminAssetsMetrics));
     pushResult(
       "Admin assets night-mode table and form text remain readable",
@@ -338,6 +339,47 @@ async function runShellQa() {
         adminAssetsContrast.lowContrastSamples.length === 0,
       formatMetrics(adminAssetsContrast),
     );
+    pushResult(
+      "Admin assets catalog is list-dominant",
+      adminAssetScale.catalogWidthRatio >= 0.72 &&
+        adminAssetScale.filterWidth <= 300 &&
+        adminAssetScale.tableVisible &&
+        adminAssetScale.tableMinWidth >= 880,
+      formatMetrics(adminAssetScale),
+    );
+    pushResult(
+      "Admin asset detail starts as an overlay drawer",
+      !adminAssetScale.drawerOpen && !adminAssetScale.drawerVisible && adminAssetScale.drawerDetached,
+      formatMetrics(adminAssetScale),
+    );
+    pushResult(
+      "Admin asset bulk actions stay in a compact toolbar",
+      adminAssetScale.bulkVisible &&
+        adminAssetScale.bulkHeight <= 58 &&
+        adminAssetScale.bulkIdle &&
+        adminAssetScale.disabledBulkControls >= 5,
+      formatMetrics(adminAssetScale),
+    );
+    pushResult(
+      "Admin asset row actions are icon-only and reachable",
+      adminAssetScale.rowActionButtons >= 3 && adminAssetScale.rowActionButtonsCompact,
+      formatMetrics(adminAssetScale),
+    );
+    await page.locator(".asset-row-actions button[aria-label^='查看并编辑']").first().click();
+    await delay(260);
+    const adminAssetDrawer = await readAssetAdminMetrics(page);
+    pushResult(
+      "Admin asset detail drawer opens without stealing catalog layout",
+      adminAssetDrawer.drawerOpen &&
+        adminAssetDrawer.drawerVisible &&
+        adminAssetDrawer.scrimVisible &&
+        adminAssetDrawer.drawerWidth <= 480 &&
+        adminAssetDrawer.drawerRight <= adminAssetDrawer.viewportWidth + 2 &&
+        Math.abs(adminAssetDrawer.catalogWidth - adminAssetScale.catalogWidth) <= 2,
+      formatMetrics(adminAssetDrawer),
+    );
+    await page.locator(".asset-detail-drawer .admin-actions button[aria-label='关闭沙具详情']").first().click();
+    await delay(180);
 
     await clickByText(page, /LLM 配置/);
     await page.waitForSelector(".admin-shell .provider-readiness-card", { timeout: 10_000 });
@@ -587,6 +629,87 @@ async function readProductViewSmokeMetrics(page, rootSelector) {
       visibleControls,
     };
   }, rootSelector);
+}
+
+async function readAssetAdminMetrics(page) {
+  return page.evaluate(() => {
+    const rectOf = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        right: Math.round(rect.right),
+        bottom: Math.round(rect.bottom),
+      };
+    };
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < window.innerHeight &&
+        rect.left < window.innerWidth &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.08
+      );
+    };
+    const layout = rectOf(".asset-admin-layout");
+    const filter = rectOf(".asset-filter-panel");
+    const catalog = rectOf(".asset-catalog-panel");
+    const drawer = rectOf(".asset-detail-drawer");
+    const bulk = rectOf(".asset-bulk-bar");
+    const table = document.querySelector(".asset-table");
+    const tableWrap = rectOf(".asset-table-wrap");
+    const drawerElement = document.querySelector(".asset-detail-drawer");
+    const bulkElement = document.querySelector(".asset-bulk-bar");
+    const drawerStyle = drawerElement ? window.getComputedStyle(drawerElement) : null;
+    const actionButtons = Array.from(document.querySelectorAll(".asset-row-actions button"));
+    const firstActionButtons = actionButtons.slice(0, 3).map((button) => {
+      const rect = button.getBoundingClientRect();
+      return {
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        text: button.textContent?.trim() ?? "",
+      };
+    });
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+      filterWidth: filter?.width ?? 0,
+      catalogWidth: catalog?.width ?? 0,
+      catalogWidthRatio: layout && catalog ? Number((catalog.width / layout.width).toFixed(3)) : 0,
+      drawerWidth: drawer?.width ?? 0,
+      drawerRight: drawer?.right ?? 0,
+      drawerOpen: drawerElement?.getAttribute("data-open") === "true",
+      drawerVisible: isVisible(".asset-detail-drawer"),
+      drawerDetached: drawerStyle?.position === "fixed",
+      scrimVisible: isVisible(".asset-detail-scrim"),
+      bulkVisible: isVisible(".asset-bulk-bar"),
+      bulkHeight: bulk?.height ?? 0,
+      bulkIdle: bulkElement?.classList.contains("idle") ?? false,
+      bulkText: bulkElement?.textContent?.trim().replace(/\s+/g, " ") ?? "",
+      disabledBulkControls: document.querySelectorAll(".asset-bulk-bar button:disabled, .asset-bulk-bar select:disabled").length,
+      tableVisible: isVisible(".asset-table"),
+      tableWrapHeight: tableWrap?.height ?? 0,
+      tableMinWidth: table ? Number.parseFloat(window.getComputedStyle(table).minWidth || "0") : 0,
+      rowActionButtons: actionButtons.length,
+      rowActionButtonsCompact:
+        firstActionButtons.length >= 3 &&
+        firstActionButtons.every((button) => button.width <= 40 && button.height <= 40 && button.text.length === 0),
+      firstActionButtons,
+    };
+  });
 }
 
 async function readNightModeContrastMetrics(page, rootSelector) {

@@ -1963,6 +1963,8 @@ function AssetAdminPanel({
 
   const restoreAsset = () => updateAsset({ enabled: true, deletedAt: undefined });
   const bulkTargets = selectedAssetIds;
+  const selectedAssetCount = selectedAssetIds.length;
+  const canBulkEdit = bulkTargets.length > 0;
 
   const updateManyAssets = (assetIds: string[], patch: Partial<ManagedAsset>) => {
     if (assetIds.length === 0) {
@@ -2142,45 +2144,46 @@ function AssetAdminPanel({
               {sortDirection === "asc" ? "升序" : "降序"}
             </button>
           </div>
-          {bulkTargets.length > 0 ? (
-            <div className="asset-bulk-bar" aria-live="polite">
-              <strong>{selectedAssetIds.length > 0 ? selectedAssetIds.length : 1} 个已选择</strong>
-              <button type="button" onClick={() => updateManyAssets(bulkTargets, { enabled: true, deletedAt: undefined })}>
-                启用
+          <div className={`asset-bulk-bar ${canBulkEdit ? "active" : "idle"}`} aria-live="polite">
+            <strong>{selectedAssetCount} 个已选择</strong>
+            <button type="button" disabled={!canBulkEdit} onClick={() => updateManyAssets(bulkTargets, { enabled: true, deletedAt: undefined })}>
+              启用
+            </button>
+            <button type="button" disabled={!canBulkEdit} onClick={() => updateManyAssets(bulkTargets, { enabled: false })}>
+              停用
+            </button>
+            <button type="button" disabled={!canBulkEdit} onClick={() => markAssetsDeleted(bulkTargets)}>
+              隐藏
+            </button>
+            <button type="button" disabled={!canBulkEdit} onClick={() => restoreAssets(bulkTargets)}>
+              恢复
+            </button>
+            <select
+              aria-label="批量设置风险标签"
+              defaultValue=""
+              disabled={!canBulkEdit}
+              onChange={(event) => {
+                if (event.target.value) {
+                  updateManyAssets(bulkTargets, { riskTag: event.target.value as RiskTag });
+                  event.target.value = "";
+                }
+              }}
+            >
+              <option value="">批量风险</option>
+              {RISK_OPTIONS.map((riskTag) => (
+                <option key={riskTag} value={riskTag}>
+                  {RISK_LABELS[riskTag]}
+                </option>
+              ))}
+            </select>
+            {canBulkEdit ? (
+              <button type="button" onClick={() => setSelectedAssetIds([])}>
+                取消选择
               </button>
-              <button type="button" onClick={() => updateManyAssets(bulkTargets, { enabled: false })}>
-                停用
-              </button>
-              <button type="button" onClick={() => markAssetsDeleted(bulkTargets)}>
-                隐藏
-              </button>
-              <button type="button" onClick={() => restoreAssets(bulkTargets)}>
-                恢复
-              </button>
-              <select
-                aria-label="批量设置风险标签"
-                defaultValue=""
-                onChange={(event) => {
-                  if (event.target.value) {
-                    updateManyAssets(bulkTargets, { riskTag: event.target.value as RiskTag });
-                    event.target.value = "";
-                  }
-                }}
-              >
-                <option value="">批量风险</option>
-                {RISK_OPTIONS.map((riskTag) => (
-                  <option key={riskTag} value={riskTag}>
-                    {RISK_LABELS[riskTag]}
-                  </option>
-                ))}
-              </select>
-              {selectedAssetIds.length > 0 ? (
-                <button type="button" onClick={() => setSelectedAssetIds([])}>
-                  取消选择
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+            ) : (
+              <span className="asset-bulk-hint">勾选列表项后批量处理</span>
+            )}
+          </div>
         </div>
 
         {viewMode === "table" ? (
@@ -2338,7 +2341,13 @@ function AssetAdminPanel({
         />
       ) : null}
 
-      <aside className={`admin-card asset-detail-panel asset-detail-drawer ${detailOpen && selected ? "open" : ""}`} aria-label="沙具详情">
+      <aside
+        className={`admin-card asset-detail-panel asset-detail-drawer ${detailOpen && selected ? "open" : ""}`}
+        aria-label="沙具详情"
+        aria-modal={detailOpen && selected ? "true" : undefined}
+        data-open={detailOpen && selected ? "true" : "false"}
+        role={detailOpen && selected ? "dialog" : undefined}
+      >
         <div className="admin-card-header">
           <div>
             <p className="eyebrow">Asset Detail</p>

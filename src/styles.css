@@ -19084,6 +19084,13 @@ table td {
     color-mix(in srgb, var(--accent-soft) 72%, var(--surface)) !important;
 }
 
+.asset-bulk-bar.idle {
+  border-color: color-mix(in srgb, var(--line) 78%, transparent) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(247, 238, 219, 0.22)),
+    color-mix(in srgb, var(--surface) 84%, transparent) !important;
+}
+
 .asset-bulk-bar strong {
   display: inline-flex;
   min-height: 28px;
@@ -19101,6 +19108,19 @@ table td {
   min-height: 30px !important;
   border-radius: 9px !important;
   white-space: nowrap !important;
+}
+
+.asset-bulk-bar button:disabled,
+.asset-bulk-bar select:disabled {
+  cursor: not-allowed !important;
+}
+
+.asset-bulk-hint {
+  margin-left: auto;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .asset-table-wrap {
@@ -19165,9 +19185,28 @@ table td {
     linear-gradient(180deg, rgba(20, 67, 63, 0.78), rgba(8, 28, 37, 0.88)) !important;
 }
 
+.product-shell.night-mode .asset-bulk-bar.idle {
+  border-color: rgba(82, 111, 118, 0.66) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    rgba(10, 26, 35, 0.92) !important;
+}
+
 .product-shell.night-mode .asset-bulk-bar strong {
   background: rgba(121, 229, 214, 0.14);
   color: #dffff7;
+}
+
+.product-shell.night-mode .asset-bulk-hint {
+  color: rgba(216, 236, 230, 0.78);
+}
+
+.product-shell.night-mode .asset-bulk-bar button:disabled,
+.product-shell.night-mode .asset-bulk-bar select:disabled {
+  border-color: rgba(82, 111, 118, 0.58) !important;
+  background: rgba(12, 27, 36, 0.96) !important;
+  color: #b2c7c0 !important;
+  opacity: 1 !important;
 }
 
 .product-shell.night-mode .asset-table {
