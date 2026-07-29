@@ -21337,3 +21337,295 @@ table td {
     display: none;
   }
 }
+
+/* Backpack polish v2:
+   Treat the left inventory as a game item bag. The toy render owns the card,
+   the name sits in a stable bottom plate, and secondary status never overlaps
+   the readable label. */
+.game-side-drawer .asset-category-list,
+.focus-asset-drawer .asset-category-list {
+  padding: 12px !important;
+}
+
+.game-side-drawer .asset-category,
+.focus-asset-drawer .asset-category {
+  display: grid !important;
+  gap: 8px !important;
+  padding-bottom: 12px !important;
+}
+
+.game-side-drawer .asset-category.recent,
+.focus-asset-drawer .asset-category.recent {
+  margin: -2px -12px 10px !important;
+  padding: 10px 12px 14px !important;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.08)),
+    color-mix(in srgb, var(--accent-soft) 30%, transparent) !important;
+}
+
+.game-side-drawer .asset-grid,
+.focus-asset-drawer .asset-grid,
+.game-side-drawer .asset-category-list.compact .asset-grid,
+.focus-asset-drawer .asset-category-list.compact .asset-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.game-side-drawer .asset-card,
+.game-side-drawer .asset-category-list.compact .asset-card,
+.focus-asset-drawer .asset-card,
+.focus-asset-drawer .asset-category-list.compact .asset-card {
+  min-height: 176px !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+  isolation: isolate !important;
+}
+
+.game-side-drawer .asset-card-action,
+.game-side-drawer .asset-category-list.compact .asset-card-action,
+.focus-asset-drawer .asset-card-action,
+.focus-asset-drawer .asset-category-list.compact .asset-card-action {
+  position: relative !important;
+  display: grid !important;
+  grid-template-rows: 102px 50px !important;
+  min-height: 166px !important;
+  height: 166px !important;
+  gap: 7px !important;
+  padding: 7px !important;
+  overflow: hidden !important;
+  border-radius: 17px !important;
+  cursor: grab !important;
+}
+
+.game-side-drawer .asset-card:active .asset-card-action,
+.game-side-drawer .asset-card.dragging .asset-card-action,
+.focus-asset-drawer .asset-card:active .asset-card-action,
+.focus-asset-drawer .asset-card.dragging .asset-card-action {
+  cursor: grabbing !important;
+}
+
+.game-side-drawer .asset-preview,
+.game-side-drawer .asset-category-list.compact .asset-preview,
+.focus-asset-drawer .asset-preview,
+.focus-asset-drawer .asset-category-list.compact .asset-preview {
+  width: 100% !important;
+  height: 102px !important;
+  min-height: 102px !important;
+  max-height: 102px !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+}
+
+.game-side-drawer .asset-preview img,
+.game-side-drawer .asset-preview canvas,
+.focus-asset-drawer .asset-preview img,
+.focus-asset-drawer .asset-preview canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+.game-side-drawer .asset-card-main,
+.game-side-drawer .asset-category-list.compact .asset-card-main,
+.focus-asset-drawer .asset-card-main,
+.focus-asset-drawer .asset-category-list.compact .asset-card-main {
+  position: relative !important;
+  z-index: 6 !important;
+  display: grid !important;
+  grid-template-rows: 24px 18px !important;
+  width: 100% !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  gap: 2px !important;
+  align-content: center !important;
+  justify-items: center !important;
+  overflow: hidden !important;
+  padding: 4px 8px !important;
+  border-radius: 12px !important;
+}
+
+.game-side-drawer .asset-card-name,
+.game-side-drawer .asset-category-list.compact .asset-card-name,
+.focus-asset-drawer .asset-card-name,
+.focus-asset-drawer .asset-category-list.compact .asset-card-name {
+  position: static !important;
+  display: block !important;
+  width: 100% !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: #172623 !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  line-height: 24px !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  text-shadow: none !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.game-side-drawer .asset-card-meta,
+.game-side-drawer .asset-category-list.compact .asset-card-meta,
+.focus-asset-drawer .asset-card-meta,
+.focus-asset-drawer .asset-category-list.compact .asset-card-meta {
+  position: static !important;
+  display: flex !important;
+  width: 100% !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.game-side-drawer .asset-card .risk-badge,
+.game-side-drawer .asset-category-list.compact .asset-card .risk-badge,
+.focus-asset-drawer .asset-card .risk-badge,
+.focus-asset-drawer .asset-category-list.compact .asset-card .risk-badge {
+  position: static !important;
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 0 7px !important;
+  font-size: 9px !important;
+  line-height: 17px !important;
+  text-overflow: ellipsis !important;
+  transform: none !important;
+  white-space: nowrap !important;
+}
+
+.game-side-drawer .asset-card-pocket-label,
+.focus-asset-drawer .asset-card-pocket-label {
+  top: 8px !important;
+  left: 8px !important;
+  z-index: 9 !important;
+  max-width: calc(100% - 54px) !important;
+  min-height: 20px !important;
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  line-height: 14px !important;
+  pointer-events: none !important;
+}
+
+.game-side-drawer .asset-favorite,
+.focus-asset-drawer .asset-favorite {
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 10 !important;
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.game-side-drawer .asset-card-grip,
+.focus-asset-drawer .asset-card-grip {
+  display: none !important;
+}
+
+.game-side-drawer .asset-card-action::after,
+.focus-asset-drawer .asset-card-action::after {
+  top: 83px !important;
+  right: 10px !important;
+  bottom: auto !important;
+  z-index: 11 !important;
+  padding: 5px 8px !important;
+  border-radius: 999px !important;
+  content: "放入" !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(6px) scale(0.96) !important;
+}
+
+.game-side-drawer .asset-card:hover .asset-card-action::after,
+.game-side-drawer .asset-card:focus-within .asset-card-action::after,
+.focus-asset-drawer .asset-card:hover .asset-card-action::after,
+.focus-asset-drawer .asset-card:focus-within .asset-card-action::after {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+.game-side-drawer .asset-card.dragging .asset-card-action::after,
+.focus-asset-drawer .asset-card.dragging .asset-card-action::after {
+  content: "拖到沙盘" !important;
+  opacity: 1 !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-category.recent,
+.product-shell.night-mode .focus-asset-drawer .asset-category.recent {
+  background:
+    linear-gradient(90deg, rgba(137, 229, 216, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(158, 190, 180, 0.08) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card-main,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-card-main,
+.product-shell.night-mode .focus-asset-drawer .asset-card-main,
+.product-shell.night-mode .focus-asset-drawer .asset-category-list.compact .asset-card-main {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 44%),
+    linear-gradient(180deg, rgba(12, 35, 43, 0.95), rgba(5, 18, 25, 0.98)) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card-name,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-card-name,
+.product-shell.night-mode .focus-asset-drawer .asset-card-name,
+.product-shell.night-mode .focus-asset-drawer .asset-category-list.compact .asset-card-name {
+  color: #f8fffb !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .asset-card .risk-badge,
+.product-shell.night-mode .game-side-drawer .asset-category-list.compact .asset-card .risk-badge,
+.product-shell.night-mode .focus-asset-drawer .asset-card .risk-badge,
+.product-shell.night-mode .focus-asset-drawer .asset-category-list.compact .asset-card .risk-badge {
+  border-color: rgba(132, 234, 219, 0.54) !important;
+  background: rgba(33, 100, 91, 0.9) !important;
+  color: #f1fffb !important;
+}
+
+@media (max-width: 1500px) {
+  .game-side-drawer .asset-card,
+  .game-side-drawer .asset-category-list.compact .asset-card,
+  .focus-asset-drawer .asset-card,
+  .focus-asset-drawer .asset-category-list.compact .asset-card {
+    min-height: 168px !important;
+  }
+
+  .game-side-drawer .asset-card-action,
+  .game-side-drawer .asset-category-list.compact .asset-card-action,
+  .focus-asset-drawer .asset-card-action,
+  .focus-asset-drawer .asset-category-list.compact .asset-card-action {
+    grid-template-rows: 94px 50px !important;
+    min-height: 158px !important;
+    height: 158px !important;
+  }
+
+  .game-side-drawer .asset-preview,
+  .game-side-drawer .asset-category-list.compact .asset-preview,
+  .focus-asset-drawer .asset-preview,
+  .focus-asset-drawer .asset-category-list.compact .asset-preview {
+    height: 94px !important;
+    min-height: 94px !important;
+    max-height: 94px !important;
+  }
+
+  .game-side-drawer .asset-card-action::after,
+  .focus-asset-drawer .asset-card-action::after {
+    top: 76px !important;
+  }
+}
