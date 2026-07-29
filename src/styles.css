@@ -21629,3 +21629,289 @@ table td {
     top: 76px !important;
   }
 }
+
+/* Insight drawer polish v3:
+   Keep the right side as a quick in-game instrument panel. The sandbox remains
+   the primary visual surface; analysis opens only when the user asks for it. */
+.app-shell.game-hud-layout .game-side-drawer-right {
+  width: clamp(300px, 22vw, 340px) !important;
+}
+
+.game-side-drawer .right-panel {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.34), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--panel) 88%, transparent)) !important;
+}
+
+.game-side-drawer .right-panel .panel-header {
+  min-height: 50px !important;
+  padding: 10px 12px 8px !important;
+}
+
+.game-side-drawer .right-panel .panel-header h1 {
+  font-size: 20px !important;
+  line-height: 1.08 !important;
+}
+
+.game-side-drawer .right-panel .panel-header .small-icon-button {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 11px !important;
+}
+
+.game-side-drawer .right-panel .panel-tabs {
+  gap: 7px !important;
+  padding: 8px 11px !important;
+}
+
+.game-side-drawer .right-panel .panel-tabs button {
+  min-height: 34px !important;
+  border-radius: 11px !important;
+}
+
+.game-side-drawer .insight-drawer {
+  gap: 8px !important;
+  padding: 9px 11px 14px !important;
+}
+
+.game-side-drawer .insight-overview {
+  gap: 5px !important;
+}
+
+.game-side-drawer .insight-overview-item {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 6px 5px 5px !important;
+  border-radius: 12px !important;
+}
+
+.game-side-drawer .insight-overview-item strong {
+  display: block !important;
+  font-size: 20px !important;
+  line-height: 22px !important;
+}
+
+.game-side-drawer .insight-overview-item span {
+  display: block !important;
+  font-size: 10px !important;
+  line-height: 13px !important;
+}
+
+.game-side-drawer .insight-selected-snapshot {
+  height: auto !important;
+  min-height: 54px !important;
+  padding: 8px 9px !important;
+  border-radius: 12px !important;
+}
+
+.game-side-drawer .insight-selected-snapshot.empty {
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+}
+
+.game-side-drawer .insight-selected-snapshot svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.game-side-drawer .insight-selected-snapshot strong {
+  font-size: 13px !important;
+}
+
+.game-side-drawer .insight-selected-snapshot em {
+  display: -webkit-box !important;
+  max-height: 30px !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+.game-side-drawer .insight-section {
+  border-radius: 12px !important;
+}
+
+.game-side-drawer .insight-section summary {
+  min-height: 40px !important;
+  padding: 0 9px !important;
+}
+
+.game-side-drawer .insight-section:not([open]) {
+  min-height: 40px !important;
+}
+
+.game-side-drawer .insight-section summary span {
+  font-size: 11px !important;
+}
+
+.game-side-drawer .insight-section summary em {
+  max-width: 38% !important;
+  font-size: 9px !important;
+}
+
+.game-side-drawer .insight-section summary::after {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.game-side-drawer .right-panel:not(.collapsed) .insight-section-body,
+.game-side-drawer .right-panel:not(.collapsed) .insight-section > .structured-data-panel,
+.game-side-drawer .right-panel:not(.collapsed) .insight-section > .object-inspector {
+  max-height: min(360px, calc(100vh - 360px)) !important;
+  overflow: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+.game-side-drawer .insight-snapshot-panel {
+  min-height: 148px !important;
+}
+
+.game-side-drawer .insight-snapshot-grid {
+  gap: 8px !important;
+}
+
+.game-side-drawer .insight-event-preview ol {
+  max-height: 96px !important;
+  overflow: auto !important;
+}
+
+.game-side-drawer .right-panel-scroll {
+  min-height: 0 !important;
+}
+
+.game-side-drawer .ai-panel {
+  gap: 8px !important;
+  min-height: 0 !important;
+}
+
+.game-side-drawer .ai-hero {
+  min-height: 72px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+
+.game-side-drawer .ai-hero h2 {
+  font-size: 15px !important;
+  line-height: 1.08 !important;
+}
+
+.game-side-drawer .ai-hero p:not(.eyebrow) {
+  font-size: 11px !important;
+  line-height: 1.22 !important;
+}
+
+.game-side-drawer .right-panel .ai-companion-portrait {
+  width: 52px !important;
+  height: 52px !important;
+}
+
+.game-side-drawer .ai-context-card,
+.game-side-drawer .ai-quick-section {
+  border-radius: 13px !important;
+  padding: 10px !important;
+}
+
+.game-side-drawer .ai-context-card {
+  max-height: 184px !important;
+  overflow: hidden !important;
+}
+
+.game-side-drawer .ai-context-grid {
+  gap: 6px !important;
+}
+
+.game-side-drawer .ai-context-metric {
+  min-height: 48px !important;
+  padding: 6px !important;
+}
+
+.game-side-drawer .ai-context-metric strong {
+  font-size: 15px !important;
+}
+
+.game-side-drawer .ai-context-chips {
+  max-height: 58px !important;
+  overflow: auto !important;
+}
+
+.game-side-drawer .ai-quick-list {
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+}
+
+.game-side-drawer .ai-quick-list button {
+  min-height: 36px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+}
+
+.game-side-drawer .ai-chat-log {
+  min-height: 160px !important;
+}
+
+.product-shell.night-mode .game-side-drawer .right-panel {
+  border-color: rgba(126, 201, 195, 0.34) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(117, 236, 217, 0.12), transparent 35%),
+    linear-gradient(180deg, rgba(16, 38, 48, 0.98), rgba(5, 18, 26, 0.98)) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .right-panel .panel-header,
+.product-shell.night-mode .game-side-drawer .right-panel .panel-tabs {
+  border-color: rgba(132, 214, 202, 0.28) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .right-panel .panel-tabs button {
+  color: rgba(228, 244, 239, 0.86) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .right-panel .panel-tabs button.active {
+  color: #f8fffc !important;
+}
+
+.product-shell.night-mode .game-side-drawer .ai-hero,
+.product-shell.night-mode .game-side-drawer .ai-context-card,
+.product-shell.night-mode .game-side-drawer .ai-quick-section,
+.product-shell.night-mode .game-side-drawer .ai-chat-log,
+.product-shell.night-mode .game-side-drawer .ai-composer {
+  border-color: rgba(128, 212, 202, 0.34) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(118, 238, 218, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(16, 42, 50, 0.96), rgba(6, 20, 29, 0.96)) !important;
+  color: #f3fffb !important;
+}
+
+.product-shell.night-mode .game-side-drawer .ai-hero *,
+.product-shell.night-mode .game-side-drawer .ai-context-card *,
+.product-shell.night-mode .game-side-drawer .ai-quick-section *,
+.product-shell.night-mode .game-side-drawer .ai-chat-log *,
+.product-shell.night-mode .game-side-drawer .ai-composer * {
+  color: inherit;
+}
+
+.product-shell.night-mode .game-side-drawer .ai-context-card .section-title-row span,
+.product-shell.night-mode .game-side-drawer .ai-context-metric em,
+.product-shell.night-mode .game-side-drawer .ai-context-chips span,
+.product-shell.night-mode .game-side-drawer .ai-stream-status {
+  color: rgba(222, 242, 237, 0.74) !important;
+}
+
+.product-shell.night-mode .game-side-drawer .ai-context-metric,
+.product-shell.night-mode .game-side-drawer .ai-quick-list button,
+.product-shell.night-mode .game-side-drawer .ai-composer textarea {
+  border-color: rgba(134, 216, 206, 0.36) !important;
+  background: rgba(5, 20, 29, 0.58) !important;
+  color: #f8fffc !important;
+}
+
+.product-shell.night-mode .game-side-drawer .ai-composer textarea::placeholder {
+  color: rgba(221, 241, 236, 0.6) !important;
+}
+
+@media (max-width: 1280px) {
+  .app-shell.game-hud-layout .game-side-drawer-right {
+    width: min(324px, calc(100vw - 28px)) !important;
+  }
+
+  .game-side-drawer .insight-overview-item strong {
+    font-size: 18px !important;
+  }
+}

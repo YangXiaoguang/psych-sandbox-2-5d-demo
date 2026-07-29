@@ -87,7 +87,7 @@ export function RightPanel({
       <div className="panel-header">
         <div>
           <p className="eyebrow">{activeTab === "ai" ? "AI 伙伴" : "实时洞察"}</p>
-          <h1>{activeTab === "ai" ? "AI 伙伴" : "洞察面板"}</h1>
+          <h1>{activeTab === "ai" ? "AI 伙伴" : "作品洞察"}</h1>
         </div>
         <button
           className="small-icon-button"
