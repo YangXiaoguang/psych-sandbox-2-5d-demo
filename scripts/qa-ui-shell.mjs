@@ -100,6 +100,7 @@ async function runShellQa() {
     const gameNavContrast = await readNightModeContrastMetrics(page, ".game-navigation");
     const sandboxTopbarContrast = await readNightModeContrastMetrics(page, ".workspace-column .topbar");
     const sandboxToolbeltContrast = await readNightModeContrastMetrics(page, ".sandbox-game-toolbelt");
+    const sandboxAffordance = await readNightAffordanceMetrics(page, ".product-shell");
     pushResult("Sandbox desktop has no horizontal document overflow", sandboxDesktop.scrollWidth <= sandboxDesktop.viewportWidth + 2, formatMetrics(sandboxDesktop));
     pushResult("Sandbox game navigation stays compact", sandboxDesktop.navHeight <= 80, `height=${sandboxDesktop.navHeight}`);
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
@@ -152,6 +153,7 @@ async function runShellQa() {
     pushNightContrastResult("Game navigation night text remains readable", gameNavContrast, 6);
     pushNightContrastResult("Sandbox top HUD night controls remain readable", sandboxTopbarContrast, 3);
     pushNightContrastResult("Sandbox bottom toolbelt night controls remain readable", sandboxToolbeltContrast, 10);
+    pushNightAffordanceResult("Sandbox night affordances remain legible", sandboxAffordance);
 
     const selectedStageToy = await trySelectStageToy(page);
     await delay(300);
@@ -307,11 +309,13 @@ async function runShellQa() {
     await captureShellScreenshot(page, "agent-chat-night-desktop.png");
     const agentSmokeMetrics = await readProductViewSmokeMetrics(page, ".agent-chat-shell");
     const agentContrast = await readNightModeContrastMetrics(page, ".agent-chat-shell");
+    const agentAffordance = await readNightAffordanceMetrics(page, ".agent-chat-shell");
     pushResult("Agent chat smoke renders primary surface", agentSmokeMetrics.rootVisible, formatMetrics(agentSmokeMetrics));
     pushResult("Agent chat smoke has no horizontal overflow", agentSmokeMetrics.scrollWidth <= agentSmokeMetrics.viewportWidth + 2, formatMetrics(agentSmokeMetrics));
     pushResult("Agent chat smoke keeps navigation compact", agentSmokeMetrics.navHeight <= 82, formatMetrics(agentSmokeMetrics));
     pushResult("Agent chat smoke exposes conversation controls", agentSmokeMetrics.visibleControls >= 3, formatMetrics(agentSmokeMetrics));
     pushNightContrastResult("Agent chat night text and composer remain readable", agentContrast, 18);
+    pushNightAffordanceResult("Agent chat night affordances remain legible", agentAffordance);
 
     await openGamePortal(page, /个人中心/);
     await page.waitForSelector(".personal-shell", { timeout: 10_000 });
@@ -319,11 +323,13 @@ async function runShellQa() {
     await captureShellScreenshot(page, "personal-memory-night-desktop.png");
     const memorySmokeMetrics = await readProductViewSmokeMetrics(page, ".personal-shell");
     const memoryContrast = await readNightModeContrastMetrics(page, ".personal-shell");
+    const memoryAffordance = await readNightAffordanceMetrics(page, ".personal-shell");
     pushResult("Memory OS smoke renders primary surface", memorySmokeMetrics.rootVisible, formatMetrics(memorySmokeMetrics));
     pushResult("Memory OS smoke has no horizontal overflow", memorySmokeMetrics.scrollWidth <= memorySmokeMetrics.viewportWidth + 2, formatMetrics(memorySmokeMetrics));
     pushResult("Memory OS smoke keeps navigation compact", memorySmokeMetrics.navHeight <= 82, formatMetrics(memorySmokeMetrics));
     pushResult("Memory OS smoke exposes profile controls", memorySmokeMetrics.visibleControls >= 3, formatMetrics(memorySmokeMetrics));
     pushNightContrastResult("Memory OS night text and forms remain readable", memoryContrast, 32);
+    pushNightAffordanceResult("Memory OS night affordances remain legible", memoryAffordance);
 
     await openGamePortal(page, /管理后台/);
     await page.waitForSelector(".admin-shell", { timeout: 10_000 });
@@ -340,6 +346,7 @@ async function runShellQa() {
     pushResult("Admin 1280px has no horizontal document overflow", adminNarrowMetrics.scrollWidth <= adminNarrowMetrics.viewportWidth + 2, formatMetrics(adminNarrowMetrics));
     pushResult("Admin 1280px navigation stays compact", adminNarrowMetrics.navHeight <= 90, `height=${adminNarrowMetrics.navHeight}`);
     const adminUsersContrast = await readNightModeContrastMetrics(page, ".admin-shell");
+    const adminUsersAffordance = await readNightAffordanceMetrics(page, ".admin-shell");
     pushResult(
       "Admin users night-mode text remains readable",
       adminUsersContrast.sampleCount >= 24 &&
@@ -347,6 +354,7 @@ async function runShellQa() {
         adminUsersContrast.lowContrastSamples.length === 0,
       formatMetrics(adminUsersContrast),
     );
+    pushNightAffordanceResult("Admin users night affordances remain legible", adminUsersAffordance);
 
     await clickByText(page, /沙具资产/);
     await page.waitForSelector(".asset-admin-layout", { timeout: 10_000 });
@@ -354,6 +362,7 @@ async function runShellQa() {
     await captureShellScreenshot(page, "admin-assets-night-1280.png");
     const adminAssetsMetrics = await readGenericShellMetrics(page, ".app-navigation");
     const adminAssetsContrast = await readNightModeContrastMetrics(page, ".asset-admin-layout");
+    const adminAssetsAffordance = await readNightAffordanceMetrics(page, ".asset-admin-layout");
     const adminAssetScale = await readAssetAdminMetrics(page);
     pushResult("Admin assets 1280px has no horizontal overflow", adminAssetsMetrics.scrollWidth <= adminAssetsMetrics.viewportWidth + 2, formatMetrics(adminAssetsMetrics));
     pushResult(
@@ -363,6 +372,7 @@ async function runShellQa() {
         adminAssetsContrast.lowContrastSamples.length === 0,
       formatMetrics(adminAssetsContrast),
     );
+    pushNightAffordanceResult("Admin assets night affordances remain legible", adminAssetsAffordance);
     pushResult(
       "Admin assets catalog is list-dominant",
       adminAssetScale.catalogWidthRatio >= 0.72 &&
@@ -410,6 +420,7 @@ async function runShellQa() {
     await delay(350);
     await captureShellScreenshot(page, "admin-llm-night-1280.png");
     const adminLlmContrast = await readNightModeContrastMetrics(page, ".admin-shell");
+    const adminLlmAffordance = await readNightAffordanceMetrics(page, ".admin-shell");
     pushResult(
       "Admin LLM night-mode inputs and buttons remain readable",
       adminLlmContrast.sampleCount >= 20 &&
@@ -417,12 +428,14 @@ async function runShellQa() {
         adminLlmContrast.lowContrastSamples.length === 0,
       formatMetrics(adminLlmContrast),
     );
+    pushNightAffordanceResult("Admin LLM night affordances remain legible", adminLlmAffordance);
 
     await clickByText(page, /Agent 配置/);
     await page.waitForSelector(".agent-admin-grid", { timeout: 10_000 });
     await delay(350);
     await captureShellScreenshot(page, "admin-agents-night-1280.png");
     const adminAgentContrast = await readNightModeContrastMetrics(page, ".agent-admin-grid");
+    const adminAgentAffordance = await readNightAffordanceMetrics(page, ".agent-admin-grid");
     pushResult(
       "Admin Agent night-mode editor text remains readable",
       adminAgentContrast.sampleCount >= 20 &&
@@ -430,6 +443,7 @@ async function runShellQa() {
         adminAgentContrast.lowContrastSamples.length === 0,
       formatMetrics(adminAgentContrast),
     );
+    pushNightAffordanceResult("Admin Agent night affordances remain legible", adminAgentAffordance);
 
     pushResult(
       "No browser console/page errors during UI shell QA",
@@ -913,6 +927,202 @@ async function readNightModeContrastMetrics(page, rootSelector) {
   }, rootSelector);
 }
 
+async function readNightAffordanceMetrics(page, rootSelector) {
+  return page.evaluate((selector) => {
+    const parseColor = (value) => {
+      if (!value || value === "transparent") return null;
+      const rgbMatch = value.match(/rgba?\(([^)]+)\)/);
+      if (!rgbMatch) return null;
+      const [r, g, b, a = "1"] = rgbMatch[1].split(",").map((part) => part.trim());
+      return { r: Number(r), g: Number(g), b: Number(b), a: Number(a) };
+    };
+
+    const parseBackgroundImageColor = (value) => {
+      if (!value || value === "none") return null;
+      const matches = [...value.matchAll(/rgba?\([^)]+\)/gi)]
+        .map((match) => parseColor(match[0]))
+        .filter((color) => color && color.a > 0.18);
+      return matches.length > 0 ? matches[matches.length - 1] : null;
+    };
+
+    const channel = (component) => {
+      const value = Math.max(0, Math.min(255, component)) / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+
+    const luminance = (color) => 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
+
+    const contrast = (foreground, background) => {
+      const lighter = Math.max(luminance(foreground), luminance(background));
+      const darker = Math.min(luminance(foreground), luminance(background));
+      return Number(((lighter + 0.05) / (darker + 0.05)).toFixed(2));
+    };
+
+    const blend = (foreground, background) => {
+      const alpha = Math.max(0, Math.min(1, foreground.a ?? 1));
+      return {
+        r: foreground.r * alpha + background.r * (1 - alpha),
+        g: foreground.g * alpha + background.g * (1 - alpha),
+        b: foreground.b * alpha + background.b * (1 - alpha),
+        a: 1,
+      };
+    };
+
+    const effectiveBackground = (element) => {
+      let current = element;
+      const layers = [];
+      while (current && current instanceof Element) {
+        const style = window.getComputedStyle(current);
+        const color = parseColor(style.backgroundColor);
+        if (color && color.a > 0.12) {
+          layers.push(color);
+        }
+        const imageColor = parseBackgroundImageColor(style.backgroundImage);
+        if (imageColor) {
+          layers.push(imageColor);
+        }
+        current = current.parentElement;
+      }
+      return layers.reduceRight((background, foreground) => blend(foreground, background), {
+        r: 7,
+        g: 17,
+        b: 25,
+        a: 1,
+      });
+    };
+
+    const root = document.querySelector(selector);
+    if (!root) {
+      return {
+        rootSelector: selector,
+        visibleFormControls: 0,
+        placeholderSamples: [],
+        disabledSamples: [],
+        tagSamples: [],
+        scrollableCount: 0,
+        lowPlaceholderSamples: [],
+        lowDisabledSamples: [],
+        lowTagSamples: [],
+      };
+    }
+
+    const isInsideClosedDetails = (element) => {
+      const details = element.closest("details");
+      if (!details || details.open) return false;
+      const summary = details.querySelector(":scope > summary") ?? details.querySelector("summary");
+      return !summary?.contains(element);
+    };
+
+    const isVisible = (element) => {
+      if (!element || isInsideClosedDetails(element)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < window.innerHeight &&
+        rect.left < window.innerWidth &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.08
+      );
+    };
+
+    const readableText = (element) => {
+      if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+        return element.value || element.placeholder || element.getAttribute("aria-label") || "";
+      }
+      if (element instanceof HTMLSelectElement) {
+        return element.selectedOptions[0]?.textContent ?? element.value;
+      }
+      return element.textContent ?? element.getAttribute("aria-label") ?? "";
+    };
+
+    const sampleElement = (element, { pseudo = null, threshold = 4.35 } = {}) => {
+      const style = window.getComputedStyle(element, pseudo);
+      const foreground = parseColor(style.color);
+      const background = effectiveBackground(element);
+      const score = foreground ? contrast(foreground, background) : 0;
+      return {
+        tagName: element.tagName.toLowerCase(),
+        className: typeof element.className === "string" ? element.className.slice(0, 64) : "",
+        text: readableText(element).trim().replace(/\s+/g, " ").slice(0, 42),
+        contrast: score,
+        threshold,
+        color: style.color,
+        background: `rgb(${Math.round(background.r)}, ${Math.round(background.g)}, ${Math.round(background.b)})`,
+      };
+    };
+
+    const formControls = Array.from(
+      root.querySelectorAll(
+        "input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select",
+      ),
+    ).filter(isVisible);
+
+    const placeholderSamples = formControls
+      .filter((element) => (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) && element.placeholder)
+      .map((element) => sampleElement(element, { pseudo: "::placeholder", threshold: 3.8 }));
+
+    const disabledSamples = Array.from(
+      root.querySelectorAll("button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled='true'], .disabled"),
+    )
+      .filter(isVisible)
+      .map((element) => sampleElement(element, { threshold: 3 }));
+
+    const tagSamples = Array.from(
+      root.querySelectorAll(
+        [
+          ".risk-badge",
+          ".status-pill",
+          ".status-badge",
+          ".auth-status-pill",
+          ".asset-status",
+          ".asset-status-pill",
+          ".agent-chip",
+          ".admin-chip",
+          ".memory-chip",
+          ".context-chip",
+          ".personal-pill",
+          ".user-status-pill",
+          ".access-role-pill",
+          ".user-auth-pill",
+          ".ai-context-chips span",
+          ".asset-card-pocket-label",
+          ".admin-summary-chips > *",
+          ".asset-category-pills > *",
+        ].join(","),
+      ),
+    )
+      .filter((element) => isVisible(element) && readableText(element).trim().length > 0)
+      .map((element) => sampleElement(element, { threshold: 3.8 }));
+
+    const scrollableCount = Array.from(root.querySelectorAll("*")).filter((element) => {
+      if (!isVisible(element)) return false;
+      const style = window.getComputedStyle(element);
+      return (
+        (element.scrollHeight > element.clientHeight + 16 || element.scrollWidth > element.clientWidth + 16) &&
+        style.overflow !== "visible" &&
+        style.overflowY !== "visible"
+      );
+    }).length;
+
+    return {
+      rootSelector: selector,
+      visibleFormControls: formControls.length,
+      placeholderSamples: placeholderSamples.slice(0, 8),
+      disabledSamples: disabledSamples.slice(0, 8),
+      tagSamples: tagSamples.slice(0, 8),
+      scrollableCount,
+      lowPlaceholderSamples: placeholderSamples.filter((sample) => sample.contrast < sample.threshold).slice(0, 8),
+      lowDisabledSamples: disabledSamples.filter((sample) => sample.contrast < sample.threshold).slice(0, 8),
+      lowTagSamples: tagSamples.filter((sample) => sample.contrast < sample.threshold).slice(0, 8),
+    };
+  }, rootSelector);
+}
+
 async function waitForVisibleBox(page, selector, timeout = 5000) {
   await page.waitForFunction(
     (targetSelector) => {
@@ -1343,6 +1553,16 @@ function pushNightContrastResult(name, metrics, minimumSamples = 20) {
     metrics.sampleCount >= minimumSamples &&
       metrics.minimumContrast >= 4.35 &&
       metrics.lowContrastSamples.length === 0,
+    formatMetrics(metrics),
+  );
+}
+
+function pushNightAffordanceResult(name, metrics) {
+  pushResult(
+    name,
+    metrics.lowPlaceholderSamples.length === 0 &&
+      metrics.lowDisabledSamples.length === 0 &&
+      metrics.lowTagSamples.length === 0,
     formatMetrics(metrics),
   );
 }

@@ -21915,3 +21915,113 @@ table td {
     font-size: 18px !important;
   }
 }
+
+/* Global night QA v1:
+   Final dark-mode guardrails for form controls, disabled states, chips and
+   scrollable regions. These rules preserve the current layout while making
+   every operable surface readable in the low-light sandbox theme. */
+.product-shell.night-mode {
+  color-scheme: dark;
+}
+
+.product-shell.night-mode :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select) {
+  border-color: rgba(135, 204, 198, 0.42) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(136, 235, 219, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(9, 27, 36, 0.96), rgba(4, 17, 25, 0.98)) !important;
+  color: #f6fffb !important;
+  caret-color: #8cf5e3 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 0 rgba(120, 236, 219, 0) !important;
+}
+
+.product-shell.night-mode :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select):hover:not(:disabled) {
+  border-color: rgba(145, 232, 220, 0.56) !important;
+}
+
+.product-shell.night-mode :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select):focus {
+  border-color: rgba(133, 247, 229, 0.84) !important;
+  box-shadow:
+    0 0 0 3px rgba(99, 218, 202, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09) !important;
+  outline: none !important;
+}
+
+.product-shell.night-mode :is(input, textarea)::placeholder {
+  color: rgba(222, 244, 239, 0.68) !important;
+  opacity: 1 !important;
+}
+
+.product-shell.night-mode select option {
+  background: #081923 !important;
+  color: #f7fffc !important;
+}
+
+.product-shell.night-mode :is(button, input, select, textarea):disabled,
+.product-shell.night-mode :is([aria-disabled="true"], .disabled) {
+  border-color: rgba(118, 168, 164, 0.28) !important;
+  background:
+    linear-gradient(180deg, rgba(18, 38, 47, 0.72), rgba(8, 22, 31, 0.76)) !important;
+  color: rgba(222, 239, 235, 0.72) !important;
+  cursor: not-allowed !important;
+  filter: none !important;
+  opacity: 0.72 !important;
+  text-shadow: none !important;
+}
+
+.product-shell.night-mode :is(button, input, select, textarea, summary, a):focus-visible {
+  outline: 2px solid rgba(133, 247, 229, 0.86) !important;
+  outline-offset: 2px !important;
+}
+
+.product-shell.night-mode :is(
+  .risk-badge,
+  .status-pill,
+  .status-badge,
+  .auth-status-pill,
+  .asset-status,
+  .agent-chip,
+  .admin-chip,
+  .memory-chip,
+  .context-chip,
+  .ai-context-chips span,
+  .asset-card-pocket-label
+) {
+  border-color: rgba(124, 223, 210, 0.46) !important;
+  background:
+    radial-gradient(circle at 35% 0%, rgba(154, 255, 235, 0.14), transparent 42%),
+    rgba(20, 66, 63, 0.84) !important;
+  color: #effffb !important;
+}
+
+.product-shell.night-mode :is(.risk-badge.death, .status-pill.danger, .status-badge.danger) {
+  border-color: rgba(255, 168, 143, 0.52) !important;
+  background: rgba(80, 38, 34, 0.86) !important;
+  color: #ffe3d9 !important;
+}
+
+.product-shell.night-mode :is(.risk-badge.fantasy, .status-pill.fantasy, .status-badge.fantasy) {
+  border-color: rgba(190, 153, 255, 0.52) !important;
+  background: rgba(52, 38, 86, 0.86) !important;
+  color: #eee5ff !important;
+}
+
+.product-shell.night-mode * {
+  scrollbar-color: rgba(119, 226, 211, 0.58) rgba(5, 18, 27, 0.58);
+}
+
+.product-shell.night-mode *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.product-shell.night-mode *::-webkit-scrollbar-track {
+  background: rgba(5, 18, 27, 0.52);
+}
+
+.product-shell.night-mode *::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(5, 18, 27, 0.52);
+  border-radius: 999px;
+  background: rgba(119, 226, 211, 0.58);
+}
