@@ -1,0 +1,191 @@
+#!/usr/bin/env node
+
+import * as esbuild from "esbuild";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const ARTIFACT_DIR = path.resolve(process.cwd(), "artifacts", "current-snapshot-contract-qa");
+const ENTRY_PATH = path.join(ARTIFACT_DIR, "entry.ts");
+const BUNDLE_PATH = path.join(ARTIFACT_DIR, "entry.mjs");
+
+const results = [];
+
+try {
+  await mkdir(ARTIFACT_DIR, { recursive: true });
+  await writeFile(ENTRY_PATH, buildRuntimeEntry(), "utf8");
+  await esbuild.build({
+    entryPoints: [ENTRY_PATH],
+    outfile: BUNDLE_PATH,
+    bundle: true,
+    format: "esm",
+    platform: "node",
+    sourcemap: false,
+    logLevel: "silent",
+  });
+
+  const runtime = await import(pathToFileURL(BUNDLE_PATH).href);
+  await assertRuntimeSnapshot(runtime.default);
+  await assertStaticContractFiles();
+  printSummary();
+} catch (error) {
+  results.push({
+    name: "Current Snapshot contract QA runner",
+    ok: false,
+    detail: error instanceof Error ? error.stack ?? error.message : String(error),
+  });
+  printSummary();
+  process.exitCode = 1;
+}
+
+function buildRuntimeEntry() {
+  return `
+import {
+  createCurrentSandboxSnapshotPayload,
+  createCurrentSandboxSnapshotResponse,
+} from "../../src/api/currentSandboxSnapshotApi";
+import { CURRENT_SANDBOX_SNAPSHOT_SCHEMA } from "../../src/llm/currentSandboxSnapshot";
+
+const sampleObject = {
+  id: "obj_house_001",
+  assetId: "env_house",
+  name: "房子",
+  category: "建筑与环境",
+  x: 293,
+  y: 170,
+  width: 112,
+  height: 76,
+  rotation: -3,
+  scale: 1.35,
+  createdAt: 1000,
+  riskTag: "normal",
+  symbolicCandidates: ["家庭", "安全", "归属"],
+  anchor: { x: 0.5, y: 0.78 },
+  footprint: { kind: "wide", width: 1.2, depth: 0.9, height: 0.8 },
+  thumbnailScale: 1,
+  semanticTags: ["建筑", "容器", "安全感"],
+  modelRecipe: { kind: "house" },
+};
+
+const request = {
+  environment: { weather: "rainy", light: "night" },
+  objects: [sampleObject],
+  selectedObjectId: "obj_house_001",
+  generatedAt: "2026-07-31T10:30:00+08:00",
+  snapshotId: "snapshot_contract_qa",
+};
+
+export default {
+  schema: CURRENT_SANDBOX_SNAPSHOT_SCHEMA,
+  payload: createCurrentSandboxSnapshotPayload(request),
+  response: createCurrentSandboxSnapshotResponse(request),
+};
+`;
+}
+
+async function assertRuntimeSnapshot(runtime) {
+  const { payload, response, schema } = runtime;
+  assert("Runtime exports payload", Boolean(payload));
+  assert("Runtime exports response", Boolean(response));
+  assert("Schema constant remains stable", schema === "sandbox.current-snapshot.v1", schema);
+
+  assert("Response is successful", response.ok === true, JSON.stringify(response));
+  assert("Response requestId is generated", typeof response.requestId === "string" && response.requestId.startsWith("req_"), response.requestId);
+  assert("Response wraps the same snapshot schema", response.data.snapshot.schemaVersion === "sandbox.current-snapshot.v1");
+
+  const { snapshot, policy } = payload;
+  assert("Payload includes policy", Boolean(policy));
+  assert("Policy excludes event flow", policy.includesEvents === false);
+  assert("Policy excludes personal memory", policy.includesPersonalMemory === false);
+  assert("Policy excludes user identity", policy.includesUserIdentity === false);
+  assert("Policy excludes images", policy.includesImage === false);
+
+  assert("Snapshot uses current_sandbox source", snapshot.source === "current_sandbox", snapshot.source);
+  assert("Snapshot preserves deterministic id", snapshot.snapshotId === "snapshot_contract_qa", snapshot.snapshotId);
+  assert("Snapshot preserves generatedAt", snapshot.generatedAt === "2026-07-31T10:30:00+08:00", snapshot.generatedAt);
+  assert("Snapshot maps rainy night labels", snapshot.environment.weatherLabel === "雨天" && snapshot.environment.lightLabel === "黑夜");
+  assert("Snapshot includes one object", snapshot.objects.length === 1, String(snapshot.objects.length));
+  assert("Snapshot selectedObjectId is preserved", snapshot.selectedObjectId === "obj_house_001", String(snapshot.selectedObjectId));
+  assert("Snapshot analysis counts objects", snapshot.analysis.totalObjects === 1, String(snapshot.analysis.totalObjects));
+  assert("Snapshot analysis exposes summary text", typeof snapshot.analysis.summaryText === "string" && snapshot.analysis.summaryText.includes("当前沙盘共有 1 个沙具"));
+
+  const object = snapshot.objects[0];
+  assert("Snapshot object keeps name/category", object.name === "房子" && object.category === "建筑与环境");
+  assert("Snapshot object has normalized coordinates", object.position.xNorm > 0 && object.position.xNorm <= 1 && object.position.yNorm > 0 && object.position.yNorm <= 1);
+  assert("Snapshot object keeps transform", object.transform.rotationDeg === -3 && object.transform.scale === 1.35);
+  assert("Snapshot object keeps footprint", object.footprint.kind === "wide" && object.footprint.width === 1.2);
+
+  const forbiddenKeys = ["events", "eventFlow", "memory", "memories", "user", "userId", "auth", "consent", "scope", "image", "screenshot", "apiKey"];
+  const snapshotKeys = collectKeys(snapshot);
+  const leakedKeys = forbiddenKeys.filter((key) => snapshotKeys.has(key));
+  assert("Snapshot contains no forbidden context keys", leakedKeys.length === 0, leakedKeys.join(", "));
+}
+
+async function assertStaticContractFiles() {
+  const [contracts, apiHelper, mockAdapter, structuredPanel, doc] = await Promise.all([
+    readProjectFile("src/api/contracts.ts"),
+    readProjectFile("src/api/currentSandboxSnapshotApi.ts"),
+    readProjectFile("src/api/mockApiAdapter.ts"),
+    readProjectFile("src/components/StructuredDataPanel.tsx"),
+    readProjectFile("docs/sandbox-llm-data-output-spec.md"),
+  ]);
+
+  assert("Contracts declare request DTO", contracts.includes("BuildCurrentSandboxSnapshotRequestDto"));
+  assert("Contracts declare response DTO", contracts.includes("CurrentSandboxSnapshotResponseDto"));
+  assert("Contracts expose LLM snapshot endpoint", contracts.includes("/api/llm/current-sandbox-snapshot"));
+  assert("Contracts include sample current snapshot report", contracts.includes("sampleCurrentSandboxSnapshot"));
+
+  assert("API helper uses shared builder", apiHelper.includes("buildCurrentSandboxSnapshot(request)"));
+  assert("API helper policy excludes events", apiHelper.includes("includesEvents: false"));
+  assert("API helper policy excludes identity", apiHelper.includes("includesUserIdentity: false"));
+  assert("API helper policy excludes images", apiHelper.includes("includesImage: false"));
+
+  assert("Mock adapter exposes createCurrentSandboxSnapshot", mockAdapter.includes("createCurrentSandboxSnapshot("));
+  assert("Mock adapter includes sample response", mockAdapter.includes("sampleCurrentSandboxSnapshot"));
+
+  assert("Structured data panel uses API payload helper", structuredPanel.includes("createCurrentSandboxSnapshotPayload"));
+  assert("Structured data panel copies raw snapshot JSON", structuredPanel.includes("JSON.stringify(snapshot, null, 2)"));
+
+  assert("Doc states only current status is output", doc.includes("当前沙盘这一刻的完整状态"));
+  assert("Doc excludes event flow", doc.includes("事件流") && doc.includes("不包含新增、移动、删除等历史过程"));
+  assert("Doc excludes personal memory", doc.includes("个人记忆") && doc.includes("不包含长期记忆"));
+  assert("Doc excludes authorization context", doc.includes("授权上下文"));
+  assert("Doc excludes images", doc.includes("图片截图"));
+}
+
+function collectKeys(value, keys = new Set()) {
+  if (!value || typeof value !== "object") {
+    return keys;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectKeys(item, keys));
+    return keys;
+  }
+  Object.entries(value).forEach(([key, child]) => {
+    keys.add(key);
+    collectKeys(child, keys);
+  });
+  return keys;
+}
+
+async function readProjectFile(relativePath) {
+  return readFile(path.resolve(process.cwd(), relativePath), "utf8");
+}
+
+function assert(name, condition, detail = "") {
+  results.push({ name, ok: Boolean(condition), detail: String(detail ?? "") });
+  if (!condition) {
+    throw new Error(`${name}${detail ? `: ${detail}` : ""}`);
+  }
+}
+
+function printSummary() {
+  for (const result of results) {
+    const prefix = result.ok ? "PASS" : "FAIL";
+    console.log(`${prefix} ${result.name}${result.detail ? ` — ${result.detail}` : ""}`);
+  }
+
+  const passed = results.filter((result) => result.ok).length;
+  const total = results.length;
+  console.log(`Current Snapshot contract QA summary: ${passed}/${total} passed`);
+}
