@@ -9329,6 +9329,83 @@ button:disabled {
   line-height: 1.45;
 }
 
+.data-panel-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.data-panel-header h2 {
+  margin: 0;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.data-panel-header p {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.data-panel-header button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+  border-radius: 9px;
+  color: var(--accent-dark);
+  background: color-mix(in srgb, var(--accent-soft) 76%, #fffdf6);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.data-panel-header button:hover,
+.data-panel-header button:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 78%, var(--line));
+  color: #fff;
+  background: var(--accent);
+}
+
+.snapshot-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.snapshot-summary-row span {
+  display: grid;
+  min-height: 46px;
+  place-items: center;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
+  border-radius: 10px;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  font-size: 10px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.snapshot-summary-row strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Night mode readability polish: this section intentionally lives after component styles
    so it wins over light-mode card/form defaults. */
 .product-shell.night-mode {
@@ -12592,6 +12669,33 @@ button:disabled {
   color: #effbf7 !important;
   border-color: rgba(112, 214, 198, 0.36) !important;
   background: rgba(48, 124, 113, 0.28) !important;
+}
+
+.product-shell.night-mode .data-panel-header p {
+  color: rgba(216, 233, 228, 0.78) !important;
+}
+
+.product-shell.night-mode .data-panel-header button {
+  color: #eafff8 !important;
+  border-color: rgba(112, 214, 198, 0.48) !important;
+  background: rgba(24, 84, 80, 0.72) !important;
+}
+
+.product-shell.night-mode .data-panel-header button:hover,
+.product-shell.night-mode .data-panel-header button:focus-visible {
+  color: #fbfffd !important;
+  border-color: rgba(137, 242, 224, 0.88) !important;
+  background: rgba(38, 137, 126, 0.92) !important;
+}
+
+.product-shell.night-mode .snapshot-summary-row span {
+  color: rgba(216, 233, 228, 0.8) !important;
+  border-color: rgba(156, 195, 196, 0.28) !important;
+  background: rgba(7, 20, 28, 0.72) !important;
+}
+
+.product-shell.night-mode .snapshot-summary-row strong {
+  color: #f6fffb !important;
 }
 
 /* Focus mode */

@@ -1,57 +1,90 @@
-import { useMemo } from "react";
-import type { SandboxAnalysis, SandboxObject } from "../types";
+import { Check, ClipboardCopy } from "lucide-react";
+import { useMemo, useState } from "react";
+import { buildCurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import type { SandboxEnvironment, SandboxObject } from "../types";
 
 interface StructuredDataPanelProps {
   objects: SandboxObject[];
-  analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
   selectedObject: SandboxObject | null;
 }
 
 export function StructuredDataPanel({
   objects,
-  analysis,
+  environment,
   selectedObject,
 }: StructuredDataPanelProps): JSX.Element {
-  const dataPreview = useMemo(
-    () => ({
-      selectedObject: selectedObject
-        ? {
-            id: selectedObject.id,
-            assetId: selectedObject.assetId,
-            name: selectedObject.name,
-            x: Math.round(selectedObject.x),
-            y: Math.round(selectedObject.y),
-            rotation: selectedObject.rotation,
-            scale: selectedObject.scale,
-          }
-        : null,
-      objects: objects.map((object) => ({
-        id: object.id,
-        assetId: object.assetId,
-        name: object.name,
-        x: Math.round(object.x),
-        y: Math.round(object.y),
-        rotation: object.rotation,
-        scale: object.scale,
-        riskTag: object.riskTag,
-      })),
-      analysis: {
-        riskCounts: analysis.riskCounts,
-        centerObjects: analysis.centerObjects.length,
-        boundaryObjects: analysis.boundaryObjects.length,
-        grid: analysis.grid.map((cell) => ({
-          id: cell.id,
-          count: cell.count,
-        })),
-      },
-    }),
-    [analysis, objects, selectedObject],
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const snapshot = useMemo(
+    () =>
+      buildCurrentSandboxSnapshot({
+        objects,
+        environment,
+        selectedObjectId: selectedObject?.id ?? null,
+      }),
+    [environment, objects, selectedObject?.id],
   );
+  const snapshotJson = useMemo(() => JSON.stringify(snapshot, null, 2), [snapshot]);
+
+  const handleCopySnapshot = async () => {
+    const copied = await copyText(snapshotJson);
+    setCopyState(copied ? "copied" : "failed");
+    window.setTimeout(() => setCopyState("idle"), 1600);
+  };
 
   return (
-    <section className="side-section data-panel" aria-label="结构化数据">
-      <h2>结构化数据</h2>
-      <pre>{JSON.stringify(dataPreview, null, 2)}</pre>
+    <section className="side-section data-panel structured-data-panel" aria-label="当前 LLM Snapshot">
+      <div className="data-panel-header">
+        <div>
+          <h2>LLM Snapshot</h2>
+          <p>只包含当前沙盘状态，不包含事件流、个人记忆和用户身份。</p>
+        </div>
+        <button type="button" onClick={handleCopySnapshot} aria-label="复制当前 LLM Snapshot">
+          {copyState === "copied" ? <Check size={14} /> : <ClipboardCopy size={14} />}
+          {copyState === "copied" ? "已复制" : copyState === "failed" ? "复制失败" : "复制"}
+        </button>
+      </div>
+      <div className="snapshot-summary-row" aria-label="当前 Snapshot 摘要">
+        <span>
+          <strong>{snapshot.analysis.totalObjects}</strong>
+          沙具
+        </span>
+        <span>
+          <strong>{snapshot.analysis.centerCount}</strong>
+          中心
+        </span>
+        <span>
+          <strong>{snapshot.environment.weatherLabel}</strong>
+          天气
+        </span>
+        <span>
+          <strong>{snapshot.environment.lightLabel}</strong>
+          光照
+        </span>
+      </div>
+      <pre>{snapshotJson}</pre>
     </section>
   );
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return copied;
+  } catch {
+    return false;
+  }
 }

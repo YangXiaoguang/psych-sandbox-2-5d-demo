@@ -126,6 +126,7 @@ export function RightPanel({
           selectedObject={selectedObject}
           events={events}
           analysis={analysis}
+          environment={environment}
           onPatchSelected={onPatchSelected}
           onDeleteSelected={onDeleteSelected}
         />
@@ -148,6 +149,7 @@ function SceneInsightDrawer({
   selectedObject,
   events,
   analysis,
+  environment,
   onPatchSelected,
   onDeleteSelected,
 }: {
@@ -155,6 +157,7 @@ function SceneInsightDrawer({
   selectedObject: SandboxObject | null;
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
   onPatchSelected: (patch: Partial<SandboxObject>, label: string) => void;
   onDeleteSelected: () => void;
 }): JSX.Element {
@@ -236,11 +239,11 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <Database size={15} />
-            结构化数据
+            LLM Snapshot
           </span>
-          <em>JSON 预览</em>
+          <em>当前状态</em>
         </summary>
-        <StructuredDataPanel objects={objects} analysis={analysis} selectedObject={selectedObject} />
+        <StructuredDataPanel objects={objects} environment={environment} selectedObject={selectedObject} />
       </details>
     </div>
   );
