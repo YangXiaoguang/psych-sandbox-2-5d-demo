@@ -17,6 +17,7 @@ npm run dev
 - [Stage Engine v2 视觉圣经](docs/visual-bible.md)
 - [Stage Engine v2 场景合同](docs/scene-contracts.md)
 - [Stage Engine v2 质量门](docs/quality-gates.md)
+- [当前沙盘 Snapshot 数据输出规范](docs/sandbox-llm-data-output-spec.md)
 
 ## 能力
 
