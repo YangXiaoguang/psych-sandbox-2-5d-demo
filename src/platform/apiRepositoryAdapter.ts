@@ -91,7 +91,12 @@ function buildApiRepositoryReport({
       personalData,
       adminGovernance,
       context,
-      mockRoundTrip: Boolean(apiContract.sampleUserPage.ok && apiContract.sampleWorkspacePage.ok && apiContract.sampleMemoryPage.ok),
+      mockRoundTrip: Boolean(
+        apiContract.sampleUserPage.ok &&
+          apiContract.sampleWorkspacePage.ok &&
+          apiContract.sampleMemoryPage.ok &&
+          apiContract.sampleCurrentSandboxSnapshot.ok,
+      ),
     }),
     migrationSteps: [
       mode === "mockApi"
@@ -155,7 +160,7 @@ function buildBackendReport({
       {
         label: "DTO 分页演练",
         status: mockRoundTrip ? "ok" : "warn",
-        detail: mockRoundTrip ? "用户、工作区、记忆候选分页样例均可从 Mock Adapter 生成。" : "Mock 分页样例尚未完整生成。",
+        detail: mockRoundTrip ? "用户、工作区、记忆候选分页样例和当前沙盘 Snapshot 均可从 Mock Adapter 生成。" : "Mock DTO 样例尚未完整生成。",
       },
       {
         label: "写操作契约",

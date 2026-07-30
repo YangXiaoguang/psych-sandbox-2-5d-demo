@@ -1,6 +1,6 @@
 import { Check, ClipboardCopy } from "lucide-react";
 import { useMemo, useState } from "react";
-import { buildCurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
 import type { SandboxEnvironment, SandboxObject } from "../types";
 
 interface StructuredDataPanelProps {
@@ -15,15 +15,16 @@ export function StructuredDataPanel({
   selectedObject,
 }: StructuredDataPanelProps): JSX.Element {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
-  const snapshot = useMemo(
+  const snapshotPayload = useMemo(
     () =>
-      buildCurrentSandboxSnapshot({
+      createCurrentSandboxSnapshotPayload({
         objects,
         environment,
         selectedObjectId: selectedObject?.id ?? null,
       }),
     [environment, objects, selectedObject?.id],
   );
+  const { snapshot, policy } = snapshotPayload;
   const snapshotJson = useMemo(() => JSON.stringify(snapshot, null, 2), [snapshot]);
 
   const handleCopySnapshot = async () => {
@@ -37,7 +38,7 @@ export function StructuredDataPanel({
       <div className="data-panel-header">
         <div>
           <h2>LLM Snapshot</h2>
-          <p>只包含当前沙盘状态，不包含事件流、个人记忆和用户身份。</p>
+          <p>{policy.note}</p>
         </div>
         <button type="button" onClick={handleCopySnapshot} aria-label="复制当前 LLM Snapshot">
           {copyState === "copied" ? <Check size={14} /> : <ClipboardCopy size={14} />}

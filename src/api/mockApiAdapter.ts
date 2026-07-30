@@ -2,6 +2,7 @@ import { getEffectivePermissions } from "../admin/localAdminGovernance";
 import type { AdminGovernanceData } from "../admin/types";
 import type { PersonalDataBundle, PersonalMemoryCandidate, SandtraySessionArchive, UserWorkspace } from "../personal/types";
 import type { LlmProviderConfig, ManagedAsset, PsychAgentProfile } from "../types";
+import { createCurrentSandboxSnapshotResponse } from "./currentSandboxSnapshotApi";
 import {
   API_CONTRACT_VERSION,
   API_ENDPOINT_CONTRACTS,
@@ -17,6 +18,8 @@ import {
   type ApiResponseDto,
   type ApiSortDto,
   type AssetSummaryDto,
+  type BuildCurrentSandboxSnapshotRequestDto,
+  type CurrentSandboxSnapshotResponseDto,
   type LlmProviderSummaryDto,
   type MemoryCandidateDto,
   type PsychAgentSummaryDto,
@@ -50,6 +53,9 @@ export interface FrontendMockApiAdapter {
   queryAssets(request?: Partial<ApiPaginationRequestDto>): Promise<ApiPageResponseDto<AssetSummaryDto>>;
   queryLlmProviders(request?: Partial<ApiPaginationRequestDto>): Promise<ApiPageResponseDto<LlmProviderSummaryDto>>;
   queryAgents(request?: Partial<ApiPaginationRequestDto>): Promise<ApiPageResponseDto<PsychAgentSummaryDto>>;
+  createCurrentSandboxSnapshot(
+    request: BuildCurrentSandboxSnapshotRequestDto,
+  ): Promise<ApiResponseDto<CurrentSandboxSnapshotResponseDto>>;
   buildContractReport(): ApiContractReport;
 }
 
@@ -87,6 +93,9 @@ export function createMockApiAdapter(input: MockApiAdapterInput): FrontendMockAp
     async queryAgents(request) {
       return toPageResponse(mapAgents(input.agents ?? []), request, "updatedAt");
     },
+    async createCurrentSandboxSnapshot(request) {
+      return createCurrentSandboxSnapshotResponse(request);
+    },
     buildContractReport() {
       return {
         version: API_CONTRACT_VERSION,
@@ -101,6 +110,13 @@ export function createMockApiAdapter(input: MockApiAdapterInput): FrontendMockAp
         sampleMemoryPage: toPageResponseSync(mapMemoryCandidates(input.personalData.memoryCandidates), { page: 1, pageSize: 5 }, "updatedAt"),
         sampleAssetPage: toPageResponseSync(mapAssets(input.managedAssets ?? []), { page: 1, pageSize: 5 }, "updatedAt"),
         sampleLlmProviderPage: toPageResponseSync(mapLlmProviders(input.llmProviders ?? []), { page: 1, pageSize: 5 }, "updatedAt"),
+        sampleCurrentSandboxSnapshot: createCurrentSandboxSnapshotResponse({
+          environment: { weather: "sunny", light: "day" },
+          objects: [],
+          selectedObjectId: null,
+          snapshotId: "snapshot_contract_sample",
+          generatedAt: new Date().toISOString(),
+        }),
       };
     },
   };

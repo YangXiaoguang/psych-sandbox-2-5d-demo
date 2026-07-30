@@ -1,4 +1,5 @@
 import type { AdminAccessRole, AdminAccessStatus, AdminPermissionKey, AdminWorkspaceScope } from "../admin/types";
+import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type {
   CommunicationTone,
   ConsentScope,
@@ -290,6 +291,27 @@ export interface SaveSandtraySnapshotRequestDto {
   capturedAt: string;
 }
 
+export interface BuildCurrentSandboxSnapshotRequestDto {
+  environment: SandboxEnvironment;
+  objects: SandboxObject[];
+  selectedObjectId?: string | null;
+  generatedAt?: string;
+  snapshotId?: string;
+}
+
+export interface CurrentSandboxSnapshotPolicyDto {
+  includesEvents: false;
+  includesPersonalMemory: false;
+  includesUserIdentity: false;
+  includesImage: false;
+  note: string;
+}
+
+export interface CurrentSandboxSnapshotResponseDto {
+  snapshot: CurrentSandboxSnapshot;
+  policy: CurrentSandboxSnapshotPolicyDto;
+}
+
 export interface UpdateMemoryCandidateRequestDto {
   memoryId: string;
   status?: MemoryCandidateStatus;
@@ -363,6 +385,7 @@ export interface ApiContractReport {
   sampleMemoryPage: ApiPageResponseDto<MemoryCandidateDto>;
   sampleAssetPage: ApiPageResponseDto<AssetSummaryDto>;
   sampleLlmProviderPage: ApiPageResponseDto<LlmProviderSummaryDto>;
+  sampleCurrentSandboxSnapshot: ApiResponseDto<CurrentSandboxSnapshotResponseDto>;
 }
 
 export const API_PAGINATION_PROTOCOL: ApiPaginationProtocol = {
@@ -582,6 +605,17 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     paginated: false,
     errors: ["AUTH_REQUIRED", "VALIDATION_FAILED", "RESOURCE_CONFLICT"],
     migrationPriority: "p0",
+  },
+  {
+    method: "POST",
+    path: "/api/llm/current-sandbox-snapshot",
+    summary: "生成供 LLM 使用的当前沙盘状态 Snapshot，不包含事件流、个人记忆、用户身份或截图。",
+    auth: "owner-or-admin",
+    requestDto: "BuildCurrentSandboxSnapshotRequestDto",
+    responseDto: "ApiResponseDto<CurrentSandboxSnapshotResponseDto>",
+    paginated: false,
+    errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "VALIDATION_FAILED"],
+    migrationPriority: "p1",
   },
   {
     method: "GET",
