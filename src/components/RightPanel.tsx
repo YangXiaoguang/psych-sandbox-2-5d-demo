@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { Bot, ChevronLeft, ChevronRight, Clock3, Database, LayoutDashboard, MousePointer2, Trash2 } from "lucide-react";
 import { RISK_COLORS, RISK_LABELS } from "../data/assets";
-import type { LlmProviderConfig, RiskTag, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
+import type { LlmProviderConfig, RiskTag, SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { EventStream } from "./EventStream";
@@ -17,8 +17,8 @@ interface RightPanelProps {
   selectedObject: SandboxObject | null;
   events: SandboxEvent[];
   analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
   llmProviders: LlmProviderConfig[];
-  personalMemoryContext: string[];
   activeTab: RightPanelTab;
   collapsed: boolean;
   onTabChange: (tab: RightPanelTab) => void;
@@ -32,8 +32,8 @@ export function RightPanel({
   selectedObject,
   events,
   analysis,
+  environment,
   llmProviders,
-  personalMemoryContext,
   activeTab,
   collapsed,
   onTabChange,
@@ -134,10 +134,8 @@ export function RightPanel({
           <AiCompanionPanel
             objects={objects}
             selectedObject={selectedObject}
-            events={events}
-            analysis={analysis}
+            environment={environment}
             llmProviders={llmProviders}
-            personalMemoryContext={personalMemoryContext}
           />
         </div>
       )}

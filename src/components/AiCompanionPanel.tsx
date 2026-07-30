@@ -1,17 +1,16 @@
 import { HeartHandshake, Send, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { LlmProviderConfig, SandboxAnalysis, SandboxEvent, SandboxObject } from "../types";
+import type { LlmProviderConfig, SandboxEnvironment, SandboxObject } from "../types";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
+import { buildCurrentSandboxSnapshot, type CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import { MarkdownText } from "./MarkdownText";
 
 interface AiCompanionPanelProps {
   objects: SandboxObject[];
   selectedObject: SandboxObject | null;
-  events: SandboxEvent[];
-  analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
   llmProviders: LlmProviderConfig[];
-  personalMemoryContext: string[];
   variant?: "default" | "focus";
 }
 
@@ -32,11 +31,10 @@ type CompanionMode = "idle" | "listening" | "thinking" | "speaking";
 interface CompanionContext {
   chips: string[];
   activeCells: string[];
-  recentEvents: SandboxEvent[];
-  objectNames: string[];
+  snapshot: CurrentSandboxSnapshot;
   selectedName: string | null;
+  objectNames: string[];
   centerObjectNames: string[];
-  memoryNotes: string[];
 }
 
 const QUICK_PROMPTS: QuickPrompt[] = [
@@ -47,8 +45,8 @@ const QUICK_PROMPTS: QuickPrompt[] = [
   },
   {
     id: "process-review",
-    label: "回顾创作过程",
-    prompt: "请帮我回顾刚才的创作过程，尽量中性、温柔一些。",
+    label: "看当前结构",
+    prompt: "请只基于当前沙盘状态，温和地帮我看看作品结构。",
   },
   {
     id: "selected-object",
@@ -70,10 +68,8 @@ const QUICK_PROMPTS: QuickPrompt[] = [
 export function AiCompanionPanel({
   objects,
   selectedObject,
-  events,
-  analysis,
+  environment,
   llmProviders,
-  personalMemoryContext,
   variant = "default",
 }: AiCompanionPanelProps): JSX.Element {
   const [messages, setMessages] = useState<CompanionMessage[]>(() => [
@@ -92,8 +88,14 @@ export function AiCompanionPanel({
   const chatLogRef = useRef<HTMLElement | null>(null);
 
   const contextSummary = useMemo(
-    () => buildContextSummary(objects, selectedObject, events, analysis, personalMemoryContext),
-    [analysis, events, objects, personalMemoryContext, selectedObject],
+    () =>
+      buildContextSummary({
+        objects,
+        selectedObject,
+        environment,
+        generatedAt: new Date().toISOString(),
+      }),
+    [environment, objects, selectedObject],
   );
 
   useEffect(() => {
@@ -207,7 +209,7 @@ export function AiCompanionPanel({
         <div>
           <p className="eyebrow">AI Companion</p>
           <h2>沙盘伙伴</h2>
-          <p>温柔陪伴、过程回顾、作品整理</p>
+          <p>温柔陪伴、当前状态整理、作品表达</p>
         </div>
       </section>
 
@@ -218,8 +220,8 @@ export function AiCompanionPanel({
         </div>
         <div className="ai-context-grid">
           <ContextMetric label="选中" value={selectedObject?.name ?? "无"} />
-          <ContextMetric label="中心" value={`${analysis.centerObjects.length}`} />
-          <ContextMetric label="事件" value={`${events.length}`} />
+          <ContextMetric label="中心" value={`${contextSummary.snapshot.analysis.centerCount}`} />
+          <ContextMetric label="区域" value={`${contextSummary.activeCells.length}`} />
         </div>
         <div className="ai-context-chips">
           {contextSummary.chips.map((chip) => (
@@ -314,35 +316,44 @@ function ContextMetric({ label, value }: { label: string; value: string }): JSX.
   );
 }
 
-function buildContextSummary(
-  objects: SandboxObject[],
-  selectedObject: SandboxObject | null,
-  events: SandboxEvent[],
-  analysis: SandboxAnalysis,
-  personalMemoryContext: string[],
-): CompanionContext {
-  const activeCells = analysis.grid
+function buildContextSummary({
+  objects,
+  selectedObject,
+  environment,
+  generatedAt,
+}: {
+  objects: SandboxObject[];
+  selectedObject: SandboxObject | null;
+  environment: SandboxEnvironment;
+  generatedAt: string;
+}): CompanionContext {
+  const snapshot = buildCurrentSandboxSnapshot({
+    objects,
+    environment,
+    selectedObjectId: selectedObject?.id ?? null,
+    generatedAt,
+  });
+  const activeCells = snapshot.analysis.zoneCounts
     .filter((cell) => cell.count > 0)
     .map((cell) => `${cell.label}${cell.count}`);
-  const objectNames = objects.map((object) => object.name);
-  const centerObjectIds = new Set(analysis.centerObjects);
-  const centerObjectNames = objects.filter((object) => centerObjectIds.has(object.id)).map((object) => object.name);
+  const objectNames = snapshot.objects.map((object) => object.name);
+  const centerObjectNames = snapshot.objects
+    .filter((object) => object.position.inCenter)
+    .map((object) => object.name);
   const chips = [
     selectedObject ? `正在引用: ${selectedObject.name}` : "未选中沙具",
     objects.length > 0 ? `对象: ${objectNames.slice(0, 4).join("、")}` : "空沙盘",
     activeCells.length > 0 ? `区域: ${activeCells.slice(0, 3).join(" / ")}` : "区域未形成集中",
-    personalMemoryContext.length > 0 ? `确认记忆: ${personalMemoryContext.length}` : "暂无确认记忆",
-    events.length > 0 ? `最近事件: ${events[events.length - 1]?.label ?? "无"}` : "暂无事件",
+    `环境: ${snapshot.environment.weatherLabel} · ${snapshot.environment.lightLabel}`,
   ];
 
   return {
     chips,
     activeCells,
-    recentEvents: events.slice(-5),
+    snapshot,
     objectNames,
     selectedName: selectedObject?.name ?? null,
     centerObjectNames,
-    memoryNotes: personalMemoryContext,
   };
 }
 
@@ -353,8 +364,9 @@ function buildCompanionMessages(
 ): LlmChatMessage[] {
   const system = [
     "你是数字心理沙盘 Demo 中的 AI 沙盘伙伴。你要温暖、简洁、非评判地陪用户整理体验。",
-    "你不能做诊断，不能替代专业心理咨询或医疗建议。不要给出固定象征解释，要用开放式问题帮助用户表达。引用已确认记忆时必须说明它只是用户确认过的参考线索。",
-    `当前沙盘上下文：${contextToText(context)}`,
+    "你不能做诊断，不能替代专业心理咨询或医疗建议。不要给出固定象征解释，要用开放式问题帮助用户表达。",
+    "当前只允许使用 CurrentSandboxSnapshot。不要假设事件流、个人记忆、用户身份、对话历史之外的资料存在。",
+    `CurrentSandboxSnapshot JSON:\n${JSON.stringify(context.snapshot, null, 2)}`,
   ].join("\n\n");
   const historyMessages: LlmChatMessage[] = history
     .filter((message) => message.text.trim())
@@ -377,37 +389,25 @@ function contextToText(context: CompanionContext): string {
     context.objectNames.length > 0 ? context.objectNames.slice(0, 10).join("、") : "当前没有沙具";
   const centerText =
     context.centerObjectNames.length > 0 ? context.centerObjectNames.join("、") : "中心区域暂时没有明显对象";
-  const recentText =
-    context.recentEvents.length > 0 ? context.recentEvents.map((event) => event.label).join("；") : "暂无事件";
-  const memoryText =
-    context.memoryNotes.length > 0
-      ? `已确认个人记忆：${context.memoryNotes.join("；")}。`
-      : "已确认个人记忆：暂无。";
-  return `对象：${objectText}。区域：${regionText}。中心：${centerText}。最近事件：${recentText}。${memoryText}`;
+  const environmentText = `${context.snapshot.environment.weatherLabel} · ${context.snapshot.environment.lightLabel}`;
+  return `对象：${objectText}。区域：${regionText}。中心：${centerText}。环境：${environmentText}。`;
 }
 
 function createCompanionReply(prompt: string, context: CompanionContext): string {
   const normalized = prompt.toLowerCase();
   const regionText = context.activeCells.length > 0 ? context.activeCells.join("、") : "目前还没有明显集中的区域";
-  const recentText =
-    context.recentEvents.length > 0
-      ? context.recentEvents.map((event) => event.label).join("；")
-      : "现在还没有太多创作事件";
   const objectText =
     context.objectNames.length > 0 ? context.objectNames.slice(0, 8).join("、") : "现在沙盘里还没有放入沙具";
   const centerText =
     context.centerObjectNames.length > 0 ? context.centerObjectNames.join("、") : "中心区域暂时没有明显对象";
-  const memoryText =
-    context.memoryNotes.length > 0
-      ? `你确认过的一些线索包括：${context.memoryNotes.slice(0, 2).join("；")}。我会把它当作参考，不当作结论。`
-      : "";
+  const environmentText = `${context.snapshot.environment.weatherLabel} · ${context.snapshot.environment.lightLabel}`;
 
   if (normalized.includes("不要分析") || normalized.includes("陪我聊")) {
     return "好，我们先不急着解释。你可以只说一个很小的感觉，比如这个沙盘让你更靠近、想躲开，还是只是有点说不清。我会跟着你的节奏来。";
   }
 
   if (normalized.includes("过程") || normalized.includes("回顾")) {
-    return `我先帮你轻轻回看过程：最近的创作轨迹里有这些动作：${recentText}。如果你愿意，我们可以从“最想改动的一步”或“最有感觉的一步”开始聊。`;
+    return `第一版里我先只看当前沙盘状态，不展开事件流。现在能看到的结构是：${contextToText(context)} 如果你愿意，我们可以从此刻最有感觉的位置开始，而不是先回溯过程。`;
   }
 
   if (normalized.includes("中心") || normalized.includes("区域") || normalized.includes("位置")) {
@@ -419,7 +419,7 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
   }
 
   if (normalized.includes("整理") || normalized.includes("文字") || normalized.includes("总结")) {
-    return `我整理一版中性草稿：当前作品里包含${objectText}，沙具分布主要出现在${regionText}，中心附近有${centerText}。${memoryText}这些位置和对象可以作为继续讨论的线索，但不代表固定含义。你可以在这个基础上补充：哪些沙具让你感觉亲近，哪些让你感觉有距离。`;
+    return `我整理一版中性草稿：当前作品处于${environmentText}环境，包含${objectText}，沙具分布主要出现在${regionText}，中心附近有${centerText}。这些位置和对象可以作为继续讨论的线索，但不代表固定含义。你可以在这个基础上补充：哪些沙具让你感觉亲近，哪些让你感觉有距离。`;
   }
 
   if (normalized.includes("选中") || normalized.includes("沙具")) {
@@ -428,5 +428,5 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
       : "现在还没有选中具体沙具。你可以点一下画布里的某个沙具，我会把它作为当前话题；也可以直接告诉我你最在意哪一个。";
   }
 
-  return `我在这里。${memoryText}当前作品的一个温和线索是：${regionText}。我们可以先从你的感受开始，而不是从解释开始。看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？`;
+  return `我在这里。当前作品的一个温和线索是：${regionText}，环境是${environmentText}。我们可以先从你的感受开始，而不是从解释开始。看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？`;
 }

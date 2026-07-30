@@ -43,7 +43,6 @@ import { getEnvironmentLabel } from "./data/environment";
 import { createInitialScene } from "./data/initialScene";
 import type {
   LlmProviderConfig,
-  SandboxAnalysis,
   SandboxAsset,
   SandboxCameraState,
   SandboxEnvironment,
@@ -69,7 +68,6 @@ import {
   savePsychAgents,
 } from "./utils/storage";
 import {
-  buildPersonalContextPacket,
   createLocalPersonalUser,
   getActiveProfile,
   switchActivePersonalUser,
@@ -152,11 +150,6 @@ export function App(): JSX.Element {
   const assetPanelCollapsed = layoutPreferences.assetPanelCollapsed;
   const rightPanelCollapsed = layoutPreferences.rightPanelCollapsed;
   const activeProfile = useMemo(() => getActiveProfile(personalData), [personalData]);
-  const personalContextPacket = useMemo(
-    () => buildPersonalContextPacket(personalData, activeUserId),
-    [activeUserId, personalData],
-  );
-  const personalMemoryContext = personalContextPacket.promptLines;
   const repositoryReport = useMemo<SystemArchitectureReport>(
     () => repositoryAdapter.buildReport(personalData, adminGovernance, { managedAssets, llmProviders, agents }),
     [adminGovernance, agents, llmProviders, managedAssets, personalData, repositoryAdapter],
@@ -792,10 +785,8 @@ export function App(): JSX.Element {
                 <FocusAiCompanionDrawer
                   objects={objects}
                   selectedObject={selectedObject}
-                  events={events}
-                  analysis={analysis}
+                  environment={environment}
                   llmProviders={llmProviders}
-                  personalMemoryContext={personalMemoryContext}
                   onClose={() => patchLayoutPreferences({ aiDrawerOpen: false })}
                 />
               ) : null}
@@ -970,8 +961,8 @@ export function App(): JSX.Element {
                   selectedObject={selectedObject}
                   events={events}
                   analysis={analysis}
+                  environment={environment}
                   llmProviders={llmProviders}
-                  personalMemoryContext={personalMemoryContext}
                   activeTab={rightPanelTab}
                   collapsed={false}
                   onTabChange={setRightPanelTab}
@@ -991,9 +982,7 @@ export function App(): JSX.Element {
           llmProviders={llmProviders}
           conversations={conversations}
           objects={objects}
-          events={events}
-          analysis={analysis}
-          personalMemoryContext={personalMemoryContext}
+          environment={environment}
           onConversationsChange={setConversations}
         />
       ) : null}
@@ -1114,18 +1103,14 @@ function SandboxGameNavigation({
 function FocusAiCompanionDrawer({
   objects,
   selectedObject,
-  events,
-  analysis,
+  environment,
   llmProviders,
-  personalMemoryContext,
   onClose,
 }: {
   objects: SandboxObject[];
   selectedObject: SandboxObject | null;
-  events: SandboxEvent[];
-  analysis: SandboxAnalysis;
+  environment: SandboxEnvironment;
   llmProviders: LlmProviderConfig[];
-  personalMemoryContext: string[];
   onClose: () => void;
 }): JSX.Element {
   return (
@@ -1146,10 +1131,8 @@ function FocusAiCompanionDrawer({
         <AiCompanionPanel
           objects={objects}
           selectedObject={selectedObject}
-          events={events}
-          analysis={analysis}
+          environment={environment}
           llmProviders={llmProviders}
-          personalMemoryContext={personalMemoryContext}
           variant="focus"
         />
       </div>

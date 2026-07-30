@@ -1,336 +1,122 @@
-# 当前沙盘 Snapshot 数据输出规范
+# 当前沙盘 Snapshot 输出规范
 
-文档版本：v1.1  
+版本：v1.2
 更新日期：2026-07-31  
-适用项目：`psych-sandbox-2-5d-demo`  
-适用对象：前端工程师、后端工程师、LLM 工程师  
+代码实现：`src/llm/currentSandboxSnapshot.ts`
 
----
+## 一句话说明
 
-## 1. 目标
+发给 LLM 的数据只包含“当前沙盘这一刻是什么样子”。
+第一版不包含事件流、个人记忆、授权上下文、用户身份、API Key 或截图。
 
-第一版只向 LLM 输出**当前沙盘状态的完整 Snapshot**，让 LLM 能清楚知道：
-
-- 当前沙盘里有哪些沙具；
-- 每个沙具在哪里；
-- 每个沙具属于什么类别、有哪些象征候选；
-- 当前天气和光照是什么；
-- 九宫格、中心区、边界区、风险标签和类别分布如何。
-
-第一版**暂不输出**：
-
-- 事件流；
-- 个人授权上下文；
-- 长期记忆；
-- 用户真实身份；
-- 对话历史；
-- API Key；
-- PNG 截图。
-
----
-
-## 2. 总体结构
-
-建议输出一个 JSON 对象，命名为：
+## 输出对象
 
 ```ts
 CurrentSandboxSnapshot
 ```
 
-当前代码实现位置：
+## 顶层字段
 
-```text
-src/llm/currentSandboxSnapshot.ts
-```
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `schemaVersion` | string | 数据结构版本，固定为 `sandbox.current-snapshot.v1`。 |
+| `snapshotId` | string | 本次快照 ID，用于排查日志。 |
+| `generatedAt` | string | 快照生成时间，ISO 8601 格式。 |
+| `source` | string | 数据来源，固定为 `current_sandbox`。 |
+| `canvas` | object | 沙盘画布与坐标系信息。 |
+| `environment` | object | 当前天气与光照。 |
+| `objects` | array | 当前沙盘上的全部沙具。 |
+| `analysis` | object | 当前沙盘的空间统计结果。 |
+| `selectedObjectId` | string/null | 当前选中的沙具 ID，没有选中则为 `null`。 |
 
-结构如下：
+## canvas 字段
 
-```ts
-interface CurrentSandboxSnapshot {
-  schemaVersion: "sandbox.current-snapshot.v1";
-  snapshotId: string;
-  generatedAt: string;
-  source: "current_sandbox";
-  canvas: SnapshotCanvas;
-  environment: SnapshotEnvironment;
-  objects: SnapshotObject[];
-  analysis: SnapshotAnalysis;
-  selectedObjectId?: string | null;
-}
-```
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `width` | number | 沙盘逻辑宽度。 |
+| `height` | number | 沙盘逻辑高度。 |
+| `coordinateSystem` | string | 原始坐标系，固定为 `board-pixel`。 |
+| `normalizedCoordinateSystem` | string | 归一化坐标系，固定为 `0-1`。 |
+| `guides` | string[] | 可用于分析的辅助能力，例如九宫格、中心区、边界区、y 深度排序。 |
 
----
+## environment 字段
 
-## 3. 顶层字段说明
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `weather` | string | 天气枚举：`sunny`、`cloudy`、`rainy`。 |
+| `weatherLabel` | string | 天气中文名：晴天、阴天、雨天。 |
+| `light` | string | 光照枚举：`day`、`night`。 |
+| `lightLabel` | string | 光照中文名：白天、黑夜。 |
 
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `schemaVersion` | string | 是 | Snapshot 结构版本。后续字段有破坏性变化时升级版本。 | `sandbox.current-snapshot.v1` |
-| `snapshotId` | string | 是 | 本次 Snapshot 的唯一 ID，用于日志追踪。 | `snapshot_20260731_001` |
-| `generatedAt` | string | 是 | 生成时间，使用 ISO 8601 格式。 | `2026-07-31T10:30:00+08:00` |
-| `source` | string | 是 | 数据来源。第一版固定为当前沙盘。 | `current_sandbox` |
-| `canvas` | object | 是 | 沙盘画布和坐标系信息。 | 见第 4 节 |
-| `environment` | object | 是 | 当前天气和光照信息。 | 见第 5 节 |
-| `objects` | array | 是 | 当前沙盘上的全部沙具对象。 | 见第 6 节 |
-| `analysis` | object | 是 | 基于当前对象生成的空间统计。 | 见第 7 节 |
-| `selectedObjectId` | string/null | 否 | 当前选中沙具 ID。没有选中时为 `null`。 | `obj_house_001` |
+## objects 字段
 
----
+每个沙具对象包含：
 
-## 4. 画布字段：canvas
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `id` | string | 沙盘中这个沙具实例的唯一 ID。 |
+| `assetId` | string | 沙具资产 ID。 |
+| `name` | string | 沙具名称。 |
+| `category` | string | 沙具分类。 |
+| `riskTag` | string | 资产风险标签：`normal`、`conflict`、`death`、`fantasy`。 |
+| `riskLabel` | string | 风险标签中文名。 |
+| `symbolicCandidates` | string[] | 象征候选词，只能作为开放式探索线索。 |
+| `semanticTags` | string[] | 语义标签，用于摘要和检索。 |
+| `position` | object | 位置、九宫格区域、中心区、边界区和深度排序。 |
+| `transform` | object | 旋转、缩放、宽度和高度。 |
+| `footprint` | object | 占地类型与空间尺寸提示。 |
+| `createdOrder` | number | 当前对象按创建时间推导出的摆放顺序。 |
 
-```ts
-interface SnapshotCanvas {
-  width: number;
-  height: number;
-  coordinateSystem: "board-pixel";
-  normalizedCoordinateSystem: "0-1";
-  guides: string[];
-}
-```
+### position 字段
 
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `width` | number | 是 | 沙盘逻辑画布宽度。当前项目参考值为 `960`。 | `960` |
-| `height` | number | 是 | 沙盘逻辑画布高度。当前项目参考值为 `640`。 | `640` |
-| `coordinateSystem` | string | 是 | 原始坐标系。第一版统一使用画布像素坐标。 | `board-pixel` |
-| `normalizedCoordinateSystem` | string | 是 | 归一化坐标系，便于 LLM 分析。 | `0-1` |
-| `guides` | string[] | 是 | 当前可用于分析的辅助系统。 | `["nine-grid", "center-region", "boundary-region", "y-depth-sort"]` |
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `x` / `y` | number | 沙盘像素坐标。 |
+| `xNorm` / `yNorm` | number | 归一化坐标，范围 0 到 1。 |
+| `zone` | string | 九宫格区域 ID。 |
+| `zoneLabel` | string | 九宫格区域中文名。 |
+| `inCenter` | boolean | 是否位于中心区域。 |
+| `inBoundary` | boolean | 是否位于边界区域。 |
+| `depthRank` | number | y 深度排序名次，数值越大越靠前。 |
 
----
+### transform 字段
 
-## 5. 环境字段：environment
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `rotationDeg` | number | 旋转角度，单位为度。 |
+| `scale` | number | 缩放比例。 |
+| `width` | number | 当前显示宽度。 |
+| `height` | number | 当前显示高度。 |
 
-```ts
-interface SnapshotEnvironment {
-  weather: "sunny" | "cloudy" | "rainy";
-  weatherLabel: string;
-  light: "day" | "night";
-  lightLabel: string;
-}
-```
+### footprint 字段
 
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `weather` | string | 是 | 天气枚举。 | `rainy` |
-| `weatherLabel` | string | 是 | 天气中文名。 | `雨天` |
-| `light` | string | 是 | 光照枚举。 | `night` |
-| `lightLabel` | string | 是 | 光照中文名。 | `黑夜` |
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `kind` | string | 占地类型：`compact`、`wide`、`tall`、`flat`。 |
+| `width` | number | 占地宽度提示。 |
+| `depth` | number | 占地深度提示。 |
+| `height` | number | 高度提示。 |
 
-天气取值：
+## analysis 字段
 
-| 值 | 中文 |
-|---|---|
-| `sunny` | 晴天 |
-| `cloudy` | 阴天 |
-| `rainy` | 雨天 |
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `totalObjects` | number | 沙具总数。 |
+| `centerCount` | number | 中心区沙具数量。 |
+| `boundaryCount` | number | 边界区沙具数量。 |
+| `zoneCounts` | array | 九宫格各区域数量。 |
+| `categoryCounts` | array | 各沙具分类数量。 |
+| `riskCounts` | array | 各风险标签数量。 |
+| `emptyZones` | string[] | 当前为空的九宫格区域 ID。 |
+| `depthOrder` | string[] | 按 y 坐标深度排序后的对象 ID。 |
+| `summaryText` | string | 给人和 LLM 快速阅读的当前状态摘要。 |
 
-光照取值：
-
-| 值 | 中文 |
-|---|---|
-| `day` | 白天 |
-| `night` | 黑夜 |
-
----
-
-## 6. 沙具字段：objects
-
-每个沙具输出为一个 `SnapshotObject`。
-
-```ts
-interface SnapshotObject {
-  id: string;
-  assetId: string;
-  name: string;
-  category: string;
-  riskTag: "normal" | "conflict" | "death" | "fantasy";
-  riskLabel: string;
-  symbolicCandidates: string[];
-  semanticTags: string[];
-  position: SnapshotObjectPosition;
-  transform: SnapshotObjectTransform;
-  footprint: SnapshotObjectFootprint;
-  createdOrder: number;
-}
-```
-
-### 6.1 沙具基础字段
-
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `id` | string | 是 | 沙盘中这个沙具实例的唯一 ID。 | `obj_house_001` |
-| `assetId` | string | 是 | 沙具资产 ID。 | `env_house` |
-| `name` | string | 是 | 沙具名称。 | `房子` |
-| `category` | string | 是 | 沙具分类。 | `建筑与环境` |
-| `riskTag` | string | 是 | 沙具风险标签枚举。注意：这是资产标签，不是用户风险判断。 | `normal` |
-| `riskLabel` | string | 是 | 风险标签中文名。 | `常规` |
-| `symbolicCandidates` | string[] | 是 | 可能的象征候选，仅供开放式探索，不能当作结论。 | `["家庭", "安全", "归属"]` |
-| `semanticTags` | string[] | 是 | 语义标签，用于检索和摘要。 | `["建筑", "家庭", "容器"]` |
-| `position` | object | 是 | 沙具位置和区域信息。 | 见第 6.2 节 |
-| `transform` | object | 是 | 沙具旋转、缩放和尺寸信息。 | 见第 6.3 节 |
-| `footprint` | object | 是 | 沙具在沙盘中的占地类型。 | 见第 6.4 节 |
-| `createdOrder` | number | 是 | 沙具放置顺序。没有事件流时按 `createdAt` 排序生成。 | `1` |
-
-### 6.2 位置字段：position
-
-```ts
-interface SnapshotObjectPosition {
-  x: number;
-  y: number;
-  xNorm: number;
-  yNorm: number;
-  zone: string;
-  zoneLabel: string;
-  inCenter: boolean;
-  inBoundary: boolean;
-  depthRank: number;
-}
-```
-
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `x` | number | 是 | 原始 x 坐标。 | `465` |
-| `y` | number | 是 | 原始 y 坐标。 | `280` |
-| `xNorm` | number | 是 | 归一化 x 坐标，范围 0 到 1。计算：`x / canvas.width`。 | `0.484` |
-| `yNorm` | number | 是 | 归一化 y 坐标，范围 0 到 1。计算：`y / canvas.height`。 | `0.438` |
-| `zone` | string | 是 | 九宫格区域 ID。 | `middle-center` |
-| `zoneLabel` | string | 是 | 九宫格区域中文名。 | `中心` |
-| `inCenter` | boolean | 是 | 是否在中心区域。 | `true` |
-| `inBoundary` | boolean | 是 | 是否在边界区域。 | `false` |
-| `depthRank` | number | 是 | y 深度排序名次，用于说明前后层级。 | `5` |
-
-九宫格区域：
-
-| `zone` | 中文 |
-|---|---|
-| `top-left` | 左上 |
-| `top-center` | 上中 |
-| `top-right` | 右上 |
-| `middle-left` | 左中 |
-| `middle-center` | 中心 |
-| `middle-right` | 右中 |
-| `bottom-left` | 左下 |
-| `bottom-center` | 下中 |
-| `bottom-right` | 右下 |
-
-### 6.3 变换字段：transform
-
-```ts
-interface SnapshotObjectTransform {
-  rotationDeg: number;
-  scale: number;
-  width: number;
-  height: number;
-}
-```
-
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `rotationDeg` | number | 是 | 沙具旋转角度，单位为度。 | `12` |
-| `scale` | number | 是 | 沙具缩放比例。 | `1.05` |
-| `width` | number | 是 | 沙具当前显示宽度。 | `96` |
-| `height` | number | 是 | 沙具当前显示高度。 | `82` |
-
-### 6.4 占地字段：footprint
-
-```ts
-interface SnapshotObjectFootprint {
-  kind: "compact" | "wide" | "tall" | "flat";
-  width: number;
-  depth: number;
-  height: number;
-}
-```
-
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `kind` | string | 是 | 沙具占地类型。 | `wide` |
-| `width` | number | 是 | 沙具占地宽度。 | `1.2` |
-| `depth` | number | 是 | 沙具占地深度。 | `0.9` |
-| `height` | number | 是 | 沙具高度提示。 | `0.8` |
-
-占地类型：
-
-| 值 | 中文说明 |
-|---|---|
-| `compact` | 小型、紧凑沙具，例如儿童、小动物 |
-| `wide` | 横向较宽沙具，例如房子、桥、围栏 |
-| `tall` | 竖向较高沙具，例如树、塔、太阳 |
-| `flat` | 扁平沙具，例如水域、石头 |
-
----
-
-## 7. 分析字段：analysis
-
-`analysis` 是给 LLM 最重要的摘要字段。它让 LLM 不需要自己从坐标里猜结构。
-
-```ts
-interface SnapshotAnalysis {
-  totalObjects: number;
-  centerCount: number;
-  boundaryCount: number;
-  zoneCounts: SnapshotCountItem[];
-  categoryCounts: SnapshotCountItem[];
-  riskCounts: SnapshotCountItem[];
-  emptyZones: string[];
-  depthOrder: string[];
-  summaryText: string;
-}
-```
-
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `totalObjects` | number | 是 | 沙具总数。 | `8` |
-| `centerCount` | number | 是 | 中心区域沙具数量。 | `3` |
-| `boundaryCount` | number | 是 | 边界区域沙具数量。 | `1` |
-| `zoneCounts` | array | 是 | 九宫格区域数量统计。 | 见下方 |
-| `categoryCounts` | array | 是 | 沙具分类数量统计。 | 见下方 |
-| `riskCounts` | array | 是 | 风险标签数量统计。 | 见下方 |
-| `emptyZones` | string[] | 是 | 当前没有沙具的九宫格区域。 | `["top-right"]` |
-| `depthOrder` | string[] | 是 | 按 y 深度排序后的对象 ID。 | `["obj_sun_001", "obj_house_001"]` |
-| `summaryText` | string | 是 | 面向 LLM 的一句话结构摘要。只描述事实，不做诊断。 | `中心区域有 3 个沙具，主要包括房子、儿童和狗。` |
-
-统计项统一格式：
-
-```ts
-interface SnapshotCountItem {
-  id: string;
-  label: string;
-  count: number;
-}
-```
-
-| 字段 | 类型 | 必填 | 中文说明 | 示例 |
-|---|---|---:|---|---|
-| `id` | string | 是 | 统计项 ID。 | `middle-center` |
-| `label` | string | 是 | 统计项中文名称。 | `中心` |
-| `count` | number | 是 | 数量。 | `3` |
-
----
-
-## 8. 不输出内容
-
-第一版 Snapshot 明确不输出以下内容：
-
-| 内容 | 原因 |
-|---|---|
-| `events` 事件流 | 先保持简单，避免 LLM 误读创作过程 |
-| 个人授权上下文 | 第一版只分析当前沙盘，不使用长期记忆 |
-| 用户真实姓名、邮箱、手机号 | 隐私保护 |
-| API Key / LLM 配置 | 安全风险 |
-| 对话历史 | 避免和当前沙盘状态混淆 |
-| PNG / base64 截图 | 当前先走结构化数据，不走视觉输入 |
-| 心理诊断字段 | 系统只提供开放式探索，不做诊断 |
-
----
-
-## 9. 示例 JSON
+## 示例
 
 ```json
 {
   "schemaVersion": "sandbox.current-snapshot.v1",
-  "snapshotId": "snapshot_20260731_001",
+  "snapshotId": "snapshot_20260731_103000_abc123",
   "generatedAt": "2026-07-31T10:30:00+08:00",
   "source": "current_sandbox",
   "canvas": {
@@ -354,24 +140,24 @@ interface SnapshotCountItem {
       "category": "建筑与环境",
       "riskTag": "normal",
       "riskLabel": "常规",
-      "symbolicCandidates": ["家庭", "安全", "归属", "内部空间"],
-      "semanticTags": ["建筑", "家庭", "容器", "安全感"],
+      "symbolicCandidates": ["家庭", "安全", "归属"],
+      "semanticTags": ["建筑", "容器", "安全感"],
       "position": {
-        "x": 465,
-        "y": 280,
-        "xNorm": 0.484,
-        "yNorm": 0.438,
-        "zone": "middle-center",
-        "zoneLabel": "中心",
-        "inCenter": true,
+        "x": 293,
+        "y": 170,
+        "xNorm": 0.305,
+        "yNorm": 0.266,
+        "zone": "top-center",
+        "zoneLabel": "上中",
+        "inCenter": false,
         "inBoundary": false,
-        "depthRank": 1
+        "depthRank": 2
       },
       "transform": {
-        "rotationDeg": 0,
-        "scale": 1,
-        "width": 96,
-        "height": 82
+        "rotationDeg": -3,
+        "scale": 1.35,
+        "width": 112,
+        "height": 76
       },
       "footprint": {
         "kind": "wide",
@@ -380,102 +166,26 @@ interface SnapshotCountItem {
         "height": 0.8
       },
       "createdOrder": 1
-    },
-    {
-      "id": "obj_child_001",
-      "assetId": "person_child",
-      "name": "儿童",
-      "category": "人物",
-      "riskTag": "normal",
-      "riskLabel": "常规",
-      "symbolicCandidates": ["成长", "自我", "脆弱", "希望"],
-      "semanticTags": ["人物", "儿童", "成长"],
-      "position": {
-        "x": 550,
-        "y": 310,
-        "xNorm": 0.573,
-        "yNorm": 0.484,
-        "zone": "middle-center",
-        "zoneLabel": "中心",
-        "inCenter": true,
-        "inBoundary": false,
-        "depthRank": 2
-      },
-      "transform": {
-        "rotationDeg": 6,
-        "scale": 1.05,
-        "width": 72,
-        "height": 88
-      },
-      "footprint": {
-        "kind": "compact",
-        "width": 0.7,
-        "depth": 0.7,
-        "height": 1
-      },
-      "createdOrder": 2
     }
   ],
   "analysis": {
-    "totalObjects": 2,
-    "centerCount": 2,
+    "totalObjects": 1,
+    "centerCount": 0,
     "boundaryCount": 0,
-    "zoneCounts": [
-      { "id": "middle-center", "label": "中心", "count": 2 }
-    ],
-    "categoryCounts": [
-      { "id": "建筑与环境", "label": "建筑与环境", "count": 1 },
-      { "id": "人物", "label": "人物", "count": 1 }
-    ],
-    "riskCounts": [
-      { "id": "normal", "label": "常规", "count": 2 },
-      { "id": "conflict", "label": "冲突", "count": 0 },
-      { "id": "death", "label": "死亡", "count": 0 },
-      { "id": "fantasy", "label": "幻想", "count": 0 }
-    ],
-    "emptyZones": [
-      "top-left",
-      "top-center",
-      "top-right",
-      "middle-left",
-      "middle-right",
-      "bottom-left",
-      "bottom-center",
-      "bottom-right"
-    ],
-    "depthOrder": ["obj_house_001", "obj_child_001"],
-    "summaryText": "当前沙盘共有 2 个沙具，房子和儿童都位于中心区域。"
+    "zoneCounts": [{ "id": "top-center", "label": "上中", "count": 1 }],
+    "categoryCounts": [{ "id": "建筑与环境", "label": "建筑与环境", "count": 1 }],
+    "riskCounts": [{ "id": "normal", "label": "常规", "count": 1 }],
+    "emptyZones": ["top-left", "top-right", "middle-left"],
+    "depthOrder": ["obj_house_001"],
+    "summaryText": "当前沙盘共有 1 个沙具，中心区 0 个，边界区 0 个。"
   },
-  "selectedObjectId": "obj_child_001"
+  "selectedObjectId": "obj_house_001"
 }
 ```
 
----
+## LLM 使用边界
 
-## 10. 给 LLM 的最简使用方式
-
-向 LLM 发送时，可以这样组织：
-
-```text
-下面是当前沙盘的结构化 Snapshot。
-请只基于这些字段进行温和、开放、非诊断式的观察。
-不要输出心理疾病诊断，不要把象征候选当成确定结论。
-
-{{CURRENT_SANDBOX_SNAPSHOT_JSON}}
-```
-
----
-
-## 11. 开发检查清单
-
-实现 Snapshot 输出时，只需要检查这几项：
-
-- [ ] 是否输出 `schemaVersion = sandbox.current-snapshot.v1`。
-- [ ] 是否输出当前天气和光照。
-- [ ] 是否输出所有当前沙具。
-- [ ] 每个沙具是否有名称、分类、风险标签、象征候选、语义标签。
-- [ ] 每个沙具是否有原始坐标和归一化坐标。
-- [ ] 每个沙具是否有九宫格区域中文名。
-- [ ] 是否输出总数、中心数、边界数、类别统计、风险统计。
-- [ ] 是否没有输出事件流、个人记忆、用户隐私和 API Key。
-- [ ] 示例 JSON 是否能被正常解析。
+- 只能基于这个 snapshot 讨论“当前画面”。
+- 不要推断用户真实身份、历史记忆或授权信息。
+- 不要说“刚才你先放了什么”，因为第一版没有事件流。
+- 象征候选词只能用于开放式提问，不能当作诊断结论。
