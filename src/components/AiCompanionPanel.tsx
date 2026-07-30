@@ -1,9 +1,11 @@
 import { HeartHandshake, Send, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
+import type { CurrentSandboxSnapshotPolicyDto } from "../api/contracts";
 import type { LlmProviderConfig, SandboxEnvironment, SandboxObject } from "../types";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
-import { buildCurrentSandboxSnapshot, type CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import { MarkdownText } from "./MarkdownText";
 
 interface AiCompanionPanelProps {
@@ -32,6 +34,7 @@ interface CompanionContext {
   chips: string[];
   activeCells: string[];
   snapshot: CurrentSandboxSnapshot;
+  snapshotPolicy: CurrentSandboxSnapshotPolicyDto;
   selectedName: string | null;
   objectNames: string[];
   centerObjectNames: string[];
@@ -327,7 +330,7 @@ function buildContextSummary({
   environment: SandboxEnvironment;
   generatedAt: string;
 }): CompanionContext {
-  const snapshot = buildCurrentSandboxSnapshot({
+  const { snapshot, policy } = createCurrentSandboxSnapshotPayload({
     objects,
     environment,
     selectedObjectId: selectedObject?.id ?? null,
@@ -351,6 +354,7 @@ function buildContextSummary({
     chips,
     activeCells,
     snapshot,
+    snapshotPolicy: policy,
     objectNames,
     selectedName: selectedObject?.name ?? null,
     centerObjectNames,
@@ -366,6 +370,7 @@ function buildCompanionMessages(
     "你是数字心理沙盘 Demo 中的 AI 沙盘伙伴。你要温暖、简洁、非评判地陪用户整理体验。",
     "你不能做诊断，不能替代专业心理咨询或医疗建议。不要给出固定象征解释，要用开放式问题帮助用户表达。",
     "当前只允许使用 CurrentSandboxSnapshot。不要假设事件流、个人记忆、用户身份、对话历史之外的资料存在。",
+    `CurrentSandboxSnapshotPolicy JSON:\n${JSON.stringify(context.snapshotPolicy, null, 2)}`,
     `CurrentSandboxSnapshot JSON:\n${JSON.stringify(context.snapshot, null, 2)}`,
   ].join("\n\n");
   const historyMessages: LlmChatMessage[] = history

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as esbuild from "esbuild";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -129,6 +129,10 @@ async function assertStaticContractFiles() {
     readProjectFile("src/components/StructuredDataPanel.tsx"),
     readProjectFile("docs/sandbox-llm-data-output-spec.md"),
   ]);
+  const [aiCompanionPanel, agentChatView] = await Promise.all([
+    readProjectFile("src/components/AiCompanionPanel.tsx"),
+    readProjectFile("src/components/AgentChatView.tsx"),
+  ]);
 
   assert("Contracts declare request DTO", contracts.includes("BuildCurrentSandboxSnapshotRequestDto"));
   assert("Contracts declare response DTO", contracts.includes("CurrentSandboxSnapshotResponseDto"));
@@ -145,12 +149,17 @@ async function assertStaticContractFiles() {
 
   assert("Structured data panel uses API payload helper", structuredPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("Structured data panel copies raw snapshot JSON", structuredPanel.includes("JSON.stringify(snapshot, null, 2)"));
+  assert("AI companion uses API payload helper", aiCompanionPanel.includes("createCurrentSandboxSnapshotPayload"));
+  assert("AI companion includes snapshot policy in prompt", aiCompanionPanel.includes("CurrentSandboxSnapshotPolicy JSON"));
+  assert("Agent chat uses API payload helper", agentChatView.includes("createCurrentSandboxSnapshotPayload"));
+  assert("Agent chat includes snapshot policy in prompt", agentChatView.includes("CurrentSandboxSnapshotPolicy JSON"));
 
   assert("Doc states only current status is output", doc.includes("当前沙盘这一刻的完整状态"));
   assert("Doc excludes event flow", doc.includes("事件流") && doc.includes("不包含新增、移动、删除等历史过程"));
   assert("Doc excludes personal memory", doc.includes("个人记忆") && doc.includes("不包含长期记忆"));
   assert("Doc excludes authorization context", doc.includes("授权上下文"));
   assert("Doc excludes images", doc.includes("图片截图"));
+  await assertNoBypassedSnapshotBuilderImports();
 }
 
 function collectKeys(value, keys = new Set()) {
@@ -170,6 +179,46 @@ function collectKeys(value, keys = new Set()) {
 
 async function readProjectFile(relativePath) {
   return readFile(path.resolve(process.cwd(), relativePath), "utf8");
+}
+
+async function assertNoBypassedSnapshotBuilderImports() {
+  const sourceFiles = await listSourceFiles(path.resolve(process.cwd(), "src"));
+  const allowed = new Set([
+    path.normalize("src/api/currentSandboxSnapshotApi.ts"),
+    path.normalize("src/llm/currentSandboxSnapshot.ts"),
+  ]);
+  const bypasses = [];
+
+  await Promise.all(
+    sourceFiles.map(async (absolutePath) => {
+      const relativePath = path.relative(process.cwd(), absolutePath);
+      const normalized = path.normalize(relativePath);
+      const content = await readFile(absolutePath, "utf8");
+      if (!allowed.has(normalized) && content.includes("buildCurrentSandboxSnapshot")) {
+        bypasses.push(relativePath);
+      }
+    }),
+  );
+
+  bypasses.sort();
+  assert("No UI or LLM entry bypasses Snapshot API helper", bypasses.length === 0, bypasses.join(", "));
+}
+
+async function listSourceFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        return listSourceFiles(fullPath);
+      }
+      if (entry.isFile() && /\.(ts|tsx)$/.test(entry.name)) {
+        return [fullPath];
+      }
+      return [];
+    }),
+  );
+  return files.flat();
 }
 
 function assert(name, condition, detail = "") {

@@ -8,7 +8,9 @@ import type {
   SandboxEnvironment,
   SandboxObject,
 } from "../types";
-import { buildCurrentSandboxSnapshot, type CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
+import type { CurrentSandboxSnapshotPolicyDto } from "../api/contracts";
+import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
 import { createId } from "../utils/id";
@@ -50,15 +52,15 @@ export function AgentChatView({
     () => [...conversations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
     [conversations],
   );
-  const sceneSnapshot = useMemo(
+  const sceneSnapshotPayload = useMemo(
     () =>
-      buildCurrentSandboxSnapshot({
+      createCurrentSandboxSnapshotPayload({
         objects,
         environment,
       }),
     [environment, objects],
   );
-  const sceneSummary = useMemo(() => buildSceneSnapshotSummary(sceneSnapshot), [sceneSnapshot]);
+  const sceneSummary = useMemo(() => buildSceneSnapshotSummary(sceneSnapshotPayload.snapshot), [sceneSnapshotPayload]);
 
   useEffect(() => {
     if (!activeAgent && enabledAgents[0]) {
@@ -145,7 +147,14 @@ export function AgentChatView({
     const userMessage: AgentMessage = { id: createId("message"), role: "user", text, createdAt: now };
     const assistantMessage: AgentMessage = { id: createId("message"), role: "assistant", text: "", createdAt: now };
     const targetConversationId = conversation.id;
-    const requestMessages = buildAgentMessages(agent, conversation.messages, text, sceneSnapshot, sceneSummary);
+    const requestMessages = buildAgentMessages(
+      agent,
+      conversation.messages,
+      text,
+      sceneSnapshotPayload.snapshot,
+      sceneSnapshotPayload.policy,
+      sceneSummary,
+    );
 
     setDraft("");
     setStreamingMessageId(assistantMessage.id);
@@ -394,12 +403,14 @@ function buildAgentMessages(
   history: AgentMessage[],
   userInput: string,
   sceneSnapshot: CurrentSandboxSnapshot,
+  snapshotPolicy: CurrentSandboxSnapshotPolicyDto,
   sceneSummary: string,
 ): LlmChatMessage[] {
   const system = [
     agent.systemPrompt,
     `当前沙盘摘要：${sceneSummary}`,
     "当前只允许使用 CurrentSandboxSnapshot。不要假设事件流、个人记忆、用户身份或授权上下文存在。",
+    `CurrentSandboxSnapshotPolicy JSON:\n${JSON.stringify(snapshotPolicy, null, 2)}`,
     `CurrentSandboxSnapshot JSON:\n${JSON.stringify(sceneSnapshot, null, 2)}`,
     "重要边界：你是心理沙盘对话伙伴，不做诊断，不替代专业心理咨询或医疗建议。不要声称自己是真实历史人物本人，只能作为理论取向角色进行温和交流。",
     "回答风格：中文，温暖、简洁、开放式提问优先。每次回复先回应用户，再提出一个可继续探索的问题。",
