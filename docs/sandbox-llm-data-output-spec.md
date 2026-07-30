@@ -37,6 +37,12 @@
 CurrentSandboxSnapshot
 ```
 
+当前代码实现位置：
+
+```text
+src/llm/currentSandboxSnapshot.ts
+```
+
 结构如下：
 
 ```ts
