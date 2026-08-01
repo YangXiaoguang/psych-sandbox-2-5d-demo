@@ -383,6 +383,8 @@ Future changes are not allowed to:
 - Remove existing object drag, rotate, scale, delete, JSON export, or PNG export.
 - Remove selected-object duplicate behavior or its event record.
 - Hide asset card names or risk tags.
+- Make large or compact asset cards lose their stable bottom label plates.
+- Reintroduce asset card overlap in the visible backpack drawer area.
 - Reintroduce duplicate AI companion panels.
 - Make weather layers intercept pointer events.
 - Make the right panel cover the playable stage in fullscreen.
