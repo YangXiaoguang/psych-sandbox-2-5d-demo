@@ -52,6 +52,31 @@ npm run qa:visual-baseline
 - 每个固定场景无水平页面溢出，关键根节点可见。
 - 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
 
+### 2.4 视觉评审报告
+
+```bash
+npm run qa:visual-report
+```
+
+通过标准：
+
+- 能读取最新 `artifacts/visual-regression/YYYY-MM-DD/manifest.json`。
+- 12 个固定场景全部存在。
+- 截图 manifest 中无浏览器 console error 和 page error。
+- 在同一目录写入 `visual-review.md`，作为人工视觉评审索引。
+
+如需指定 manifest：
+
+```bash
+VISUAL_REVIEW_MANIFEST=artifacts/visual-regression/2026-08-01/manifest.json npm run qa:visual-report
+```
+
+推荐顺序：
+
+1. 先运行 `npm run qa:visual-baseline` 生成最新截图。
+2. 再运行 `npm run qa:visual-report` 生成评审报告。
+3. 打开 `visual-review.md`，按报告里的场景顺序检查 Stage v2 主视觉、雨夜可读性、背包抽屉、AI 抽屉和全局主题副作用。
+
 ---
 
 ## 3. 浏览器运行检查

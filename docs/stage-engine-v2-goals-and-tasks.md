@@ -256,8 +256,19 @@ Deliverables:
 
 - `npm run build`.
 - `npm run qa:stage-v2`.
+- `npm run qa:ui-shell`.
 - Manual smoke note for Classic, Agent, Memory OS, and Admin navigation.
+- `npm run qa:visual-baseline` and `npm run qa:visual-report`.
 - Final commit and tag.
+
+Acceptance:
+
+- Production build succeeds.
+- Stage v2 interaction smoke passes without console or page errors.
+- UI shell smoke passes across Sandbox, Agent, Memory OS, and Admin.
+- Visual baseline captures all 12 required scenes.
+- Visual report is generated beside the screenshot manifest and contains no missing-scene failures.
+- The final review can point to the latest report as evidence instead of relying only on chat notes.
 
 Suggested final tag:
 

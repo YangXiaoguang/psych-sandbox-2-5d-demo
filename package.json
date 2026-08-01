@@ -10,7 +10,8 @@
     "qa:snapshot-contract": "node scripts/qa-current-snapshot-contract.mjs",
     "qa:stage-v2": "node scripts/qa-stage-v2.mjs",
     "qa:ui-shell": "node scripts/qa-ui-shell.mjs",
-    "qa:visual-baseline": "node scripts/capture-visual-baseline.mjs"
+    "qa:visual-baseline": "node scripts/capture-visual-baseline.mjs",
+    "qa:visual-report": "node scripts/generate-visual-review.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
