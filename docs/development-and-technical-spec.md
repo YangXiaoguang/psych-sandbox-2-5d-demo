@@ -908,12 +908,31 @@ type RepositoryMode = "localStorage" | "mockApi" | "remoteApi";
 - `src/api/contracts.ts`
 - `src/api/client.ts`
 - `src/api/mockApiAdapter.ts`
+- `scripts/export-api-contract.mjs`
 
 契约版本：
 
 ```ts
 API_CONTRACT_VERSION = "2026-05-06.v1"
 ```
+
+导出命令：
+
+```bash
+npm run api:contract
+```
+
+输出：
+
+- `artifacts/api-contract/api-contract-report.json`
+- `artifacts/api-contract/api-contract-summary.md`
+
+说明：
+
+- 导出报告由真实 DTO 常量和 `FrontendMockApiAdapter.v1` 生成，不单独手写维护。
+- 报告包含端点清单、分页协议、错误码、认证上下文、分页样例、沙具资产样例、LLM 配置摘要和当前沙盘 Snapshot 样例。
+- LLM provider 只输出 `apiKeyConfigured` 与 `apiKeyPreview`，不得输出明文 API Key。
+- `artifacts/` 为本地生成物，不提交到 Git；需要交接时由开发人员重新运行命令生成。
 
 核心端点：
 

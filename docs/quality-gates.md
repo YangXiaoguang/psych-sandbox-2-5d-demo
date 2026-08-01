@@ -52,7 +52,27 @@ npm run qa:snapshot-contract
 - AI 伙伴和 Agent 对话必须通过 `createSandboxSnapshotChatMessages` 注入 LLM 上下文，不得在组件中散落拼接 Snapshot prompt，也不得向 LLM 注入 `CurrentSandboxSnapshotPolicy JSON`。
 - API 契约、Mock Adapter、文档说明和运行时样例保持一致。
 
-### 2.4 固定视觉基线
+### 2.4 API 契约导出
+
+```bash
+npm run qa:api-contract
+```
+
+通过标准：
+
+- 生成 `artifacts/api-contract/api-contract-report.json` 和 `api-contract-summary.md`。
+- 报告来自 `src/api/contracts.ts` 与 `src/api/mockApiAdapter.ts`，不手写复制 DTO。
+- 端点、分页协议、错误码、认证上下文和样例分页响应齐全。
+- LLM provider 样例只包含 `apiKeyConfigured` 与 `apiKeyPreview`，不得输出明文 API Key、密码或密钥字段。
+- 当前沙盘 Snapshot 样例仍只表达当前状态，不把事件流、个人记忆或截图混进 LLM 输入。
+
+如果只是给后端同学重新生成交付文件，也可以运行：
+
+```bash
+npm run api:contract
+```
+
+### 2.5 固定视觉基线
 
 ```bash
 npm run qa:visual-baseline
@@ -66,7 +86,7 @@ npm run qa:visual-baseline
 - 每个固定场景无水平页面溢出，关键根节点可见。
 - 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
 
-### 2.5 视觉评审报告
+### 2.6 视觉评审报告
 
 ```bash
 npm run qa:visual-report
@@ -91,7 +111,7 @@ VISUAL_REVIEW_MANIFEST=artifacts/visual-regression/2026-08-01/manifest.json npm 
 2. 再运行 `npm run qa:visual-report` 生成评审报告。
 3. 打开 `visual-review.md`，按报告里的场景顺序检查 Stage v2 主视觉、雨夜可读性、背包抽屉、AI 抽屉和全局主题副作用。
 
-### 2.6 完整验收链路
+### 2.7 完整验收链路
 
 ```bash
 npm run qa:acceptance
@@ -101,10 +121,11 @@ npm run qa:acceptance
 
 1. `npm run build`
 2. `npm run qa:snapshot-contract`
-3. `npm run qa:stage-v2`
-4. `npm run qa:ui-shell`
-5. `npm run qa:visual-baseline`
-6. `npm run qa:visual-report`
+3. `npm run qa:api-contract`
+4. `npm run qa:stage-v2`
+5. `npm run qa:ui-shell`
+6. `npm run qa:visual-baseline`
+7. `npm run qa:visual-report`
 
 如果只是局部修改，可以先运行对应单项；但任何影响 Stage v2、LLM 数据输出、全局主题或主要导航的提交，都必须至少运行相关单项 QA。
 
