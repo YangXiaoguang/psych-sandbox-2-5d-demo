@@ -1,5 +1,5 @@
 import { RoundedBoxMesh } from "../RoundedBoxMesh";
-import { Cheeks, EyePair, Smile, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
+import { Cheeks, EyePair, Smile, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStitchRow, ToyStripe, ToyStud } from "./toyPrimitives";
 
 export function MonsterToy(): JSX.Element {
   return (
@@ -85,6 +85,7 @@ export function RobotToy(): JSX.Element {
         <ToyMaterial preset="glassWater" color="#15333b" emissive="#55d7d0" emissiveIntensity={0.18} opacity={0.88} />
       </RoundedBoxMesh>
       <ToyStripe position={[-0.02, 0.22, -0.209]} rotation={[0, 0, Math.PI / 2]} length={0.12} radius={0.004} preset="glassWater" color="#9ef7f2" opacity={0.58} />
+      <ToyStitchRow start={[-0.08, 0.245, -0.209]} end={[0.085, 0.245, -0.209]} count={4} color="#d6fffb" size={0.0065} opacity={0.64} />
       <mesh position={[0.06, 0.205, -0.194]} castShadow>
         <sphereGeometry args={[0.014, 10, 8]} />
         <ToyMaterial preset="softPlastic" color="#e9f8e8" emissive="#9decc4" emissiveIntensity={0.08} />
@@ -240,6 +241,7 @@ export function LightToy(): JSX.Element {
       <RoundedBoxMesh size={[0.3, 0.035, 0.05]} radius={0.012} smoothness={3} position={[0, 0.08, -0.15]} castShadow>
         <ToyMaterial preset="toyMetal" color="#d0aa68" />
       </RoundedBoxMesh>
+      <ToyStitchRow start={[-0.14, 0.105, -0.18]} end={[0.14, 0.105, -0.18]} count={5} color="#fff0ba" size={0.008} opacity={0.74} />
     </group>
   );
 }

@@ -1,4 +1,4 @@
-import { Cheeks, EyePair, TOY_DARK, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
+import { Cheeks, EyePair, TOY_DARK, ToyBeadRow, ToyBow, ToyHighlight, ToyMaterial, ToyStitchRow, ToyStripe, ToyStud } from "./toyPrimitives";
 
 export function DogToy(): JSX.Element {
   return (
@@ -61,6 +61,7 @@ export function DogToy(): JSX.Element {
         <ToyMaterial preset="softPlastic" color="#4ea7c8" />
       </mesh>
       <ToyBeadRow start={[-0.03, 0.405, -0.18]} end={[0.22, 0.405, -0.18]} count={4} color="#ffe28f" preset="warmCeramic" size={0.012} />
+      <ToyBow position={[0.3, 0.43, -0.19]} rotation={[0, 0, -0.12]} scale={[0.48, 0.48, 0.48]} color="#54b5d8" knotColor="#ffe28f" />
       <mesh position={[0.14, 0.22, -0.3]} castShadow>
         <sphereGeometry args={[0.035, 12, 8]} />
         <ToyMaterial preset="softPlastic" color="#f4cf65" />
@@ -100,6 +101,7 @@ export function BirdToy(): JSX.Element {
         <capsuleGeometry args={[0.055, 0.34, 5, 14]} />
         <ToyMaterial preset="softPlastic" color="#3fa3c4" />
       </mesh>
+      <ToyStitchRow start={[-0.27, 0.3, -0.15]} end={[-0.15, 0.23, -0.15]} count={4} color="#e9fbff" size={0.008} opacity={0.7} />
       {[-0.22, 0.22].map((x) => (
         <ToyStripe key={`bird-wing-mark-${x}`} position={[x, 0.28, -0.12]} rotation={[0.28, 0, x > 0 ? -0.7 : 0.7]} length={0.17} radius={0.006} preset="glassWater" color="#d8fbff" opacity={0.78} />
       ))}
@@ -107,6 +109,7 @@ export function BirdToy(): JSX.Element {
         <capsuleGeometry args={[0.055, 0.34, 5, 14]} />
         <ToyMaterial preset="softPlastic" color="#3fa3c4" />
       </mesh>
+      <ToyStitchRow start={[0.27, 0.3, -0.15]} end={[0.15, 0.23, -0.15]} count={4} color="#e9fbff" size={0.008} opacity={0.7} />
       {[-0.26, 0.26].map((x) => (
         <group key={x} position={[x, 0.26, -0.08]} rotation={[0.15, 0, x > 0 ? -0.68 : 0.68]}>
           {[0, 0.055, 0.11].map((offset) => (
@@ -167,6 +170,7 @@ export function FishToy(): JSX.Element {
       </mesh>
       <ToyBeadRow start={[-0.18, 0.34, -0.205]} end={[0.22, 0.31, -0.205]} count={5} color="#d8fcff" preset="glassWater" size={0.016} opacity={0.84} />
       <ToyBeadRow start={[-0.12, 0.24, -0.21]} end={[0.16, 0.22, -0.21]} count={4} color="#4bb5c6" preset="glassWater" size={0.011} opacity={0.78} />
+      <ToyStitchRow start={[-0.33, 0.4, -0.19]} end={[0.08, 0.43, -0.2]} count={6} color="#eaffff" size={0.008} opacity={0.62} />
       {[0.02, 0.16, 0.3].map((x) => (
         <mesh key={x} position={[x, 0.3, -0.18]} rotation={[0.1, 0, 0.35]} scale={[0.34, 0.78, 0.12]} castShadow>
           <sphereGeometry args={[0.085, 16, 10]} />

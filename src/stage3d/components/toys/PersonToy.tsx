@@ -1,5 +1,5 @@
 import { RoundedBoxMesh } from "../RoundedBoxMesh";
-import { Cheeks, EyePair, Smile, ToyHighlight, ToyMaterial, ToyStripe, ToyStud } from "./toyPrimitives";
+import { Cheeks, EyePair, Smile, ToyBow, ToyHighlight, ToyMaterial, ToyStitchRow, ToyStripe, ToyStud } from "./toyPrimitives";
 
 interface PersonToyProps {
   bodyScale: number;
@@ -83,6 +83,22 @@ export function PersonToy({ bodyScale, cloth, elder, skin }: PersonToyProps): JS
       </mesh>
       <Smile position={[0, 0.66, -0.225]} scale={[0.62, 0.42, 0.62]} />
       <ToyStripe position={[0, 0.35, -0.175]} rotation={[0, 0, 0]} length={0.32} radius={0.006} preset="softPlastic" color="#fff6e8" opacity={0.82} />
+      {isChild ? (
+        <>
+          <ToyStripe position={[-0.08, 0.34, -0.186]} rotation={[0, 0, -0.22]} length={0.28} radius={0.007} preset="softPlastic" color="#e8fbff" opacity={0.86} />
+          <ToyStripe position={[0.08, 0.34, -0.186]} rotation={[0, 0, 0.22]} length={0.28} radius={0.007} preset="softPlastic" color="#e8fbff" opacity={0.86} />
+          <ToyBow position={[0, 0.47, -0.193]} scale={[0.72, 0.72, 0.72]} color="#ffd15b" knotColor="#75d4e1" />
+        </>
+      ) : null}
+      {elder ? (
+        <ToyStitchRow start={[-0.1, 0.43, -0.188]} end={[0.1, 0.4, -0.188]} count={5} color="#f6ead6" size={0.01} opacity={0.76} />
+      ) : null}
+      {isAdult ? (
+        <>
+          <ToyStripe position={[-0.1, 0.43, -0.189]} rotation={[0, 0, -0.18]} length={0.18} radius={0.006} preset="softPlastic" color="#f8ead8" opacity={0.88} />
+          <ToyStripe position={[0.1, 0.43, -0.189]} rotation={[0, 0, 0.18]} length={0.18} radius={0.006} preset="softPlastic" color="#f8ead8" opacity={0.88} />
+        </>
+      ) : null}
       {[0.23, 0.31, 0.39].map((y, index) => (
         <ToyStud
           key={`button-${y}`}
@@ -137,6 +153,18 @@ export function PersonToy({ bodyScale, cloth, elder, skin }: PersonToyProps): JS
         <RoundedBoxMesh key={x} size={[0.14, 0.045, 0.16]} radius={0.028} smoothness={4} position={[x, -0.09, -0.09]} castShadow receiveShadow>
           <ToyMaterial preset="softPlastic" color={elder ? "#6e6258" : "#4f3423"} />
         </RoundedBoxMesh>
+      ))}
+      {[-0.11, 0.11].map((x) => (
+        <ToyStripe
+          key={`shoe-shine-${x}`}
+          position={[x - 0.018, -0.065, -0.18]}
+          rotation={[0.08, 0, Math.PI / 2]}
+          length={0.07}
+          radius={0.0038}
+          preset="warmCeramic"
+          color="#fff2dc"
+          opacity={0.48}
+        />
       ))}
       {elder ? (
         <group position={[0.28, 0.14, -0.08]} rotation={[0.08, 0, -0.12]}>

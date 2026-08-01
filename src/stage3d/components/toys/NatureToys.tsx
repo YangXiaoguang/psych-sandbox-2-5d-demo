@@ -1,4 +1,4 @@
-import { Cheeks, EyePair, Smile, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStripe, ToyStud, type Vec3 } from "./toyPrimitives";
+import { Cheeks, EyePair, Smile, ToyBeadRow, ToyHighlight, ToyMaterial, ToyStitchRow, ToyStripe, ToyStud, ToyWoodGrain, type Vec3 } from "./toyPrimitives";
 
 export function TreeToy(): JSX.Element {
   return (
@@ -7,6 +7,7 @@ export function TreeToy(): JSX.Element {
         <cylinderGeometry args={[0.13, 0.18, 0.64, 18]} />
         <ToyMaterial preset="paintedWood" color="#a66b3d" />
       </mesh>
+      <ToyWoodGrain origin={[0.02, 0.24, -0.136]} count={3} length={0.12} spread={0.09} color="#704426" opacity={0.55} />
       {[0.18, 0.31].map((y) => (
         <mesh key={y} position={[0, y, -0.132]} rotation={[Math.PI / 2, 0, 0]} castShadow>
           <torusGeometry args={[0.105, 0.006, 6, 20, Math.PI]} />
@@ -75,6 +76,7 @@ export function WaterToy(): JSX.Element {
       ))}
       <ToyBeadRow start={[-0.6, 0.12, -0.23]} end={[-0.22, 0.13, -0.31]} count={6} color="#eaffff" preset="glassWater" size={0.013} opacity={0.66} />
       <ToyBeadRow start={[0.25, 0.13, 0.3]} end={[0.66, 0.12, 0.18]} count={6} color="#eaffff" preset="glassWater" size={0.013} opacity={0.62} />
+      <ToyStitchRow start={[-0.45, 0.15, -0.05]} end={[0.34, 0.155, -0.02]} count={9} color="#f6ffff" size={0.008} opacity={0.5} />
       {[0.18, 0.48, 0.66].map((radius, index) => (
         <mesh
           key={`inner-${radius}`}
@@ -176,6 +178,7 @@ export function SunToy(): JSX.Element {
         <cylinderGeometry args={[0.04, 0.05, 0.36, 12]} />
         <ToyMaterial preset="paintedWood" color="#8e6335" />
       </mesh>
+      <ToyWoodGrain origin={[0, 0.19, -0.047]} count={2} length={0.08} spread={0.04} color="#604527" opacity={0.5} />
       <mesh position={[0, -0.02, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.18, 0.22, 0.08, 20]} />
         <ToyMaterial preset="paintedWood" color="#ba8150" />

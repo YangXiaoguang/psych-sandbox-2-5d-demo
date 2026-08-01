@@ -98,3 +98,24 @@ Non-regression:
 
 - Toy details are purely visual mesh children. They must not change sandbox object data, transform handles, hit testing, exports, localStorage, or analysis.
 - Validation still relies on `npm run build`, `npm run qa:stage-v2`, and `npm run qa:visual-baseline`.
+
+## Next Sprint: Hero Toy Detail Language V2
+
+Goal:
+
+- Move from one-off toy decoration to a reusable handcrafted miniature detail language.
+- Improve the first 12 hero toys without changing `ToyModelRecipe`, saved object data, drag handles, hit testing, analysis, or export formats.
+- Make close camera views and inventory thumbnails show more deliberate toy craft: clothing straps, tiny bows, roof stitches, wood grain, water foam stitches, robot screen LEDs, and lamp base details.
+
+Implemented direction:
+
+- Add shared primitives in `toyPrimitives.tsx`: `ToyBow`, `ToyInsetPlate`, `ToyWoodGrain`, and `ToyStitchRow`.
+- Apply these primitives to the person family, dog, bird, fish, house, bridge, fence, tree, water, sun, robot, and light.
+- Keep every detail as lightweight child geometry so object transforms, selection halos, and Stage v2 drag math stay unchanged.
+
+Non-regression:
+
+- No changes to sandbox object schema or asset recipe schema.
+- No external images, GLB assets, CDN files, or backend calls.
+- No changes to Stage v2 camera, export, analysis, AI companion, Agent, Memory OS, or Admin logic.
+- Validation must include `npm run build`, `npm run qa:stage-v2`, `npm run qa:ui-shell`, `npm run qa:visual-baseline`, and `npm run qa:visual-report`.

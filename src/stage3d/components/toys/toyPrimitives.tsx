@@ -1,3 +1,5 @@
+import { RoundedBoxMesh } from "../RoundedBoxMesh";
+
 export type Vec3 = [number, number, number];
 
 export type MaterialPreset =
@@ -213,4 +215,118 @@ export function ToyBeadRow({
       })}
     </>
   );
+}
+
+export function ToyBow({
+  color = "#e85643",
+  knotColor = "#ffd46f",
+  opacity = 1,
+  position,
+  rotation = [0, 0, 0] as Vec3,
+  scale = [1, 1, 1] as Vec3,
+}: {
+  color?: string;
+  knotColor?: string;
+  opacity?: number;
+  position: Vec3;
+  rotation?: Vec3;
+  scale?: Vec3;
+}): JSX.Element {
+  return (
+    <group position={position} rotation={rotation} scale={scale}>
+      {[-0.055, 0.055].map((x) => (
+        <mesh key={`bow-loop-${x}`} position={[x, 0, -0.006]} scale={[1.3, 0.72, 0.35]} castShadow>
+          <sphereGeometry args={[0.058, 16, 10]} />
+          <ToyMaterial preset="softPlastic" color={color} opacity={opacity} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0, -0.02]} scale={[0.9, 0.8, 0.55]} castShadow>
+        <sphereGeometry args={[0.034, 14, 10]} />
+        <ToyMaterial preset="softPlastic" color={knotColor} opacity={opacity} />
+      </mesh>
+      {[-0.035, 0.035].map((x) => (
+        <mesh key={`bow-tail-${x}`} position={[x, -0.055, -0.004]} rotation={[0, 0, x > 0 ? -0.38 : 0.38]} castShadow>
+          <coneGeometry args={[0.026, 0.09, 3]} />
+          <ToyMaterial preset="softPlastic" color={color} opacity={opacity} />
+        </mesh>
+      ))}
+      <ToyHighlight position={[-0.04, 0.026, -0.052]} scale={[0.42, 0.2, 0.12]} opacity={0.24} color="#fff4ce" />
+    </group>
+  );
+}
+
+export function ToyInsetPlate({
+  color = "#fff1d1",
+  opacity = 1,
+  position,
+  radius = 0.018,
+  rotation = [0, 0, 0] as Vec3,
+  size,
+}: {
+  color?: string;
+  opacity?: number;
+  position: Vec3;
+  radius?: number;
+  rotation?: Vec3;
+  size: Vec3;
+}): JSX.Element {
+  return (
+    <RoundedBoxMesh size={size} radius={radius} smoothness={4} position={position} rotation={rotation} castShadow>
+      <ToyMaterial preset="warmCeramic" color={color} opacity={opacity} />
+    </RoundedBoxMesh>
+  );
+}
+
+export function ToyWoodGrain({
+  color = "#8b5c38",
+  count = 3,
+  length = 0.18,
+  opacity = 0.58,
+  origin,
+  spread = 0.09,
+}: {
+  color?: string;
+  count?: number;
+  length?: number;
+  opacity?: number;
+  origin: Vec3;
+  spread?: number;
+}): JSX.Element {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, index) => {
+        const offset = count === 1 ? 0 : (index / (count - 1) - 0.5) * spread;
+        return (
+          <ToyStripe
+            key={`grain-${origin.join("-")}-${index}`}
+            position={[origin[0] + offset, origin[1] + index * 0.006, origin[2]]}
+            rotation={[0, 0, Math.PI / 2 + (index - 1) * 0.08]}
+            length={length * (1 - index * 0.08)}
+            radius={0.0038}
+            preset="paintedWood"
+            color={color}
+            opacity={opacity}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+export function ToyStitchRow({
+  color = "#fff5d6",
+  count = 5,
+  end,
+  opacity = 0.76,
+  size = 0.007,
+  start,
+}: {
+  color?: string;
+  count?: number;
+  end: Vec3;
+  opacity?: number;
+  size?: number;
+  start: Vec3;
+}): JSX.Element {
+  return <ToyBeadRow start={start} end={end} count={count} color={color} preset="warmCeramic" size={size} opacity={opacity} />;
 }
