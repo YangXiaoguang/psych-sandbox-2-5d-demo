@@ -193,9 +193,48 @@ async function runShellQa() {
       formatMetrics(backpackDesktop.railButtons),
     );
     pushResult("Backpack drawer hides stage mode switch", !backpackDesktop.modeSwitchVisible, formatMetrics(backpackDesktop));
-    pushResult("Backpack cards keep names readable", backpackDesktop.cards.every((card) => card.nameReadable), formatMetrics(backpackDesktop.cards));
-    pushResult("Backpack card badges do not cover names", backpackDesktop.cards.every((card) => !card.riskOverlapsName), formatMetrics(backpackDesktop.cards));
+    const backpackDesktopLabelSamples = backpackDesktop.cards.filter((card) => card.nameFullyVisibleInDrawer);
+    pushResult(
+      "Backpack cards keep names readable",
+      backpackDesktopLabelSamples.length >= 3 && backpackDesktopLabelSamples.every((card) => card.nameReadable),
+      formatMetrics({ sampledCards: backpackDesktopLabelSamples, allCards: backpackDesktop.cards }),
+    );
+    pushResult(
+      "Backpack card badges do not cover names",
+      backpackDesktopLabelSamples.length >= 3 && backpackDesktopLabelSamples.every((card) => !card.riskOverlapsName),
+      formatMetrics({ sampledCards: backpackDesktopLabelSamples, allCards: backpackDesktop.cards }),
+    );
+    pushResult(
+      "Backpack large cards keep labels in stable plates",
+      backpackDesktopLabelSamples.length >= 3 &&
+        backpackDesktopLabelSamples.every(
+          (card) => card.namePlateStable && card.previewClearOfName && !card.nameCovered,
+        ) &&
+        !backpackDesktop.cardsOverlap,
+      formatMetrics(backpackDesktop),
+    );
     pushNightContrastResult("Backpack drawer night text remains readable", backpackContrast, 32);
+
+    await clickByText(page, /紧凑/);
+    await delay(260);
+    await captureShellScreenshot(page, "sandbox-backpack-compact-night-desktop.png");
+    const backpackCompact = await readBackpackMetrics(page);
+    const backpackCompactLabelSamples = backpackCompact.cards.filter((card) => card.nameFullyVisibleInDrawer);
+    pushResult(
+      "Backpack compact cards keep labels readable",
+      backpackCompact.compactMode &&
+        backpackCompactLabelSamples.length >= 3 &&
+        backpackCompactLabelSamples.every(
+          (card) =>
+            card.nameReadable &&
+            card.namePlateStable &&
+            card.previewClearOfName &&
+            !card.nameCovered &&
+            !card.riskOverlapsName,
+        ) &&
+        !backpackCompact.cardsOverlap,
+      formatMetrics({ ...backpackCompact, sampledCards: backpackCompactLabelSamples }),
+    );
     await clickSelector(page, ".game-drawer-close");
     await page.waitForSelector(".game-side-drawer-left", { state: "detached", timeout: 5000 });
     await delay(250);
@@ -1166,6 +1205,15 @@ async function readBackpackMetrics(page) {
       };
     };
     const intersects = (a, b) => Boolean(a && b && a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y);
+    const contains = (outer, inner) =>
+      Boolean(
+        outer &&
+          inner &&
+          inner.x >= outer.x - 1 &&
+          inner.y >= outer.y - 1 &&
+          inner.right <= outer.right + 1 &&
+          inner.bottom <= outer.bottom + 1,
+      );
     const isVisible = (element) => {
       if (!element) return false;
       const rect = element.getBoundingClientRect();
@@ -1181,6 +1229,7 @@ async function readBackpackMetrics(page) {
 
     const drawer = box(".game-side-drawer-left");
     const tools = box(".game-side-drawer-left .asset-library-tools");
+    const categoryList = document.querySelector(".game-side-drawer-left .asset-category-list");
     const modeSwitch = document.querySelector(".stage-engine-mode-switch");
     const modeSwitchBox = box(modeSwitch);
     const railButtons = Array.from(document.querySelectorAll(".game-side-drawer-left .asset-shelf-rail button"))
@@ -1190,28 +1239,89 @@ async function readBackpackMetrics(page) {
         active: button.classList.contains("active"),
         ...box(button),
       }));
-    const cards = Array.from(document.querySelectorAll(".game-side-drawer-left .asset-card"))
+    const cardElements = Array.from(document.querySelectorAll(".game-side-drawer-left .asset-card")).filter(isVisible);
+    const cardsOverlap = cardElements.some((card, index) => {
+      const cardBox = box(card);
+      return cardElements.slice(index + 1).some((other) => {
+        const otherBox = box(other);
+        if (!intersects(cardBox, otherBox)) return false;
+        const xOverlap = Math.max(0, Math.min(cardBox.right, otherBox.right) - Math.max(cardBox.x, otherBox.x));
+        const yOverlap = Math.max(0, Math.min(cardBox.bottom, otherBox.bottom) - Math.max(cardBox.y, otherBox.y));
+        return xOverlap > 2 && yOverlap > 2;
+      });
+    });
+    const cards = cardElements
       .slice(0, 8)
       .map((card) => {
         const name = card.querySelector(".asset-card-name");
+        const preview = card.querySelector(".asset-preview");
+        const main = card.querySelector(".asset-card-main");
+        const meta = card.querySelector(".asset-card-meta");
         const risk = card.querySelector(".risk-badge");
         const nameBox = box(name);
+        const previewBox = box(preview);
+        const mainBox = box(main);
+        const metaBox = box(meta);
         const cardBox = box(card);
         const riskBox = box(risk);
         const nameStyle = name ? window.getComputedStyle(name) : null;
         const nameText = name?.textContent?.trim() ?? "";
+        const nameFullyVisibleInDrawer = Boolean(
+          drawer &&
+            nameBox &&
+            nameBox.y >= Math.max(0, drawer.y) &&
+            nameBox.bottom <= Math.min(window.innerHeight, drawer.bottom),
+        );
+        const nameCenterElement =
+          nameBox && document.elementFromPoint((nameBox.x + nameBox.right) / 2, (nameBox.y + nameBox.bottom) / 2);
+        const nameCovered = Boolean(
+          nameFullyVisibleInDrawer &&
+            name &&
+            nameCenterElement &&
+            nameCenterElement !== name &&
+            !name.contains(nameCenterElement) &&
+            !nameCenterElement.contains(name) &&
+            !nameCenterElement.closest(".asset-card-name") &&
+            !nameCenterElement.closest(".asset-card-main"),
+        );
+        const nameVerticallyClipped = Boolean(name && name.scrollHeight > name.clientHeight + 2);
+        const namePlateStable = Boolean(
+          cardBox &&
+            mainBox &&
+            nameBox &&
+            metaBox &&
+            riskBox &&
+            mainBox.height >= 42 &&
+            contains(cardBox, mainBox) &&
+            contains(mainBox, nameBox) &&
+            contains(mainBox, metaBox) &&
+            contains(metaBox, riskBox) &&
+            !nameVerticallyClipped,
+        );
+        const previewClearOfName = Boolean(previewBox && mainBox && previewBox.bottom <= mainBox.y + 2);
         return {
           title: card.getAttribute("title") ?? "",
           nameText,
           nameColor: nameStyle?.color ?? "",
           nameHeight: nameBox?.height ?? 0,
+          nameClientHeight: name?.clientHeight ?? 0,
+          nameScrollHeight: name?.scrollHeight ?? 0,
           nameInsideCard: Boolean(nameBox && cardBox && nameBox.y >= cardBox.y && nameBox.bottom <= cardBox.bottom),
+          nameFullyVisibleInDrawer,
+          nameCovered,
+          nameVerticallyClipped,
+          namePlateStable,
+          previewClearOfName,
+          mainHeight: mainBox?.height ?? 0,
           nameReadable:
             nameText.length > 0 &&
             Boolean(nameBox && nameBox.height >= 18) &&
             Boolean(nameStyle && nameStyle.visibility !== "hidden" && Number(nameStyle.opacity) > 0.5) &&
-            Boolean(nameBox && cardBox && nameBox.y >= cardBox.y && nameBox.bottom <= cardBox.bottom),
+            Boolean(nameBox && cardBox && nameBox.y >= cardBox.y && nameBox.bottom <= cardBox.bottom) &&
+            !nameCovered &&
+            !nameVerticallyClipped,
           riskOverlapsName: intersects(nameBox, riskBox),
+          riskInsideMeta: contains(metaBox, riskBox),
         };
       });
 
@@ -1222,12 +1332,14 @@ async function readBackpackMetrics(page) {
       drawer,
       drawerWidthRatio: drawer ? Number((drawer.width / window.innerWidth).toFixed(3)) : 0,
       toolsHeight: tools?.height ?? 0,
+      compactMode: categoryList?.classList.contains("compact") ?? false,
       idleDragStatusVisible: isVisible(document.querySelector(".game-side-drawer-left .asset-drag-status.idle")),
       railButtons,
       drawerFitsViewport: Boolean(drawer && drawer.x >= 0 && drawer.right <= window.innerWidth + 1),
       drawerHasStageGutter: Boolean(drawer && drawer.x >= 10 && drawer.bottom <= window.innerHeight - 10),
       modeSwitchVisible: isVisible(modeSwitch),
       modeSwitchIntersectsDrawer: intersects(modeSwitchBox, drawer),
+      cardsOverlap,
       cards,
     };
   });
