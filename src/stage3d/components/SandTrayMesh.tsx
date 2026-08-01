@@ -24,8 +24,10 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
   const oceanTexture = useMemo(() => createOceanTexture(environment), [environment]);
   const foamTexture = useMemo(() => createFoamTexture(environment), [environment]);
   const causticTexture = useMemo(() => createCausticTexture(environment), [environment]);
+  const softPatchTexture = useMemo(() => createSoftPatchTexture(), []);
   const islandTopGeometry = useMemo(() => createIslandTopGeometry(), []);
   const islandSideGeometry = useMemo(() => createIslandSideGeometry(), []);
+  const shoreShadowGeometry = useMemo(() => createIslandRingGeometry(0.98, 1.22, WATER_Y + 0.034), []);
   const wetSandGeometry = useMemo(() => createIslandRingGeometry(0.86, 1.012, SAND_SURFACE_Y + 0.011), []);
   const foamGeometry = useMemo(() => createIslandRingGeometry(1.006, 1.092, SAND_SURFACE_Y + 0.017), []);
   const tideFoamGeometry = useMemo(() => createIslandRingGeometry(1.04, 1.18, SAND_SURFACE_Y + 0.021), []);
@@ -33,6 +35,9 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
   const surfaceSeeds = useMemo(() => createSurfaceSandSeeds(), []);
   const rakeSeeds = useMemo(() => createSandRakeSeeds(), []);
   const foamFleckSeeds = useMemo(() => createFoamFleckSeeds(), []);
+  const dunePatchSeeds = useMemo(() => createDunePatchSeeds(), []);
+  const sandSparkleSeeds = useMemo(() => createSandSparkleSeeds(), []);
+  const oceanBandSeeds = useMemo(() => createOceanBandSeeds(), []);
 
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime();
@@ -58,6 +63,8 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
         />
       </mesh>
       <OceanGlimmer night={night} rainy={rainy} texture={causticTexture} />
+      <OceanCurrentBands seeds={oceanBandSeeds} night={night} rainy={rainy} texture={softPatchTexture} />
+      <ShoreWaterShadow geometry={shoreShadowGeometry} night={night} rainy={rainy} />
 
       <mesh geometry={islandSideGeometry} castShadow receiveShadow>
         <meshStandardMaterial
@@ -89,6 +96,8 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
           metalness={0}
         />
       </mesh>
+      <DuneReliefPatches seeds={dunePatchSeeds} night={night} rainy={rainy} texture={softPatchTexture} />
+      <SandSparkleFlecks seeds={sandSparkleSeeds} night={night} rainy={rainy} />
 
       <mesh geometry={foamGeometry} receiveShadow renderOrder={3}>
         <meshBasicMaterial
@@ -117,6 +126,173 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
       <ShoreDetails seeds={shellSeeds} night={night} />
       <SurfaceSandDetails seeds={surfaceSeeds} night={night} rainy={rainy} />
       <SandRakeMarks seeds={rakeSeeds} night={night} rainy={rainy} />
+    </group>
+  );
+}
+
+function ShoreWaterShadow({
+  geometry,
+  night,
+  rainy,
+}: {
+  geometry: THREE.BufferGeometry;
+  night: boolean;
+  rainy: boolean;
+}): JSX.Element {
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame(({ clock }) => {
+    if (!materialRef.current) {
+      return;
+    }
+    const breathe = 0.5 + Math.sin(clock.getElapsedTime() * (rainy ? 0.88 : 0.64)) * 0.5;
+    materialRef.current.opacity = night ? 0.34 + breathe * 0.07 : rainy ? 0.24 + breathe * 0.06 : 0.2 + breathe * 0.045;
+  });
+
+  return (
+    <mesh geometry={geometry} renderOrder={1}>
+      <meshBasicMaterial
+        ref={materialRef}
+        color={night ? "#03131c" : rainy ? "#1c6e76" : "#127a84"}
+        transparent
+        opacity={night ? 0.36 : 0.22}
+        depthWrite={false}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
+function OceanCurrentBands({
+  night,
+  rainy,
+  seeds,
+  texture,
+}: {
+  night: boolean;
+  rainy: boolean;
+  seeds: OceanBandSeed[];
+  texture: THREE.Texture;
+}): JSX.Element {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) {
+      return;
+    }
+    const elapsed = clock.getElapsedTime();
+    groupRef.current.position.x = Math.sin(elapsed * 0.12) * 0.08;
+    groupRef.current.position.z = Math.cos(elapsed * 0.1) * 0.06;
+    groupRef.current.rotation.y = Math.sin(elapsed * 0.08) * 0.012;
+  });
+
+  return (
+    <group ref={groupRef}>
+      {seeds.map((seed, index) => (
+        <mesh
+          key={`${seed.x}-${seed.z}-${index}`}
+          position={[seed.x, WATER_Y + 0.028 + seed.lift, seed.z]}
+          rotation={[-Math.PI / 2, 0, seed.rotation]}
+          scale={[seed.length, seed.width, 1]}
+          renderOrder={1}
+        >
+          <circleGeometry args={[1, 28]} />
+          <meshBasicMaterial
+            map={texture}
+            color={night ? "#8fd4df" : rainy ? "#c8f3f0" : "#f5fff8"}
+            transparent
+            opacity={(night ? 0.045 : rainy ? 0.07 : 0.092) * seed.opacity}
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function DuneReliefPatches({
+  night,
+  rainy,
+  seeds,
+  texture,
+}: {
+  night: boolean;
+  rainy: boolean;
+  seeds: DunePatchSeed[];
+  texture: THREE.Texture;
+}): JSX.Element {
+  return (
+    <group>
+      {seeds.map((seed, index) => {
+        const isShadow = seed.kind === "shadow";
+        const isCool = seed.kind === "cool";
+        const color = isShadow
+          ? night
+            ? "#5f4b2e"
+            : rainy
+              ? "#8f6a3f"
+              : "#9e6a31"
+          : isCool
+            ? night
+              ? "#ddf2d5"
+              : rainy
+                ? "#e3ead1"
+                : "#fff0b8"
+            : night
+              ? "#fff0b8"
+              : rainy
+                ? "#f3d093"
+                : "#ffe09a";
+        return (
+          <mesh
+            key={`${seed.x}-${seed.z}-${index}`}
+            position={[seed.x, SAND_SURFACE_Y + 0.086 + seed.lift, seed.z]}
+            rotation={[-Math.PI / 2, 0, seed.rotation]}
+            scale={[seed.radiusX, seed.radiusZ, 1]}
+            renderOrder={7}
+          >
+            <circleGeometry args={[1, 36]} />
+            <meshBasicMaterial
+              map={texture}
+              color={color}
+              transparent
+              opacity={seed.opacity * (isShadow ? (night ? 0.14 : 0.12) : rainy ? 0.11 : 0.145)}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function SandSparkleFlecks({
+  night,
+  rainy,
+  seeds,
+}: {
+  night: boolean;
+  rainy: boolean;
+  seeds: SandSparkleSeed[];
+}): JSX.Element {
+  const materialColor = night ? "#fff2ba" : rainy ? "#e8dfbd" : "#fff3c5";
+  const opacityScale = night ? 0.48 : rainy ? 0.28 : 0.62;
+
+  return (
+    <group>
+      {seeds.map((seed, index) => (
+        <mesh
+          key={`${seed.x}-${seed.z}-${index}`}
+          position={[seed.x, SAND_SURFACE_Y + 0.092 + seed.lift, seed.z]}
+          rotation={[-Math.PI / 2, 0, seed.rotation]}
+          scale={[seed.length, seed.width, 1]}
+          renderOrder={8}
+        >
+          <planeGeometry args={[1, 1]} />
+          <meshBasicMaterial color={materialColor} transparent opacity={seed.opacity * opacityScale} depthWrite={false} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -633,6 +809,41 @@ function createFoamTexture(environment: SandboxEnvironment): THREE.CanvasTexture
   return texture;
 }
 
+function createSoftPatchTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const context = canvas.getContext("2d");
+  if (context) {
+    const gradient = context.createRadialGradient(128, 128, 4, 128, 128, 126);
+    gradient.addColorStop(0, "rgba(255,255,255,0.92)");
+    gradient.addColorStop(0.38, "rgba(255,255,255,0.54)");
+    gradient.addColorStop(0.72, "rgba(255,255,255,0.16)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.globalCompositeOperation = "destination-out";
+    for (let notch = 0; notch < 22; notch += 1) {
+      const angle = seeded(notch * 23) * Math.PI * 2;
+      const distance = 86 + seeded(notch * 31) * 28;
+      const x = 128 + Math.cos(angle) * distance;
+      const y = 128 + Math.sin(angle) * distance;
+      const radius = 10 + seeded(notch * 37) * 22;
+      const cut = context.createRadialGradient(x, y, 1, x, y, radius);
+      cut.addColorStop(0, "rgba(255,255,255,0.18)");
+      cut.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = cut;
+      context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    }
+    context.globalCompositeOperation = "source-over";
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 function createIslandTopGeometry(): THREE.BufferGeometry {
   const vertices: number[] = [];
   const uvs: number[] = [];
@@ -795,6 +1006,37 @@ interface FoamFleckSeed {
   size: number;
 }
 
+interface DunePatchSeed {
+  kind: "highlight" | "shadow" | "cool";
+  lift: number;
+  opacity: number;
+  radiusX: number;
+  radiusZ: number;
+  rotation: number;
+  x: number;
+  z: number;
+}
+
+interface SandSparkleSeed {
+  length: number;
+  lift: number;
+  opacity: number;
+  rotation: number;
+  width: number;
+  x: number;
+  z: number;
+}
+
+interface OceanBandSeed {
+  length: number;
+  lift: number;
+  opacity: number;
+  rotation: number;
+  width: number;
+  x: number;
+  z: number;
+}
+
 function createShellSeeds(): ShoreSeed[] {
   return Array.from({ length: 34 }, (_, index) => ({
     angle: seeded(index * 37) * Math.PI * 2,
@@ -844,6 +1086,57 @@ function createFoamFleckSeeds(): FoamFleckSeed[] {
     scale: 1.048 + seeded(index * 37 + 7) * 0.11,
     size: 0.014 + seeded(index * 53 + 11) * 0.036,
   }));
+}
+
+function createDunePatchSeeds(): DunePatchSeed[] {
+  return Array.from({ length: 18 }, (_, index) => {
+    const angle = seeded(index * 67 + 9) * Math.PI * 2;
+    const scale = 0.18 + seeded(index * 79 + 3) * 0.7;
+    const point = getIslandEdgePoint(angle, scale);
+    const kindRoll = seeded(index * 83 + 13);
+    return {
+      kind: kindRoll > 0.72 ? "cool" : kindRoll > 0.45 ? "highlight" : "shadow",
+      lift: seeded(index * 47 + 5) * 0.008,
+      opacity: 0.58 + seeded(index * 89 + 7) * 0.42,
+      radiusX: 0.34 + seeded(index * 97 + 11) * 0.74,
+      radiusZ: 0.16 + seeded(index * 101 + 17) * 0.38,
+      rotation: seeded(index * 109 + 19) * Math.PI * 2,
+      x: point.x,
+      z: point.z,
+    };
+  });
+}
+
+function createSandSparkleSeeds(): SandSparkleSeed[] {
+  return Array.from({ length: 118 }, (_, index) => {
+    const angle = seeded(index * 113 + 5) * Math.PI * 2;
+    const scale = 0.16 + seeded(index * 127 + 7) * 0.76;
+    const point = getIslandEdgePoint(angle, scale);
+    return {
+      length: 0.018 + seeded(index * 131 + 11) * 0.05,
+      lift: seeded(index * 137 + 13) * 0.006,
+      opacity: 0.14 + seeded(index * 139 + 17) * 0.36,
+      rotation: seeded(index * 149 + 19) * Math.PI,
+      width: 0.0025 + seeded(index * 151 + 23) * 0.008,
+      x: point.x,
+      z: point.z,
+    };
+  });
+}
+
+function createOceanBandSeeds(): OceanBandSeed[] {
+  return Array.from({ length: 24 }, (_, index) => {
+    const side = seeded(index * 157 + 3) > 0.5 ? 1 : -1;
+    return {
+      length: 1.6 + seeded(index * 163 + 5) * 3.4,
+      lift: seeded(index * 167 + 7) * 0.012,
+      opacity: 0.55 + seeded(index * 173 + 11) * 0.45,
+      rotation: -0.22 + seeded(index * 179 + 13) * 0.44,
+      width: 0.045 + seeded(index * 181 + 17) * 0.18,
+      x: side * (4.4 + seeded(index * 191 + 19) * 5.6),
+      z: -4.5 + seeded(index * 193 + 23) * 9,
+    };
+  });
 }
 
 function seeded(seed: number): number {

@@ -22129,3 +22129,97 @@ table td {
   border-radius: 999px;
   background: rgba(119, 226, 211, 0.58);
 }
+
+/* Stage v2 visual polish v5:
+   Keep the game surface dominant. Idle guidance is still present for screen
+   readers and QA text checks, but the visible HUD now behaves like a compact
+   controller strip instead of an explanatory office toolbar. */
+.stage-v2-interaction-hud[data-mode="idle"] {
+  width: auto !important;
+  min-width: 212px !important;
+  max-width: min(292px, calc(100% - 28px)) !important;
+  min-height: 48px !important;
+  padding: 8px 11px !important;
+  gap: 9px !important;
+}
+
+.stage-v2-interaction-hud[data-mode="idle"] .stage-v2-interaction-orb {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.stage-v2-interaction-hud[data-mode="idle"] .stage-v2-interaction-orb::before {
+  inset: 8px !important;
+}
+
+.stage-v2-interaction-hud[data-mode="idle"] div > span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
+.stage-v2-interaction-hud[data-mode="idle"] strong {
+  font-size: 0.82rem !important;
+}
+
+.sandbox-game-toolbelt.context-idle {
+  max-width: min(760px, calc(100% - 188px)) !important;
+  min-height: 58px !important;
+  padding: 6px !important;
+  gap: 7px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-status {
+  min-width: min(210px, 22vw) !important;
+  padding: 5px 9px 5px 6px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-mode-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 13px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-status p {
+  font-size: 13px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-status span:not(.toolbelt-mode-icon) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-actions {
+  gap: 4px !important;
+  padding: 3px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-actions button {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 14px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-actions button span {
+  font-size: 9px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-hints {
+  max-width: 140px !important;
+  gap: 4px !important;
+}
+
+.sandbox-game-toolbelt.context-idle .toolbelt-hints span {
+  min-height: 28px !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+}
