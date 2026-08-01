@@ -1,9 +1,10 @@
 # 当前沙盘 Snapshot 输出规范（简版）
 
-版本：v1.3
+版本：v1.4
 适用对象：前端、LLM 调用层、后续后端 API
 代码实现：`src/llm/currentSandboxSnapshot.ts`
 API 契约：`POST /api/llm/current-sandbox-snapshot`
+验证命令：`npm run qa:snapshot-contract`
 
 ## 目标
 

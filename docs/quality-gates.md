@@ -1,6 +1,6 @@
 # Stage Engine v2 质量门
 
-文档版本：v1.1  
+文档版本：v1.2  
 更新日期：2026-08-01  
 适用范围：所有 Stage Engine v2 相关开发、视觉改动、交互改动、UI 主题改动
 
@@ -38,7 +38,20 @@ git status --short --branch
 - 不包含无关文件。
 - 不包含临时截图、debug dump、构建产物，除非任务明确要求。
 
-### 2.3 固定视觉基线
+### 2.3 当前沙盘 Snapshot 合同
+
+```bash
+npm run qa:snapshot-contract
+```
+
+通过标准：
+
+- `CurrentSandboxSnapshot` schema 固定为 `sandbox.current-snapshot.v1`。
+- 输出只包含当前沙盘状态，不包含事件流、个人身份、个人记忆、授权上下文、截图或 API Key。
+- 右侧结构化数据面板、AI 伙伴和 Agent 对话都必须通过 `createCurrentSandboxSnapshotPayload` 使用同一份 builder。
+- API 契约、Mock Adapter、文档说明和运行时样例保持一致。
+
+### 2.4 固定视觉基线
 
 ```bash
 npm run qa:visual-baseline
@@ -52,7 +65,7 @@ npm run qa:visual-baseline
 - 每个固定场景无水平页面溢出，关键根节点可见。
 - 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
 
-### 2.4 视觉评审报告
+### 2.5 视觉评审报告
 
 ```bash
 npm run qa:visual-report
@@ -76,6 +89,23 @@ VISUAL_REVIEW_MANIFEST=artifacts/visual-regression/2026-08-01/manifest.json npm 
 1. 先运行 `npm run qa:visual-baseline` 生成最新截图。
 2. 再运行 `npm run qa:visual-report` 生成评审报告。
 3. 打开 `visual-review.md`，按报告里的场景顺序检查 Stage v2 主视觉、雨夜可读性、背包抽屉、AI 抽屉和全局主题副作用。
+
+### 2.6 完整验收链路
+
+```bash
+npm run qa:acceptance
+```
+
+该命令用于阶段收口或 checkpoint 前，按顺序执行：
+
+1. `npm run build`
+2. `npm run qa:snapshot-contract`
+3. `npm run qa:stage-v2`
+4. `npm run qa:ui-shell`
+5. `npm run qa:visual-baseline`
+6. `npm run qa:visual-report`
+
+如果只是局部修改，可以先运行对应单项；但任何影响 Stage v2、LLM 数据输出、全局主题或主要导航的提交，都必须至少运行相关单项 QA。
 
 ---
 
@@ -332,6 +362,7 @@ Stage Engine v2 第一版性能目标：
 - [ ] 修改范围符合当前 Phase。
 - [ ] 没有无关重构。
 - [ ] `npm run build` 通过。
+- [ ] 如修改 LLM 上下文、结构化数据、API 契约或 AI 对话入口，`npm run qa:snapshot-contract` 通过。
 - [ ] 核心沙盘交互未丢失。
 - [ ] 日间和夜间至少各检查一次。
 - [ ] 资产库没有缩略图/文字重叠。

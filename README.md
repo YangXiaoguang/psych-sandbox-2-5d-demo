@@ -9,6 +9,14 @@ npm install
 npm run dev
 ```
 
+## 验收
+
+```bash
+npm run qa:acceptance
+```
+
+该命令会依次运行生产构建、当前沙盘 Snapshot 合同、Stage v2 交互、全局 UI shell、固定视觉基线和视觉评审报告。日常小改可只运行对应的单项 QA。
+
 ## 开发文档
 
 - [项目开发手册与技术说明书](docs/project-development-manual.md)
@@ -30,4 +38,5 @@ npm run dev
 - 九宫格、中心区域、边界区域辅助分析
 - 右侧显示对象属性、结构化数据、风险标签分布与事件流
 - 导出 JSON 快照与 PNG 作品截图
+- 为 LLM 输出当前沙盘 `CurrentSandboxSnapshot`，不包含事件流、个人身份、个人记忆、授权上下文或截图
 - 使用 localStorage 暂存当前作品
