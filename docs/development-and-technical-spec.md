@@ -928,6 +928,7 @@ npm run qa:repository
 - `src/api/client.ts`
 - `src/api/mockApiAdapter.ts`
 - `scripts/export-api-contract.mjs`
+- `scripts/qa-mock-api-behavior.mjs`
 
 契约版本：
 
@@ -952,6 +953,14 @@ npm run api:contract
 - 报告包含端点清单、分页协议、错误码、认证上下文、分页样例、沙具资产样例、LLM 配置摘要和当前沙盘 Snapshot 样例。
 - LLM provider 只输出 `apiKeyConfigured` 与 `apiKeyPreview`，不得输出明文 API Key。
 - `artifacts/` 为本地生成物，不提交到 Git；需要交接时由开发人员重新运行命令生成。
+
+行为质量门：
+
+```bash
+npm run qa:mock-api
+```
+
+该命令直接调用 `FrontendMockApiAdapter.v1`，验证分页、搜索、筛选、排序、分页越界、LLM Key 遮罩、Agent 查询、沙盘档案、记忆候选和当前沙盘 Snapshot response。它用于证明前端 mock adapter 不只是静态 DTO 清单，而是具备后续真实后端需要实现的最小行为样例。
 
 核心端点：
 

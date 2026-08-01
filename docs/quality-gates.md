@@ -72,7 +72,27 @@ npm run qa:api-contract
 npm run api:contract
 ```
 
-### 2.5 Repository Adapter 模式检查
+### 2.5 Mock API 行为检查
+
+```bash
+npm run qa:mock-api
+```
+
+通过标准：
+
+- Mock API Adapter 的用户、资产、LLM provider、Agent、沙盘档案和记忆候选查询可用。
+- 分页必须是一页起算，支持 `page/pageSize`，超出范围返回 `PAGE_OUT_OF_RANGE`。
+- 关键词搜索、字段筛选、数组筛选和排序都要有可验证样例。
+- LLM provider 只返回 `apiKeyConfigured` 与遮罩后的 `apiKeyPreview`，不得暴露明文 API Key 或密钥字段。
+- 当前沙盘 Snapshot response 仍使用 `sandbox.current-snapshot.v1`，并保持事件流排除策略。
+
+输出：
+
+```text
+artifacts/mock-api-behavior-qa/mock-api-behavior-report.json
+```
+
+### 2.6 Repository Adapter 模式检查
 
 ```bash
 npm run qa:repository
@@ -92,7 +112,7 @@ npm run qa:repository
 artifacts/repository-adapter-qa/repository-adapter-report.json
 ```
 
-### 2.6 固定视觉基线
+### 2.7 固定视觉基线
 
 ```bash
 npm run qa:visual-baseline
@@ -106,7 +126,7 @@ npm run qa:visual-baseline
 - 每个固定场景无水平页面溢出，关键根节点可见。
 - 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
 
-### 2.7 视觉评审报告
+### 2.8 视觉评审报告
 
 ```bash
 npm run qa:visual-report
@@ -131,7 +151,7 @@ VISUAL_REVIEW_MANIFEST=artifacts/visual-regression/2026-08-01/manifest.json npm 
 2. 再运行 `npm run qa:visual-report` 生成评审报告。
 3. 打开 `visual-review.md`，按报告里的场景顺序检查 Stage v2 主视觉、雨夜可读性、背包抽屉、AI 抽屉和全局主题副作用。
 
-### 2.8 完整验收链路
+### 2.9 完整验收链路
 
 ```bash
 npm run qa:acceptance
@@ -142,11 +162,12 @@ npm run qa:acceptance
 1. `npm run build`
 2. `npm run qa:snapshot-contract`
 3. `npm run qa:api-contract`
-4. `npm run qa:repository`
-5. `npm run qa:stage-v2`
-6. `npm run qa:ui-shell`
-7. `npm run qa:visual-baseline`
-8. `npm run qa:visual-report`
+4. `npm run qa:mock-api`
+5. `npm run qa:repository`
+6. `npm run qa:stage-v2`
+7. `npm run qa:ui-shell`
+8. `npm run qa:visual-baseline`
+9. `npm run qa:visual-report`
 
 如果只是局部修改，可以先运行对应单项；但任何影响 Stage v2、LLM 数据输出、全局主题或主要导航的提交，都必须至少运行相关单项 QA。
 
