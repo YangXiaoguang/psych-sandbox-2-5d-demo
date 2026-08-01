@@ -49,6 +49,7 @@ npm run qa:snapshot-contract
 - `CurrentSandboxSnapshot` schema 固定为 `sandbox.current-snapshot.v1`。
 - 输出只包含当前沙盘状态，不包含事件流、个人身份、个人记忆、授权上下文、截图或 API Key。
 - 右侧结构化数据面板、AI 伙伴和 Agent 对话都必须通过 `createCurrentSandboxSnapshotPayload` 使用同一份 builder。
+- AI 伙伴和 Agent 对话必须通过 `createSandboxSnapshotChatMessages` 注入 LLM 上下文，不得在组件中散落拼接 Snapshot prompt。
 - API 契约、Mock Adapter、文档说明和运行时样例保持一致。
 
 ### 2.4 固定视觉基线

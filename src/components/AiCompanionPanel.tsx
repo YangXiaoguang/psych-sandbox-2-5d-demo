@@ -6,6 +6,10 @@ import type { LlmProviderConfig, SandboxEnvironment, SandboxObject } from "../ty
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
 import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import {
+  createSandboxSnapshotChatMessages,
+  SANDBOX_DIALOGUE_SAFETY_NOTICE,
+} from "../llm/sandboxPromptContext";
 import { MarkdownText } from "./MarkdownText";
 
 interface AiCompanionPanelProps {
@@ -366,26 +370,24 @@ function buildCompanionMessages(
   history: CompanionMessage[],
   context: CompanionContext,
 ): LlmChatMessage[] {
-  const system = [
-    "你是数字心理沙盘 Demo 中的 AI 沙盘伙伴。你要温暖、简洁、非评判地陪用户整理体验。",
-    "你不能做诊断，不能替代专业心理咨询或医疗建议。不要给出固定象征解释，要用开放式问题帮助用户表达。",
-    "当前只允许使用 CurrentSandboxSnapshot。不要假设事件流、个人记忆、用户身份、对话历史之外的资料存在。",
-    `CurrentSandboxSnapshotPolicy JSON:\n${JSON.stringify(context.snapshotPolicy, null, 2)}`,
-    `CurrentSandboxSnapshot JSON:\n${JSON.stringify(context.snapshot, null, 2)}`,
-  ].join("\n\n");
   const historyMessages: LlmChatMessage[] = history
     .filter((message) => message.text.trim())
-    .slice(-8)
     .map((message) => ({
       role: message.role,
       content: message.text,
     }));
 
-  return [
-    { role: "system", content: system },
-    ...historyMessages,
-    { role: "user", content: prompt },
-  ];
+  return createSandboxSnapshotChatMessages({
+    systemInstructions: [
+      "你是数字心理沙盘 Demo 中的 AI 沙盘伙伴。你要温暖、简洁、非评判地陪用户整理体验。",
+      SANDBOX_DIALOGUE_SAFETY_NOTICE,
+    ],
+    snapshot: context.snapshot,
+    policy: context.snapshotPolicy,
+    history: historyMessages,
+    historyLimit: 8,
+    userInput: prompt,
+  });
 }
 
 function contextToText(context: CompanionContext): string {

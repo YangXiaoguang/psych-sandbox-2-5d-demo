@@ -1,6 +1,6 @@
 # 当前沙盘 Snapshot 输出规范（简版）
 
-版本：v1.4
+版本：v1.5
 适用对象：前端、LLM 调用层、后续后端 API
 代码实现：`src/llm/currentSandboxSnapshot.ts`
 API 契约：`POST /api/llm/current-sandbox-snapshot`
@@ -43,6 +43,23 @@ ApiResponseDto<CurrentSandboxSnapshotResponseDto>
 ```
 
 其中 `data.snapshot` 就是完整的 `CurrentSandboxSnapshot`。
+
+## LLM Prompt 注入约束
+
+所有发送给 LLM 的沙盘上下文都必须通过：
+
+```ts
+src/llm/sandboxPromptContext.ts
+```
+
+开发要求：
+
+| 要求 | 说明 |
+|---|---|
+| 统一入口 | AI 伙伴、Agent 对话等入口使用 `createSandboxSnapshotChatMessages` 组装 messages。 |
+| 禁止散落拼接 | 组件里不要直接手写 `CurrentSandboxSnapshot JSON` 或 `CurrentSandboxSnapshotPolicy JSON`。 |
+| 统一摘要 | 简短沙盘摘要使用 `buildCurrentSnapshotBrief`。 |
+| 统一边界 | “不包含事件流、个人身份、个人记忆、授权上下文、截图或 API Key”的规则只在上下文模块集中维护。 |
 
 ## 顶层字段
 

@@ -122,10 +122,11 @@ async function assertRuntimeSnapshot(runtime) {
 }
 
 async function assertStaticContractFiles() {
-  const [contracts, apiHelper, mockAdapter, structuredPanel, doc] = await Promise.all([
+  const [contracts, apiHelper, mockAdapter, promptContext, structuredPanel, doc] = await Promise.all([
     readProjectFile("src/api/contracts.ts"),
     readProjectFile("src/api/currentSandboxSnapshotApi.ts"),
     readProjectFile("src/api/mockApiAdapter.ts"),
+    readProjectFile("src/llm/sandboxPromptContext.ts"),
     readProjectFile("src/components/StructuredDataPanel.tsx"),
     readProjectFile("docs/sandbox-llm-data-output-spec.md"),
   ]);
@@ -147,12 +148,21 @@ async function assertStaticContractFiles() {
   assert("Mock adapter exposes createCurrentSandboxSnapshot", mockAdapter.includes("createCurrentSandboxSnapshot("));
   assert("Mock adapter includes sample response", mockAdapter.includes("sampleCurrentSandboxSnapshot"));
 
+  assert("Prompt context centralizes snapshot chat messages", promptContext.includes("createSandboxSnapshotChatMessages"));
+  assert("Prompt context includes allowed-context notice", promptContext.includes("当前只允许使用 CurrentSandboxSnapshot"));
+  assert("Prompt context serializes snapshot policy", promptContext.includes("CurrentSandboxSnapshotPolicy JSON"));
+  assert("Prompt context serializes current snapshot", promptContext.includes("CurrentSandboxSnapshot JSON"));
+  assert("Prompt context provides shared summary helper", promptContext.includes("buildCurrentSnapshotBrief"));
+
   assert("Structured data panel uses API payload helper", structuredPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("Structured data panel copies raw snapshot JSON", structuredPanel.includes("JSON.stringify(snapshot, null, 2)"));
   assert("AI companion uses API payload helper", aiCompanionPanel.includes("createCurrentSandboxSnapshotPayload"));
-  assert("AI companion includes snapshot policy in prompt", aiCompanionPanel.includes("CurrentSandboxSnapshotPolicy JSON"));
+  assert("AI companion uses centralized snapshot prompt context", aiCompanionPanel.includes("createSandboxSnapshotChatMessages"));
+  assert("AI companion does not inline snapshot policy prompt", !aiCompanionPanel.includes("CurrentSandboxSnapshotPolicy JSON"));
   assert("Agent chat uses API payload helper", agentChatView.includes("createCurrentSandboxSnapshotPayload"));
-  assert("Agent chat includes snapshot policy in prompt", agentChatView.includes("CurrentSandboxSnapshotPolicy JSON"));
+  assert("Agent chat uses centralized snapshot prompt context", agentChatView.includes("createSandboxSnapshotChatMessages"));
+  assert("Agent chat uses centralized snapshot brief", agentChatView.includes("buildCurrentSnapshotBrief"));
+  assert("Agent chat does not inline snapshot policy prompt", !agentChatView.includes("CurrentSandboxSnapshotPolicy JSON"));
 
   assert("Doc states only current status is output", doc.includes("当前沙盘这一刻的完整状态"));
   assert("Doc excludes event flow", doc.includes("事件流") && doc.includes("不包含新增、移动、删除等历史过程"));

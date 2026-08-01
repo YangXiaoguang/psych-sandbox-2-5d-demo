@@ -13,6 +13,11 @@ import type { CurrentSandboxSnapshotPolicyDto } from "../api/contracts";
 import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
+import {
+  buildCurrentSnapshotBrief,
+  createSandboxSnapshotChatMessages,
+  SANDBOX_DIALOGUE_SAFETY_NOTICE,
+} from "../llm/sandboxPromptContext";
 import { createId } from "../utils/id";
 import { AgentPortrait } from "./AgentPortrait";
 import { MarkdownText } from "./MarkdownText";
@@ -60,7 +65,7 @@ export function AgentChatView({
       }),
     [environment, objects],
   );
-  const sceneSummary = useMemo(() => buildSceneSnapshotSummary(sceneSnapshotPayload.snapshot), [sceneSnapshotPayload]);
+  const sceneSummary = useMemo(() => buildCurrentSnapshotBrief(sceneSnapshotPayload.snapshot), [sceneSnapshotPayload]);
 
   useEffect(() => {
     if (!activeAgent && enabledAgents[0]) {
@@ -381,23 +386,6 @@ export function AgentChatView({
   );
 }
 
-function buildSceneSnapshotSummary(snapshot: CurrentSandboxSnapshot): string {
-  const objectText =
-    snapshot.objects.length > 0
-      ? snapshot.objects
-          .slice(0, 8)
-          .map((object) => object.name)
-          .join("、")
-      : "当前沙盘为空";
-  const gridText =
-    snapshot.analysis.zoneCounts
-      .filter((cell) => cell.count > 0)
-      .slice(0, 5)
-      .map((cell) => `${cell.label}${cell.count}`)
-      .join("、") || "暂无明显区域分布";
-  return `沙具：${objectText}。区域：${gridText}。中心${snapshot.analysis.centerCount}个，边界${snapshot.analysis.boundaryCount}个。环境：${snapshot.environment.weatherLabel} · ${snapshot.environment.lightLabel}。`;
-}
-
 function buildAgentMessages(
   agent: PsychAgentProfile,
   history: AgentMessage[],
@@ -406,28 +394,27 @@ function buildAgentMessages(
   snapshotPolicy: CurrentSandboxSnapshotPolicyDto,
   sceneSummary: string,
 ): LlmChatMessage[] {
-  const system = [
-    agent.systemPrompt,
-    `当前沙盘摘要：${sceneSummary}`,
-    "当前只允许使用 CurrentSandboxSnapshot。不要假设事件流、个人记忆、用户身份或授权上下文存在。",
-    `CurrentSandboxSnapshotPolicy JSON:\n${JSON.stringify(snapshotPolicy, null, 2)}`,
-    `CurrentSandboxSnapshot JSON:\n${JSON.stringify(sceneSnapshot, null, 2)}`,
-    "重要边界：你是心理沙盘对话伙伴，不做诊断，不替代专业心理咨询或医疗建议。不要声称自己是真实历史人物本人，只能作为理论取向角色进行温和交流。",
-    "回答风格：中文，温暖、简洁、开放式提问优先。每次回复先回应用户，再提出一个可继续探索的问题。",
-  ].join("\n\n");
   const historyMessages: LlmChatMessage[] = history
     .filter((message) => message.text.trim())
-    .slice(-12)
     .map((message) => ({
       role: message.role,
       content: message.text,
     }));
 
-  return [
-    { role: "system", content: system },
-    ...historyMessages,
-    { role: "user", content: userInput },
-  ];
+  return createSandboxSnapshotChatMessages({
+    systemInstructions: [
+      agent.systemPrompt,
+      SANDBOX_DIALOGUE_SAFETY_NOTICE,
+      "不要声称自己是真实历史人物本人，只能作为理论取向角色进行温和交流。",
+      "回答风格：中文，温暖、简洁、开放式提问优先。每次回复先回应用户，再提出一个可继续探索的问题。",
+    ],
+    snapshot: sceneSnapshot,
+    policy: snapshotPolicy,
+    history: historyMessages,
+    historyLimit: 12,
+    summaryText: sceneSummary,
+    userInput,
+  });
 }
 
 function createAgentReply(
