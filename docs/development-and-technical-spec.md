@@ -868,6 +868,7 @@ type AdminAccessRole = "owner" | "admin" | "operator" | "viewer";
 - `src/platform/localRepositoryAdapter.ts`
 - `src/platform/apiRepositoryAdapter.ts`
 - `src/platform/repositoryAdapterRegistry.ts`
+- `scripts/qa-repository-adapters.mjs`
 
 模式：
 
@@ -900,6 +901,24 @@ type RepositoryMode = "localStorage" | "mockApi" | "remoteApi";
 - 远程 API 占位模式。
 - 已有 API Client 和诊断结构。
 - 等待真实后端实现。
+
+仓储模式质量门：
+
+```bash
+npm run qa:repository
+```
+
+输出：
+
+- `artifacts/repository-adapter-qa/repository-adapter-report.json`
+
+检查重点：
+
+- 三种 Repository 模式都可以生成架构报告。
+- 每份报告都覆盖身份、工作区、权限、沙盘、记忆、会话、资产和 LLM 迁移域。
+- `mockApi` 可生成 DTO 分页样例与当前沙盘 Snapshot 样例。
+- `remoteApi` 必须保持占位诊断：`transport=http`、`remoteReady=false`，避免误认为已经接入真实服务。
+- 报告不得包含明文 API Key 或密码字段。
 
 ### 12.3 API 契约
 

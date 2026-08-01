@@ -72,7 +72,27 @@ npm run qa:api-contract
 npm run api:contract
 ```
 
-### 2.5 固定视觉基线
+### 2.5 Repository Adapter 模式检查
+
+```bash
+npm run qa:repository
+```
+
+通过标准：
+
+- `localStorage`、`mockApi`、`remoteApi` 三种模式都能生成 `SystemArchitectureReport`。
+- 报告覆盖身份、工作区、权限、沙盘、记忆、会话、资产和 LLM 八个迁移域。
+- `mockApi` 模式必须能完成 DTO 分页与当前沙盘 Snapshot 样例 round trip。
+- `remoteApi` 仍必须明确标记为占位模式：`transport=http`，`remoteReady=false`，不得误报为已接入真实服务。
+- 报告不得暴露明文 API Key、密码或密钥字段。
+
+输出：
+
+```text
+artifacts/repository-adapter-qa/repository-adapter-report.json
+```
+
+### 2.6 固定视觉基线
 
 ```bash
 npm run qa:visual-baseline
@@ -86,7 +106,7 @@ npm run qa:visual-baseline
 - 每个固定场景无水平页面溢出，关键根节点可见。
 - 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
 
-### 2.6 视觉评审报告
+### 2.7 视觉评审报告
 
 ```bash
 npm run qa:visual-report
@@ -111,7 +131,7 @@ VISUAL_REVIEW_MANIFEST=artifacts/visual-regression/2026-08-01/manifest.json npm 
 2. 再运行 `npm run qa:visual-report` 生成评审报告。
 3. 打开 `visual-review.md`，按报告里的场景顺序检查 Stage v2 主视觉、雨夜可读性、背包抽屉、AI 抽屉和全局主题副作用。
 
-### 2.7 完整验收链路
+### 2.8 完整验收链路
 
 ```bash
 npm run qa:acceptance
@@ -122,10 +142,11 @@ npm run qa:acceptance
 1. `npm run build`
 2. `npm run qa:snapshot-contract`
 3. `npm run qa:api-contract`
-4. `npm run qa:stage-v2`
-5. `npm run qa:ui-shell`
-6. `npm run qa:visual-baseline`
-7. `npm run qa:visual-report`
+4. `npm run qa:repository`
+5. `npm run qa:stage-v2`
+6. `npm run qa:ui-shell`
+7. `npm run qa:visual-baseline`
+8. `npm run qa:visual-report`
 
 如果只是局部修改，可以先运行对应单项；但任何影响 Stage v2、LLM 数据输出、全局主题或主要导航的提交，都必须至少运行相关单项 QA。
 
