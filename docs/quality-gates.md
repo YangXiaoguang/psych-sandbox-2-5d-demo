@@ -1,7 +1,7 @@
 # Stage Engine v2 质量门
 
-文档版本：v1.0  
-更新日期：2026-07-18  
+文档版本：v1.1  
+更新日期：2026-08-01  
 适用范围：所有 Stage Engine v2 相关开发、视觉改动、交互改动、UI 主题改动
 
 ---
@@ -123,12 +123,14 @@ http://localhost:5174/
 | `sandbox-day-cloudy` | 沙盘编辑 / 阴天 / 白天 | 低对比光照检查 |
 | `sandbox-night-clear` | 沙盘编辑 / 晴天 / 黑夜 | 夜间 UI 可读性 |
 | `sandbox-night-rainy` | 沙盘编辑 / 雨天 / 黑夜 | 最困难可读性场景 |
+| `inventory-expanded` | 左侧沙具库展开 | 背包抽屉、缩略图、名称、标签不重叠 |
+| `right-panel-collapsed` | 右侧折叠 | 舞台宽度和操作可用 |
+| `sandbox-insight-drawer` | 作品洞察抽屉打开 | 右侧抽屉可读，不压住沙盘主体 |
 | `sandbox-fullscreen` | 全屏编辑 | 工具与浮层不遮挡 |
 | `sandbox-ai-drawer` | AI 伙伴打开 | 单一抽屉，不重复窗口 |
-| `inventory-expanded` | 左侧沙具库大图 | 缩略图、名称、标签不重叠 |
-| `right-panel-collapsed` | 右侧折叠 | 舞台宽度和操作可用 |
-| `admin-users` | 管理后台用户列表 | 表格/抽屉信息架构 |
 | `agent-chat` | Agent 对话 | 对话文字、输入框、头像 |
+| `personal-memory` | 个人中心 | 个人档案、记忆仪表盘、表单可读性 |
+| `admin-users` | 管理后台用户列表 | 表格/抽屉信息架构 |
 
 截图输出建议：
 
