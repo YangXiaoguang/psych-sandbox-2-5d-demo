@@ -1,7 +1,7 @@
 # Stage Engine v2 Scene Contracts
 
-Document version: v2.1 RC
-Updated: 2026-07-24
+Document version: v2.2 RC
+Updated: 2026-08-01
 Scope: Stage Engine v2 3D sandplay editor, classic fallback, shared data, interaction, export, and visual QA.
 
 ---
@@ -68,7 +68,11 @@ interface SandboxObject {
   scale: number;
   riskTag: RiskTag;
   symbolicCandidates: string[];
-  footprint?: SandboxFootprint;
+  anchor: ToyAssetAnchor;
+  footprint: ToyAssetFootprint;
+  thumbnailScale: number;
+  semanticTags: string[];
+  modelRecipe: ToyModelRecipe;
   createdAt: number;
 }
 ```
@@ -94,6 +98,13 @@ Object vertical -> Three Y
 
 After moving an object in 3D, Stage v2 must write the final 2D `x/y` back to React state.
 
+Current Stage v2 mapping constants live in `src/stage3d/utils/stageMapping.ts`:
+
+- `boardToStage()` maps product coordinates into Three.js X/Z.
+- `stageToBoard()` clamps object placement to the usable sand area.
+- `intersectSandPlane()` is the only supported pointer-to-sand-plane bridge for drop, drag, and camera-safe hit testing.
+- `getObjectStageScale()` derives visible model scale from the saved object `footprint` and `scale`.
+
 ### 4.3 Event Contract
 
 Every edit must continue to record a `SandboxEvent`.
@@ -104,10 +115,18 @@ Every edit must continue to record a `SandboxEvent`.
 | Move asset | include old and new position when available |
 | Rotate asset | include object name and new rotation |
 | Scale asset | include object name and new scale |
+| Duplicate asset | include object name, copied object id, and new position |
 | Delete asset | include object name |
 | Change weather/light | include weather and light mode |
 
 Event labels may be localized Chinese UI text, but they must remain searchable and understandable.
+
+Current selected-toolbelt labels are:
+
+- `快捷工具旋转沙具: <name>`
+- `快捷工具缩放沙具: <name>`
+- `复制沙具: <name>`
+- `删除沙具: <name>`
 
 ---
 
@@ -134,9 +153,9 @@ StageEngineV2Scene
 │   └── ToyObject3D[]
 ├── InteractionRoot
 │   ├── RaycastSandPlane
-│   ├── DragPreview
+│   ├── AssetDropBridge
 │   ├── SelectionIndicator
-│   └── TransformActionBridge
+│   └── ToolbeltTransformBridge
 ├── WeatherRoot
 │   ├── RainLayer
 │   ├── CloudLayer
@@ -146,6 +165,20 @@ StageEngineV2Scene
 ```
 
 Implementation file names may differ, but these responsibilities must be present.
+
+Current implementation map:
+
+| Logical layer | Current file |
+|---|---|
+| Stage shell and canvas bridge | `src/stage3d/components/StageEngineV2Shell.tsx` |
+| WebGL renderer and lighting | `src/stage3d/components/StageCanvas3D.tsx` |
+| Camera pan, zoom, rotate, reset | `src/stage3d/components/StageCameraControls.tsx` |
+| Object hit testing and drag write-back | `src/stage3d/components/StageObjectsLayer3D.tsx` |
+| Sand island, ocean, foam, shells, stones | `src/stage3d/components/SandTrayMesh.tsx` |
+| Weather overlays | `src/stage3d/components/StageWeatherSystem.tsx` |
+| Toy render wrapper | `src/stage3d/components/ToyObject3D.tsx` |
+| Toy model families | `src/stage3d/components/toys/*.tsx` |
+| Stage/product coordinate mapping | `src/stage3d/utils/stageMapping.ts` |
 
 ---
 
@@ -165,7 +198,7 @@ The stage must support:
 
 - Mouse wheel zoom.
 - Mouse drag pan for moving the sandbox view.
-- Controlled rotate action by UI button or modified gesture.
+- Right-mouse drag rotate for changing the viewing angle.
 - Reset camera button.
 
 Camera limits must prevent the sand island from being completely lost offscreen.
@@ -191,10 +224,18 @@ When an object is selected, users must be able to:
 - Move by direct mouse drag.
 - Rotate.
 - Scale.
+- Duplicate.
 - Delete.
 - Inspect properties.
 
 The first RC may use toolbar buttons and panel controls instead of a full 3D gizmo. However, the feature surface must remain equivalent to the classic editor.
+
+Current RC transform surface:
+
+- Direct 3D drag changes saved `x/y`.
+- Bottom `sandbox-game-toolbelt` exposes right/left rotate, shrink/grow, duplicate, and delete.
+- Right insight panel mirrors selected-object details and supports property-level edits.
+- Stage v2 must never hide the selected-object toolbelt behind weather UI, top HUD, or drawer overlays.
 
 ---
 
@@ -251,19 +292,26 @@ Each Stage v2 toy asset should be represented by a stable recipe:
 ```ts
 interface StageToyAssetSpec {
   assetId: string;
-  visualFamily: "person" | "animal" | "environment" | "nature" | "symbol";
-  materialFamily: "softPlastic" | "clay" | "paintedWood" | "ceramic" | "toyMetal" | "glassWater";
-  footprint: {
-    type: "ellipse" | "rect" | "wide" | "small";
-    width: number;
-    depth: number;
-  };
   anchor: {
     x: number;
-    z: number;
+    y: number;
+  };
+  footprint: {
+    kind: "compact" | "wide" | "tall" | "flat";
+    width: number;
+    depth: number;
+    height: number;
   };
   thumbnailScale: number;
   semanticTags: string[];
+  modelRecipe: ToyModelRecipe;
+  render: {
+    viewHeight: number;
+    targetWidth: number;
+    targetHeight: number;
+    yaw: number;
+    shadowOpacity: number;
+  };
 }
 ```
 
@@ -298,13 +346,33 @@ Stage v2 RC is not acceptable until all gates pass:
 - Stage v2 renders without a blank WebGL canvas.
 - Ocean animation has visible frame-to-frame movement.
 - Object drag updates position and records an event.
-- Camera pan, zoom, rotate, and reset are usable.
+- Selected-object toolbelt can rotate, scale, duplicate, and delete.
+- Camera pan, zoom, right-drag rotate, and reset are usable.
 - Weather and light switching updates scene appearance.
 - Night UI is readable.
 - PNG export downloads a valid image.
 - JSON export remains compatible.
 - Classic editor remains switchable.
 - Browser console has no uncaught errors during smoke QA.
+- `npm run qa:stage-v2` passes the current 29-gate smoke path.
+- `npm run qa:ui-shell` passes the cross-view UI and night contrast gates.
+- `npm run qa:visual-baseline` captures all fixed scenes.
+- `npm run qa:visual-report` reports all required scenes with no console, page, or request errors.
+
+Current fixed visual scenes:
+
+- `sandbox-day-sunny`
+- `sandbox-day-cloudy`
+- `sandbox-night-clear`
+- `sandbox-night-rainy`
+- `inventory-expanded`
+- `right-panel-collapsed`
+- `sandbox-insight-drawer`
+- `sandbox-fullscreen`
+- `sandbox-ai-drawer`
+- `agent-chat`
+- `personal-memory`
+- `admin-users`
 
 ---
 
@@ -313,6 +381,7 @@ Stage v2 RC is not acceptable until all gates pass:
 Future changes are not allowed to:
 
 - Remove existing object drag, rotate, scale, delete, JSON export, or PNG export.
+- Remove selected-object duplicate behavior or its event record.
 - Hide asset card names or risk tags.
 - Reintroduce duplicate AI companion panels.
 - Make weather layers intercept pointer events.

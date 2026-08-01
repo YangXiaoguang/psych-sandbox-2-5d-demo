@@ -1,7 +1,7 @@
 # Stage Engine v2 Release Candidate Plan
 
-Document version: v2.0 RC
-Updated: 2026-07-24
+Document version: v2.1 RC
+Updated: 2026-08-01
 Project: 2.5D psychological sandplay collaboration system
 
 ---
@@ -176,7 +176,7 @@ Deliverables:
 
 ### Phase RC-1: Contracts and Documentation
 
-Status: in progress.
+Status: complete.
 
 Deliverables:
 
@@ -188,6 +188,12 @@ Acceptance:
 
 - Docs no longer describe old wood-frame-only tray as the Stage v2 target.
 - Docs name current Stage v2 gates and rollback baseline.
+
+Evidence:
+
+- `docs/scene-contracts.md` now describes the borderless sand island, ocean, weather, mouse camera controls, selected-object toolbelt, AI companion drawer, toy module boundary, and export contracts.
+- The data contract mirrors the current `SandboxObject`, `ToyAssetSpec`, `ToyAssetFootprint`, `ToyModelRecipe`, and stage mapping APIs.
+- Regression rules now explicitly protect drag, rotate, scale, duplicate, delete, JSON export, PNG export, Classic fallback, and fullscreen AI single-panel behavior.
 
 ### Phase RC-2: Repeatable QA
 
@@ -291,7 +297,7 @@ Evidence:
 - `qa:ui-shell` includes smoke checks for Agent chat, Memory OS, and Admin navigation surfaces.
 - Classic fallback is verified by `qa:stage-v2` switching back from Stage v2 to `Classic 2.5D`.
 - Final RC acceptance requires `npm run build`, `npm run qa:ui-shell`, and `npm run qa:stage-v2` to pass on the accepted commit.
-- 2026-07-25 RC-5 local verification: `npm run build` passed, `npm run qa:ui-shell` passed 49/49 gates, and `npm run qa:stage-v2` passed 18/18 gates. Stage v2 QA artifacts are written to `artifacts/stage-v2-qa`.
+- 2026-08-01 local verification: `npm run build` passed, `npm run qa:ui-shell` passed 89/89 gates, and `npm run qa:stage-v2` passed 29/29 gates. Stage v2 QA artifacts are written to `artifacts/stage-v2-qa`.
 
 ---
 
