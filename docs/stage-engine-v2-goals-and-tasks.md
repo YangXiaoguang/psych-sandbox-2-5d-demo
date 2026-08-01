@@ -191,6 +191,8 @@ Acceptance:
 
 ### Phase RC-2: Repeatable QA
 
+Status: complete and expanded.
+
 Deliverables:
 
 - Add a script such as `scripts/qa-stage-v2.mjs`.
@@ -198,6 +200,8 @@ Deliverables:
 - The script should boot or connect to the local app, switch to Stage v2, and verify:
   - render readiness
   - object drag
+  - selected-object toolbelt actions
+  - rotate, scale, duplicate, and delete write-back
   - camera motion
   - water animation
   - weather/light switching
@@ -207,6 +211,12 @@ Deliverables:
 Acceptance:
 
 - One command produces a pass/fail result and useful diagnostic output.
+
+Evidence:
+
+- `npm run qa:stage-v2` now verifies the user path from backpack placement to Stage v2 object drag, then checks the selected-object toolbelt state.
+- The same command asserts that right rotation, scale-up, duplicate, and delete update the stored scene and write the expected event stream records.
+- Camera pan, right-drag rotation, wheel zoom, PNG export, JSON export, weather/light switching, and Classic 2.5D fallback remain in the same smoke path.
 
 ### Phase RC-3: Toy Model Boundary
 

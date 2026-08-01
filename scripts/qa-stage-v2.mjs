@@ -153,6 +153,14 @@ async function runStageV2Smoke() {
     dragResult.modeDetail ?? "drag HUD state not observed",
   );
 
+  markQaStep("selected toy transforms");
+  const transformResult = await tryTransformSelectedToy(page, dragResult.objectId);
+  pushResult("Stage v2 selected toy exposes transform toolbelt", transformResult.selectionActive, transformResult.selectionDetail);
+  pushResult("Stage v2 toolbelt rotates the selected toy", transformResult.rotationOk, transformResult.rotationDetail);
+  pushResult("Stage v2 toolbelt scales the selected toy", transformResult.scaleOk, transformResult.scaleDetail);
+  pushResult("Stage v2 toolbelt duplicates the selected toy", transformResult.duplicateOk, transformResult.duplicateDetail);
+  pushResult("Stage v2 toolbelt deletes the selected toy", transformResult.deleteOk, transformResult.deleteDetail);
+
   markQaStep("pan camera");
   const cameraResult = await tryMoveCamera(page, canvas);
   pushResult("Mouse can move the Stage v2 camera view", cameraResult.ok, cameraResult.detail);
@@ -311,11 +319,149 @@ async function tryDragObject(page, canvas) {
         detail: `${movement.name ?? movement.objectId}: ${movement.dx.toFixed(1)}, ${movement.dy.toFixed(1)}`,
         modeSeen,
         modeDetail,
+        objectId: movement.objectId,
+        objectName: movement.name ?? movement.objectId,
       };
     }
   }
 
-  return { ok: false, detail: "no persisted object movement detected after candidate drags", modeSeen, modeDetail };
+  return { ok: false, detail: "no persisted object movement detected after candidate drags", modeSeen, modeDetail, objectId: null };
+}
+
+async function tryTransformSelectedToy(page, targetObjectId) {
+  const emptyResult = {
+    selectionActive: false,
+    selectionDetail: "no dragged object id available",
+    rotationOk: false,
+    rotationDetail: "skipped",
+    scaleOk: false,
+    scaleDetail: "skipped",
+    duplicateOk: false,
+    duplicateDetail: "skipped",
+    deleteOk: false,
+    deleteDetail: "skipped",
+  };
+
+  if (!targetObjectId) {
+    return emptyResult;
+  }
+
+  const sceneBefore = await readScene(page);
+  const targetBefore = (sceneBefore.objects ?? []).find((object) => object.id === targetObjectId);
+  if (!targetBefore) {
+    return {
+      ...emptyResult,
+      selectionDetail: `target object missing from scene: ${targetObjectId}`,
+    };
+  }
+
+  const selectionStatus = await readToolbeltStatus(page);
+  const selectionActive =
+    /正在编辑/.test(selectionStatus.text) &&
+    (selectionStatus.text.includes(targetBefore.name ?? "") || /旋转\s+\d+°/.test(selectionStatus.text));
+
+  if (!selectionActive) {
+    return {
+      ...emptyResult,
+      selectionActive: false,
+      selectionDetail: selectionStatus.text || "selected toolbelt text missing",
+    };
+  }
+
+  await clickToolbeltButtonByMatcher(page, /向右旋转 .* 15 度|右转/);
+  await delay(220);
+  const sceneAfterRotate = await readScene(page);
+  const rotated = (sceneAfterRotate.objects ?? []).find((object) => object.id === targetObjectId);
+  const expectedRotation = normalizeQaRotation(Number(targetBefore.rotation ?? 0) + 15);
+  const rotationOk = Boolean(rotated) && Math.abs(normalizeQaRotation(Number(rotated.rotation ?? 0)) - expectedRotation) < 0.1;
+  const rotationEvent = findEvent(sceneAfterRotate, {
+    objectId: targetObjectId,
+    type: "property_change",
+    labelIncludes: "快捷工具旋转沙具",
+  });
+
+  await clickToolbeltButtonByMatcher(page, /放大 .+|放大/);
+  await delay(220);
+  const sceneAfterScale = await readScene(page);
+  const scaled = (sceneAfterScale.objects ?? []).find((object) => object.id === targetObjectId);
+  const previousScale = Number(rotated?.scale ?? targetBefore.scale ?? 1);
+  const expectedScale = Number(Math.min(2.4, previousScale + 0.1).toFixed(2));
+  const scaleOk = Boolean(scaled) && Math.abs(Number(scaled.scale ?? 1) - expectedScale) < 0.005;
+  const scaleEvent = findEvent(sceneAfterScale, {
+    objectId: targetObjectId,
+    type: "property_change",
+    labelIncludes: "快捷工具缩放沙具",
+  });
+
+  const idsBeforeDuplicate = new Set((sceneAfterScale.objects ?? []).map((object) => object.id));
+  await clickToolbeltButtonByMatcher(page, /复制 .+|复制/);
+  await delay(260);
+  const sceneAfterDuplicate = await readScene(page);
+  const duplicate = (sceneAfterDuplicate.objects ?? []).find((object) => !idsBeforeDuplicate.has(object.id));
+  const duplicateOk =
+    Boolean(duplicate) &&
+    duplicate?.assetId === targetBefore.assetId &&
+    Math.abs(Number(duplicate?.x ?? 0) - Number(scaled?.x ?? targetBefore.x ?? 0) - 34) <= 1.5;
+  const duplicateEvent = duplicate
+    ? findEvent(sceneAfterDuplicate, {
+        objectId: duplicate.id,
+        type: "add",
+        labelIncludes: "复制沙具",
+      })
+    : null;
+
+  if (!duplicate) {
+    return {
+      selectionActive,
+      selectionDetail: selectionStatus.text,
+      rotationOk: rotationOk && Boolean(rotationEvent),
+      rotationDetail: rotated
+        ? `${targetBefore.name}: ${Math.round(Number(targetBefore.rotation ?? 0))}° -> ${Math.round(Number(rotated.rotation ?? 0))}°`
+        : "target missing after rotate",
+      scaleOk: scaleOk && Boolean(scaleEvent),
+      scaleDetail: scaled
+        ? `${targetBefore.name}: ${previousScale.toFixed(2)}x -> ${Number(scaled.scale ?? 0).toFixed(2)}x`
+        : "target missing after scale",
+      duplicateOk: false,
+      duplicateDetail: "no duplicated object created",
+      deleteOk: false,
+      deleteDetail: "skipped because duplicate was not created",
+    };
+  }
+
+  await clickToolbeltButtonByMatcher(page, new RegExp(`删除\\s+${escapeRegExp(duplicate.name ?? targetBefore.name ?? "")}`));
+  await delay(260);
+  const sceneAfterDelete = await readScene(page);
+  const duplicateStillExists = (sceneAfterDelete.objects ?? []).some((object) => object.id === duplicate.id);
+  const originalStillExists = (sceneAfterDelete.objects ?? []).some((object) => object.id === targetObjectId);
+  const deleteEvent = findEvent(sceneAfterDelete, {
+    objectId: duplicate.id,
+    type: "delete",
+    labelIncludes: "删除沙具",
+  });
+
+  return {
+    selectionActive,
+    selectionDetail: selectionStatus.text,
+    rotationOk: rotationOk && Boolean(rotationEvent),
+    rotationDetail: rotated
+      ? `${targetBefore.name}: ${Math.round(Number(targetBefore.rotation ?? 0))}° -> ${Math.round(Number(rotated.rotation ?? 0))}°`
+      : "target missing after rotate",
+    scaleOk: scaleOk && Boolean(scaleEvent),
+    scaleDetail: scaled
+      ? `${targetBefore.name}: ${previousScale.toFixed(2)}x -> ${Number(scaled.scale ?? 0).toFixed(2)}x`
+      : "target missing after scale",
+    duplicateOk: duplicateOk && Boolean(duplicateEvent),
+    duplicateDetail: duplicate
+      ? `${duplicate.name ?? duplicate.assetId}: copied from ${targetBefore.name ?? targetBefore.assetId}`
+      : "no duplicated object created",
+    deleteOk: !duplicateStillExists && originalStillExists && Boolean(deleteEvent),
+    deleteDetail: duplicateStillExists
+      ? `${duplicate.name ?? duplicate.id} still exists`
+      : originalStillExists
+        ? `deleted duplicate ${duplicate.name ?? duplicate.id}; original remains`
+        : "original object was unexpectedly deleted",
+  };
 }
 
 async function tryMoveCamera(page, canvas) {
@@ -655,6 +801,68 @@ async function readStageInteraction(page) {
       text: hud?.textContent?.replace(/\s+/g, " ").trim() ?? "",
     };
   });
+}
+
+async function readToolbeltStatus(page) {
+  return page.evaluate(() => {
+    const toolbelt = document.querySelector(".sandbox-game-toolbelt");
+    return {
+      className: toolbelt?.className ?? "",
+      text: toolbelt?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+    };
+  });
+}
+
+async function clickToolbeltButtonByMatcher(page, matcher) {
+  const found = await page.evaluate(
+    ({ source, flags }) => {
+      const pattern = new RegExp(source, flags);
+      const toolbelt = document.querySelector(".sandbox-game-toolbelt");
+      if (!(toolbelt instanceof HTMLElement)) {
+        return false;
+      }
+
+      const buttons = Array.from(toolbelt.querySelectorAll("button"));
+      const button = buttons.find((element) => {
+        const label = element.getAttribute("aria-label") ?? "";
+        const title = element.getAttribute("title") ?? "";
+        const text = element.textContent ?? "";
+        return pattern.test(`${label} ${title} ${text}`);
+      });
+
+      if (!(button instanceof HTMLElement) || button.hasAttribute("disabled")) {
+        return false;
+      }
+
+      button.click();
+      return true;
+    },
+    { source: matcher.source, flags: matcher.flags },
+  );
+
+  if (!found) {
+    throw new Error(`Toolbelt button not found: ${matcher}`);
+  }
+
+  await delay(120);
+}
+
+function findEvent(scene, { objectId, type, labelIncludes }) {
+  return [...(scene.events ?? [])].reverse().find((event) => {
+    return (
+      event.objectId === objectId &&
+      event.type === type &&
+      (labelIncludes ? String(event.label ?? "").includes(labelIncludes) : true)
+    );
+  });
+}
+
+function normalizeQaRotation(rotation) {
+  return ((rotation % 360) + 360) % 360;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function waitForShellEnvironment(page, { weather, light, nightMode }) {
