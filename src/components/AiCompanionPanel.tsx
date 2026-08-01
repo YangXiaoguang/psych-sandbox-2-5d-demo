@@ -1,7 +1,6 @@
 import { HeartHandshake, Send, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
-import type { CurrentSandboxSnapshotPolicyDto } from "../api/contracts";
 import type { LlmProviderConfig, SandboxEnvironment, SandboxObject } from "../types";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
@@ -38,7 +37,6 @@ interface CompanionContext {
   chips: string[];
   activeCells: string[];
   snapshot: CurrentSandboxSnapshot;
-  snapshotPolicy: CurrentSandboxSnapshotPolicyDto;
   selectedName: string | null;
   objectNames: string[];
   centerObjectNames: string[];
@@ -334,7 +332,7 @@ function buildContextSummary({
   environment: SandboxEnvironment;
   generatedAt: string;
 }): CompanionContext {
-  const { snapshot, policy } = createCurrentSandboxSnapshotPayload({
+  const { snapshot } = createCurrentSandboxSnapshotPayload({
     objects,
     environment,
     selectedObjectId: selectedObject?.id ?? null,
@@ -358,7 +356,6 @@ function buildContextSummary({
     chips,
     activeCells,
     snapshot,
-    snapshotPolicy: policy,
     objectNames,
     selectedName: selectedObject?.name ?? null,
     centerObjectNames,
@@ -383,7 +380,6 @@ function buildCompanionMessages(
       SANDBOX_DIALOGUE_SAFETY_NOTICE,
     ],
     snapshot: context.snapshot,
-    policy: context.snapshotPolicy,
     history: historyMessages,
     historyLimit: 8,
     userInput: prompt,

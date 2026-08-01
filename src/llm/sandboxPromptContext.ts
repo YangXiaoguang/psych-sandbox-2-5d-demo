@@ -1,4 +1,3 @@
-import type { CurrentSandboxSnapshotPolicyDto } from "../api/contracts";
 import type { CurrentSandboxSnapshot } from "./currentSandboxSnapshot";
 import type { LlmChatMessage } from "./streamText";
 
@@ -11,7 +10,6 @@ export const SANDBOX_DIALOGUE_SAFETY_NOTICE =
 interface SandboxSnapshotChatMessageInput {
   systemInstructions: string[];
   snapshot: CurrentSandboxSnapshot;
-  policy: CurrentSandboxSnapshotPolicyDto;
   userInput: string;
   history?: LlmChatMessage[];
   historyLimit?: number;
@@ -22,7 +20,6 @@ interface SandboxSnapshotChatMessageInput {
 export function createSandboxSnapshotChatMessages({
   systemInstructions,
   snapshot,
-  policy,
   userInput,
   history = [],
   historyLimit = 10,
@@ -31,7 +28,7 @@ export function createSandboxSnapshotChatMessages({
 }: SandboxSnapshotChatMessageInput): LlmChatMessage[] {
   const system = [
     ...systemInstructions.map((line) => line.trim()).filter(Boolean),
-    buildCurrentSnapshotPromptBlock({ snapshot, policy, summaryText, extraRules }),
+    buildCurrentSnapshotPromptBlock({ snapshot, summaryText, extraRules }),
   ].join("\n\n");
 
   return [
@@ -43,19 +40,16 @@ export function createSandboxSnapshotChatMessages({
 
 export function buildCurrentSnapshotPromptBlock({
   snapshot,
-  policy,
   summaryText,
   extraRules = [],
 }: {
   snapshot: CurrentSandboxSnapshot;
-  policy: CurrentSandboxSnapshotPolicyDto;
   summaryText?: string;
   extraRules?: string[];
 }): string {
   return [
     CURRENT_SNAPSHOT_ALLOWED_CONTEXT_NOTICE,
     summaryText ? `当前沙盘摘要：${summaryText}` : null,
-    `CurrentSandboxSnapshotPolicy JSON:\n${JSON.stringify(policy, null, 2)}`,
     `CurrentSandboxSnapshot JSON:\n${JSON.stringify(snapshot, null, 2)}`,
     ...extraRules.map((rule) => rule.trim()).filter(Boolean),
   ]

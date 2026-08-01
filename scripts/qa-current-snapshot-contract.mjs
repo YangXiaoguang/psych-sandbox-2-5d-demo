@@ -150,7 +150,7 @@ async function assertStaticContractFiles() {
 
   assert("Prompt context centralizes snapshot chat messages", promptContext.includes("createSandboxSnapshotChatMessages"));
   assert("Prompt context includes allowed-context notice", promptContext.includes("当前只允许使用 CurrentSandboxSnapshot"));
-  assert("Prompt context serializes snapshot policy", promptContext.includes("CurrentSandboxSnapshotPolicy JSON"));
+  assert("Prompt context does not serialize snapshot policy", !promptContext.includes("CurrentSandboxSnapshotPolicy JSON"));
   assert("Prompt context serializes current snapshot", promptContext.includes("CurrentSandboxSnapshot JSON"));
   assert("Prompt context provides shared summary helper", promptContext.includes("buildCurrentSnapshotBrief"));
 

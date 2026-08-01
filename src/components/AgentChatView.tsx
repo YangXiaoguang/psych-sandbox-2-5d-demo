@@ -9,7 +9,6 @@ import type {
   SandboxObject,
 } from "../types";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
-import type { CurrentSandboxSnapshotPolicyDto } from "../api/contracts";
 import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
@@ -157,7 +156,6 @@ export function AgentChatView({
       conversation.messages,
       text,
       sceneSnapshotPayload.snapshot,
-      sceneSnapshotPayload.policy,
       sceneSummary,
     );
 
@@ -391,7 +389,6 @@ function buildAgentMessages(
   history: AgentMessage[],
   userInput: string,
   sceneSnapshot: CurrentSandboxSnapshot,
-  snapshotPolicy: CurrentSandboxSnapshotPolicyDto,
   sceneSummary: string,
 ): LlmChatMessage[] {
   const historyMessages: LlmChatMessage[] = history
@@ -409,7 +406,6 @@ function buildAgentMessages(
       "回答风格：中文，温暖、简洁、开放式提问优先。每次回复先回应用户，再提出一个可继续探索的问题。",
     ],
     snapshot: sceneSnapshot,
-    policy: snapshotPolicy,
     history: historyMessages,
     historyLimit: 12,
     summaryText: sceneSummary,
