@@ -318,6 +318,24 @@ npm run qa:visual-baseline
 - 该脚本会分别检查大图模式与紧凑模式，确保完整露出的卡片名称可读、名称牌稳定、风险标签不压住名称、预览区不挤压到底部标签区。
 - QA 只对名称牌完整进入抽屉可视区的卡片做遮挡断言，避免把滚动区域底部半露出的下一行卡片误判为真实遮挡。
 
+### 5.2.1 Toy Sprite 渲染快照
+
+默认沙具必须验证：
+
+- 每个内置资产都有 `ToyAssetSpec`。
+- 默认资产不能落到 `fallback` recipe。
+- `anchor`、`footprint`、`thumbnailScale`、语义标签和象征候选完整。
+- Three.js 离屏 sprite 能在浏览器中真实渲染为非空透明 PNG。
+- 透明裁剪不能切掉主体边缘。
+- 主体像素范围、锚点和构图中心保持合理。
+- 19 个内置 sprite 具有足够差异，避免多个资产误渲染成同一个模型。
+
+当前自动化覆盖：
+
+- `npm run qa:toy-assets` 会构建一个临时浏览器 harness，调用真实 `renderToyAssetSprite` 渲染全部内置沙具。
+- 该脚本会输出 `artifacts/toy-asset-render-qa/toy-asset-render-report.json` 和每个沙具的 PNG 快照。
+- 默认输出只显示摘要和失败项；需要完整 gate 日志时可运行 `TOY_ASSET_QA_VERBOSE=1 npm run qa:toy-assets`。
+
 ### 5.3 导出
 
 必须验证：

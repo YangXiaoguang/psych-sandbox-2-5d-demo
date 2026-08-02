@@ -1320,6 +1320,12 @@ server {
 - 整理沙盘视觉 pass，减少重复覆盖。
 - 给 ToyAssetRenderer 增加模型快照检查。
 
+当前进展：
+
+- `npm run qa:toy-assets` 已作为 Phase A 稳定化质量门接入 `qa:acceptance`。
+- 该命令在临时浏览器 harness 中调用真实 `renderToyAssetSprite`，渲染全部 19 个内置沙具，检查非空透明 PNG、透明裁剪、锚点、主体像素范围、recipe 多样性、语义字段和默认资产不落入 fallback。
+- QA 产物输出到 `artifacts/toy-asset-render-qa/`，包含每个内置沙具的 PNG 快照和 `toy-asset-render-report.json`。
+
 ### Phase B：真实后端接入
 
 - 实现 API 契约 P0 端点。

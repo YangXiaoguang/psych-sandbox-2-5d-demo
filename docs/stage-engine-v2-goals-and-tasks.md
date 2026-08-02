@@ -300,6 +300,7 @@ Evidence:
 - 2026-08-01 local verification: `npm run build` passed, `npm run qa:ui-shell` passed 89/89 gates, and `npm run qa:stage-v2` passed 29/29 gates. Stage v2 QA artifacts are written to `artifacts/stage-v2-qa`.
 - 2026-08-01 visual verification: `npm run qa:visual-baseline && npm run qa:visual-report` captured all 12 required scenes with 0 console errors, 0 page errors, 0 request failures, and `Gate result: PASS`. The review index is `artifacts/visual-regression/2026-08-01/visual-review.md`.
 - 2026-08-02 backpack QA hardening: `npm run build` passed and `npm run qa:ui-shell` passed 91/91 gates after adding large/compact backpack label-plate checks. The current pushed commit is `36db39d test: harden backpack readability qa`.
+- 2026-08-02 toy render QA hardening: `npm run qa:toy-assets` renders all 19 built-in Three.js toy sprites in a browser harness and verifies non-empty PNG output, transparent crop bounds, anchors, semantic fields, recipe diversity, and no default fallback recipes.
 
 ---
 
