@@ -147,11 +147,11 @@ psych-sandbox-2-5d-demo/
 │   ├── personal/               # 个人记忆 OS、沙盘档案、Context Packet
 │   ├── platform/               # Repository Adapter 抽象和本地/API 模式切换
 │   ├── rendering/              # Three.js 程序化玩具沙具 sprite 渲染
-│   ├── styles/                 # 设计 token、基础 reset、应用外壳等分层样式
+│   ├── styles/                 # 设计 token、基础 reset、应用外壳、沙具库和沙盘编辑器分层样式
 │   ├── utils/                  # 分析、下载、事件、ID、对象工厂、投影、存储
 │   ├── App.tsx                 # 顶层应用编排
 │   ├── main.tsx                # React 入口
-│   ├── styles.css              # 仍待继续拆分的主要产品界面样式
+│   ├── styles.css              # 仍待继续拆分的产品界面补充样式
 │   └── types.ts                # 跨模块核心类型
 ├── docs/
 │   └── development-and-technical-spec.md
@@ -1082,7 +1082,7 @@ interface ApiPagePayloadDto<T> {
 
 ## 14. 样式与视觉系统
 
-全局样式文件：`src/styles.css`
+全局样式入口已从单一 `src/styles.css` 分阶段拆为多个文件。
 
 样式入口：
 
@@ -1090,7 +1090,8 @@ interface ApiPagePayloadDto<T> {
 - `src/styles/base.css`：全局 `box-sizing`、`body` 和表单控件基础 reset。
 - `src/styles/app-shell.css`：应用外壳、顶部导航、认证入口等全局框架样式。
 - `src/styles/asset-library.css`：沙具库背包、搜索筛选、分类货架、沙具卡片与风险标签基础样式。
-- `src/styles.css`：当前仍承载主要产品界面样式。
+- `src/styles/sandbox-editor.css`：中央工作区、沙盘工具条、Classic 2.5D 舞台和全屏/focus 基础样式。
+- `src/styles.css`：当前仍承载右侧面板、Agent、个人中心、管理后台、Stage v2 polish 等补充样式。
 
 入口导入顺序必须保持为：
 
@@ -1099,6 +1100,7 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/app-shell.css";
 import "./styles/asset-library.css";
+import "./styles/sandbox-editor.css";
 import "./styles.css";
 ```
 
@@ -1124,8 +1126,7 @@ import "./styles.css";
 
 建议后续重构：
 
-- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css`、`asset-library.css` 第一阶段拆分；后续应继续拆为：
-  - `styles/sandbox-editor.css`
+- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css`、`asset-library.css`、`sandbox-editor.css` 第一阶段拆分；后续应继续拆为：
   - `styles/right-panel.css`
   - `styles/agent-chat.css`
   - `styles/admin.css`
@@ -1392,7 +1393,8 @@ server {
 | 基础 reset | `src/styles/base.css` |
 | 应用外壳样式 | `src/styles/app-shell.css` |
 | 沙具库基础样式 | `src/styles/asset-library.css` |
-| 主要产品样式 | `src/styles.css` |
+| 沙盘编辑器基础样式 | `src/styles/sandbox-editor.css` |
+| 产品补充样式 | `src/styles.css` |
 
 ---
 

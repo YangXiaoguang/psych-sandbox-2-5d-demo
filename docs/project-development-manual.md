@@ -131,10 +131,10 @@ psych-sandbox-2-5d-demo/
 │   ├── platform/               # Repository Adapter 抽象与模式切换
 │   ├── rendering/              # Three.js 离屏生成 3D 玩具化沙具 sprite
 │   ├── utils/                  # 分析、下载、事件、ID、对象工厂、投影、存储
-│   ├── styles/                 # 分阶段拆出的 CSS token、基础 reset、应用外壳和沙具库样式
+│   ├── styles/                 # 分阶段拆出的 CSS token、基础 reset、应用外壳、沙具库和沙盘编辑器样式
 │   ├── App.tsx                 # 顶层应用状态和视图编排
 │   ├── main.tsx                # React 入口
-│   ├── styles.css              # 仍待继续拆分的主要产品界面样式
+│   ├── styles.css              # 仍待继续拆分的产品界面补充样式
 │   └── types.ts                # 跨模块核心类型
 ├── docs/
 │   ├── project-development-manual.md
@@ -836,10 +836,11 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/app-shell.css";
 import "./styles/asset-library.css";
+import "./styles/sandbox-editor.css";
 import "./styles.css";
 ```
 
-其中 `tokens.css` 保存颜色、字号、圆角和阴影等设计 token，`base.css` 保存全局 reset，`app-shell.css` 保存应用外壳、顶部导航和认证入口样式，`asset-library.css` 保存沙具库背包、筛选、分类货架、沙具卡片与风险标签基础样式，`styles.css` 仍承载主要产品界面样式。当前体量仍较大，后续建议继续拆分为：
+其中 `tokens.css` 保存颜色、字号、圆角和阴影等设计 token，`base.css` 保存全局 reset，`app-shell.css` 保存应用外壳、顶部导航和认证入口样式，`asset-library.css` 保存沙具库背包、筛选、分类货架、沙具卡片与风险标签基础样式，`sandbox-editor.css` 保存中央工作区、沙盘工具条、Classic 2.5D 舞台和全屏/focus 基础样式，`styles.css` 仍承载右侧面板、Agent、个人中心、管理后台、Stage v2 polish 等补充样式。当前体量仍较大，后续建议继续拆分为：
 
 ```text
 src/styles/
@@ -1165,7 +1166,7 @@ chore: checkpoint ...
 
 短期：
 
-- 继续将 `src/styles.css` 按沙盘编辑器、沙具库、右侧面板、Agent 和管理后台拆分。
+- 继续将 `src/styles.css` 按右侧面板、Agent、个人中心和管理后台拆分。
 - 为沙盘核心交互补 Playwright 回归。
 - 继续提升沙具 sprite 质量和沙面接触细节。
 - 修复所有夜间模式可读性死角。
