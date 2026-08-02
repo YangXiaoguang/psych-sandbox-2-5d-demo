@@ -44,6 +44,7 @@ import {
   createCurrentSandboxSnapshotPayload,
   createCurrentSandboxSnapshotResponse,
 } from "../../src/api/currentSandboxSnapshotApi";
+import { buildCurrentSandboxInsight, CURRENT_SANDBOX_INSIGHT_SCHEMA } from "../../src/llm/currentSandboxInsight";
 import { CURRENT_SANDBOX_SNAPSHOT_SCHEMA } from "../../src/llm/currentSandboxSnapshot";
 
 const sampleObject = {
@@ -75,19 +76,24 @@ const request = {
   snapshotId: "snapshot_contract_qa",
 };
 
+const payload = createCurrentSandboxSnapshotPayload(request);
+
 export default {
   schema: CURRENT_SANDBOX_SNAPSHOT_SCHEMA,
-  payload: createCurrentSandboxSnapshotPayload(request),
+  insightSchema: CURRENT_SANDBOX_INSIGHT_SCHEMA,
+  payload,
   response: createCurrentSandboxSnapshotResponse(request),
+  insight: buildCurrentSandboxInsight(payload.snapshot),
 };
 `;
 }
 
 async function assertRuntimeSnapshot(runtime) {
-  const { payload, response, schema } = runtime;
+  const { payload, response, schema, insightSchema, insight } = runtime;
   assert("Runtime exports payload", Boolean(payload));
   assert("Runtime exports response", Boolean(response));
   assert("Schema constant remains stable", schema === "sandbox.current-snapshot.v1", schema);
+  assert("Insight schema constant remains stable", insightSchema === "sandbox.current-insight.v1", insightSchema);
 
   assert("Response is successful", response.ok === true, JSON.stringify(response));
   assert("Response requestId is generated", typeof response.requestId === "string" && response.requestId.startsWith("req_"), response.requestId);
@@ -119,16 +125,33 @@ async function assertRuntimeSnapshot(runtime) {
   const snapshotKeys = collectKeys(snapshot);
   const leakedKeys = forbiddenKeys.filter((key) => snapshotKeys.has(key));
   assert("Snapshot contains no forbidden context keys", leakedKeys.length === 0, leakedKeys.join(", "));
+
+  assert("Runtime exports derived insight", Boolean(insight));
+  assert("Insight uses current schema", insight.schemaVersion === "sandbox.current-insight.v1", insight.schemaVersion);
+  assert("Insight links to source snapshot", insight.sourceSnapshotId === snapshot.snapshotId, insight.sourceSnapshotId);
+  assert("Insight excludes event flow", insight.guardrails.includesEvents === false);
+  assert("Insight excludes personal memory", insight.guardrails.includesPersonalMemory === false);
+  assert("Insight excludes identity", insight.guardrails.includesIdentity === false);
+  assert("Insight excludes images", insight.guardrails.includesImage === false);
+  assert("Insight produces observation material", Array.isArray(insight.observations) && insight.observations.length >= 3);
+  assert("Insight produces suggested questions", Array.isArray(insight.suggestedQuestions) && insight.suggestedQuestions.length > 0);
+  assert("Insight brief keeps non-diagnostic notice", insight.brief.includes("不构成诊断"), insight.brief);
+
+  const insightKeys = collectKeys(insight);
+  const leakedInsightKeys = forbiddenKeys.filter((key) => insightKeys.has(key));
+  assert("Insight contains no forbidden context keys", leakedInsightKeys.length === 0, leakedInsightKeys.join(", "));
 }
 
 async function assertStaticContractFiles() {
-  const [contracts, apiHelper, mockAdapter, promptContext, structuredPanel, doc] = await Promise.all([
+  const [contracts, apiHelper, mockAdapter, promptContext, insightFile, structuredPanel, doc, analysisDoc] = await Promise.all([
     readProjectFile("src/api/contracts.ts"),
     readProjectFile("src/api/currentSandboxSnapshotApi.ts"),
     readProjectFile("src/api/mockApiAdapter.ts"),
     readProjectFile("src/llm/sandboxPromptContext.ts"),
+    readProjectFile("src/llm/currentSandboxInsight.ts"),
     readProjectFile("src/components/StructuredDataPanel.tsx"),
     readProjectFile("docs/sandbox-llm-data-output-spec.md"),
+    readProjectFile("docs/ai-analysis-layer-design.md"),
   ]);
   const [aiCompanionPanel, agentChatView] = await Promise.all([
     readProjectFile("src/components/AiCompanionPanel.tsx"),
@@ -152,7 +175,12 @@ async function assertStaticContractFiles() {
   assert("Prompt context includes allowed-context notice", promptContext.includes("当前只允许使用 CurrentSandboxSnapshot"));
   assert("Prompt context does not serialize snapshot policy", !promptContext.includes("CurrentSandboxSnapshotPolicy JSON"));
   assert("Prompt context serializes current snapshot", promptContext.includes("CurrentSandboxSnapshot JSON"));
+  assert("Prompt context serializes derived insight", promptContext.includes("CurrentSandboxInsight JSON"));
   assert("Prompt context provides shared summary helper", promptContext.includes("buildCurrentSnapshotBrief"));
+
+  assert("Insight module declares schema", insightFile.includes("CURRENT_SANDBOX_INSIGHT_SCHEMA"));
+  assert("Insight module exposes deterministic builder", insightFile.includes("buildCurrentSandboxInsight"));
+  assert("Insight module documents no-diagnosis guardrail", insightFile.includes("不能作为诊断结论"));
 
   assert("Structured data panel uses API payload helper", structuredPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("Structured data panel copies raw snapshot JSON", structuredPanel.includes("JSON.stringify(snapshot, null, 2)"));
@@ -169,6 +197,8 @@ async function assertStaticContractFiles() {
   assert("Doc excludes personal memory", doc.includes("个人记忆") && doc.includes("不包含长期记忆"));
   assert("Doc excludes authorization context", doc.includes("授权上下文"));
   assert("Doc excludes images", doc.includes("图片截图"));
+  assert("Analysis layer doc describes Snapshot to Insight pipeline", analysisDoc.includes("CurrentSandboxSnapshot") && analysisDoc.includes("CurrentSandboxInsight"));
+  assert("Analysis layer doc rejects screenshot-first analysis", analysisDoc.includes("不应优先做") && analysisDoc.includes("看截图再分析"));
   await assertNoBypassedSnapshotBuilderImports();
 }
 

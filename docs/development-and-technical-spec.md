@@ -590,7 +590,27 @@ interface SandboxAnalysis {
 - 边界区域对象。
 - 深度排序结果。
 
-### 7.2 事件类型
+### 7.2 AI 派生洞察
+
+文件：`src/llm/currentSandboxInsight.ts`
+
+`CurrentSandboxInsight` 只从 `CurrentSandboxSnapshot` 派生，不读取事件流、个人记忆、用户身份或截图。它用于把当前沙盘状态整理成 LLM 更容易使用的观察材料。
+
+输出维度：
+
+- 环境观察。
+- 区域密度与空白区域。
+- 中心和边界摆放线索。
+- 邻近或同区域对象关系。
+- 主题候选和开放式问题。
+
+约束：
+
+- 洞察是观察材料，不是心理诊断。
+- 象征候选只能用于提问，不得作为固定解释。
+- LLM Prompt 必须同时保留原始 `CurrentSandboxSnapshot`，避免只依赖摘要。
+
+### 7.3 事件类型
 
 `SandboxEventType`：
 

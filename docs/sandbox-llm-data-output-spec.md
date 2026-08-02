@@ -1,6 +1,6 @@
 # 当前沙盘 Snapshot 输出规范
 
-版本：v1.7
+版本：v1.8
 适用对象：前端开发、LLM 调用层、后续后端接口
 
 ## 目标
@@ -27,6 +27,14 @@ LLM Prompt 入口：
 ```ts
 src/llm/sandboxPromptContext.ts -> createSandboxSnapshotChatMessages
 ```
+
+可选派生洞察：
+
+```ts
+src/llm/currentSandboxInsight.ts -> buildCurrentSandboxInsight
+```
+
+`CurrentSandboxInsight` 只由 `CurrentSandboxSnapshot` 派生，用来给 LLM 提供空间观察、对象关系、主题候选和开放问题。它不额外读取事件流、个人记忆、用户身份或截图。
 
 验证命令：
 
@@ -234,7 +242,7 @@ CurrentSandboxSnapshot
 
 ## LLM 使用提醒
 
-传给 LLM 时只传 `CurrentSandboxSnapshot`，并附加这段固定规则：
+传给 LLM 时只传 `CurrentSandboxSnapshot`，以及由它确定性生成的 `CurrentSandboxInsight`，并附加这段固定规则：
 
 ```text
 请只基于当前沙盘状态进行温和、开放式回应。

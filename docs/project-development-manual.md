@@ -470,7 +470,20 @@ interface ManagedAsset extends SandboxAsset {
 
 这些分析只用于结构化观察，不代表心理诊断。
 
-### 8.2 事件流
+### 8.2 AI 派生洞察
+
+`src/llm/currentSandboxInsight.ts` 会基于当前 `CurrentSandboxSnapshot` 生成 `CurrentSandboxInsight`。
+
+它负责输出：
+
+- 空间观察：主要聚集区、空白区、中心/边界摆放。
+- 关系观察：距离较近、同一区域、相对独立的沙具。
+- 主题候选：来自沙具语义标签和象征候选词。
+- 开放问题：给 Agent 追问使用，而不是直接下结论。
+
+它不能读取事件流、个人记忆、用户身份或截图。任何 AI 回复都必须把这些内容当作“观察材料”，不能当作诊断证据。
+
+### 8.3 事件流
 
 事件类型：
 
