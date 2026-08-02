@@ -1089,6 +1089,7 @@ interface ApiPagePayloadDto<T> {
 - `src/styles/tokens.css`：全局颜色、字号、圆角、阴影等设计 token。
 - `src/styles/base.css`：全局 `box-sizing`、`body` 和表单控件基础 reset。
 - `src/styles/app-shell.css`：应用外壳、顶部导航、认证入口等全局框架样式。
+- `src/styles/asset-library.css`：沙具库背包、搜索筛选、分类货架、沙具卡片与风险标签基础样式。
 - `src/styles.css`：当前仍承载主要产品界面样式。
 
 入口导入顺序必须保持为：
@@ -1097,6 +1098,7 @@ interface ApiPagePayloadDto<T> {
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/app-shell.css";
+import "./styles/asset-library.css";
 import "./styles.css";
 ```
 
@@ -1122,9 +1124,8 @@ import "./styles.css";
 
 建议后续重构：
 
-- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css` 第一阶段拆分；后续应继续拆为：
+- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css`、`asset-library.css` 第一阶段拆分；后续应继续拆为：
   - `styles/sandbox-editor.css`
-  - `styles/asset-library.css`
   - `styles/right-panel.css`
   - `styles/agent-chat.css`
   - `styles/admin.css`
@@ -1390,6 +1391,7 @@ server {
 | 样式 token | `src/styles/tokens.css` |
 | 基础 reset | `src/styles/base.css` |
 | 应用外壳样式 | `src/styles/app-shell.css` |
+| 沙具库基础样式 | `src/styles/asset-library.css` |
 | 主要产品样式 | `src/styles.css` |
 
 ---
