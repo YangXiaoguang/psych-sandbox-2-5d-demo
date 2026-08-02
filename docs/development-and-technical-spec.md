@@ -928,6 +928,7 @@ npm run qa:repository
 - `src/api/client.ts`
 - `src/api/mockApiAdapter.ts`
 - `scripts/export-api-contract.mjs`
+- `scripts/qa-api-client.mjs`
 - `scripts/qa-mock-api-behavior.mjs`
 
 契约版本：
@@ -955,6 +956,12 @@ npm run api:contract
 - `artifacts/` 为本地生成物，不提交到 Git；需要交接时由开发人员重新运行命令生成。
 
 行为质量门：
+
+```bash
+npm run qa:api-client
+```
+
+该命令直接验证 `createApiClient` 的 HTTP 边界：Base URL 与路径拼接、查询参数编码、认证上下文 headers、契约版本 header、JSON body、标准 `ApiResponseDto`、非标准 HTTP 错误映射、网络失败和超时归一化。
 
 ```bash
 npm run qa:mock-api

@@ -72,7 +72,28 @@ npm run qa:api-contract
 npm run api:contract
 ```
 
-### 2.5 Mock API 行为检查
+### 2.5 API Client 行为检查
+
+```bash
+npm run qa:api-client
+```
+
+通过标准：
+
+- HTTP Client 正确拼接 Base URL、路径、普通查询参数、字段筛选参数和数组参数。
+- 请求必须携带 `X-Api-Contract-Version`、`X-Request-ID`，并在有认证上下文时携带 actor、active user、role、workspace scope。
+- POST/PATCH 等带 body 请求必须设置 `Content-Type: application/json` 并序列化 JSON body。
+- 服务端标准 `ApiResponseDto` 错误必须抛出 `ApiClientError`，并保留 status、code、requestId。
+- 非标准 HTTP 错误必须映射到统一错误码；网络失败和超时必须分别归一化为 `INTERNAL_ERROR` 与 `REQUEST_TIMEOUT`。
+- API Client 不能依赖浏览器专属 `window` 对象，确保 Node QA 和后续 SSR/测试环境也可验证。
+
+输出：
+
+```text
+artifacts/api-client-qa/api-client-report.json
+```
+
+### 2.6 Mock API 行为检查
 
 ```bash
 npm run qa:mock-api
@@ -92,7 +113,7 @@ npm run qa:mock-api
 artifacts/mock-api-behavior-qa/mock-api-behavior-report.json
 ```
 
-### 2.6 Repository Adapter 模式检查
+### 2.7 Repository Adapter 模式检查
 
 ```bash
 npm run qa:repository
@@ -112,7 +133,7 @@ npm run qa:repository
 artifacts/repository-adapter-qa/repository-adapter-report.json
 ```
 
-### 2.7 固定视觉基线
+### 2.8 固定视觉基线
 
 ```bash
 npm run qa:visual-baseline
@@ -126,7 +147,7 @@ npm run qa:visual-baseline
 - 每个固定场景无水平页面溢出，关键根节点可见。
 - 输出目录默认为 `artifacts/visual-regression/YYYY-MM-DD/`，该目录不提交到 Git，只作为本地设计评审、截图对比和回归证据。
 
-### 2.8 视觉评审报告
+### 2.9 视觉评审报告
 
 ```bash
 npm run qa:visual-report
@@ -151,7 +172,7 @@ VISUAL_REVIEW_MANIFEST=artifacts/visual-regression/2026-08-01/manifest.json npm 
 2. 再运行 `npm run qa:visual-report` 生成评审报告。
 3. 打开 `visual-review.md`，按报告里的场景顺序检查 Stage v2 主视觉、雨夜可读性、背包抽屉、AI 抽屉和全局主题副作用。
 
-### 2.9 完整验收链路
+### 2.10 完整验收链路
 
 ```bash
 npm run qa:acceptance
@@ -162,12 +183,13 @@ npm run qa:acceptance
 1. `npm run build`
 2. `npm run qa:snapshot-contract`
 3. `npm run qa:api-contract`
-4. `npm run qa:mock-api`
-5. `npm run qa:repository`
-6. `npm run qa:stage-v2`
-7. `npm run qa:ui-shell`
-8. `npm run qa:visual-baseline`
-9. `npm run qa:visual-report`
+4. `npm run qa:api-client`
+5. `npm run qa:mock-api`
+6. `npm run qa:repository`
+7. `npm run qa:stage-v2`
+8. `npm run qa:ui-shell`
+9. `npm run qa:visual-baseline`
+10. `npm run qa:visual-report`
 
 如果只是局部修改，可以先运行对应单项；但任何影响 Stage v2、LLM 数据输出、全局主题或主要导航的提交，都必须至少运行相关单项 QA。
 

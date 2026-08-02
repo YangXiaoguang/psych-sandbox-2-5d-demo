@@ -59,7 +59,7 @@ export function createApiClient(config: ApiClientConfig) {
     const requestId = createRequestId();
     const controller = new AbortController();
     const timeoutMs = input.timeoutMs ?? config.timeoutMs;
-    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    const timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
     const abortListener = () => controller.abort();
     input.signal?.addEventListener("abort", abortListener, { once: true });
 
@@ -84,7 +84,7 @@ export function createApiClient(config: ApiClientConfig) {
       const dto = createClientErrorDto(requestId, error);
       throw new ApiClientError(0, dto);
     } finally {
-      window.clearTimeout(timeoutId);
+      globalThis.clearTimeout(timeoutId);
       input.signal?.removeEventListener("abort", abortListener);
     }
   }
