@@ -7,6 +7,7 @@ import "./styles/app-shell.css";
 import "./styles/asset-library.css";
 import "./styles/sandbox-editor.css";
 import "./styles/right-panel.css";
+import "./styles/agent-chat.css";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
