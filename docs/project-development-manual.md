@@ -131,10 +131,10 @@ psych-sandbox-2-5d-demo/
 │   ├── platform/               # Repository Adapter 抽象与模式切换
 │   ├── rendering/              # Three.js 离屏生成 3D 玩具化沙具 sprite
 │   ├── utils/                  # 分析、下载、事件、ID、对象工厂、投影、存储
-│   ├── styles/                 # 分阶段拆出的 CSS token 和基础 reset
+│   ├── styles/                 # 分阶段拆出的 CSS token、基础 reset 和应用外壳样式
 │   ├── App.tsx                 # 顶层应用状态和视图编排
 │   ├── main.tsx                # React 入口
-│   ├── styles.css              # 主要产品界面样式，后续继续模块化
+│   ├── styles.css              # 仍待继续拆分的主要产品界面样式
 │   └── types.ts                # 跨模块核心类型
 ├── docs/
 │   ├── project-development-manual.md
@@ -834,10 +834,11 @@ interface ApiErrorDto {
 ```ts
 import "./styles/tokens.css";
 import "./styles/base.css";
+import "./styles/app-shell.css";
 import "./styles.css";
 ```
 
-其中 `tokens.css` 保存颜色、字号、圆角和阴影等设计 token，`base.css` 保存全局 reset，`styles.css` 仍承载主要产品界面样式。当前体量仍较大，后续建议继续拆分为：
+其中 `tokens.css` 保存颜色、字号、圆角和阴影等设计 token，`base.css` 保存全局 reset，`app-shell.css` 保存应用外壳、顶部导航和认证入口样式，`styles.css` 仍承载主要产品界面样式。当前体量仍较大，后续建议继续拆分为：
 
 ```text
 src/styles/
@@ -1163,7 +1164,7 @@ chore: checkpoint ...
 
 短期：
 
-- 将 `src/styles.css` 分模块拆分。
+- 继续将 `src/styles.css` 按沙盘编辑器、沙具库、右侧面板、Agent 和管理后台拆分。
 - 为沙盘核心交互补 Playwright 回归。
 - 继续提升沙具 sprite 质量和沙面接触细节。
 - 修复所有夜间模式可读性死角。

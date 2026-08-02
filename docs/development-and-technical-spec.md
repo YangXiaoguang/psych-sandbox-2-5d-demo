@@ -147,10 +147,11 @@ psych-sandbox-2-5d-demo/
 │   ├── personal/               # 个人记忆 OS、沙盘档案、Context Packet
 │   ├── platform/               # Repository Adapter 抽象和本地/API 模式切换
 │   ├── rendering/              # Three.js 程序化玩具沙具 sprite 渲染
+│   ├── styles/                 # 设计 token、基础 reset、应用外壳等分层样式
 │   ├── utils/                  # 分析、下载、事件、ID、对象工厂、投影、存储
 │   ├── App.tsx                 # 顶层应用编排
 │   ├── main.tsx                # React 入口
-│   ├── styles.css              # 全局视觉系统与大量页面样式
+│   ├── styles.css              # 仍待继续拆分的主要产品界面样式
 │   └── types.ts                # 跨模块核心类型
 ├── docs/
 │   └── development-and-technical-spec.md
@@ -1087,6 +1088,7 @@ interface ApiPagePayloadDto<T> {
 
 - `src/styles/tokens.css`：全局颜色、字号、圆角、阴影等设计 token。
 - `src/styles/base.css`：全局 `box-sizing`、`body` 和表单控件基础 reset。
+- `src/styles/app-shell.css`：应用外壳、顶部导航、认证入口等全局框架样式。
 - `src/styles.css`：当前仍承载主要产品界面样式。
 
 入口导入顺序必须保持为：
@@ -1094,6 +1096,7 @@ interface ApiPagePayloadDto<T> {
 ```ts
 import "./styles/tokens.css";
 import "./styles/base.css";
+import "./styles/app-shell.css";
 import "./styles.css";
 ```
 
@@ -1119,8 +1122,7 @@ import "./styles.css";
 
 建议后续重构：
 
-- `styles.css` 已经非常大，已完成 `tokens.css` 与 `base.css` 第一阶段拆分；后续应继续拆为：
-  - `styles/app-shell.css`
+- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css` 第一阶段拆分；后续应继续拆为：
   - `styles/sandbox-editor.css`
   - `styles/asset-library.css`
   - `styles/right-panel.css`
@@ -1385,7 +1387,10 @@ server {
 | API Client | `src/api/client.ts` |
 | Mock API | `src/api/mockApiAdapter.ts` |
 | Repository Adapter | `src/platform/*.ts` |
-| 全局样式 | `src/styles.css` |
+| 样式 token | `src/styles/tokens.css` |
+| 基础 reset | `src/styles/base.css` |
+| 应用外壳样式 | `src/styles/app-shell.css` |
+| 主要产品样式 | `src/styles.css` |
 
 ---
 
