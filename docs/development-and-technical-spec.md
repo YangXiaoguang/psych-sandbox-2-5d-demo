@@ -147,7 +147,7 @@ psych-sandbox-2-5d-demo/
 │   ├── personal/               # 个人记忆 OS、沙盘档案、Context Packet
 │   ├── platform/               # Repository Adapter 抽象和本地/API 模式切换
 │   ├── rendering/              # Three.js 程序化玩具沙具 sprite 渲染
-│   ├── styles/                 # 设计 token、基础 reset、应用外壳、沙具库和沙盘编辑器分层样式
+│   ├── styles/                 # 设计 token、基础 reset、应用外壳、沙具库、沙盘和右侧面板分层样式
 │   ├── utils/                  # 分析、下载、事件、ID、对象工厂、投影、存储
 │   ├── App.tsx                 # 顶层应用编排
 │   ├── main.tsx                # React 入口
@@ -1091,7 +1091,8 @@ interface ApiPagePayloadDto<T> {
 - `src/styles/app-shell.css`：应用外壳、顶部导航、认证入口等全局框架样式。
 - `src/styles/asset-library.css`：沙具库背包、搜索筛选、分类货架、沙具卡片与风险标签基础样式。
 - `src/styles/sandbox-editor.css`：中央工作区、沙盘工具条、Classic 2.5D 舞台和全屏/focus 基础样式。
-- `src/styles.css`：当前仍承载右侧面板、Agent、个人中心、管理后台、Stage v2 polish 等补充样式。
+- `src/styles/right-panel.css`：右侧作品面板、洞察抽屉、折叠快捷栏、沙盘内 AI 伙伴入口和全屏 AI 抽屉基础样式。
+- `src/styles.css`：当前仍承载 Agent、个人中心、管理后台、Stage v2 polish 等补充样式。
 
 入口导入顺序必须保持为：
 
@@ -1101,6 +1102,7 @@ import "./styles/base.css";
 import "./styles/app-shell.css";
 import "./styles/asset-library.css";
 import "./styles/sandbox-editor.css";
+import "./styles/right-panel.css";
 import "./styles.css";
 ```
 
@@ -1126,8 +1128,7 @@ import "./styles.css";
 
 建议后续重构：
 
-- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css`、`asset-library.css`、`sandbox-editor.css` 第一阶段拆分；后续应继续拆为：
-  - `styles/right-panel.css`
+- `styles.css` 已经非常大，已完成 `tokens.css`、`base.css`、`app-shell.css`、`asset-library.css`、`sandbox-editor.css`、`right-panel.css` 第一阶段拆分；后续应继续拆为：
   - `styles/agent-chat.css`
   - `styles/admin.css`
   - `styles/personal-center.css`
@@ -1394,6 +1395,7 @@ server {
 | 应用外壳样式 | `src/styles/app-shell.css` |
 | 沙具库基础样式 | `src/styles/asset-library.css` |
 | 沙盘编辑器基础样式 | `src/styles/sandbox-editor.css` |
+| 右侧面板基础样式 | `src/styles/right-panel.css` |
 | 产品补充样式 | `src/styles.css` |
 
 ---

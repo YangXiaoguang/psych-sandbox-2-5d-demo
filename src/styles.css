@@ -65,82 +65,6 @@
   font-size: 18px;
 }
 
-.right-panel.collapsed {
-  align-items: center;
-  gap: 10px;
-  padding: 10px 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.7), rgba(240, 232, 214, 0.84)),
-    var(--panel);
-}
-
-.rail-toggle,
-.rail-tab {
-  position: relative;
-  display: inline-flex;
-  width: 38px;
-  height: 38px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #c5b89f;
-  border-radius: var(--radius-xs);
-  background: var(--surface-warm);
-  color: var(--ink-soft);
-  box-shadow: var(--inner-highlight);
-}
-
-.rail-count {
-  position: absolute;
-  right: -5px;
-  top: -6px;
-  display: inline-flex;
-  min-width: 18px;
-  height: 18px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  border: 1px solid rgba(112, 169, 157, 0.5);
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-dark);
-  font-size: 10px;
-  font-weight: 950;
-  line-height: 1;
-}
-
-.rail-tab.active,
-.rail-tab:hover,
-.rail-toggle:hover {
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-  color: var(--accent-dark);
-}
-
-.ai-stage-companion {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  z-index: 4;
-  display: grid;
-  width: 112px;
-  min-height: 126px;
-  place-items: center;
-  padding: 8px 8px 9px;
-  border: 1px solid rgba(97, 142, 132, 0.54);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 250, 237, 0.94), rgba(234, 244, 237, 0.9)),
-    #f5f0e3;
-  box-shadow:
-    0 16px 26px rgba(46, 67, 59, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-.app-shell.focus-mode .ai-stage-companion {
-  right: 16px;
-  bottom: 16px;
-}
-
 .focus-floating-button {
   position: absolute;
   z-index: 9;
@@ -170,10 +94,6 @@
   top: 96px;
 }
 
-.focus-ai-toggle {
-  right: 14px;
-  top: 162px;
-}
 
 .focus-drawer-scrim {
   position: absolute;
@@ -197,72 +117,6 @@
 .focus-asset-drawer .asset-library {
   width: 100%;
   height: 100%;
-}
-
-.focus-ai-drawer {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  z-index: 12;
-  display: grid;
-  width: min(424px, calc(100vw - 42px));
-  max-height: min(680px, calc(100vh - 128px));
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
-  border: 1px solid rgba(97, 142, 132, 0.64);
-  border-radius: var(--radius-sm);
-  background:
-    radial-gradient(circle at 14% 0%, rgba(129, 211, 191, 0.2), transparent 34%),
-    linear-gradient(180deg, rgba(255, 252, 242, 0.96), rgba(239, 247, 241, 0.94)),
-    var(--panel);
-  box-shadow:
-    0 28px 58px rgba(13, 29, 33, 0.32),
-    var(--inner-highlight);
-  backdrop-filter: blur(16px);
-}
-
-.focus-ai-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 14px 12px;
-  border-bottom: 1px solid var(--line);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent),
-    rgba(255, 249, 237, 0.7);
-}
-
-.focus-ai-drawer-header h2 {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0;
-  font-size: 18px;
-}
-
-.focus-ai-drawer-body {
-  min-height: 0;
-  overflow: auto;
-}
-
-.focus-ai-drawer .ai-panel {
-  min-height: 100%;
-  padding: 10px;
-}
-
-.focus-ai-drawer .ai-chat-log {
-  max-height: min(26vh, 220px);
-}
-
-.focus-ai-drawer .ai-hero {
-  min-height: 76px;
-}
-
-.app-shell.focus-mode.ai-drawer-open .ai-stage-companion {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(8px);
 }
 
 .focus-selection-card {
