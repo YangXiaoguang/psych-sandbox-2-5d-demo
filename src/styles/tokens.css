@@ -1,0 +1,57 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #1f2b2c;
+  background: #dfe7df;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  /* Product color system */
+  --app-bg: #dfe7df;
+  --app-bg-deep: #bfcbbf;
+  --panel: #f7f4eb;
+  --panel-soft: #fbf6ea;
+  --panel-strong: #fffaf0;
+  --surface: #fffdf6;
+  --surface-warm: #fff9ed;
+  --sand: #e9cf95;
+  --sand-light: #f6e6bd;
+  --wood: #9b6d3e;
+  --wood-dark: #513720;
+  --line: #cfc5b2;
+  --line-soft: #ddd2bd;
+  --line-strong: #9b8d76;
+  --ink: #1f2b2c;
+  --ink-soft: #34413e;
+  --ink-muted: #66726d;
+  --accent: #2f8f83;
+  --accent-soft: #edf8f3;
+  --accent-line: #70a99d;
+  --accent-dark: #256c65;
+  --warning: #b06124;
+  --danger: #a94a35;
+
+  /* Product scale */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-md: 13px;
+  --font-body: 14px;
+  --font-readable: 15px;
+  --font-title: 20px;
+  --control-sm: 34px;
+  --control-md: 38px;
+  --control-lg: 46px;
+
+  /* Product depth */
+  --shadow-xs: 0 4px 12px rgba(97, 69, 35, 0.08);
+  --shadow-sm: 0 10px 24px rgba(52, 71, 63, 0.1);
+  --shadow: 0 18px 45px rgba(55, 48, 37, 0.16);
+  --shadow-stage: 0 24px 60px rgba(45, 65, 53, 0.22);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}

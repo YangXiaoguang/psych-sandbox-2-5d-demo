@@ -1083,6 +1083,20 @@ interface ApiPagePayloadDto<T> {
 
 全局样式文件：`src/styles.css`
 
+样式入口：
+
+- `src/styles/tokens.css`：全局颜色、字号、圆角、阴影等设计 token。
+- `src/styles/base.css`：全局 `box-sizing`、`body` 和表单控件基础 reset。
+- `src/styles.css`：当前仍承载主要产品界面样式。
+
+入口导入顺序必须保持为：
+
+```ts
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles.css";
+```
+
 当前样式职责：
 
 - 顶部导航。
@@ -1105,8 +1119,7 @@ interface ApiPagePayloadDto<T> {
 
 建议后续重构：
 
-- `styles.css` 已经非常大，应拆为：
-  - `styles/tokens.css`
+- `styles.css` 已经非常大，已完成 `tokens.css` 与 `base.css` 第一阶段拆分；后续应继续拆为：
   - `styles/app-shell.css`
   - `styles/sandbox-editor.css`
   - `styles/asset-library.css`
