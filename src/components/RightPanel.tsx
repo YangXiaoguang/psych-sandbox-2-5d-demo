@@ -1,6 +1,21 @@
 import type { CSSProperties } from "react";
-import { Bot, ChevronLeft, ChevronRight, Clock3, Database, LayoutDashboard, MousePointer2, Trash2 } from "lucide-react";
+import { useMemo } from "react";
+import {
+  Bot,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Database,
+  LayoutDashboard,
+  MessageCircleQuestion,
+  MousePointer2,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
 import { RISK_COLORS, RISK_LABELS } from "../data/assets";
+import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
 import type { LlmProviderConfig, RiskTag, SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
 import { AnalysisPanel } from "./AnalysisPanel";
@@ -161,6 +176,15 @@ function SceneInsightDrawer({
   onPatchSelected: (patch: Partial<SandboxObject>, label: string) => void;
   onDeleteSelected: () => void;
 }): JSX.Element {
+  const insight = useMemo(() => {
+    const payload = createCurrentSandboxSnapshotPayload({
+      objects,
+      environment,
+      selectedObjectId: selectedObject?.id ?? null,
+    });
+    return buildCurrentSandboxInsight(payload.snapshot);
+  }, [environment, objects, selectedObject?.id]);
+
   return (
     <div className="insight-drawer" aria-label="作品洞察抽屉">
       <section className="insight-overview" aria-label="作品概览">
@@ -179,6 +203,19 @@ function SceneInsightDrawer({
       </section>
 
       <SelectedObjectSnapshot selectedObject={selectedObject} onDeleteSelected={onDeleteSelected} />
+
+      <details className="insight-section ai-observation-section">
+        <summary>
+          <span>
+            <Sparkles size={15} />
+            AI 观察材料
+          </span>
+          <em>{insight.observations.length} 条线索</em>
+        </summary>
+        <div className="insight-section-body">
+          <AiObservationPanel insight={insight} />
+        </div>
+      </details>
 
       <details className="insight-section">
         <summary>
@@ -246,6 +283,46 @@ function SceneInsightDrawer({
         <StructuredDataPanel objects={objects} environment={environment} selectedObject={selectedObject} />
       </details>
     </div>
+  );
+}
+
+function AiObservationPanel({ insight }: { insight: CurrentSandboxInsight }): JSX.Element {
+  const topObservations = insight.observations.slice(0, 2);
+  const topThemes = insight.themeCandidates.slice(0, 5);
+  const leadingQuestion = insight.suggestedQuestions[0];
+
+  return (
+    <section className="insight-ai-panel" aria-label="AI 观察材料">
+      <p className="insight-ai-brief">{insight.brief}</p>
+
+      {topObservations.length > 0 ? (
+        <ul className="insight-ai-observations" aria-label="主要观察线索">
+          {topObservations.map((observation) => (
+            <li key={observation.id}>
+              <strong>{observation.title}</strong>
+              <span>{observation.detail}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty-state compact">当前还没有可稳定观察的空间线索。</p>
+      )}
+
+      {topThemes.length > 0 ? (
+        <div className="insight-ai-themes" aria-label="主题候选">
+          {topThemes.map((theme) => (
+            <span key={theme.theme}>{theme.theme}</span>
+          ))}
+        </div>
+      ) : null}
+
+      {leadingQuestion ? (
+        <div className="insight-ai-question">
+          <MessageCircleQuestion size={15} />
+          <span>{leadingQuestion.text}</span>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

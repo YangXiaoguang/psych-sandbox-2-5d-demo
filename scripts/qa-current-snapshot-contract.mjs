@@ -143,13 +143,14 @@ async function assertRuntimeSnapshot(runtime) {
 }
 
 async function assertStaticContractFiles() {
-  const [contracts, apiHelper, mockAdapter, promptContext, insightFile, structuredPanel, doc, analysisDoc] = await Promise.all([
+  const [contracts, apiHelper, mockAdapter, promptContext, insightFile, structuredPanel, rightPanel, doc, analysisDoc] = await Promise.all([
     readProjectFile("src/api/contracts.ts"),
     readProjectFile("src/api/currentSandboxSnapshotApi.ts"),
     readProjectFile("src/api/mockApiAdapter.ts"),
     readProjectFile("src/llm/sandboxPromptContext.ts"),
     readProjectFile("src/llm/currentSandboxInsight.ts"),
     readProjectFile("src/components/StructuredDataPanel.tsx"),
+    readProjectFile("src/components/RightPanel.tsx"),
     readProjectFile("docs/sandbox-llm-data-output-spec.md"),
     readProjectFile("docs/ai-analysis-layer-design.md"),
   ]);
@@ -184,6 +185,8 @@ async function assertStaticContractFiles() {
 
   assert("Structured data panel uses API payload helper", structuredPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("Structured data panel copies raw snapshot JSON", structuredPanel.includes("JSON.stringify(snapshot, null, 2)"));
+  assert("Right panel uses API payload helper for insight", rightPanel.includes("createCurrentSandboxSnapshotPayload"));
+  assert("Right panel renders derived insight material", rightPanel.includes("buildCurrentSandboxInsight") && rightPanel.includes("AI 观察材料"));
   assert("AI companion uses API payload helper", aiCompanionPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("AI companion uses centralized snapshot prompt context", aiCompanionPanel.includes("createSandboxSnapshotChatMessages"));
   assert("AI companion does not inline snapshot policy prompt", !aiCompanionPanel.includes("CurrentSandboxSnapshotPolicy JSON"));
