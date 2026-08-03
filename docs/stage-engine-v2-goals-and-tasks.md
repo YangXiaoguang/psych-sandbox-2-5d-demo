@@ -301,6 +301,9 @@ Evidence:
 - 2026-08-01 visual verification: `npm run qa:visual-baseline && npm run qa:visual-report` captured all 12 required scenes with 0 console errors, 0 page errors, 0 request failures, and `Gate result: PASS`. The review index is `artifacts/visual-regression/2026-08-01/visual-review.md`.
 - 2026-08-02 backpack QA hardening: `npm run build` passed and `npm run qa:ui-shell` passed 91/91 gates after adding large/compact backpack label-plate checks. The current pushed commit is `36db39d test: harden backpack readability qa`.
 - 2026-08-02 toy render QA hardening: `npm run qa:toy-assets` renders all 19 built-in Three.js toy sprites in a browser harness and verifies non-empty PNG output, transparent crop bounds, anchors, semantic fields, recipe diversity, and no default fallback recipes.
+- 2026-08-03 current verification on `d30a124`: `npm run qa:stage-v2` passed 29/29 gates, including backpack placement, toy drag, selected-object rotate/scale/duplicate/delete, mouse pan, right-drag camera rotation, wheel zoom, PNG export, JSON export, weather/light switching, Classic fallback, and console/page error checks.
+- 2026-08-03 UI shell verification: `npm run qa:ui-shell` passed 91/91 gates, including compact game HUD layout, fullscreen AI single-drawer behavior, inventory readability, insight drawer fit, Agent/Memory/Admin navigation smoke, and night-mode text/form contrast checks.
+- 2026-08-03 visual verification: `npm run qa:visual-baseline` captured all 12 required scenes and `npm run qa:visual-report` produced `Gate result: PASS` with 0 console errors, 0 page errors, and 0 request failures. The review index is `artifacts/visual-regression/2026-08-03/visual-review.md`.
 
 ---
 
