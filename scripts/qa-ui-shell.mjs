@@ -106,10 +106,11 @@ async function runShellQa() {
     pushResult("Sandbox floating HUD stays compact", sandboxDesktop.topbarHeight <= 72, `height=${sandboxDesktop.topbarHeight}`);
     pushResult("Sandbox ambient HUD stays narrow", sandboxDesktop.topbarWidth <= 430, formatMetrics(sandboxDesktop));
     pushResult(
-      "Sandbox ambient HUD defaults to one game capsule",
+      "Sandbox ambient HUD embeds engine and environment in one compact capsule",
+      sandboxDesktop.modeSwitchEmbeddedInTopbar &&
       Boolean(sandboxDesktop.environmentSummary) &&
         sandboxDesktop.environmentSummary.width <= 220 &&
-        sandboxDesktop.topbarVisibleButtons <= 1 &&
+        sandboxDesktop.topbarVisibleButtons <= 3 &&
         !sandboxDesktop.environmentPopoverVisible &&
         /晴天|阴天|雨天/.test(sandboxDesktop.environmentSummaryText) &&
         /白天|黑夜/.test(sandboxDesktop.environmentSummaryText),
@@ -127,7 +128,11 @@ async function runShellQa() {
     );
     pushResult("Sandbox side HUD entries stay compact", sandboxDesktop.sideHudEntriesCompact, formatMetrics(sandboxDesktop));
     pushResult("Sandbox side HUD entries hug viewport edges", sandboxDesktop.sideHudEntriesAtEdges, formatMetrics(sandboxDesktop));
-    pushResult("Sandbox HUD does not cover engine switch", !sandboxDesktop.topbarOverlapsModeSwitch, formatMetrics(sandboxDesktop));
+    pushResult(
+      "Sandbox engine switch is integrated or unobstructed",
+      sandboxDesktop.modeSwitchEmbeddedInTopbar || !sandboxDesktop.topbarOverlapsModeSwitch,
+      formatMetrics(sandboxDesktop),
+    );
     pushResult("Engine switch does not cover Stage v2 title", !sandboxDesktop.modeSwitchOverlapsStagePanelTop, formatMetrics(sandboxDesktop));
     pushResult("Engine switch avoids the game toolbelt", !sandboxDesktop.modeSwitchOverlapsToolbelt, formatMetrics(sandboxDesktop));
     pushResult(
@@ -517,7 +522,9 @@ async function readSandboxShellMetrics(page) {
     const intersects = (a, b) => Boolean(a && b && a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y);
     const nav = box(".game-navigation");
     const topbar = box(".workspace-column .topbar");
+    const modeSwitchElement = document.querySelector(".stage-engine-mode-switch");
     const modeSwitch = box(".stage-engine-mode-switch");
+    const modeSwitchEmbeddedInTopbar = Boolean(modeSwitchElement && document.querySelector(".workspace-column .topbar")?.contains(modeSwitchElement));
     const stagePanelTop = box(".stage-v2-panel-top");
     const stage = box(".stage-v2-shell");
     const toolbelt = box(".sandbox-game-toolbelt");
@@ -618,6 +625,7 @@ async function readSandboxShellMetrics(page) {
       environmentSummary,
       environmentSummaryText: document.querySelector(".workspace-column .environment-dock > summary")?.textContent?.trim().replace(/\s+/g, " ") ?? "",
       environmentPopoverVisible: isVisible(".workspace-column .environment-popover"),
+      modeSwitchEmbeddedInTopbar,
       inventoryToggle,
       insightToggle,
       sideHudEntriesCompact:
@@ -632,7 +640,7 @@ async function readSandboxShellMetrics(page) {
       topbarCoversStageCenter: intersects(topbar, stageCore),
       toolbeltCoversStageCenter: intersects(toolbelt, stageCore),
       hudKeepsStageCenterClear: !intersects(topbar, stageCore) && !intersects(toolbelt, stageCore),
-      topbarOverlapsModeSwitch: intersects(topbar, modeSwitch),
+      topbarOverlapsModeSwitch: modeSwitchEmbeddedInTopbar ? false : intersects(topbar, modeSwitch),
       topbarOverlapsStagePanelTop: intersects(topbar, stagePanelTop),
       modeSwitchOverlapsStagePanelTop: intersects(modeSwitch, stagePanelTop),
       modeSwitchOverlapsToolbelt: intersects(modeSwitch, toolbelt),

@@ -26,14 +26,18 @@ import {
 import type { SandboxCameraState, SandboxEnvironment, SandboxWeather } from "../types";
 import { SANDBOX_CAMERA_PRESETS } from "../utils/projection";
 
+type SandboxEngineMode = "classic" | "stage3d";
+
 interface TopBarProps {
   objectCount: number;
   environment: SandboxEnvironment;
   camera: SandboxCameraState;
+  engineMode: SandboxEngineMode;
   focusMode: boolean;
   rightPanelCollapsed: boolean;
   showRightPanelToggle: boolean;
   showGuides: boolean;
+  onEngineModeChange: (mode: SandboxEngineMode) => void;
   onEnvironmentChange: (patch: Partial<SandboxEnvironment>) => void;
   onCameraChange: (patch: Partial<SandboxCameraState>) => void;
   onCameraReset: () => void;
@@ -49,10 +53,12 @@ export function TopBar({
   objectCount,
   environment,
   camera,
+  engineMode,
   focusMode,
   rightPanelCollapsed,
   showRightPanelToggle,
   showGuides,
+  onEngineModeChange,
   onEnvironmentChange,
   onCameraChange,
   onCameraReset,
@@ -103,6 +109,30 @@ export function TopBar({
         </div>
       </div>
       <div className="topbar-hud" aria-label="沙盘控制台">
+        <div className="stage-engine-mode-switch" role="group" aria-label="选择沙盘渲染引擎">
+          <span>引擎</span>
+          <button
+            type="button"
+            className={engineMode === "classic" ? "active" : ""}
+            onClick={() => onEngineModeChange("classic")}
+            aria-pressed={engineMode === "classic"}
+            title="Classic 2.5D"
+          >
+            <span aria-hidden="true">2.5D</span>
+            <span className="visually-hidden">Classic 2.5D</span>
+          </button>
+          <button
+            type="button"
+            className={engineMode === "stage3d" ? "active" : ""}
+            onClick={() => onEngineModeChange("stage3d")}
+            aria-pressed={engineMode === "stage3d"}
+            title="Stage v2 预览"
+          >
+            <span aria-hidden="true">3D</span>
+            <span className="visually-hidden">Stage v2 预览</span>
+          </button>
+        </div>
+
         <section className="hud-cluster environment-hud" aria-label="沙盘环境">
           <details className="environment-dock">
             <summary aria-label={`沙盘环境：${getEnvironmentLabel(environment)}，展开切换天气与光照`}>

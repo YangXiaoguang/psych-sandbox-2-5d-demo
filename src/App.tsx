@@ -840,10 +840,12 @@ export function App(): JSX.Element {
               objectCount={objects.length}
               environment={environment}
               camera={sandboxCamera}
+              engineMode={sandboxEngineMode}
               focusMode={sandboxFocusMode}
               rightPanelCollapsed={rightPanelCollapsed}
               showRightPanelToggle={!sandboxFocusMode}
               showGuides={showGuides}
+              onEngineModeChange={setSandboxEngineMode}
               onEnvironmentChange={handleEnvironmentChange}
               onCameraChange={handleCameraChange}
               onCameraReset={handleCameraReset}
@@ -854,25 +856,6 @@ export function App(): JSX.Element {
               onExportPng={handleExportPng}
               onClearScene={handleClearScene}
             />
-            <div className="stage-engine-mode-switch" role="group" aria-label="选择沙盘渲染引擎">
-              <span>渲染引擎</span>
-              <button
-                type="button"
-                className={sandboxEngineMode === "classic" ? "active" : ""}
-                onClick={() => setSandboxEngineMode("classic")}
-                aria-pressed={sandboxEngineMode === "classic"}
-              >
-                Classic 2.5D
-              </button>
-              <button
-                type="button"
-                className={sandboxEngineMode === "stage3d" ? "active" : ""}
-                onClick={() => setSandboxEngineMode("stage3d")}
-                aria-pressed={sandboxEngineMode === "stage3d"}
-              >
-                Stage v2 预览
-              </button>
-            </div>
             {sandboxEngineMode === "stage3d" ? (
               <Suspense
                 fallback={

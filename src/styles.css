@@ -19472,3 +19472,119 @@ table td {
   border-color: rgba(123, 232, 214, 0.32) !important;
   background: rgba(8, 34, 43, 0.74) !important;
 }
+
+/* Product experience phase 5:
+   The engine selector belongs to the ambient stage HUD, not as a separate
+   floating row. Keep the legacy selector for QA, but make the control compact
+   and bound to the topbar so it cannot cover the stage, drawers, or toolbelt. */
+.workspace-column .topbar .stage-engine-mode-switch,
+.product-shell.night-mode .workspace-column .topbar .stage-engine-mode-switch,
+.app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch,
+.product-shell.focus-mode .app-shell.focus-mode .topbar .stage-engine-mode-switch,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar .stage-engine-mode-switch {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  align-self: center !important;
+  gap: 3px !important;
+  width: auto !important;
+  max-width: none !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 3px !important;
+  border-radius: 14px !important;
+  border-color: color-mix(in srgb, var(--line) 72%, transparent) !important;
+  background:
+    radial-gradient(circle at 36% 0%, rgba(255, 255, 255, 0.28), transparent 42%),
+    color-mix(in srgb, var(--surface) 70%, transparent) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.workspace-column .topbar .stage-engine-mode-switch > span,
+.product-shell.night-mode .workspace-column .topbar .stage-engine-mode-switch > span,
+.app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch > span,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch > span {
+  display: inline-flex !important;
+  padding: 0 5px 0 6px !important;
+  color: var(--muted) !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.12em !important;
+}
+
+.workspace-column .topbar .stage-engine-mode-switch button,
+.product-shell.night-mode .workspace-column .topbar .stage-engine-mode-switch button,
+.app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch button,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch button,
+.product-shell.focus-mode .app-shell.focus-mode .topbar .stage-engine-mode-switch button,
+.product-shell.night-mode.focus-mode .app-shell.focus-mode .topbar .stage-engine-mode-switch button {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 43px !important;
+  max-width: none !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 9px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.workspace-column .topbar .stage-engine-mode-switch button span:not(.visually-hidden),
+.product-shell.night-mode .workspace-column .topbar .stage-engine-mode-switch button span:not(.visually-hidden) {
+  display: inline !important;
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  white-space: nowrap !important;
+}
+
+.product-shell.night-mode .workspace-column .topbar .stage-engine-mode-switch {
+  border-color: rgba(115, 219, 206, 0.28) !important;
+  background:
+    radial-gradient(circle at 36% 0%, rgba(141, 246, 226, 0.12), transparent 42%),
+    rgba(9, 28, 38, 0.68) !important;
+}
+
+.product-shell.night-mode .workspace-column .topbar .stage-engine-mode-switch > span {
+  color: rgba(218, 242, 236, 0.76) !important;
+}
+
+.app-shell.game-hud-layout .workspace-column .topbar,
+.product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar,
+.product-shell:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar,
+.product-shell.night-mode:not(.auth-mode):not(.focus-mode) .app-shell.game-hud-layout:not(.focus-mode) .workspace-column .topbar {
+  max-width: min(470px, calc(100% - 188px)) !important;
+}
+
+@media (max-width: 1180px) {
+  .app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch,
+  .product-shell.night-mode .app-shell.game-hud-layout .workspace-column .topbar .stage-engine-mode-switch {
+    display: inline-flex !important;
+  }
+
+  .workspace-column .topbar .stage-engine-mode-switch > span {
+    display: none !important;
+  }
+
+  .workspace-column .topbar .stage-engine-mode-switch button {
+    min-width: 39px !important;
+    padding: 0 7px !important;
+  }
+}
