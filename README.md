@@ -19,6 +19,8 @@ npm run qa:acceptance
 
 ## 开发文档
 
+- [当前执行计划](PLAN.md)
+- [产品与交互规格](GAME_SPEC.md)
 - [项目开发手册与技术说明书](docs/project-development-manual.md)
 - [详细开发文档与技术规格参考](docs/development-and-technical-spec.md)
 - [Stage Engine v2 开发目标与任务书](docs/stage-engine-v2-goals-and-tasks.md)

@@ -2,6 +2,8 @@
 
 This file is the project operating protocol for Codex and other coding agents. Read it before changing code.
 
+Also read `PLAN.md` to understand the current checkpoint and next phase before starting non-trivial work.
+
 ## Project Identity
 
 This is a 2.5D psychological sandplay collaboration system, not a generic game and not an office dashboard. The product must preserve a warm, professional, game-like sandplay editing experience with AI companion support, personal memory boundaries, and a migration path to real backend services.
@@ -33,6 +35,7 @@ Never ship a change that breaks these flows:
 
 | Task Type | Read First |
 |---|---|
+| Any non-trivial task | `PLAN.md`, `GAME_SPEC.md`, `TEST_MATRIX.md` |
 | Stage v2 visual or interaction | `docs/scene-contracts.md`, `docs/visual-bible.md`, `docs/stage-engine-v2-goals-and-tasks.md`, `docs/quality-gates.md` |
 | Toy model / asset rendering | `docs/visual-bible.md`, `docs/scene-contracts.md`, `src/stage3d/components/toys/` |
 | AI analysis / LLM context | `docs/ai-analysis-layer-technical-architecture.md`, `docs/sandbox-llm-data-output-spec.md` |
