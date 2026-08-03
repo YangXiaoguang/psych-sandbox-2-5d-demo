@@ -280,6 +280,9 @@ function assertBehaviorReport(report) {
 
   assert("Snapshot response succeeds", report.snapshotResponse.ok === true, JSON.stringify(report.snapshotResponse));
   assert("Snapshot response keeps current schema", report.snapshotResponse.data.snapshot.schemaVersion === "sandbox.current-snapshot.v1");
+  assert("Snapshot response includes current insight schema", report.snapshotResponse.data.insight.schemaVersion === "sandbox.current-insight.v1");
+  assert("Snapshot insight links to snapshot", report.snapshotResponse.data.insight.sourceSnapshotId === report.snapshotResponse.data.snapshot.snapshotId);
+  assert("Snapshot insight keeps guardrails", report.snapshotResponse.data.insight.guardrails.includesEvents === false && report.snapshotResponse.data.insight.guardrails.includesPersonalMemory === false);
   assert("Snapshot response preserves selected object", report.snapshotResponse.data.snapshot.selectedObjectId === "obj_house_seed");
   assert("Snapshot response excludes event flow by policy", report.snapshotResponse.data.policy.includesEvents === false);
 

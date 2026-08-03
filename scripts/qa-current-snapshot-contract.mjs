@@ -83,13 +83,13 @@ export default {
   insightSchema: CURRENT_SANDBOX_INSIGHT_SCHEMA,
   payload,
   response: createCurrentSandboxSnapshotResponse(request),
-  insight: buildCurrentSandboxInsight(payload.snapshot),
+  expectedInsight: buildCurrentSandboxInsight(payload.snapshot),
 };
 `;
 }
 
 async function assertRuntimeSnapshot(runtime) {
-  const { payload, response, schema, insightSchema, insight } = runtime;
+  const { payload, response, schema, insightSchema, expectedInsight } = runtime;
   assert("Runtime exports payload", Boolean(payload));
   assert("Runtime exports response", Boolean(response));
   assert("Schema constant remains stable", schema === "sandbox.current-snapshot.v1", schema);
@@ -98,9 +98,13 @@ async function assertRuntimeSnapshot(runtime) {
   assert("Response is successful", response.ok === true, JSON.stringify(response));
   assert("Response requestId is generated", typeof response.requestId === "string" && response.requestId.startsWith("req_"), response.requestId);
   assert("Response wraps the same snapshot schema", response.data.snapshot.schemaVersion === "sandbox.current-snapshot.v1");
+  assert("Response wraps the same insight schema", response.data.insight.schemaVersion === "sandbox.current-insight.v1");
 
-  const { snapshot, policy } = payload;
+  const { snapshot, insight, policy } = payload;
   assert("Payload includes policy", Boolean(policy));
+  assert("Payload includes versioned insight", Boolean(insight) && insight.schemaVersion === "sandbox.current-insight.v1");
+  assert("Payload insight links to snapshot", insight.sourceSnapshotId === snapshot.snapshotId, insight.sourceSnapshotId);
+  assert("Response insight matches payload insight", response.data.insight.sourceSnapshotId === payload.insight.sourceSnapshotId);
   assert("Policy excludes event flow", policy.includesEvents === false);
   assert("Policy excludes personal memory", policy.includesPersonalMemory === false);
   assert("Policy excludes user identity", policy.includesUserIdentity === false);
@@ -126,7 +130,7 @@ async function assertRuntimeSnapshot(runtime) {
   const leakedKeys = forbiddenKeys.filter((key) => snapshotKeys.has(key));
   assert("Snapshot contains no forbidden context keys", leakedKeys.length === 0, leakedKeys.join(", "));
 
-  assert("Runtime exports derived insight", Boolean(insight));
+  assert("Runtime exports expected derived insight", Boolean(expectedInsight));
   assert("Insight uses current schema", insight.schemaVersion === "sandbox.current-insight.v1", insight.schemaVersion);
   assert("Insight links to source snapshot", insight.sourceSnapshotId === snapshot.snapshotId, insight.sourceSnapshotId);
   assert("Insight excludes event flow", insight.guardrails.includesEvents === false);
@@ -136,6 +140,7 @@ async function assertRuntimeSnapshot(runtime) {
   assert("Insight produces observation material", Array.isArray(insight.observations) && insight.observations.length >= 3);
   assert("Insight produces suggested questions", Array.isArray(insight.suggestedQuestions) && insight.suggestedQuestions.length > 0);
   assert("Insight brief keeps non-diagnostic notice", insight.brief.includes("不构成诊断"), insight.brief);
+  assert("Payload insight is deterministic", insight.brief === expectedInsight.brief && insight.observations.length === expectedInsight.observations.length);
 
   const insightKeys = collectKeys(insight);
   const leakedInsightKeys = forbiddenKeys.filter((key) => insightKeys.has(key));
@@ -161,10 +166,12 @@ async function assertStaticContractFiles() {
 
   assert("Contracts declare request DTO", contracts.includes("BuildCurrentSandboxSnapshotRequestDto"));
   assert("Contracts declare response DTO", contracts.includes("CurrentSandboxSnapshotResponseDto"));
+  assert("Contracts response DTO includes versioned insight", contracts.includes("insight: CurrentSandboxInsight"));
   assert("Contracts expose LLM snapshot endpoint", contracts.includes("/api/llm/current-sandbox-snapshot"));
   assert("Contracts include sample current snapshot report", contracts.includes("sampleCurrentSandboxSnapshot"));
 
   assert("API helper uses shared builder", apiHelper.includes("buildCurrentSandboxSnapshot(request)"));
+  assert("API helper builds response insight", apiHelper.includes("buildCurrentSandboxInsight(snapshot)"));
   assert("API helper policy excludes events", apiHelper.includes("includesEvents: false"));
   assert("API helper policy excludes identity", apiHelper.includes("includesUserIdentity: false"));
   assert("API helper policy excludes images", apiHelper.includes("includesImage: false"));

@@ -1,3 +1,4 @@
+import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
 import { buildCurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type {
   ApiResponseDto,
@@ -17,8 +18,10 @@ export const CURRENT_SANDBOX_SNAPSHOT_POLICY: CurrentSandboxSnapshotPolicyDto = 
 export function createCurrentSandboxSnapshotPayload(
   request: BuildCurrentSandboxSnapshotRequestDto,
 ): CurrentSandboxSnapshotResponseDto {
+  const snapshot = buildCurrentSandboxSnapshot(request);
   return {
-    snapshot: buildCurrentSandboxSnapshot(request),
+    snapshot,
+    insight: buildCurrentSandboxInsight(snapshot),
     policy: CURRENT_SANDBOX_SNAPSHOT_POLICY,
   };
 }

@@ -1,4 +1,5 @@
 import type { AdminAccessRole, AdminAccessStatus, AdminPermissionKey, AdminWorkspaceScope } from "../admin/types";
+import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
 import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type {
   CommunicationTone,
@@ -309,6 +310,7 @@ export interface CurrentSandboxSnapshotPolicyDto {
 
 export interface CurrentSandboxSnapshotResponseDto {
   snapshot: CurrentSandboxSnapshot;
+  insight: CurrentSandboxInsight;
   policy: CurrentSandboxSnapshotPolicyDto;
 }
 

@@ -596,6 +596,16 @@ interface SandboxAnalysis {
 
 `CurrentSandboxInsight` 只从 `CurrentSandboxSnapshot` 派生，不读取事件流、个人记忆、用户身份或截图。它用于把当前沙盘状态整理成 LLM 更容易使用的观察材料。
 
+API 契约层已将它作为版本化 DTO 纳入 `CurrentSandboxSnapshotResponseDto`：
+
+```ts
+{
+  snapshot: CurrentSandboxSnapshot;
+  insight: CurrentSandboxInsight;
+  policy: CurrentSandboxSnapshotPolicyDto;
+}
+```
+
 输出维度：
 
 - 环境观察。

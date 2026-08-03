@@ -1,6 +1,6 @@
 # 当前沙盘 Snapshot 输出规范
 
-版本：v1.8
+版本：v1.9
 适用对象：前端开发、LLM 调用层、后续后端接口
 
 ## 目标
@@ -42,7 +42,19 @@ src/llm/currentSandboxInsight.ts -> buildCurrentSandboxInsight
 npm run qa:snapshot-contract
 ```
 
-## 顶层结构
+## API Response 顶层结构
+
+```ts
+CurrentSandboxSnapshotResponseDto
+```
+
+| 字段 | 类型 | 中文说明 |
+|---|---|---|
+| `snapshot` | CurrentSandboxSnapshot | 当前沙盘这一刻的完整结构化状态。 |
+| `insight` | CurrentSandboxInsight | 由 `snapshot` 确定性生成的观察材料，包含空间线索、主题候选和开放问题。 |
+| `policy` | CurrentSandboxSnapshotPolicyDto | 本次输出边界，明确不包含事件流、个人记忆、用户身份或截图。 |
+
+## Snapshot 顶层结构
 
 ```ts
 CurrentSandboxSnapshot

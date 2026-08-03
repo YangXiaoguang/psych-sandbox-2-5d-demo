@@ -174,6 +174,8 @@ function assertContractReport(report) {
   const snapshotResponse = report.sampleCurrentSandboxSnapshot;
   assert("Sample current snapshot response is successful", snapshotResponse?.ok === true, JSON.stringify(snapshotResponse));
   assert("Sample current snapshot schema is current", snapshotResponse.data.snapshot.schemaVersion === "sandbox.current-snapshot.v1");
+  assert("Sample current insight schema is current", snapshotResponse.data.insight.schemaVersion === "sandbox.current-insight.v1");
+  assert("Sample current insight links to snapshot", snapshotResponse.data.insight.sourceSnapshotId === snapshotResponse.data.snapshot.snapshotId);
   assert("Sample current snapshot policy excludes event flow", snapshotResponse.data.policy.includesEvents === false);
 
   assert("Auth context exposes active user", typeof report.authContext?.activeUserId === "string" && report.authContext.activeUserId.length > 0);
