@@ -48,27 +48,27 @@ interface CompanionContext {
 const QUICK_PROMPTS: QuickPrompt[] = [
   {
     id: "talk-about-work",
-    label: "聊聊这个作品",
+    label: "看这个作品",
     prompt: "我想聊聊这个沙盘作品，可以先温和地陪我看看吗？",
   },
   {
     id: "process-review",
-    label: "看当前结构",
+    label: "看结构",
     prompt: "请只基于当前沙盘状态，温和地帮我看看作品结构。",
   },
   {
     id: "selected-object",
-    label: "聊选中沙具",
+    label: "聊选中",
     prompt: "这个选中的沙具让我有点在意，想从它开始聊聊。",
   },
   {
     id: "just-listen",
-    label: "先陪我聊",
+    label: "陪我聊",
     prompt: "先不要分析，只陪我聊聊。我可能还没有想清楚。",
   },
   {
     id: "summary-draft",
-    label: "整理一段文字",
+    label: "整理文字",
     prompt: "请把当前作品整理成一段中性的观察文字，方便我之后继续修改。",
   },
 ];
@@ -85,7 +85,7 @@ export function AiCompanionPanel({
       id: "assistant-welcome",
       role: "assistant",
       text:
-        "我会安静地陪你看这个沙盘。你可以随便说说感受，也可以让我帮你从作品、沙具或创作顺序里整理线索。这里不会做诊断，只一起把体验说清楚。",
+        "我在这里陪你看这个沙盘。可以说感受，也可以让我整理当前画面；这里不会做诊断。",
     },
   ]);
   const [draft, setDraft] = useState("");
@@ -217,13 +217,13 @@ export function AiCompanionPanel({
         <div>
           <p className="eyebrow">AI Companion</p>
           <h2>沙盘伙伴</h2>
-          <p>温柔陪伴、当前状态整理、作品表达</p>
+          <p>陪你看画面、整理表达</p>
         </div>
       </section>
 
       <section className="ai-context-card" aria-label="当前沙盘上下文">
         <div className="section-title-row">
-          <h2>当前上下文</h2>
+          <h2>沙盘信号</h2>
           <span>{objects.length} 个沙具</span>
         </div>
         <div className="ai-context-grid">
@@ -239,7 +239,7 @@ export function AiCompanionPanel({
       </section>
 
       <section className="ai-quick-section" aria-label="快捷问题">
-        <h2>可以这样开始</h2>
+        <h2>轻轻开始</h2>
         <div className="ai-quick-list">
           {QUICK_PROMPTS.map((item) => (
             <button key={item.id} type="button" onClick={() => sendMessage(item.prompt)}>

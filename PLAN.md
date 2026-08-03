@@ -15,6 +15,7 @@ Updated: 2026-08-04
 | Backend-ready contract | `checkpoint/backend-contract-v1-2026-08-04` | API service boundaries, task migration domain, mock reports, and backend handoff QA added. |
 | Product experience compact HUD | `checkpoint/product-experience-hud-v1-2026-08-04` | Engine selector moved into the ambient stage HUD; UI QA now verifies an integrated, unobstructed game capsule. |
 | Product experience backpack polish | `checkpoint/product-experience-backpack-v1-2026-08-04` | Asset backpack idle copy reduced, duplicate favorite control removed, category badges shortened, and card text/readability guards stay green. |
+| Product experience insight drawer | `checkpoint/product-experience-insight-drawer-v1-2026-08-04` | Right scene/AI drawer copy and chrome reduced into compact game instrument panels while preserving insight, AI, and export workflows. |
 
 ## Completed In This Stabilization Track
 
@@ -29,6 +30,7 @@ Updated: 2026-08-04
 - Phase 4 backend-ready contract track completed with service boundary DTOs and handoff notes in `docs/backend-ready-contract-2026-08-04.md`.
 - Phase 5A compact HUD completed: the Classic/Stage v2 engine switch is now part of the topbar game capsule instead of a separate floating row.
 - Phase 5B asset backpack polish completed: the left drawer now behaves more like a game inventory, with lower copy density, single-path favorites access, stable toy cards, shortened category badges, and no idle drag instruction occupying layout space.
+- Phase 5C insight drawer polish completed: the right scene/AI drawer now uses shorter instrument labels, compact metrics, lighter collapsible rows, and reduced AI companion chrome.
 
 ## Next Recommended Sequence
 
@@ -140,7 +142,7 @@ Evidence:
 
 ### Phase 5: Product Experience Track
 
-Status: in progress. Phase 5A compact HUD and Phase 5B asset backpack checkpoints complete.
+Status: in progress. Phase 5A compact HUD, Phase 5B asset backpack, and Phase 5C insight drawer checkpoints complete.
 
 Goal: continue reducing office-like chrome and make the system feel like a refined sandplay studio.
 
@@ -163,6 +165,7 @@ Evidence:
 
 - Engine switch embedded in `TopBar` ambient HUD.
 - Asset backpack idle copy removed from the visible drawer, favorites live in the rail/card affordances, and toy card names/risk tags have fixed readable plates.
+- Right scene/AI drawer reduced to compact instrument metrics, a small selected-object strip, collapsed detail rows, and shorter AI companion quick prompts.
 - `npm run qa:ui-shell` passes 91/91 gates.
 - `npm run qa:stage-v2` passes 29/29 gates.
 

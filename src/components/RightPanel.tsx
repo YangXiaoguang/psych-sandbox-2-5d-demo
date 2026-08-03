@@ -101,8 +101,8 @@ export function RightPanel({
     <aside className="right-panel" aria-label="作品与 AI 伙伴面板">
       <div className="panel-header">
         <div>
-          <p className="eyebrow">{activeTab === "ai" ? "AI 伙伴" : "实时洞察"}</p>
-          <h1>{activeTab === "ai" ? "AI 伙伴" : "作品洞察"}</h1>
+          <p className="eyebrow">{activeTab === "ai" ? "COMPANION" : "LIVE MAP"}</p>
+          <h1>{activeTab === "ai" ? "AI 伙伴" : "洞察仪表"}</h1>
         </div>
         <button
           className="small-icon-button"
@@ -208,9 +208,9 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <Sparkles size={15} />
-            AI 观察材料
+            观察线索
           </span>
-          <em>{insight.observations.length} 条线索</em>
+          <em>{insight.observations.length} 条</em>
         </summary>
         <div className="insight-section-body">
           <AiObservationPanel insight={insight} />
@@ -221,7 +221,7 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <MousePointer2 size={15} />
-            选中沙具属性
+            沙具编辑
           </span>
           <em>{selectedObject?.name ?? "未选择"}</em>
         </summary>
@@ -236,9 +236,9 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <LayoutDashboard size={15} />
-            空间热力与风险
+            空间地图
           </span>
-          <em>{analysis.centerObjects.length} 个中心对象</em>
+          <em>中心 {analysis.centerObjects.length}</em>
         </summary>
         <div className="insight-section-body">
           <InsightHeatmapSummary analysis={analysis} />
@@ -256,7 +256,7 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <Clock3 size={15} />
-            最近事件
+            动作记录
           </span>
           <em>{events.length} 条</em>
         </summary>
@@ -276,7 +276,7 @@ function SceneInsightDrawer({
         <summary>
           <span>
             <Database size={15} />
-            LLM Snapshot
+            数据快照
           </span>
           <em>当前状态</em>
         </summary>
@@ -340,7 +340,7 @@ function SelectedObjectSnapshot({
         <div>
           <span className="eyebrow">当前选中</span>
           <strong>未选择沙具</strong>
-          <em>点选沙具后显示位置、风险与快捷操作。</em>
+          <em>点选后显示快捷编辑。</em>
         </div>
       </section>
     );
