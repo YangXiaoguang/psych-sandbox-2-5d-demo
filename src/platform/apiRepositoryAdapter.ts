@@ -1,5 +1,5 @@
 import { createApiClient } from "../api/client";
-import { API_ENDPOINT_CONTRACTS } from "../api/contracts";
+import { API_ENDPOINT_CONTRACTS, API_SERVICE_BOUNDARIES } from "../api/contracts";
 import { createMockApiAdapter } from "../api/mockApiAdapter";
 import type { AdminGovernanceData } from "../admin/types";
 import type { PersonalDataBundle } from "../personal/types";
@@ -140,6 +140,7 @@ function buildBackendReport({
   const clientDiagnostic = apiClient.diagnostic();
   const p0EndpointCount = API_ENDPOINT_CONTRACTS.filter((endpoint) => endpoint.migrationPriority === "p0").length;
   const writeEndpointCount = API_ENDPOINT_CONTRACTS.filter((endpoint) => endpoint.method !== "GET").length;
+  const backendRequiredBoundaryCount = API_SERVICE_BOUNDARIES.filter((boundary) => boundary.readiness === "backend_required").length;
 
   return {
     activeMode: mode,
@@ -151,6 +152,8 @@ function buildBackendReport({
     remoteReady: false,
     mockRoundTrip,
     p0EndpointCount,
+    serviceBoundaryCount: API_SERVICE_BOUNDARIES.length,
+    backendRequiredBoundaryCount,
     checks: [
       {
         label: "统一 API Client",
@@ -171,6 +174,11 @@ function buildBackendReport({
         label: "真实服务",
         status: mode === "remoteApi" ? "warn" : "ok",
         detail: mode === "remoteApi" ? `等待 ${baseUrl} 实现契约接口。` : "当前不发起网络请求，适合前端自测和视觉回归。",
+      },
+      {
+        label: "服务边界覆盖",
+        status: "ok",
+        detail: `${API_SERVICE_BOUNDARIES.length} 个服务边界已覆盖身份、用户、工作区、沙盘、记忆、资产、Agent、LLM 代理和后台任务。`,
       },
     ],
     nextSteps: [

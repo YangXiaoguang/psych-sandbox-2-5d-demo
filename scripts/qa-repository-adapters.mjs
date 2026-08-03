@@ -11,7 +11,7 @@ const BUNDLE_PATH = path.join(ARTIFACT_DIR, "repository-adapter-entry.mjs");
 const REPORT_PATH = path.join(ARTIFACT_DIR, "repository-adapter-report.json");
 const EXPECTED_API_VERSION = "2026-05-06.v1";
 const EXPECTED_MODES = ["localStorage", "mockApi", "remoteApi"];
-const EXPECTED_DOMAIN_KEYS = ["identity", "workspace", "access", "sandtray", "memory", "conversation", "asset", "llm"];
+const EXPECTED_DOMAIN_KEYS = ["identity", "workspace", "access", "sandtray", "memory", "conversation", "asset", "llm", "task"];
 
 const results = [];
 
@@ -155,9 +155,12 @@ function assertReportShape(report, expectation) {
   assert(`${expectation.mode} has migration steps`, Array.isArray(report.migrationSteps) && report.migrationSteps.length >= 5, String(report.migrationSteps?.length ?? 0));
   assert(`${expectation.mode} API contract version is stable`, report.apiContract.version === EXPECTED_API_VERSION, report.apiContract.version);
   assert(`${expectation.mode} API endpoints are present`, report.apiContract.endpoints.length >= 19, String(report.apiContract.endpoints.length));
+  assert(`${expectation.mode} API service boundaries are present`, report.apiContract.serviceBoundaries.length >= 10, String(report.apiContract.serviceBoundaries.length));
   assert(`${expectation.mode} API sample user page is valid`, report.apiContract.sampleUserPage.ok && report.apiContract.sampleUserPage.data.items.length >= 3);
   assert(`${expectation.mode} API sample asset page is valid`, report.apiContract.sampleAssetPage.ok && report.apiContract.sampleAssetPage.data.items.length >= 5);
   assert(`${expectation.mode} backend checks are present`, Array.isArray(report.backend.checks) && report.backend.checks.length >= 3, String(report.backend.checks?.length ?? 0));
+  assert(`${expectation.mode} backend service boundary count is aligned`, report.backend.serviceBoundaryCount === report.apiContract.serviceBoundaries.length, String(report.backend.serviceBoundaryCount));
+  assert(`${expectation.mode} backend-required boundary count is present`, report.backend.backendRequiredBoundaryCount >= 1, String(report.backend.backendRequiredBoundaryCount));
 
   const domainKeys = new Set(report.domains.map((domain) => domain.key));
   const missingDomains = EXPECTED_DOMAIN_KEYS.filter((key) => !domainKeys.has(key));

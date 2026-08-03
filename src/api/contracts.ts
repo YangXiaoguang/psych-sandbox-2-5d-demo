@@ -362,16 +362,51 @@ export interface TaskStatusDto {
   updatedAt: string;
 }
 
+export type ApiEndpointAuthRequirement = "required" | "admin" | "owner-or-admin";
+export type ApiMigrationPriority = "p0" | "p1" | "p2";
+export type ApiServiceBoundaryKey =
+  | "auth"
+  | "users"
+  | "workspaces"
+  | "access"
+  | "sandtraySessions"
+  | "memoryCandidates"
+  | "assets"
+  | "agents"
+  | "llmProxy"
+  | "tasks";
+export type ApiServiceBoundaryTier = "core" | "admin" | "ai" | "async";
+export type ApiDataClassification = "public_catalog" | "personal" | "sensitive" | "secret" | "derived";
+export type ApiServiceReadiness = "local_prototype" | "mock_contract" | "backend_required";
+
 export interface ApiEndpointContract {
   method: ApiHttpMethod;
   path: string;
   summary: string;
-  auth: "required" | "admin" | "owner-or-admin";
+  auth: ApiEndpointAuthRequirement;
   requestDto: string;
   responseDto: string;
   paginated: boolean;
   errors: ApiErrorCode[];
-  migrationPriority: "p0" | "p1" | "p2";
+  migrationPriority: ApiMigrationPriority;
+}
+
+export interface ApiServiceBoundary {
+  key: ApiServiceBoundaryKey;
+  label: string;
+  tier: ApiServiceBoundaryTier;
+  owner: string;
+  purpose: string;
+  currentImplementation: string;
+  futureBackend: string;
+  dataClassification: ApiDataClassification[];
+  auth: ApiEndpointAuthRequirement[];
+  readEndpoints: string[];
+  writeEndpoints: string[];
+  asyncTasks: CreateTaskRequestDto["taskType"][];
+  migrationPriority: ApiMigrationPriority;
+  readiness: ApiServiceReadiness;
+  notes: string[];
 }
 
 export interface ApiContractReport {
@@ -382,6 +417,7 @@ export interface ApiContractReport {
   pagination: ApiPaginationProtocol;
   errors: ApiErrorCatalogItem[];
   endpoints: ApiEndpointContract[];
+  serviceBoundaries: ApiServiceBoundary[];
   sampleUserPage: ApiPageResponseDto<UserDto>;
   sampleWorkspacePage: ApiPageResponseDto<WorkspaceDto>;
   sampleMemoryPage: ApiPageResponseDto<MemoryCandidateDto>;
@@ -717,5 +753,208 @@ export const API_ENDPOINT_CONTRACTS: ApiEndpointContract[] = [
     paginated: false,
     errors: ["AUTH_REQUIRED", "AUTH_FORBIDDEN", "TASK_ACCEPTED", "INTERNAL_ERROR"],
     migrationPriority: "p2",
+  },
+];
+
+export const API_SERVICE_BOUNDARIES: ApiServiceBoundary[] = [
+  {
+    key: "auth",
+    label: "认证与会话",
+    tier: "core",
+    owner: "Identity Service",
+    purpose: "负责注册、登录、会话上下文和前端请求身份边界。",
+    currentImplementation: "PersonalDataBundle + local demo auth context",
+    futureBackend: "Auth Service / session cookie or bearer token",
+    dataClassification: ["personal", "sensitive"],
+    auth: ["required"],
+    readEndpoints: [],
+    writeEndpoints: ["POST /api/auth/register", "POST /api/auth/login"],
+    asyncTasks: [],
+    migrationPriority: "p0",
+    readiness: "backend_required",
+    notes: [
+      "生产环境不得把密码或 session secret 保存在浏览器 localStorage。",
+      "前端只消费 ApiAuthContextDto，不直接解析服务端令牌内容。",
+    ],
+  },
+  {
+    key: "users",
+    label: "用户目录与画像",
+    tier: "admin",
+    owner: "User Service",
+    purpose: "支撑万级用户查询、画像编辑、状态治理和后台用户检索。",
+    currentImplementation: "personal-memory-os.accounts / profiles",
+    futureBackend: "users / user_profiles / user_status tables",
+    dataClassification: ["personal", "sensitive"],
+    auth: ["admin"],
+    readEndpoints: ["GET /api/admin/users"],
+    writeEndpoints: ["PATCH /api/admin/users/:userId"],
+    asyncTasks: [],
+    migrationPriority: "p0",
+    readiness: "mock_contract",
+    notes: [
+      "列表必须服务端分页、筛选和排序，避免把万级用户一次性下发到浏览器。",
+      "详情编辑建议走抽屉或独立详情页，列表只保留查看、编辑、权限和删除/归档动作。",
+    ],
+  },
+  {
+    key: "workspaces",
+    label: "工作区与归属",
+    tier: "core",
+    owner: "Workspace Service",
+    purpose: "维护个人沙盘工作区、作品归属和后续团队/机构扩展边界。",
+    currentImplementation: "personal-memory-os.workspaces",
+    futureBackend: "workspaces / workspace_members / workspace_settings tables",
+    dataClassification: ["personal"],
+    auth: ["required", "owner-or-admin"],
+    readEndpoints: ["GET /api/workspaces"],
+    writeEndpoints: [],
+    asyncTasks: [],
+    migrationPriority: "p0",
+    readiness: "mock_contract",
+    notes: [
+      "所有沙盘档案、记忆候选和 Agent 会话都应归属于 userId + workspaceId。",
+      "后端迁移时要保留 own/all workspace scope 语义。",
+    ],
+  },
+  {
+    key: "access",
+    label: "权限与审计",
+    tier: "admin",
+    owner: "Access Control Service",
+    purpose: "维护后台角色、工作区访问范围、拒绝权限和审计复核。",
+    currentImplementation: "AdminGovernanceData.accessPolicies",
+    futureBackend: "access_policies / admin_audit_logs tables",
+    dataClassification: ["sensitive"],
+    auth: ["admin"],
+    readEndpoints: ["GET /api/admin/access-policies"],
+    writeEndpoints: ["PATCH /api/admin/access-policies/:userId"],
+    asyncTasks: [],
+    migrationPriority: "p0",
+    readiness: "mock_contract",
+    notes: [
+      "权限计算必须服务端执行，前端展示的 effectivePermissions 只用于 UI 控制。",
+      "所有权限变更都需要写入审计日志。",
+    ],
+  },
+  {
+    key: "sandtraySessions",
+    label: "沙盘会话与快照",
+    tier: "core",
+    owner: "Sandtray Service",
+    purpose: "保存当前草稿、历史作品、环境状态、事件流和可回放快照。",
+    currentImplementation: "scene storage + personal-memory-os.sandtraySessions",
+    futureBackend: "sandtray_sessions / sandtray_snapshots / sandbox_objects / sandbox_events tables",
+    dataClassification: ["personal", "sensitive", "derived"],
+    auth: ["owner-or-admin"],
+    readEndpoints: ["GET /api/sandtray/sessions"],
+    writeEndpoints: ["POST /api/sandtray/sessions/:sessionId/snapshots"],
+    asyncTasks: ["archive_export", "archive_import"],
+    migrationPriority: "p0",
+    readiness: "mock_contract",
+    notes: [
+      "当前 LLM Snapshot 只读取当前状态；完整事件流只进入沙盘档案，不默认进入 LLM。",
+      "Stage v2 交互仍以 SandboxObject 为源，后端只保存可回放状态。",
+    ],
+  },
+  {
+    key: "memoryCandidates",
+    label: "记忆候选与 Context Packet",
+    tier: "ai",
+    owner: "Memory Service",
+    purpose: "管理个人记忆候选、确认状态、阻断规则和未来 AI 可用上下文。",
+    currentImplementation: "personal-memory-os.memoryCandidates / blockRules",
+    futureBackend: "memory_candidates / memory_block_rules / context_packets tables",
+    dataClassification: ["personal", "sensitive", "derived"],
+    auth: ["owner-or-admin"],
+    readEndpoints: ["GET /api/memory/candidates"],
+    writeEndpoints: ["PATCH /api/memory/candidates/:memoryId"],
+    asyncTasks: ["memory_rebuild"],
+    migrationPriority: "p1",
+    readiness: "mock_contract",
+    notes: [
+      "Context Packet 必须独立授权、可预览、可撤销，不能混入 CurrentSandboxSnapshot。",
+      "记忆候选来源必须能追溯到 sessionId 或用户确认记录。",
+    ],
+  },
+  {
+    key: "assets",
+    label: "沙具资产目录",
+    tier: "admin",
+    owner: "Asset Service",
+    purpose: "支撑 300+ 沙具的搜索、批量管理、健康检查和模型配方维护。",
+    currentImplementation: "managed-assets local catalog",
+    futureBackend: "assets / asset_versions / asset_tags / asset_health_checks tables",
+    dataClassification: ["public_catalog", "derived"],
+    auth: ["required", "admin"],
+    readEndpoints: ["GET /api/assets"],
+    writeEndpoints: ["POST /api/assets"],
+    asyncTasks: ["asset_bulk_update"],
+    migrationPriority: "p1",
+    readiness: "mock_contract",
+    notes: [
+      "资产列表以服务端分页为主，详情编辑走抽屉，批量操作固定在工具栏。",
+      "沙盘中已放置对象应保留实例字段，避免资产隐藏后破坏历史作品。",
+    ],
+  },
+  {
+    key: "agents",
+    label: "Agent 角色配置",
+    tier: "ai",
+    owner: "Agent Configuration Service",
+    purpose: "维护心理学取向 Agent 资料、系统提示词、开场白和 LLM 绑定。",
+    currentImplementation: "psych-agents local config",
+    futureBackend: "psych_agents / agent_versions / agent_prompt_audits tables",
+    dataClassification: ["public_catalog", "sensitive"],
+    auth: ["admin"],
+    readEndpoints: ["GET /api/admin/agents"],
+    writeEndpoints: ["POST /api/admin/agents"],
+    asyncTasks: [],
+    migrationPriority: "p1",
+    readiness: "mock_contract",
+    notes: [
+      "Agent 应表述为理论取向角色，不声称真实人物本人。",
+      "系统提示词更新需要版本化，方便回滚和审计。",
+    ],
+  },
+  {
+    key: "llmProxy",
+    label: "LLM 配置与代理",
+    tier: "ai",
+    owner: "LLM Proxy Service",
+    purpose: "托管模型供应商配置、密钥、连接测试和真实流式调用。",
+    currentImplementation: "llm-providers local config + browser direct call fallback",
+    futureBackend: "llm_providers / llm_provider_secrets / llm_call_logs + streaming proxy",
+    dataClassification: ["secret", "sensitive", "derived"],
+    auth: ["admin", "owner-or-admin"],
+    readEndpoints: ["GET /api/admin/llm-providers"],
+    writeEndpoints: ["PATCH /api/admin/llm-providers/:providerId", "POST /api/llm/current-sandbox-snapshot"],
+    asyncTasks: ["llm_connection_test"],
+    migrationPriority: "p1",
+    readiness: "backend_required",
+    notes: [
+      "生产环境必须由后端托管 API Key，前端只拿到 key 是否已配置和遮罩预览。",
+      "LLM 输入必须通过 createSandboxSnapshotChatMessages，默认只包含 Snapshot 与 Insight。",
+    ],
+  },
+  {
+    key: "tasks",
+    label: "后台任务",
+    tier: "async",
+    owner: "Task Service",
+    purpose: "承接导入、导出、批量资产、记忆重建和 LLM 连接测试等长任务。",
+    currentImplementation: "前端同步操作或本地即时模拟",
+    futureBackend: "tasks / task_events / task_results tables + worker queue",
+    dataClassification: ["personal", "sensitive", "derived"],
+    auth: ["admin"],
+    readEndpoints: [],
+    writeEndpoints: ["POST /api/tasks"],
+    asyncTasks: ["archive_export", "archive_import", "asset_bulk_update", "memory_rebuild", "llm_connection_test"],
+    migrationPriority: "p2",
+    readiness: "backend_required",
+    notes: [
+      "长任务入口必须使用 idempotencyKey，避免重复提交导入或批量更新。",
+      "前端后续应通过 taskId 轮询或订阅任务状态。",
+    ],
   },
 ];

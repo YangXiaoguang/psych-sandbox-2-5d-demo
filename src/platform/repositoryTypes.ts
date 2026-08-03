@@ -22,7 +22,8 @@ export type RepositoryDomainKey =
   | "memory"
   | "conversation"
   | "asset"
-  | "llm";
+  | "llm"
+  | "task";
 
 export interface StoredSceneState {
   objects: SandboxObject[];
@@ -86,6 +87,8 @@ export interface BackendAdapterReport {
   remoteReady: boolean;
   mockRoundTrip: boolean;
   p0EndpointCount: number;
+  serviceBoundaryCount: number;
+  backendRequiredBoundaryCount: number;
   checks: BackendAdapterCheck[];
   nextSteps: string[];
 }

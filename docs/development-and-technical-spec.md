@@ -952,7 +952,7 @@ npm run qa:repository
 检查重点：
 
 - 三种 Repository 模式都可以生成架构报告。
-- 每份报告都覆盖身份、工作区、权限、沙盘、记忆、会话、资产和 LLM 迁移域。
+- 每份报告都覆盖身份、工作区、权限、沙盘、记忆、会话、资产、LLM 和后台任务迁移域。
 - `mockApi` 可生成 DTO 分页样例与当前沙盘 Snapshot 样例。
 - `remoteApi` 必须保持占位诊断：`transport=http`、`remoteReady=false`，避免误认为已经接入真实服务。
 - 报告不得包含明文 API Key 或密码字段。
@@ -988,7 +988,8 @@ npm run api:contract
 说明：
 
 - 导出报告由真实 DTO 常量和 `FrontendMockApiAdapter.v1` 生成，不单独手写维护。
-- 报告包含端点清单、分页协议、错误码、认证上下文、分页样例、沙具资产样例、LLM 配置摘要和当前沙盘 Snapshot 样例。
+- 报告包含端点清单、服务边界、分页协议、错误码、认证上下文、分页样例、沙具资产样例、LLM 配置摘要和当前沙盘 Snapshot 样例。
+- 服务边界由 `API_SERVICE_BOUNDARIES` 统一维护，用于明确 Auth、Users、Workspaces、Access、Sandtray、Memory、Assets、Agents、LLM Proxy 和 Tasks 的后端归属。
 - LLM provider 只输出 `apiKeyConfigured` 与 `apiKeyPreview`，不得输出明文 API Key。
 - `artifacts/` 为本地生成物，不提交到 Git；需要交接时由开发人员重新运行命令生成。
 

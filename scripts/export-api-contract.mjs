@@ -34,6 +34,19 @@ const REQUIRED_ENDPOINTS = [
   "POST /api/tasks",
 ];
 
+const REQUIRED_SERVICE_BOUNDARIES = [
+  "auth",
+  "users",
+  "workspaces",
+  "access",
+  "sandtraySessions",
+  "memoryCandidates",
+  "assets",
+  "agents",
+  "llmProxy",
+  "tasks",
+];
+
 const results = [];
 
 try {
@@ -123,6 +136,7 @@ async function assertStaticContractFiles() {
   assert("Contracts declare stable version", contracts.includes(`API_CONTRACT_VERSION = "${EXPECTED_VERSION}"`));
   assert("Contracts expose endpoint catalog", contracts.includes("API_ENDPOINT_CONTRACTS"));
   assert("Contracts expose error catalog", contracts.includes("API_ERROR_CATALOG"));
+  assert("Contracts expose service boundary catalog", contracts.includes("API_SERVICE_BOUNDARIES"));
   assert("Mock adapter exposes report builder", adapter.includes("buildMockApiContractReport"));
   assert("Mock adapter masks LLM provider keys", adapter.includes("apiKeyPreview: maskApiKey(provider.apiKey)"));
   assert("API client keeps typed response shape", client.includes("ApiResponseDto"));
@@ -153,6 +167,25 @@ function assertContractReport(report) {
     assert(`Endpoint ${key} has migration priority`, ["p0", "p1", "p2"].includes(endpoint.migrationPriority), endpoint.migrationPriority);
     assert(`Endpoint ${key} has valid error references`, endpoint.errors.every((code) => errorCodes.has(code)), endpoint.errors.join(", "));
   });
+
+  const boundaryKeys = new Set(report.serviceBoundaries?.map((boundary) => boundary.key));
+  assert("Service boundary catalog contains unique keys", boundaryKeys.size === report.serviceBoundaries?.length, JSON.stringify(report.serviceBoundaries));
+  const missingBoundaries = REQUIRED_SERVICE_BOUNDARIES.filter((key) => !boundaryKeys.has(key));
+  assert("Service boundary catalog covers required backend domains", missingBoundaries.length === 0, missingBoundaries.join(", "));
+  report.serviceBoundaries.forEach((boundary) => {
+    assert(`Boundary ${boundary.key} has owner and purpose`, Boolean(boundary.owner) && Boolean(boundary.purpose));
+    assert(`Boundary ${boundary.key} has backend target`, Boolean(boundary.futureBackend));
+    assert(`Boundary ${boundary.key} has data classification`, Array.isArray(boundary.dataClassification) && boundary.dataClassification.length > 0);
+    assert(`Boundary ${boundary.key} has migration priority`, ["p0", "p1", "p2"].includes(boundary.migrationPriority), boundary.migrationPriority);
+    [...boundary.readEndpoints, ...boundary.writeEndpoints].forEach((endpointKey) => {
+      assert(`Boundary ${boundary.key} references existing endpoint ${endpointKey}`, endpointKeys.has(endpointKey), endpointKey);
+    });
+  });
+  const coveredEndpointKeys = new Set(report.serviceBoundaries.flatMap((boundary) => [...boundary.readEndpoints, ...boundary.writeEndpoints]));
+  const uncoveredEndpoints = [...endpointKeys].filter((key) => !coveredEndpointKeys.has(key));
+  assert("Every endpoint is owned by a service boundary", uncoveredEndpoints.length === 0, uncoveredEndpoints.join(", "));
+  assert("LLM proxy boundary marks secret data", report.serviceBoundaries.some((boundary) => boundary.key === "llmProxy" && boundary.dataClassification.includes("secret")));
+  assert("Tasks boundary captures async task types", report.serviceBoundaries.some((boundary) => boundary.key === "tasks" && boundary.asyncTasks.length >= 5));
 
   assertPage("sampleUserPage", report.sampleUserPage);
   assertPage("sampleWorkspacePage", report.sampleWorkspacePage);
@@ -197,12 +230,15 @@ function buildSummaryMarkdown(report) {
   const p0 = report.endpoints.filter((endpoint) => endpoint.migrationPriority === "p0").length;
   const p1 = report.endpoints.filter((endpoint) => endpoint.migrationPriority === "p1").length;
   const p2 = report.endpoints.filter((endpoint) => endpoint.migrationPriority === "p2").length;
+  const backendRequired = report.serviceBoundaries.filter((boundary) => boundary.readiness === "backend_required").length;
   return `# API Contract Export
 
 - Version: ${report.version}
 - Adapter: ${report.adapterName}
 - Generated At: ${report.generatedAt}
 - Endpoint Count: ${report.endpoints.length}
+- Service Boundaries: ${report.serviceBoundaries.length}
+- Backend Required Boundaries: ${backendRequired}
 - Migration Priority: P0 ${p0} / P1 ${p1} / P2 ${p2}
 - Error Codes: ${report.errors.length}
 - Sample Users: ${report.sampleUserPage.data.page.total}

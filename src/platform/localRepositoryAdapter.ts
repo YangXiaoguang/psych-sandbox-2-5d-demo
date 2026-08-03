@@ -4,7 +4,7 @@ import {
   saveAdminGovernance,
 } from "../admin/localAdminGovernance";
 import type { AdminGovernanceData } from "../admin/types";
-import { API_ENDPOINT_CONTRACTS } from "../api/contracts";
+import { API_ENDPOINT_CONTRACTS, API_SERVICE_BOUNDARIES } from "../api/contracts";
 import { buildMockApiContractReport } from "../api/mockApiAdapter";
 import {
   loadPersonalData,
@@ -103,6 +103,15 @@ const LOCAL_REPOSITORY_DOMAINS: RepositoryDomainDefinition[] = [
     readModel: "供应商配置、Agent 角色、调用状态",
     writeModel: "密钥配置、模型默认值、Agent 草拟",
     migrationRisk: "risk",
+  },
+  {
+    key: "task",
+    label: "后台任务队列",
+    currentStore: "frontend sync actions / local mock status",
+    futureApi: "POST /api/tasks",
+    readModel: "任务状态、进度、错误原因和结果引用",
+    writeModel: "导入导出、批量资产、记忆重建、LLM 连接测试",
+    migrationRisk: "warn",
   },
 ];
 
@@ -210,6 +219,7 @@ function buildLocalBackendReport(
   adminGovernance: AdminGovernanceData,
 ): BackendAdapterReport {
   const p0EndpointCount = API_ENDPOINT_CONTRACTS.filter((endpoint) => endpoint.migrationPriority === "p0").length;
+  const backendRequiredBoundaryCount = API_SERVICE_BOUNDARIES.filter((boundary) => boundary.readiness === "backend_required").length;
   return {
     activeMode: "localStorage",
     modeLabel: "本地 LocalStorage",
@@ -220,6 +230,8 @@ function buildLocalBackendReport(
     remoteReady: false,
     mockRoundTrip: false,
     p0EndpointCount,
+    serviceBoundaryCount: API_SERVICE_BOUNDARIES.length,
+    backendRequiredBoundaryCount,
     checks: [
       {
         label: "本地数据边界",
@@ -235,6 +247,11 @@ function buildLocalBackendReport(
         label: "远程服务",
         status: "warn",
         detail: "尚未启用 HTTP Adapter；当前模式用于稳定本地原型。",
+      },
+      {
+        label: "服务边界契约",
+        status: "ok",
+        detail: `${API_SERVICE_BOUNDARIES.length} 个服务边界已映射到 API 契约，其中 ${backendRequiredBoundaryCount} 个必须由真实后端接管。`,
       },
     ],
     nextSteps: [
