@@ -9,14 +9,12 @@ import type {
   SandboxObject,
 } from "../types";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
+import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
 import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
-import {
-  buildCurrentSnapshotBrief,
-  createSandboxSnapshotChatMessages,
-  SANDBOX_DIALOGUE_SAFETY_NOTICE,
-} from "../llm/sandboxPromptContext";
+import { createSandboxSnapshotChatMessages, SANDBOX_DIALOGUE_SAFETY_NOTICE } from "../llm/sandboxPromptContext";
 import { createId } from "../utils/id";
 import { AgentPortrait } from "./AgentPortrait";
 import { MarkdownText } from "./MarkdownText";
@@ -64,7 +62,11 @@ export function AgentChatView({
       }),
     [environment, objects],
   );
-  const sceneSummary = useMemo(() => buildCurrentSnapshotBrief(sceneSnapshotPayload.snapshot), [sceneSnapshotPayload]);
+  const sceneInsight = useMemo(
+    () => buildCurrentSandboxInsight(sceneSnapshotPayload.snapshot),
+    [sceneSnapshotPayload],
+  );
+  const sceneSummary = sceneInsight.brief;
 
   useEffect(() => {
     if (!activeAgent && enabledAgents[0]) {
@@ -156,6 +158,7 @@ export function AgentChatView({
       conversation.messages,
       text,
       sceneSnapshotPayload.snapshot,
+      sceneInsight,
       sceneSummary,
     );
 
@@ -202,7 +205,7 @@ export function AgentChatView({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const fallback = createAgentReply(agent, text, sceneSummary);
+      const fallback = createAgentReply(agent, text, sceneSummary, sceneInsight);
       setStreamStatus(`真实 LLM 不可用，已回退本地模拟：${message}`);
       streamLocalFallback(targetConversationId, assistantMessage.id, fallback);
       return;
@@ -244,7 +247,7 @@ export function AgentChatView({
   };
 
   const insertSceneSummary = () => {
-    appendDraft(`请只结合当前沙盘 snapshot 摘要继续和我探索：${sceneSummary}`);
+    appendDraft(`请只结合当前沙盘 AI 观察材料继续和我探索：${sceneSummary}`);
   };
 
   const continueWithQuestion = () => {
@@ -389,6 +392,7 @@ function buildAgentMessages(
   history: AgentMessage[],
   userInput: string,
   sceneSnapshot: CurrentSandboxSnapshot,
+  sceneInsight: CurrentSandboxInsight,
   sceneSummary: string,
 ): LlmChatMessage[] {
   const historyMessages: LlmChatMessage[] = history
@@ -406,9 +410,13 @@ function buildAgentMessages(
       "回答风格：中文，温暖、简洁、开放式提问优先。每次回复先回应用户，再提出一个可继续探索的问题。",
     ],
     snapshot: sceneSnapshot,
+    insight: sceneInsight,
     history: historyMessages,
     historyLimit: 12,
     summaryText: sceneSummary,
+    extraRules: [
+      "回复时优先引用 CurrentSandboxInsight.brief、observations、themeCandidates 和 suggestedQuestions；只有用户明确询问对象清单时，才逐项列出沙具。",
+    ],
     userInput,
   });
 }
@@ -417,22 +425,30 @@ function createAgentReply(
   agent: PsychAgentProfile,
   input: string,
   sceneSummary: string,
+  sceneInsight?: CurrentSandboxInsight,
 ): string {
   const isDreamLike = /梦|象征|意象|画面/.test(input) || agent.avatarStyle === "dream";
   const isProcess = /过程|刚才|顺序|回顾/.test(input);
   const isFeeling = /感受|情绪|难受|害怕|开心|压力/.test(input);
+  const leadingQuestion =
+    sceneInsight?.suggestedQuestions[0]?.text ?? "看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？";
+  const themeText = sceneInsight?.themeCandidates
+    .slice(0, 3)
+    .map((theme) => theme.theme)
+    .join("、");
+  const themeSentence = themeText ? `我会把“${themeText}”先当作可以询问的词，而不是结论。` : "";
 
   if (isDreamLike) {
-    return `我会先把它当作一个意象来陪你看，而不是急着解释。${sceneSummary} 如果这个画面像一场梦，你觉得最有生命力的部分在哪里？也许我们可以从那里开始，看看它想靠近什么，或正在守护什么。`;
+    return `我会先把它当作一个意象来陪你看，而不是急着解释。${sceneSummary} ${themeSentence} 如果这个画面像一场梦，你觉得最有生命力的部分在哪里？`;
   }
 
   if (isProcess) {
-    return `第一版我先不读取事件流，只看此刻的沙盘状态。${sceneSummary} 如果你想聊“过程”，我们可以从当前画面里最像转折点的位置开始。哪一个沙具或区域让你觉得气氛发生了变化？`;
+    return `第一版我先不读取事件流，只看此刻的沙盘状态。${sceneSummary} 如果你想聊“过程”，我们可以先从当前画面里最像转折点的位置开始。${leadingQuestion}`;
   }
 
   if (isFeeling) {
-    return `谢谢你把感受带进来。${agent.name} 会先陪你停一下：这种感受更像靠近、躲开、紧绷，还是松了一点？${sceneSummary} 你也可以只选一个沙具，让它替你说一小句话。`;
+    return `谢谢你把感受带进来。${agent.name} 会先陪你停一下：这种感受更像靠近、躲开、紧绷，还是松了一点？${sceneSummary} ${leadingQuestion}`;
   }
 
-  return `我听见了。以${agent.school}的方式，我们可以先保持开放，不把沙具固定成某个含义。${sceneSummary} 如果你愿意，下一步可以说说：这里哪个位置最吸引你，哪个位置又让你有一点距离感？`;
+  return `我听见了。以${agent.school}的方式，我们可以先保持开放，不把沙具固定成某个含义。${sceneSummary} ${themeSentence} ${leadingQuestion}`;
 }

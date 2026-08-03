@@ -178,6 +178,7 @@ async function assertStaticContractFiles() {
   assert("Prompt context serializes current snapshot", promptContext.includes("CurrentSandboxSnapshot JSON"));
   assert("Prompt context serializes derived insight", promptContext.includes("CurrentSandboxInsight JSON"));
   assert("Prompt context provides shared summary helper", promptContext.includes("buildCurrentSnapshotBrief"));
+  assert("Prompt context can reuse precomputed insight", promptContext.includes("insight?: CurrentSandboxInsight"));
 
   assert("Insight module declares schema", insightFile.includes("CURRENT_SANDBOX_INSIGHT_SCHEMA"));
   assert("Insight module exposes deterministic builder", insightFile.includes("buildCurrentSandboxInsight"));
@@ -189,10 +190,11 @@ async function assertStaticContractFiles() {
   assert("Right panel renders derived insight material", rightPanel.includes("buildCurrentSandboxInsight") && rightPanel.includes("AI 观察材料"));
   assert("AI companion uses API payload helper", aiCompanionPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("AI companion uses centralized snapshot prompt context", aiCompanionPanel.includes("createSandboxSnapshotChatMessages"));
+  assert("AI companion passes derived insight into prompt context", aiCompanionPanel.includes("buildCurrentSandboxInsight") && aiCompanionPanel.includes("insight: context.insight"));
   assert("AI companion does not inline snapshot policy prompt", !aiCompanionPanel.includes("CurrentSandboxSnapshotPolicy JSON"));
   assert("Agent chat uses API payload helper", agentChatView.includes("createCurrentSandboxSnapshotPayload"));
   assert("Agent chat uses centralized snapshot prompt context", agentChatView.includes("createSandboxSnapshotChatMessages"));
-  assert("Agent chat uses centralized snapshot brief", agentChatView.includes("buildCurrentSnapshotBrief"));
+  assert("Agent chat uses derived insight brief", agentChatView.includes("buildCurrentSandboxInsight") && agentChatView.includes("sceneInsight.brief"));
   assert("Agent chat does not inline snapshot policy prompt", !agentChatView.includes("CurrentSandboxSnapshotPolicy JSON"));
 
   assert("Doc states only current status is output", doc.includes("当前沙盘这一刻的完整状态"));

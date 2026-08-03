@@ -1,5 +1,6 @@
 import type { CurrentSandboxSnapshot } from "./currentSandboxSnapshot";
 import { buildCurrentInsightBrief, buildCurrentSandboxInsight } from "./currentSandboxInsight";
+import type { CurrentSandboxInsight } from "./currentSandboxInsight";
 import type { LlmChatMessage } from "./streamText";
 
 export const CURRENT_SNAPSHOT_ALLOWED_CONTEXT_NOTICE =
@@ -11,6 +12,7 @@ export const SANDBOX_DIALOGUE_SAFETY_NOTICE =
 interface SandboxSnapshotChatMessageInput {
   systemInstructions: string[];
   snapshot: CurrentSandboxSnapshot;
+  insight?: CurrentSandboxInsight;
   userInput: string;
   history?: LlmChatMessage[];
   historyLimit?: number;
@@ -21,6 +23,7 @@ interface SandboxSnapshotChatMessageInput {
 export function createSandboxSnapshotChatMessages({
   systemInstructions,
   snapshot,
+  insight,
   userInput,
   history = [],
   historyLimit = 10,
@@ -29,7 +32,7 @@ export function createSandboxSnapshotChatMessages({
 }: SandboxSnapshotChatMessageInput): LlmChatMessage[] {
   const system = [
     ...systemInstructions.map((line) => line.trim()).filter(Boolean),
-    buildCurrentSnapshotPromptBlock({ snapshot, summaryText, extraRules }),
+    buildCurrentSnapshotPromptBlock({ snapshot, insight, summaryText, extraRules }),
   ].join("\n\n");
 
   return [
@@ -41,14 +44,16 @@ export function createSandboxSnapshotChatMessages({
 
 export function buildCurrentSnapshotPromptBlock({
   snapshot,
+  insight: providedInsight,
   summaryText,
   extraRules = [],
 }: {
   snapshot: CurrentSandboxSnapshot;
+  insight?: CurrentSandboxInsight;
   summaryText?: string;
   extraRules?: string[];
 }): string {
-  const insight = buildCurrentSandboxInsight(snapshot);
+  const insight = providedInsight ?? buildCurrentSandboxInsight(snapshot);
   return [
     CURRENT_SNAPSHOT_ALLOWED_CONTEXT_NOTICE,
     summaryText ? `当前沙盘摘要：${summaryText}` : null,

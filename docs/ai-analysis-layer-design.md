@@ -146,7 +146,7 @@ LLM 不可以假设：
 |---|---|
 | Phase A | 已完成：基于当前 snapshot 派生 `CurrentSandboxInsight`。 |
 | Phase B | 已完成：在右侧洞察面板增加“AI 观察材料”折叠区，展示可解释的观察与问题。 |
-| Phase C | 让 Agent 对话引用 insight brief，减少直接读取长对象列表。 |
+| Phase C | 已完成：Agent 对话与沙盘 AI 伙伴优先引用 insight brief、观察线索和建议问题，减少默认对象列表复述。 |
 | Phase D | 后端化后，将 Snapshot 和 Insight 作为可版本化 DTO 保存。 |
 | Phase E | 如确实需要图像识别，再把截图识别作为补充校验，而不是主数据源。 |
 

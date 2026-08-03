@@ -1,6 +1,8 @@
 import { HeartHandshake, Send, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
+import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
 import type { LlmProviderConfig, SandboxEnvironment, SandboxObject } from "../types";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
@@ -37,6 +39,7 @@ interface CompanionContext {
   chips: string[];
   activeCells: string[];
   snapshot: CurrentSandboxSnapshot;
+  insight: CurrentSandboxInsight;
   selectedName: string | null;
   objectNames: string[];
   centerObjectNames: string[];
@@ -341,13 +344,21 @@ function buildContextSummary({
   const activeCells = snapshot.analysis.zoneCounts
     .filter((cell) => cell.count > 0)
     .map((cell) => `${cell.label}${cell.count}`);
+  const insight = buildCurrentSandboxInsight(snapshot);
   const objectNames = snapshot.objects.map((object) => object.name);
   const centerObjectNames = snapshot.objects
     .filter((object) => object.position.inCenter)
     .map((object) => object.name);
+  const themeText =
+    insight.themeCandidates
+      .slice(0, 3)
+      .map((theme) => theme.theme)
+      .join("、") || "主题待浮现";
+  const observationText = insight.observations.find((observation) => observation.kind !== "environment")?.title ?? "等待更多摆放线索";
   const chips = [
     selectedObject ? `正在引用: ${selectedObject.name}` : "未选中沙具",
-    objects.length > 0 ? `对象: ${objectNames.slice(0, 4).join("、")}` : "空沙盘",
+    objects.length > 0 ? `观察: ${observationText}` : "空沙盘",
+    `主题候选: ${themeText}`,
     activeCells.length > 0 ? `区域: ${activeCells.slice(0, 3).join(" / ")}` : "区域未形成集中",
     `环境: ${snapshot.environment.weatherLabel} · ${snapshot.environment.lightLabel}`,
   ];
@@ -356,6 +367,7 @@ function buildContextSummary({
     chips,
     activeCells,
     snapshot,
+    insight,
     objectNames,
     selectedName: selectedObject?.name ?? null,
     centerObjectNames,
@@ -380,20 +392,19 @@ function buildCompanionMessages(
       SANDBOX_DIALOGUE_SAFETY_NOTICE,
     ],
     snapshot: context.snapshot,
+    insight: context.insight,
     history: historyMessages,
     historyLimit: 8,
+    summaryText: context.insight.brief,
+    extraRules: [
+      "优先基于 CurrentSandboxInsight.brief 和 suggestedQuestions 进行回应；避免默认复述完整沙具列表，除非用户明确要求。",
+    ],
     userInput: prompt,
   });
 }
 
 function contextToText(context: CompanionContext): string {
-  const regionText = context.activeCells.length > 0 ? context.activeCells.join("、") : "暂无明显区域集中";
-  const objectText =
-    context.objectNames.length > 0 ? context.objectNames.slice(0, 10).join("、") : "当前没有沙具";
-  const centerText =
-    context.centerObjectNames.length > 0 ? context.centerObjectNames.join("、") : "中心区域暂时没有明显对象";
-  const environmentText = `${context.snapshot.environment.weatherLabel} · ${context.snapshot.environment.lightLabel}`;
-  return `对象：${objectText}。区域：${regionText}。中心：${centerText}。环境：${environmentText}。`;
+  return context.insight.brief;
 }
 
 function createCompanionReply(prompt: string, context: CompanionContext): string {
@@ -404,17 +415,25 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
   const centerText =
     context.centerObjectNames.length > 0 ? context.centerObjectNames.join("、") : "中心区域暂时没有明显对象";
   const environmentText = `${context.snapshot.environment.weatherLabel} · ${context.snapshot.environment.lightLabel}`;
+  const insightBrief = context.insight.brief;
+  const leadingQuestion =
+    context.insight.suggestedQuestions[0]?.text ?? "看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？";
+  const themeText =
+    context.insight.themeCandidates
+      .slice(0, 3)
+      .map((theme) => theme.theme)
+      .join("、") || "还没有明显主题候选";
 
   if (normalized.includes("不要分析") || normalized.includes("陪我聊")) {
     return "好，我们先不急着解释。你可以只说一个很小的感觉，比如这个沙盘让你更靠近、想躲开，还是只是有点说不清。我会跟着你的节奏来。";
   }
 
   if (normalized.includes("过程") || normalized.includes("回顾")) {
-    return `第一版里我先只看当前沙盘状态，不展开事件流。现在能看到的结构是：${contextToText(context)} 如果你愿意，我们可以从此刻最有感觉的位置开始，而不是先回溯过程。`;
+    return `第一版里我先只看当前沙盘状态，不展开事件流。现在能看到的观察材料是：${contextToText(context)} 如果你愿意，我们可以从此刻最有感觉的位置开始，而不是先回溯过程。`;
   }
 
   if (normalized.includes("中心") || normalized.includes("区域") || normalized.includes("位置")) {
-    return `我看到当前区域线索是：${regionText}；中心附近主要有：${centerText}。我们可以先不解释它们，只观察这些位置带来的感觉：中心像是稳定、被看见，还是有一点压力？`;
+    return `我看到当前区域线索是：${regionText}；中心附近主要有：${centerText}。${insightBrief} 我们可以先不解释它们，只观察这些位置带来的感觉：中心像是稳定、被看见，还是有一点压力？`;
   }
 
   if (normalized.includes("对象") || normalized.includes("列表") || normalized.includes("有什么")) {
@@ -422,14 +441,14 @@ function createCompanionReply(prompt: string, context: CompanionContext): string
   }
 
   if (normalized.includes("整理") || normalized.includes("文字") || normalized.includes("总结")) {
-    return `我整理一版中性草稿：当前作品处于${environmentText}环境，包含${objectText}，沙具分布主要出现在${regionText}，中心附近有${centerText}。这些位置和对象可以作为继续讨论的线索，但不代表固定含义。你可以在这个基础上补充：哪些沙具让你感觉亲近，哪些让你感觉有距离。`;
+    return `我整理一版中性草稿：当前作品处于${environmentText}环境。${insightBrief} 可暂时作为主题候选的词有：${themeText}。这些词只是继续讨论的线索，不代表固定含义。你可以在这个基础上补充：哪些沙具让你感觉亲近，哪些让你感觉有距离。`;
   }
 
   if (normalized.includes("选中") || normalized.includes("沙具")) {
     return context.selectedName
-      ? `正在引用：${context.selectedName}。我们可以先不判断它象征什么，只看看它在这里像是在靠近谁、保护谁，或和谁保持距离。你放下它的时候，身体里比较明显的感觉是什么？`
+      ? `正在引用：${context.selectedName}。我们可以先不判断它象征什么，只看看它在这里像是在靠近谁、保护谁，或和谁保持距离。${leadingQuestion}`
       : "现在还没有选中具体沙具。你可以点一下画布里的某个沙具，我会把它作为当前话题；也可以直接告诉我你最在意哪一个。";
   }
 
-  return `我在这里。当前作品的一个温和线索是：${regionText}，环境是${environmentText}。我们可以先从你的感受开始，而不是从解释开始。看着这个沙盘时，你最先注意到的是哪个位置或哪个沙具？`;
+  return `我在这里。${insightBrief} 我们可以先从你的感受开始，而不是从解释开始。${leadingQuestion}`;
 }
