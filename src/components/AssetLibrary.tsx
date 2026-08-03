@@ -150,6 +150,7 @@ export function AssetLibrary({
       ...categorySections,
     ];
   }, [activeShelf, categories, favoriteAssets, filteredAssets, recentAssets]);
+  const activeShelfLabel = getShelfLabel(activeShelf, shelfItems);
   const visibleAssetCount = new Set(activeSections.flatMap((section) => section.assets.map((asset) => asset.assetId))).size;
 
   useEffect(() => saveStringList(FAVORITES_KEY, favoriteIds), [favoriteIds]);
@@ -208,7 +209,7 @@ export function AssetLibrary({
         <div>
           <p className="eyebrow">Asset Library</p>
           <h1>沙具背包</h1>
-          <span className="asset-library-subtitle">点击放入中心，拖拽可精确摆放。</span>
+          <span className="asset-library-subtitle">拖拽摆放 · 点击快速放入</span>
         </div>
         <span className="asset-count">{assets.length}</span>
       </div>
@@ -234,14 +235,6 @@ export function AssetLibrary({
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            className={activeShelf === "favorites" ? "asset-tool-toggle active" : "asset-tool-toggle"}
-            onClick={() => setActiveShelf((current) => (current === "favorites" ? "all" : "favorites"))}
-          >
-            <Star size={13} />
-            收藏
-          </button>
         </div>
         <div className="segmented-mini" role="group" aria-label="资产库显示模式">
           <button type="button" className={viewMode === "large" ? "active" : ""} onClick={() => setViewMode("large")}>
@@ -258,14 +251,12 @@ export function AssetLibrary({
         <div className={`asset-category-list ${viewMode === "compact" ? "compact" : ""}`}>
           <div className="asset-shelf-status" aria-live="polite">
             <span className="asset-shelf-status-main">
-              <strong>{getShelfLabel(activeShelf, shelfItems)}</strong>
+              <strong>{activeShelfLabel}</strong>
               <em>{visibleAssetCount} 个可用沙具</em>
             </span>
             {draggingAsset ? (
               <span className="asset-drag-status">已拿起：{draggingAsset.name}</span>
-            ) : (
-              <span className="asset-drag-status idle">拖拽放置</span>
-            )}
+            ) : null}
           </div>
           {activeSections.map((section) => {
             const collapsed = section.collapsible && collapsedSet.has(section.id);
@@ -349,6 +340,13 @@ function getShelfLabel(activeShelf: AssetShelfId, items: ShelfItem[]): string {
   return items.find((item) => item.id === activeShelf)?.label ?? "全部";
 }
 
+function getCategoryBadgeLabel(category: string): string {
+  if (category === "建筑与环境") return "建筑";
+  if (category === "特殊象征") return "象征";
+  if (category === "自然元素") return "自然";
+  return category;
+}
+
 function AssetCategoryHeader({
   id,
   title,
@@ -425,7 +423,7 @@ function AssetGrid({
           onDragEnd={() => onEndDragAsset?.(asset)}
           title={`${asset.name} · ${RISK_LABELS[asset.riskTag]}`}
         >
-          <span className="asset-card-pocket-label">{asset.category}</span>
+          <span className="asset-card-pocket-label">{getCategoryBadgeLabel(asset.category)}</span>
           <span className="asset-card-grip" aria-hidden="true">
             <i />
             <i />
