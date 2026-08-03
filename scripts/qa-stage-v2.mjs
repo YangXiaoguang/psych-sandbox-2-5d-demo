@@ -11,6 +11,7 @@ const BASE_URL = process.env.STAGE_V2_QA_URL ?? `http://127.0.0.1:${PORT}/`;
 const ARTIFACT_DIR = path.resolve(process.cwd(), "artifacts", "stage-v2-qa");
 const DEFAULT_USER_ID = "local_user_default";
 const SANDBOX_ASSET_DRAG_MIME = "application/x-sandbox-asset";
+const STAGE_V2_CANVAS_SELECTOR = ".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas";
 
 const STORAGE_KEYS = {
   authSession: "psych-sandbox-2-5d-demo.local-auth-session.v1",
@@ -38,7 +39,8 @@ try {
   await runStageV2Smoke();
   printSummary();
 } catch (error) {
-  results.push({ name: "qa runner", ok: false, detail: error instanceof Error ? error.message : String(error) });
+  const message = error instanceof Error ? error.message : String(error);
+  results.push({ name: "qa runner", ok: false, detail: `[${diagnostics.step}] ${message}` });
   printSummary();
   process.exitCode = 1;
 } finally {
@@ -106,9 +108,8 @@ async function runStageV2Smoke() {
     markQaStep("open sandbox");
     await clickButtonByMatcher(page, /沙盘编辑/).catch(() => undefined);
     await clickStageEngineMode(page, "stage3d");
-    await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
-    const canvas = page.locator(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas").first();
-    await canvas.waitFor({ state: "visible", timeout: 20_000 });
+    await waitForVisibleBox(page, ".stage-v2-shell", 20_000);
+    await waitForVisibleBox(page, STAGE_V2_CANVAS_SELECTOR, 20_000);
     await delay(1200);
 
   await assertNoErrorOverlay(page, "stage v2 load");
@@ -121,21 +122,21 @@ async function runStageV2Smoke() {
     initialInteraction.text,
   );
 
-  await captureLocator(page, canvas, "stage-v2-initial.png");
+  await captureLocator(page, STAGE_V2_CANVAS_SELECTOR, "stage-v2-initial.png");
 
   await clickButtonByMatcher(page, /切换天气：雨天|雨/);
   await clickButtonByMatcher(page, /切换光照：黑夜|夜/);
   await waitForShellEnvironment(page, { weather: "rainy", light: "night", nightMode: true });
   pushResult("Rainy night environment applies shell theme", true);
 
-  const waterBefore = await captureLocator(page, canvas, "stage-v2-water-before.png");
+  const waterBefore = await captureLocator(page, STAGE_V2_CANVAS_SELECTOR, "stage-v2-water-before.png");
   await delay(1000);
-  const waterAfter = await captureLocator(page, canvas, "stage-v2-water-after.png");
+  const waterAfter = await captureLocator(page, STAGE_V2_CANVAS_SELECTOR, "stage-v2-water-after.png");
   const waterDiff = byteDiff(waterBefore, waterAfter);
   pushResult("Ocean/weather animation changes frame", waterDiff > 1000, `byteDiff=${waterDiff}`);
 
   markQaStep("place toy from backpack");
-  const placementResult = await tryPlaceAssetFromBackpack(page, canvas);
+  const placementResult = await tryPlaceAssetFromBackpack(page, STAGE_V2_CANVAS_SELECTOR);
   pushResult("Backpack drag drops a new toy onto Stage v2", placementResult.ok, placementResult.detail);
   pushResult(
     "Backpack drag exposes Stage v2 placement state",
@@ -145,7 +146,7 @@ async function runStageV2Smoke() {
   pushResult("Backpack drop records an add event", placementResult.eventRecorded, placementResult.eventDetail);
 
   markQaStep("drag toy");
-  const dragResult = await tryDragObject(page, canvas);
+  const dragResult = await tryDragObject(page, STAGE_V2_CANVAS_SELECTOR);
   pushResult("Mouse drag moves a Stage v2 toy and writes scene state", dragResult.ok, dragResult.detail);
   pushResult(
     "Toy drag exposes Stage v2 interaction state",
@@ -162,18 +163,18 @@ async function runStageV2Smoke() {
   pushResult("Stage v2 toolbelt deletes the selected toy", transformResult.deleteOk, transformResult.deleteDetail);
 
   markQaStep("pan camera");
-  const cameraResult = await tryMoveCamera(page, canvas);
+  const cameraResult = await tryMoveCamera(page, STAGE_V2_CANVAS_SELECTOR);
   pushResult("Mouse can move the Stage v2 camera view", cameraResult.ok, cameraResult.detail);
   pushResult("Mouse pan exposes Stage v2 interaction state", cameraResult.modeSeen, cameraResult.modeDetail);
 
   markQaStep("rotate camera");
-  const rotateResult = await tryRotateCamera(page, canvas);
+  const rotateResult = await tryRotateCamera(page, STAGE_V2_CANVAS_SELECTOR);
   pushResult("Mouse right-drag rotates the Stage v2 viewing angle", rotateResult.ok, rotateResult.detail);
   pushResult("Right-drag exposes Stage v2 rotation state", rotateResult.modeSeen, rotateResult.modeDetail);
   pushResult("Right-drag camera rotation does not move toys", rotateResult.sceneStable, rotateResult.sceneDetail);
 
   markQaStep("zoom camera");
-  const zoomResult = await tryZoomCamera(page, canvas);
+  const zoomResult = await tryZoomCamera(page, STAGE_V2_CANVAS_SELECTOR);
   pushResult("Mouse wheel zoom changes the Stage v2 camera view", zoomResult.ok, zoomResult.detail);
   pushResult("Mouse wheel exposes Stage v2 zoom state", zoomResult.modeSeen, zoomResult.modeDetail);
 
@@ -201,7 +202,7 @@ async function runStageV2Smoke() {
 
   markQaStep("switch classic");
   await clickStageEngineMode(page, "classic");
-  await page.waitForSelector(".sandbox-editor", { timeout: 10_000 });
+  await waitForVisibleBox(page, ".sandbox-editor", 10_000);
   pushResult("Classic 2.5D fallback remains switchable", true);
 
   await assertNoErrorOverlay(page, "final state");
@@ -219,12 +220,29 @@ async function clickButtonByMatcher(page, matcher) {
   const found = await page.evaluate(
     ({ source, flags }) => {
       const pattern = new RegExp(source, flags);
+      const isVisibleForClick = (element) => {
+        if (!(element instanceof HTMLElement)) return false;
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return (
+          rect.width > 2 &&
+          rect.height > 2 &&
+          rect.bottom > 0 &&
+          rect.right > 0 &&
+          rect.top < window.innerHeight &&
+          rect.left < window.innerWidth &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          Number(style.opacity || "1") > 0.01
+        );
+      };
       const buttons = Array.from(document.querySelectorAll("button"));
-      const button = buttons.find((element) => {
+      const candidates = buttons.filter((element) => {
         const label = element.getAttribute("aria-label") ?? "";
         const text = element.textContent ?? "";
         return pattern.test(`${label} ${text}`);
       });
+      const button = candidates.find(isVisibleForClick) ?? candidates.find((element) => element instanceof HTMLElement);
 
       if (!button) {
         return false;
@@ -244,7 +262,7 @@ async function clickButtonByMatcher(page, matcher) {
 }
 
 async function clickStageEngineMode(page, mode) {
-  await page.waitForSelector(".stage-engine-mode-switch button", { state: "attached", timeout: 10_000 });
+  await waitForSelectorAttached(page, ".stage-engine-mode-switch button", 10_000);
   await delay(500);
   const found = await page.evaluate((targetMode) => {
     const buttons = Array.from(document.querySelectorAll(".stage-engine-mode-switch button"));
@@ -280,7 +298,7 @@ async function clickStageEngineMode(page, mode) {
 
 async function tryDragObject(page, canvas) {
   const before = await readScene(page);
-  const box = await canvas.boundingBox();
+  const box = await readVisibleElementBox(page, canvas);
   if (!box) {
     return { ok: false, detail: "canvas bounding box missing" };
   }
@@ -465,7 +483,7 @@ async function tryTransformSelectedToy(page, targetObjectId) {
 }
 
 async function tryMoveCamera(page, canvas) {
-  const box = await canvas.boundingBox();
+  const box = await readVisibleElementBox(page, canvas);
   if (!box) {
     return { ok: false, detail: "canvas bounding box missing" };
   }
@@ -490,7 +508,7 @@ async function tryMoveCamera(page, canvas) {
 }
 
 async function tryRotateCamera(page, canvas) {
-  const box = await canvas.boundingBox();
+  const box = await readVisibleElementBox(page, canvas);
   if (!box) {
     return {
       ok: false,
@@ -528,8 +546,18 @@ async function tryRotateCamera(page, canvas) {
 }
 
 async function tryZoomCamera(page, canvas) {
+  const box = await readVisibleElementBox(page, canvas);
+  if (!box) {
+    return {
+      ok: false,
+      detail: "canvas bounding box missing",
+      modeSeen: false,
+      modeDetail: "",
+    };
+  }
+
   const before = await captureLocator(page, canvas, "stage-v2-zoom-before.png");
-  await canvas.hover();
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
   await page.mouse.wheel(0, -520);
   await delay(100);
   const interaction = await readStageInteraction(page);
@@ -549,8 +577,8 @@ async function tryPlaceAssetFromBackpack(page, canvas) {
   const beforeObjectIds = new Set((before.objects ?? []).map((object) => object.id));
 
   await ensureAssetBackpackOpen(page);
-  await page.waitForSelector("article.asset-card[data-asset-id]", { timeout: 10_000 });
-  const box = await canvas.boundingBox();
+  await waitForVisibleAssetCard(page, "opening asset backpack");
+  const box = await readVisibleElementBox(page, canvas);
   if (!box) {
     return {
       ok: false,
@@ -681,29 +709,78 @@ async function tryPlaceAssetFromBackpack(page, canvas) {
 }
 
 async function ensureAssetBackpackOpen(page) {
-  const hasVisibleCard = await page.locator("article.asset-card[data-asset-id]").first().isVisible().catch(() => false);
-  if (hasVisibleCard) {
+  if (await hasVisibleAssetCard(page)) {
     return;
   }
 
   const toggled = await page.evaluate(() => {
+    const prioritySelectors = [
+      ".game-inventory-toggle",
+      "button[aria-label*='打开全屏沙具库']",
+      "button[aria-label*='打开沙具背包']",
+    ];
+
+    for (const selector of prioritySelectors) {
+      const button = document.querySelector(selector);
+      if (button instanceof HTMLElement && button.offsetParent !== null) {
+        button.click();
+        return { ok: true, detail: selector };
+      }
+    }
+
     const buttons = Array.from(document.querySelectorAll("button"));
     const button = buttons.find((element) => {
       const label = element.getAttribute("aria-label") ?? "";
       const text = element.textContent ?? "";
-      return /打开沙具背包|打开全屏沙具库|沙具库|背包/.test(`${label} ${text}`);
+      return element instanceof HTMLElement && element.offsetParent !== null && /打开沙具背包|打开全屏沙具库|沙具库|背包/.test(`${label} ${text}`);
     });
     if (!(button instanceof HTMLElement)) {
-      return false;
+      return { ok: false, detail: "no visible backpack toggle" };
     }
     button.click();
-    return true;
+    return { ok: true, detail: button.getAttribute("aria-label") ?? button.textContent ?? "matched button" };
   });
 
-  if (!toggled) {
-    throw new Error("Could not open asset backpack");
+  if (!toggled.ok) {
+    throw new Error(`Could not open asset backpack: ${toggled.detail}`);
   }
-  await page.waitForSelector("article.asset-card[data-asset-id]", { timeout: 10_000 });
+  await waitForVisibleAssetCard(page, `opening asset backpack via ${toggled.detail}`);
+}
+
+async function hasVisibleAssetCard(page) {
+  return Boolean(await readVisibleElementBox(page, "article.asset-card[data-asset-id]").catch(() => null));
+}
+
+async function waitForVisibleAssetCard(page, label) {
+  const deadline = Date.now() + 18_000;
+  let lastState = null;
+
+  while (Date.now() < deadline) {
+    if (await hasVisibleAssetCard(page)) {
+      return;
+    }
+
+    lastState = await page.evaluate(() => {
+      const cards = Array.from(document.querySelectorAll("article.asset-card[data-asset-id]"));
+      const visibleCards = cards.filter((element) => element instanceof HTMLElement && element.offsetParent !== null);
+      const library = document.querySelector(".asset-library");
+      const drawer = document.querySelector(".game-side-drawer-left, .focus-asset-drawer");
+      const emptyState = document.querySelector(".asset-library .empty-state, .asset-library .empty-category");
+      const activeShelf = document.querySelector(".asset-shelf-rail button.active")?.getAttribute("aria-label") ?? "";
+      return {
+        cardCount: cards.length,
+        visibleCardCount: visibleCards.length,
+        libraryVisible: library instanceof HTMLElement && library.offsetParent !== null,
+        drawerVisible: drawer instanceof HTMLElement && drawer.offsetParent !== null,
+        emptyText: emptyState?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+        activeShelf,
+      };
+    });
+
+    await delay(250);
+  }
+
+  throw new Error(`Asset backpack opened but no visible asset card after ${label}: ${JSON.stringify(lastState)}`);
 }
 
 async function closeAssetBackpack(page) {
@@ -720,10 +797,10 @@ async function closeAssetBackpack(page) {
   await delay(160);
 }
 
-async function captureLocator(page, locator, filename) {
-  const box = await locator.boundingBox();
+async function captureLocator(page, selector, filename) {
+  const box = await readVisibleElementBox(page, selector);
   if (!box) {
-    throw new Error(`Cannot capture ${filename}: locator bounding box missing`);
+    throw new Error(`Cannot capture ${filename}: visible box missing for ${selector}`);
   }
 
   return page.screenshot({
@@ -866,22 +943,134 @@ function escapeRegExp(value) {
 }
 
 async function waitForShellEnvironment(page, { weather, light, nightMode }) {
-  await page.waitForFunction(
-    ({ expectedWeather, expectedLight, expectedNightMode }) => {
+  const deadline = Date.now() + 5_000;
+  let lastState = null;
+
+  while (Date.now() < deadline) {
+    lastState = await page.evaluate(() => {
       const shell = document.querySelector(".product-shell");
-      if (!shell) {
-        return false;
+      return {
+        className: shell instanceof HTMLElement ? shell.className : "",
+        exists: Boolean(shell),
+      };
+    });
+
+    if (
+      lastState.className.includes(`weather-${weather}`) &&
+      lastState.className.includes(`light-${light}`) &&
+      lastState.className.includes("night-mode") === nightMode
+    ) {
+      return;
+    }
+
+    await delay(120);
+  }
+
+  throw new Error(`Shell environment did not become ${weather}/${light}: ${JSON.stringify(lastState)}`);
+}
+
+async function waitForVisibleBox(page, selector, timeout = 5000) {
+  const deadline = Date.now() + timeout;
+  let lastState = null;
+
+  while (Date.now() < deadline) {
+    const box = await readVisibleElementBox(page, selector);
+    if (box) {
+      return box;
+    }
+
+    lastState = await readSelectorState(page, selector);
+    await delay(120);
+  }
+
+  throw new Error(`Could not find visible box for ${selector}: ${JSON.stringify(lastState)}`);
+}
+
+async function waitForSelectorAttached(page, selector, timeout = 5000) {
+  const deadline = Date.now() + timeout;
+  let count = 0;
+
+  while (Date.now() < deadline) {
+    count = await page.evaluate((targetSelector) => document.querySelectorAll(targetSelector).length, selector);
+    if (count > 0) {
+      return;
+    }
+
+    await delay(120);
+  }
+
+  throw new Error(`Could not find attached selector ${selector}: count=${count}`);
+}
+
+async function readVisibleElementBox(page, selector) {
+  return page.evaluate((targetSelector) => {
+    const elements = Array.from(document.querySelectorAll(targetSelector));
+    for (const element of elements) {
+      if (!(element instanceof HTMLElement)) {
+        continue;
       }
 
-      return (
-        shell.classList.contains(`weather-${expectedWeather}`) &&
-        shell.classList.contains(`light-${expectedLight}`) &&
-        shell.classList.contains("night-mode") === expectedNightMode
-      );
-    },
-    { expectedWeather: weather, expectedLight: light, expectedNightMode: nightMode },
-    { timeout: 5000 },
-  );
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      const visible =
+        rect.width > 2 &&
+        rect.height > 2 &&
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < window.innerHeight &&
+        rect.left < window.innerWidth &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.01;
+
+      if (visible) {
+        return {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          right: rect.right,
+          bottom: rect.bottom,
+        };
+      }
+    }
+
+    return null;
+  }, selector);
+}
+
+async function readSelectorState(page, selector) {
+  return page.evaluate((targetSelector) => {
+    const elements = Array.from(document.querySelectorAll(targetSelector));
+    return {
+      selector: targetSelector,
+      count: elements.length,
+      samples: elements.slice(0, 4).map((element) => {
+        if (!(element instanceof HTMLElement)) {
+          return { elementType: element.constructor.name };
+        }
+
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return {
+          tagName: element.tagName.toLowerCase(),
+          className: element.className,
+          text: element.textContent?.replace(/\s+/g, " ").trim().slice(0, 80) ?? "",
+          display: style.display,
+          visibility: style.visibility,
+          opacity: style.opacity,
+          rect: {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          },
+        };
+      }),
+    };
+  }, selector);
 }
 
 async function assertNoErrorOverlay(page, label) {

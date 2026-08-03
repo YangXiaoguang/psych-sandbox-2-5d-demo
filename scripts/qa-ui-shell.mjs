@@ -92,7 +92,7 @@ async function runShellQa() {
     await page.goto(BASE_URL, { waitUntil: "networkidle" });
     await assertNoErrorOverlay(page, "initial load");
     await clickStageEngineMode(page, "stage3d");
-    await page.waitForSelector(".stage-v2-shell", { timeout: 20_000 });
+    await waitForVisibleBox(page, ".stage-v2-shell", 20_000);
     await delay(1000);
 
     await captureShellScreenshot(page, "sandbox-night-desktop.png");
@@ -172,8 +172,12 @@ async function runShellQa() {
       formatMetrics(selectedDock),
     );
 
-    await clickSelector(page, ".game-inventory-toggle");
-    await waitForVisibleBox(page, ".game-side-drawer-left .asset-library");
+    await openPanelAndWait(
+      page,
+      ".game-inventory-toggle",
+      ".game-side-drawer-left .asset-library",
+      "asset backpack drawer",
+    );
     await delay(400);
     await captureShellScreenshot(page, "sandbox-backpack-night-desktop.png");
     const backpackDesktop = await readBackpackMetrics(page);
@@ -235,8 +239,7 @@ async function runShellQa() {
         !backpackCompact.cardsOverlap,
       formatMetrics({ ...backpackCompact, sampledCards: backpackCompactLabelSamples }),
     );
-    await clickSelector(page, ".game-drawer-close");
-    await page.waitForSelector(".game-side-drawer-left", { state: "detached", timeout: 5000 });
+    await closePanelAndWait(page, ".game-side-drawer-left", ".game-side-drawer-left .game-drawer-close", "asset backpack drawer");
     await delay(250);
 
     await page.setViewportSize({ width: 1280, height: 820 });
@@ -261,8 +264,7 @@ async function runShellQa() {
       formatMetrics(sandboxNarrow),
     );
 
-    await clickSelector(page, ".game-insight-toggle");
-    await waitForVisibleBox(page, ".game-side-drawer-right .right-panel");
+    await openPanelAndWait(page, ".game-insight-toggle", ".game-side-drawer-right .right-panel", "insight drawer");
     await delay(400);
     await captureShellScreenshot(page, "sandbox-insight-night-1280.png");
     const insightNarrow = await readInsightDrawerMetrics(page);
@@ -291,8 +293,7 @@ async function runShellQa() {
       formatMetrics(insightNarrow.sections),
     );
     pushNightContrastResult("Insight drawer night text remains readable", insightContrast, 12);
-    await clickSelector(page, ".game-side-drawer-right .small-icon-button");
-    await page.waitForSelector(".game-side-drawer-right", { state: "detached", timeout: 5000 });
+    await closePanelAndWait(page, ".game-side-drawer-right", ".game-side-drawer-right .small-icon-button", "insight drawer");
     await delay(250);
 
     await page.setViewportSize({ width: 1680, height: 980 });
@@ -335,8 +336,12 @@ async function runShellQa() {
     pushResult("Focus AI drawer fits viewport", focusAiMetrics.drawerFitsViewport, formatMetrics(focusAiMetrics));
     pushResult("Focus AI keeps night-mode text readable", focusAiMetrics.minimumContrast >= 4.4, formatMetrics(focusAiMetrics));
     pushResult("Focus AI composer remains operable", focusAiMetrics.composerVisible && focusAiMetrics.sendButtonVisible, formatMetrics(focusAiMetrics));
-    await clickSelector(page, "[data-testid='focus-ai-drawer'] .small-icon-button");
-    await page.waitForSelector("[data-testid='focus-ai-drawer']", { state: "detached", timeout: 5000 });
+    await closePanelAndWait(
+      page,
+      "[data-testid='focus-ai-drawer']",
+      "[data-testid='focus-ai-drawer'] .small-icon-button",
+      "focus AI drawer",
+    );
     await clickByText(page, /退出沙盘全屏模式|退出/);
     await waitForVisibleBox(page, ".product-shell:not(.focus-mode)");
     await delay(300);
@@ -636,8 +641,10 @@ async function readSandboxShellMetrics(page) {
 }
 
 async function trySelectStageToy(page) {
-  const canvas = page.locator(".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas").first();
-  const box = await canvas.boundingBox();
+  const box = await readVisibleElementBox(
+    page,
+    ".stage-v2-canvas-wrap canvas, canvas.stage-v2-canvas, .stage-v2-canvas canvas",
+  );
   if (!box) {
     return false;
   }
@@ -662,6 +669,43 @@ async function trySelectStageToy(page) {
   }
 
   return false;
+}
+
+async function readVisibleElementBox(page, selector) {
+  return page.evaluate((targetSelector) => {
+    const elements = Array.from(document.querySelectorAll(targetSelector));
+    for (const element of elements) {
+      if (!(element instanceof HTMLElement)) {
+        continue;
+      }
+
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      const visible =
+        rect.width > 2 &&
+        rect.height > 2 &&
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < window.innerHeight &&
+        rect.left < window.innerWidth &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.01;
+
+      if (visible) {
+        return {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          right: rect.right,
+          bottom: rect.bottom,
+        };
+      }
+    }
+
+    return null;
+  }, selector);
 }
 
 async function captureShellScreenshot(page, filename) {
@@ -1163,29 +1207,20 @@ async function readNightAffordanceMetrics(page, rootSelector) {
 }
 
 async function waitForVisibleBox(page, selector, timeout = 5000) {
-  await page.waitForFunction(
-    (targetSelector) => {
-      const element = document.querySelector(targetSelector);
-      if (!(element instanceof HTMLElement)) {
-        return false;
-      }
-      const rect = element.getBoundingClientRect();
-      const style = window.getComputedStyle(element);
-      return (
-        rect.width > 24 &&
-        rect.height > 24 &&
-        rect.bottom > 0 &&
-        rect.right > 0 &&
-        rect.top < window.innerHeight &&
-        rect.left < window.innerWidth &&
-        style.display !== "none" &&
-        style.visibility !== "hidden" &&
-        Number(style.opacity || "1") > 0.01
-      );
-    },
-    selector,
-    { timeout },
-  );
+  const deadline = Date.now() + timeout;
+  let lastState = null;
+
+  while (Date.now() < deadline) {
+    const box = await readVisibleElementBox(page, selector);
+    if (box) {
+      return box;
+    }
+
+    lastState = await readSelectorState(page, selector);
+    await delay(120);
+  }
+
+  throw new Error(`Could not find visible box for ${selector}: ${JSON.stringify(lastState)}`);
 }
 
 async function readBackpackMetrics(page) {
@@ -1544,12 +1579,29 @@ async function clickByText(page, matcher) {
   const found = await page.evaluate(
     ({ source, flags }) => {
       const pattern = new RegExp(source, flags);
+      const isVisibleForClick = (element) => {
+        if (!(element instanceof HTMLElement)) return false;
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return (
+          rect.width > 2 &&
+          rect.height > 2 &&
+          rect.bottom > 0 &&
+          rect.right > 0 &&
+          rect.top < window.innerHeight &&
+          rect.left < window.innerWidth &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          Number(style.opacity || "1") > 0.01
+        );
+      };
       const controls = Array.from(document.querySelectorAll("button, summary"));
-      const control = controls.find((element) => {
+      const candidates = controls.filter((element) => {
         const label = element.getAttribute("aria-label") ?? "";
         const text = element.textContent ?? "";
         return pattern.test(`${label} ${text}`);
       });
+      const control = candidates.find(isVisibleForClick) ?? candidates.find((element) => element instanceof HTMLElement);
       if (!control) return false;
       control.click();
       return true;
@@ -1594,7 +1646,24 @@ async function clickStageEngineMode(page, mode) {
 
 async function clickSelector(page, selector) {
   const found = await page.evaluate((targetSelector) => {
-    const control = document.querySelector(targetSelector);
+    const isVisibleForClick = (element) => {
+      if (!(element instanceof HTMLElement)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        rect.width > 2 &&
+        rect.height > 2 &&
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < window.innerHeight &&
+        rect.left < window.innerWidth &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || "1") > 0.01
+      );
+    };
+    const controls = Array.from(document.querySelectorAll(targetSelector));
+    const control = controls.find(isVisibleForClick) ?? controls.find((element) => element instanceof HTMLElement);
     if (!(control instanceof HTMLElement)) return false;
     control.click();
     return true;
@@ -1603,6 +1672,125 @@ async function clickSelector(page, selector) {
   if (!found) {
     throw new Error(`Could not find control matching selector ${selector}`);
   }
+}
+
+async function openPanelAndWait(page, triggerSelector, panelSelector, label) {
+  await clickSelector(page, triggerSelector);
+  await waitForVisibleBox(page, panelSelector, 14_000).catch(async () => {
+    const state = await readPanelState(page, panelSelector, triggerSelector);
+    throw new Error(`Could not open ${label}: ${JSON.stringify(state)}`);
+  });
+}
+
+async function closePanelAndWait(page, panelSelector, closeSelector, label) {
+  await clickSelector(page, closeSelector);
+  const deadline = Date.now() + 8_000;
+
+  while (Date.now() < deadline) {
+    if (await arePanelsClosed(page, panelSelector)) {
+      return;
+    }
+
+    await delay(120);
+  }
+
+  const state = await readPanelState(page, panelSelector, closeSelector);
+  throw new Error(`Could not close ${label}: ${JSON.stringify(state)}`);
+}
+
+async function readPanelState(page, panelSelector, closeSelector) {
+  return page.evaluate(
+    ({ panelSelector: targetPanelSelector, closeSelector: targetCloseSelector }) => {
+      const panel = document.querySelector(targetPanelSelector);
+      const close = document.querySelector(targetCloseSelector);
+      const readElement = (element) => {
+        if (!(element instanceof HTMLElement)) return { exists: false };
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return {
+          exists: true,
+          display: style.display,
+          visibility: style.visibility,
+          opacity: style.opacity,
+          pointerEvents: style.pointerEvents,
+          className: element.className,
+          ariaExpanded: element.getAttribute("aria-expanded"),
+          rect: {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          },
+        };
+      };
+
+      return {
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        panel: readElement(panel),
+        close: readElement(close),
+      };
+    },
+    { panelSelector, closeSelector },
+  );
+}
+
+async function arePanelsClosed(page, selector) {
+  return page.evaluate((targetSelector) => {
+    const panels = Array.from(document.querySelectorAll(targetSelector));
+    if (panels.length === 0) return true;
+
+    return panels.every((panel) => {
+      if (!(panel instanceof HTMLElement)) return true;
+
+      const rect = panel.getBoundingClientRect();
+      const style = window.getComputedStyle(panel);
+      const opacity = Number.parseFloat(style.opacity || "1");
+      const hiddenByStyle = style.display === "none" || style.visibility === "hidden" || opacity <= 0.03;
+      const hasNoBox = rect.width <= 1 || rect.height <= 1;
+      const offscreen =
+        rect.right <= 1 ||
+        rect.left >= window.innerWidth - 1 ||
+        rect.bottom <= 1 ||
+        rect.top >= window.innerHeight - 1;
+
+      return hiddenByStyle || hasNoBox || offscreen;
+    });
+  }, selector);
+}
+
+async function readSelectorState(page, selector) {
+  return page.evaluate((targetSelector) => {
+    const elements = Array.from(document.querySelectorAll(targetSelector));
+    return {
+      selector: targetSelector,
+      count: elements.length,
+      samples: elements.slice(0, 4).map((element) => {
+        if (!(element instanceof HTMLElement)) {
+          return { elementType: element.constructor.name };
+        }
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return {
+          tagName: element.tagName.toLowerCase(),
+          className: element.className,
+          text: element.textContent?.replace(/\s+/g, " ").trim().slice(0, 80) ?? "",
+          display: style.display,
+          visibility: style.visibility,
+          opacity: style.opacity,
+          rect: {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          },
+        };
+      }),
+    };
+  }, selector);
 }
 
 async function openGamePortal(page, matcher) {

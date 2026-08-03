@@ -1,7 +1,7 @@
 # Stage Engine v2 Release Candidate Plan
 
 Document version: v2.1 RC
-Updated: 2026-08-01
+Updated: 2026-08-03
 Project: 2.5D psychological sandplay collaboration system
 
 ---
@@ -304,6 +304,7 @@ Evidence:
 - 2026-08-03 current verification on `d30a124`: `npm run qa:stage-v2` passed 29/29 gates, including backpack placement, toy drag, selected-object rotate/scale/duplicate/delete, mouse pan, right-drag camera rotation, wheel zoom, PNG export, JSON export, weather/light switching, Classic fallback, and console/page error checks.
 - 2026-08-03 UI shell verification: `npm run qa:ui-shell` passed 91/91 gates, including compact game HUD layout, fullscreen AI single-drawer behavior, inventory readability, insight drawer fit, Agent/Memory/Admin navigation smoke, and night-mode text/form contrast checks.
 - 2026-08-03 visual verification: `npm run qa:visual-baseline` captured all 12 required scenes and `npm run qa:visual-report` produced `Gate result: PASS` with 0 console errors, 0 page errors, and 0 request failures. The review index is `artifacts/visual-regression/2026-08-03/visual-review.md`.
+- 2026-08-03 acceptance verification: `npm run qa:acceptance` passed the full chain after hardening Stage v2/UI shell QA waits around visible DOM geometry, asset backpack opening, drawer close states, and canvas capture. The run included `Stage v2 QA: 29/29 gates passed` and `UI shell QA summary: 91/91 passed`.
 
 ---
 
