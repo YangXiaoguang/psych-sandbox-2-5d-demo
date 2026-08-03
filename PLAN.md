@@ -20,12 +20,13 @@ Updated: 2026-08-04
 - Toy asset QA covers 19 built-in Three.js toy sprites.
 - Current Sandbox Snapshot and derived Insight contracts are separated from LLM provider code.
 - Root agent protocol and regression matrix are available for future tasks.
+- Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
 
 ## Next Recommended Sequence
 
 ### Phase 1: Specification Hardening
 
-Status: in progress.
+Status: complete.
 
 Goal: make product goals, contracts, and rollback points machine-readable enough that future 3D/visual work does not drift.
 
@@ -45,6 +46,8 @@ npm run build
 
 ### Phase 2: Stage v2 Visual Review Loop
 
+Status: complete.
+
 Goal: use existing visual baseline tooling to evaluate Stage v2 against the target reference language before more code polish.
 
 Tasks:
@@ -61,7 +64,14 @@ npm run qa:visual-baseline
 npm run qa:visual-report
 ```
 
+Evidence:
+
+- `artifacts/visual-regression/2026-08-04/visual-review.md`
+- `docs/stage-v2-visual-review-2026-08-04.md`
+
 ### Phase 3: Focused Stage v2 Polish Sprint
+
+Status: next.
 
 Goal: improve only the highest-value visual gap without weakening interactions.
 
