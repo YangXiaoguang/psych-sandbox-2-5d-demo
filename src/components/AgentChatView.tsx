@@ -9,9 +9,9 @@ import type {
   SandboxObject,
 } from "../types";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
-import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
-import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
-import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import { buildCurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import type { CurrentSandboxSnapshot } from "../analysis/currentSandboxSnapshot";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
 import { createSandboxSnapshotChatMessages, SANDBOX_DIALOGUE_SAFETY_NOTICE } from "../llm/sandboxPromptContext";

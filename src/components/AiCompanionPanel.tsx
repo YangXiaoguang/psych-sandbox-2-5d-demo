@@ -1,12 +1,12 @@
 import { HeartHandshake, Send, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
-import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
-import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
+import { buildCurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../analysis/currentSandboxInsight";
 import type { LlmProviderConfig, SandboxEnvironment, SandboxObject } from "../types";
 import type { LlmChatMessage } from "../llm/streamText";
 import { streamLlmText } from "../llm/streamText";
-import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import type { CurrentSandboxSnapshot } from "../analysis/currentSandboxSnapshot";
 import {
   createSandboxSnapshotChatMessages,
   SANDBOX_DIALOGUE_SAFETY_NOTICE,

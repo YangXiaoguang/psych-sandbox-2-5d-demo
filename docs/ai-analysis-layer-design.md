@@ -1,6 +1,6 @@
 # AI 分析层设计与工程落地方案
 
-版本：v1.0  
+版本：v1.1
 适用对象：前端工程、LLM 调用层、后续后端服务与算法模块
 
 ## 1. 设计结论
@@ -16,6 +16,16 @@ CurrentSandboxSnapshot
   -> CurrentSandboxInsight
   -> LLM 对话与报告草稿
 ```
+
+工程目录已经按职责拆分为：
+
+```text
+src/analysis/  # 当前沙盘事实、派生洞察、视觉补充证据描述
+src/llm/       # Prompt 拼装、模型供应商、流式调用
+src/api/       # DTO、Mock API、后端迁移契约
+```
+
+`src/llm/currentSandboxSnapshot.ts`、`src/llm/currentSandboxInsight.ts` 和 `src/llm/sandboxVisualEvidence.ts` 仅保留兼容导出。新代码应优先从 `src/analysis` 导入。
 
 ## 2. 分层职责
 
@@ -43,7 +53,8 @@ CurrentSandboxSnapshot
 代码入口：
 
 ```ts
-src/llm/currentSandboxInsight.ts -> buildCurrentSandboxInsight
+src/analysis/currentSandboxSnapshot.ts -> buildCurrentSandboxSnapshot
+src/analysis/currentSandboxInsight.ts -> buildCurrentSandboxInsight
 ```
 
 LLM 注入入口：
@@ -149,13 +160,14 @@ LLM 不可以假设：
 | Phase C | 已完成：Agent 对话与沙盘 AI 伙伴优先引用 insight brief、观察线索和建议问题，减少默认对象列表复述。 |
 | Phase D | 已完成：前端 mock API 契约的 `CurrentSandboxSnapshotResponseDto` 同时返回 versioned `snapshot` 与 `insight`，为后端保存和回放做准备。 |
 | Phase E | 已完成：定义 `SandboxVisualSupplementDescriptor` 作为未来截图/视觉校验的补充证据描述符；默认不能进入 LLM 输入，也不能替代 Snapshot/Insight。 |
+| Phase F | 已完成：将 Snapshot、Insight 和视觉补充证据实现层迁移到 `src/analysis`，`src/llm` 只承担 Prompt 和模型调用职责。 |
 
 ## 8. 视觉补充证据边界
 
 代码入口：
 
 ```ts
-src/llm/sandboxVisualEvidence.ts -> createSandboxVisualSupplementDescriptor
+src/analysis/sandboxVisualEvidence.ts -> createSandboxVisualSupplementDescriptor
 ```
 
 该模块只描述本地截图或视觉回归 artifact 的用途、来源 snapshot 和禁止事项，不包含图片数据。它的定位是：

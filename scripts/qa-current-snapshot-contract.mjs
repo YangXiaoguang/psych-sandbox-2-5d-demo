@@ -44,13 +44,13 @@ import {
   createCurrentSandboxSnapshotPayload,
   createCurrentSandboxSnapshotResponse,
 } from "../../src/api/currentSandboxSnapshotApi";
-import { buildCurrentSandboxInsight, CURRENT_SANDBOX_INSIGHT_SCHEMA } from "../../src/llm/currentSandboxInsight";
-import { CURRENT_SANDBOX_SNAPSHOT_SCHEMA } from "../../src/llm/currentSandboxSnapshot";
+import { buildCurrentSandboxInsight, CURRENT_SANDBOX_INSIGHT_SCHEMA } from "../../src/analysis/currentSandboxInsight";
+import { CURRENT_SANDBOX_SNAPSHOT_SCHEMA } from "../../src/analysis/currentSandboxSnapshot";
 import {
   assertVisualSupplementIsNotLlmInput,
   createSandboxVisualSupplementDescriptor,
   SANDBOX_VISUAL_SUPPLEMENT_SCHEMA,
-} from "../../src/llm/sandboxVisualEvidence";
+} from "../../src/analysis/sandboxVisualEvidence";
 
 const sampleObject = {
   id: "obj_house_001",
@@ -171,11 +171,30 @@ async function assertRuntimeSnapshot(runtime) {
 }
 
 async function assertStaticContractFiles() {
-  const [contracts, apiHelper, mockAdapter, promptContext, insightFile, visualEvidenceFile, structuredPanel, rightPanel, doc, analysisDoc] = await Promise.all([
+  const [
+    contracts,
+    apiHelper,
+    mockAdapter,
+    promptContext,
+    snapshotFile,
+    insightFile,
+    visualEvidenceFile,
+    legacySnapshotFile,
+    legacyInsightFile,
+    legacyVisualEvidenceFile,
+    structuredPanel,
+    rightPanel,
+    doc,
+    analysisDoc,
+  ] = await Promise.all([
     readProjectFile("src/api/contracts.ts"),
     readProjectFile("src/api/currentSandboxSnapshotApi.ts"),
     readProjectFile("src/api/mockApiAdapter.ts"),
     readProjectFile("src/llm/sandboxPromptContext.ts"),
+    readProjectFile("src/analysis/currentSandboxSnapshot.ts"),
+    readProjectFile("src/analysis/currentSandboxInsight.ts"),
+    readProjectFile("src/analysis/sandboxVisualEvidence.ts"),
+    readProjectFile("src/llm/currentSandboxSnapshot.ts"),
     readProjectFile("src/llm/currentSandboxInsight.ts"),
     readProjectFile("src/llm/sandboxVisualEvidence.ts"),
     readProjectFile("src/components/StructuredDataPanel.tsx"),
@@ -194,6 +213,10 @@ async function assertStaticContractFiles() {
   assert("Contracts expose LLM snapshot endpoint", contracts.includes("/api/llm/current-sandbox-snapshot"));
   assert("Contracts include sample current snapshot report", contracts.includes("sampleCurrentSandboxSnapshot"));
 
+  assert("Contracts import analysis snapshot types", contracts.includes("../analysis/currentSandboxSnapshot"));
+  assert("Contracts import analysis insight types", contracts.includes("../analysis/currentSandboxInsight"));
+
+  assert("API helper imports analysis builders", apiHelper.includes("../analysis/currentSandboxSnapshot") && apiHelper.includes("../analysis/currentSandboxInsight"));
   assert("API helper uses shared builder", apiHelper.includes("buildCurrentSandboxSnapshot(request)"));
   assert("API helper builds response insight", apiHelper.includes("buildCurrentSandboxInsight(snapshot)"));
   assert("API helper policy excludes events", apiHelper.includes("includesEvents: false"));
@@ -203,6 +226,7 @@ async function assertStaticContractFiles() {
   assert("Mock adapter exposes createCurrentSandboxSnapshot", mockAdapter.includes("createCurrentSandboxSnapshot("));
   assert("Mock adapter includes sample response", mockAdapter.includes("sampleCurrentSandboxSnapshot"));
 
+  assert("Prompt context imports analysis models", promptContext.includes("../analysis/currentSandboxSnapshot") && promptContext.includes("../analysis/currentSandboxInsight"));
   assert("Prompt context centralizes snapshot chat messages", promptContext.includes("createSandboxSnapshotChatMessages"));
   assert("Prompt context includes allowed-context notice", promptContext.includes("当前只允许使用 CurrentSandboxSnapshot"));
   assert("Prompt context does not serialize snapshot policy", !promptContext.includes("CurrentSandboxSnapshotPolicy JSON"));
@@ -211,6 +235,12 @@ async function assertStaticContractFiles() {
   assert("Prompt context provides shared summary helper", promptContext.includes("buildCurrentSnapshotBrief"));
   assert("Prompt context can reuse precomputed insight", promptContext.includes("insight?: CurrentSandboxInsight"));
 
+  assert("Snapshot module lives in analysis layer", snapshotFile.includes("CURRENT_SANDBOX_SNAPSHOT_SCHEMA") && snapshotFile.includes("buildCurrentSandboxSnapshot"));
+  assert("Insight module lives in analysis layer", insightFile.includes("CURRENT_SANDBOX_INSIGHT_SCHEMA") && insightFile.includes("buildCurrentSandboxInsight"));
+  assert("Visual evidence module lives in analysis layer", visualEvidenceFile.includes("SANDBOX_VISUAL_SUPPLEMENT_SCHEMA"));
+  assert("Legacy snapshot module re-exports analysis implementation", legacySnapshotFile.includes("../analysis/currentSandboxSnapshot"));
+  assert("Legacy insight module re-exports analysis implementation", legacyInsightFile.includes("../analysis/currentSandboxInsight"));
+  assert("Legacy visual evidence module re-exports analysis implementation", legacyVisualEvidenceFile.includes("../analysis/sandboxVisualEvidence"));
   assert("Insight module declares schema", insightFile.includes("CURRENT_SANDBOX_INSIGHT_SCHEMA"));
   assert("Insight module exposes deterministic builder", insightFile.includes("buildCurrentSandboxInsight"));
   assert("Insight module documents no-diagnosis guardrail", insightFile.includes("不能作为诊断结论"));
@@ -239,6 +269,7 @@ async function assertStaticContractFiles() {
   assert("Analysis layer doc describes Snapshot to Insight pipeline", analysisDoc.includes("CurrentSandboxSnapshot") && analysisDoc.includes("CurrentSandboxInsight"));
   assert("Analysis layer doc rejects screenshot-first analysis", analysisDoc.includes("不应优先做") && analysisDoc.includes("看截图再分析"));
   assert("Analysis layer doc constrains visual supplement", analysisDoc.includes("SandboxVisualSupplementDescriptor") && analysisDoc.includes("不可作为 LLM 主输入"));
+  assert("Analysis layer doc names analysis source path", analysisDoc.includes("src/analysis/currentSandboxSnapshot.ts") && analysisDoc.includes("src/analysis/currentSandboxInsight.ts"));
   await assertNoBypassedSnapshotBuilderImports();
 }
 
@@ -265,6 +296,7 @@ async function assertNoBypassedSnapshotBuilderImports() {
   const sourceFiles = await listSourceFiles(path.resolve(process.cwd(), "src"));
   const allowed = new Set([
     path.normalize("src/api/currentSandboxSnapshotApi.ts"),
+    path.normalize("src/analysis/currentSandboxSnapshot.ts"),
     path.normalize("src/llm/currentSandboxSnapshot.ts"),
   ]);
   const bypasses = [];

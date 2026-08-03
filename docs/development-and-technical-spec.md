@@ -592,7 +592,7 @@ interface SandboxAnalysis {
 
 ### 7.2 AI 派生洞察
 
-文件：`src/llm/currentSandboxInsight.ts`
+文件：`src/analysis/currentSandboxInsight.ts`
 
 `CurrentSandboxInsight` 只从 `CurrentSandboxSnapshot` 派生，不读取事件流、个人记忆、用户身份或截图。它用于把当前沙盘状态整理成 LLM 更容易使用的观察材料。
 
@@ -622,7 +622,7 @@ API 契约层已将它作为版本化 DTO 纳入 `CurrentSandboxSnapshotResponse
 
 ### 7.2.1 视觉补充证据
 
-文件：`src/llm/sandboxVisualEvidence.ts`
+文件：`src/analysis/sandboxVisualEvidence.ts`
 
 `SandboxVisualSupplementDescriptor` 用于未来截图或视觉回归 artifact 的本地 QA 描述。它必须绑定 `sourceSnapshotId`，但不包含图片数据，不进入 LLM prompt，也不能替代 `CurrentSandboxSnapshot` 或 `CurrentSandboxInsight`。
 

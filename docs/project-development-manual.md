@@ -472,7 +472,7 @@ interface ManagedAsset extends SandboxAsset {
 
 ### 8.2 AI 派生洞察
 
-`src/llm/currentSandboxInsight.ts` 会基于当前 `CurrentSandboxSnapshot` 生成 `CurrentSandboxInsight`。
+`src/analysis/currentSandboxInsight.ts` 会基于当前 `CurrentSandboxSnapshot` 生成 `CurrentSandboxInsight`。
 
 它负责输出：
 

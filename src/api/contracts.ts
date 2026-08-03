@@ -1,6 +1,6 @@
 import type { AdminAccessRole, AdminAccessStatus, AdminPermissionKey, AdminWorkspaceScope } from "../admin/types";
-import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
-import type { CurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import type { CurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import type { CurrentSandboxSnapshot } from "../analysis/currentSandboxSnapshot";
 import type {
   CommunicationTone,
   ConsentScope,

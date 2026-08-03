@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { createCurrentSandboxSnapshotPayload } from "../api/currentSandboxSnapshotApi";
 import { RISK_COLORS, RISK_LABELS } from "../data/assets";
-import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
-import type { CurrentSandboxInsight } from "../llm/currentSandboxInsight";
+import { buildCurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../analysis/currentSandboxInsight";
 import type { LlmProviderConfig, RiskTag, SandboxAnalysis, SandboxEnvironment, SandboxEvent, SandboxObject } from "../types";
 import { AiCompanionPanel } from "./AiCompanionPanel";
 import { AnalysisPanel } from "./AnalysisPanel";

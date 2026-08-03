@@ -1,5 +1,5 @@
-import { buildCurrentSandboxInsight } from "../llm/currentSandboxInsight";
-import { buildCurrentSandboxSnapshot } from "../llm/currentSandboxSnapshot";
+import { buildCurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import { buildCurrentSandboxSnapshot } from "../analysis/currentSandboxSnapshot";
 import type {
   ApiResponseDto,
   BuildCurrentSandboxSnapshotRequestDto,

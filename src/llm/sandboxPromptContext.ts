@@ -1,6 +1,6 @@
-import type { CurrentSandboxSnapshot } from "./currentSandboxSnapshot";
-import { buildCurrentInsightBrief, buildCurrentSandboxInsight } from "./currentSandboxInsight";
-import type { CurrentSandboxInsight } from "./currentSandboxInsight";
+import type { CurrentSandboxSnapshot } from "../analysis/currentSandboxSnapshot";
+import { buildCurrentInsightBrief, buildCurrentSandboxInsight } from "../analysis/currentSandboxInsight";
+import type { CurrentSandboxInsight } from "../analysis/currentSandboxInsight";
 import type { LlmChatMessage } from "./streamText";
 
 export const CURRENT_SNAPSHOT_ALLOWED_CONTEXT_NOTICE =
