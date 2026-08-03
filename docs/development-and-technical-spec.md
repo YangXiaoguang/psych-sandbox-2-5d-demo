@@ -620,6 +620,12 @@ API 契约层已将它作为版本化 DTO 纳入 `CurrentSandboxSnapshotResponse
 - 象征候选只能用于提问，不得作为固定解释。
 - LLM Prompt 必须同时保留原始 `CurrentSandboxSnapshot`，避免只依赖摘要。
 
+### 7.2.1 视觉补充证据
+
+文件：`src/llm/sandboxVisualEvidence.ts`
+
+`SandboxVisualSupplementDescriptor` 用于未来截图或视觉回归 artifact 的本地 QA 描述。它必须绑定 `sourceSnapshotId`，但不包含图片数据，不进入 LLM prompt，也不能替代 `CurrentSandboxSnapshot` 或 `CurrentSandboxInsight`。
+
 ### 7.3 事件类型
 
 `SandboxEventType`：

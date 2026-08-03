@@ -148,9 +148,25 @@ LLM 不可以假设：
 | Phase B | 已完成：在右侧洞察面板增加“AI 观察材料”折叠区，展示可解释的观察与问题。 |
 | Phase C | 已完成：Agent 对话与沙盘 AI 伙伴优先引用 insight brief、观察线索和建议问题，减少默认对象列表复述。 |
 | Phase D | 已完成：前端 mock API 契约的 `CurrentSandboxSnapshotResponseDto` 同时返回 versioned `snapshot` 与 `insight`，为后端保存和回放做准备。 |
-| Phase E | 如确实需要图像识别，再把截图识别作为补充校验，而不是主数据源。 |
+| Phase E | 已完成：定义 `SandboxVisualSupplementDescriptor` 作为未来截图/视觉校验的补充证据描述符；默认不能进入 LLM 输入，也不能替代 Snapshot/Insight。 |
 
-## 8. 验收要求
+## 8. 视觉补充证据边界
+
+代码入口：
+
+```ts
+src/llm/sandboxVisualEvidence.ts -> createSandboxVisualSupplementDescriptor
+```
+
+该模块只描述本地截图或视觉回归 artifact 的用途、来源 snapshot 和禁止事项，不包含图片数据。它的定位是：
+
+- 可用于人工视觉 QA。
+- 可用于检查渲染画面是否和结构化 snapshot 一致。
+- 不可作为 LLM 主输入。
+- 不可替代 `CurrentSandboxSnapshot` 或 `CurrentSandboxInsight`。
+- 不可从截图推断用户身份、情绪或诊断结论。
+
+## 9. 验收要求
 
 每次修改 AI 分析层后至少运行：
 

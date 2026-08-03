@@ -1,6 +1,6 @@
 # 当前沙盘 Snapshot 输出规范
 
-版本：v1.9
+版本：v1.10
 适用对象：前端开发、LLM 调用层、后续后端接口
 
 ## 目标
@@ -35,6 +35,14 @@ src/llm/currentSandboxInsight.ts -> buildCurrentSandboxInsight
 ```
 
 `CurrentSandboxInsight` 只由 `CurrentSandboxSnapshot` 派生，用来给 LLM 提供空间观察、对象关系、主题候选和开放问题。它不额外读取事件流、个人记忆、用户身份或截图。
+
+视觉补充证据描述：
+
+```ts
+src/llm/sandboxVisualEvidence.ts -> createSandboxVisualSupplementDescriptor
+```
+
+它只用于本地 QA 或人工复核，不包含图片数据，不进入 LLM 输入。
 
 验证命令：
 
@@ -261,3 +269,15 @@ CurrentSandboxSnapshot
 不要引用事件流、个人记忆、用户身份、授权上下文或截图，因为本次输入不包含这些内容。
 象征候选词只能用于提问和探索，不能作为诊断结论。
 ```
+
+## 视觉补充证据不进入 LLM
+
+如果后续需要做截图识别或视觉校验，只能先生成 `SandboxVisualSupplementDescriptor` 作为本地 QA 描述符。
+
+| 字段 | 规则 |
+|---|---|
+| `sourceSnapshotId` | 必须绑定同一份 `CurrentSandboxSnapshot`。 |
+| `descriptorContainsImageData` | 固定为 `false`，描述符不包含图片数据。 |
+| `mayBeSentToLlm` | 固定为 `false`，不能进入 LLM prompt。 |
+| `mayReplaceSnapshotOrInsight` | 固定为 `false`，不能替代结构化数据。 |
+| `requiresHumanReview` | 固定为 `true`，只能辅助人工复核。 |

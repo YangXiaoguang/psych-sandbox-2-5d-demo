@@ -46,6 +46,11 @@ import {
 } from "../../src/api/currentSandboxSnapshotApi";
 import { buildCurrentSandboxInsight, CURRENT_SANDBOX_INSIGHT_SCHEMA } from "../../src/llm/currentSandboxInsight";
 import { CURRENT_SANDBOX_SNAPSHOT_SCHEMA } from "../../src/llm/currentSandboxSnapshot";
+import {
+  assertVisualSupplementIsNotLlmInput,
+  createSandboxVisualSupplementDescriptor,
+  SANDBOX_VISUAL_SUPPLEMENT_SCHEMA,
+} from "../../src/llm/sandboxVisualEvidence";
 
 const sampleObject = {
   id: "obj_house_001",
@@ -77,23 +82,35 @@ const request = {
 };
 
 const payload = createCurrentSandboxSnapshotPayload(request);
+const visualSupplement = createSandboxVisualSupplementDescriptor({
+  sourceSnapshotId: payload.snapshot.snapshotId,
+  generatedAt: payload.snapshot.generatedAt,
+  purpose: "qa_visual_alignment",
+  renderer: "stage3d",
+  captureArtifactId: "artifacts/visual-regression/latest/sandbox-stage-v2.png",
+  imageDigest: "sha256:contract-placeholder",
+});
 
 export default {
   schema: CURRENT_SANDBOX_SNAPSHOT_SCHEMA,
   insightSchema: CURRENT_SANDBOX_INSIGHT_SCHEMA,
+  visualSupplementSchema: SANDBOX_VISUAL_SUPPLEMENT_SCHEMA,
   payload,
   response: createCurrentSandboxSnapshotResponse(request),
   expectedInsight: buildCurrentSandboxInsight(payload.snapshot),
+  visualSupplement,
+  visualSupplementNotLlmInput: assertVisualSupplementIsNotLlmInput(visualSupplement),
 };
 `;
 }
 
 async function assertRuntimeSnapshot(runtime) {
-  const { payload, response, schema, insightSchema, expectedInsight } = runtime;
+  const { payload, response, schema, insightSchema, visualSupplementSchema, expectedInsight, visualSupplement, visualSupplementNotLlmInput } = runtime;
   assert("Runtime exports payload", Boolean(payload));
   assert("Runtime exports response", Boolean(response));
   assert("Schema constant remains stable", schema === "sandbox.current-snapshot.v1", schema);
   assert("Insight schema constant remains stable", insightSchema === "sandbox.current-insight.v1", insightSchema);
+  assert("Visual supplement schema constant remains stable", visualSupplementSchema === "sandbox.visual-supplement.v1", visualSupplementSchema);
 
   assert("Response is successful", response.ok === true, JSON.stringify(response));
   assert("Response requestId is generated", typeof response.requestId === "string" && response.requestId.startsWith("req_"), response.requestId);
@@ -145,15 +162,22 @@ async function assertRuntimeSnapshot(runtime) {
   const insightKeys = collectKeys(insight);
   const leakedInsightKeys = forbiddenKeys.filter((key) => insightKeys.has(key));
   assert("Insight contains no forbidden context keys", leakedInsightKeys.length === 0, leakedInsightKeys.join(", "));
+
+  assert("Visual supplement descriptor is generated", visualSupplement.schemaVersion === "sandbox.visual-supplement.v1");
+  assert("Visual supplement links to snapshot", visualSupplement.sourceSnapshotId === snapshot.snapshotId, visualSupplement.sourceSnapshotId);
+  assert("Visual supplement contains no image data", visualSupplement.policy.descriptorContainsImageData === false);
+  assert("Visual supplement cannot be LLM input", visualSupplement.policy.mayBeSentToLlm === false && visualSupplementNotLlmInput === true);
+  assert("Visual supplement cannot replace snapshot or insight", visualSupplement.policy.mayReplaceSnapshotOrInsight === false);
 }
 
 async function assertStaticContractFiles() {
-  const [contracts, apiHelper, mockAdapter, promptContext, insightFile, structuredPanel, rightPanel, doc, analysisDoc] = await Promise.all([
+  const [contracts, apiHelper, mockAdapter, promptContext, insightFile, visualEvidenceFile, structuredPanel, rightPanel, doc, analysisDoc] = await Promise.all([
     readProjectFile("src/api/contracts.ts"),
     readProjectFile("src/api/currentSandboxSnapshotApi.ts"),
     readProjectFile("src/api/mockApiAdapter.ts"),
     readProjectFile("src/llm/sandboxPromptContext.ts"),
     readProjectFile("src/llm/currentSandboxInsight.ts"),
+    readProjectFile("src/llm/sandboxVisualEvidence.ts"),
     readProjectFile("src/components/StructuredDataPanel.tsx"),
     readProjectFile("src/components/RightPanel.tsx"),
     readProjectFile("docs/sandbox-llm-data-output-spec.md"),
@@ -190,6 +214,8 @@ async function assertStaticContractFiles() {
   assert("Insight module declares schema", insightFile.includes("CURRENT_SANDBOX_INSIGHT_SCHEMA"));
   assert("Insight module exposes deterministic builder", insightFile.includes("buildCurrentSandboxInsight"));
   assert("Insight module documents no-diagnosis guardrail", insightFile.includes("不能作为诊断结论"));
+  assert("Visual evidence module declares supplement schema", visualEvidenceFile.includes("SANDBOX_VISUAL_SUPPLEMENT_SCHEMA"));
+  assert("Visual evidence module blocks LLM input", visualEvidenceFile.includes("mayBeSentToLlm: false") && visualEvidenceFile.includes("assertVisualSupplementIsNotLlmInput"));
 
   assert("Structured data panel uses API payload helper", structuredPanel.includes("createCurrentSandboxSnapshotPayload"));
   assert("Structured data panel copies raw snapshot JSON", structuredPanel.includes("JSON.stringify(snapshot, null, 2)"));
@@ -209,8 +235,10 @@ async function assertStaticContractFiles() {
   assert("Doc excludes personal memory", doc.includes("个人记忆") && doc.includes("不包含长期记忆"));
   assert("Doc excludes authorization context", doc.includes("授权上下文"));
   assert("Doc excludes images", doc.includes("图片截图"));
+  assert("Doc defines visual supplement as non-LLM evidence", doc.includes("SandboxVisualSupplementDescriptor") && doc.includes("mayBeSentToLlm"));
   assert("Analysis layer doc describes Snapshot to Insight pipeline", analysisDoc.includes("CurrentSandboxSnapshot") && analysisDoc.includes("CurrentSandboxInsight"));
   assert("Analysis layer doc rejects screenshot-first analysis", analysisDoc.includes("不应优先做") && analysisDoc.includes("看截图再分析"));
+  assert("Analysis layer doc constrains visual supplement", analysisDoc.includes("SandboxVisualSupplementDescriptor") && analysisDoc.includes("不可作为 LLM 主输入"));
   await assertNoBypassedSnapshotBuilderImports();
 }
 
