@@ -26,6 +26,8 @@ npm run qa:acceptance
 - [Stage Engine v2 场景合同](docs/scene-contracts.md)
 - [Stage Engine v2 质量门](docs/quality-gates.md)
 - [当前沙盘 Snapshot 数据输出规范](docs/sandbox-llm-data-output-spec.md)
+- [Codex/Agent 工作协议](AGENTS.md)
+- [测试与回归矩阵](TEST_MATRIX.md)
 
 ## 能力
 
