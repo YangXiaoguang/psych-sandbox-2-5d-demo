@@ -11,6 +11,7 @@ Updated: 2026-08-04
 | Stage v2 RC accepted | `7088bf6`, `checkpoint/stage-v2-rc-accepted-2026-08-03` | Full Stage v2 acceptance chain passed. |
 | AI analysis layer boundary | `b95febd`, `checkpoint/ai-analysis-layer-boundary-2026-08-03` | Snapshot/Insight moved to `src/analysis`; LLM layer is prompt/provider focused. |
 | Agentic engineering protocol | `d30e75e`, `checkpoint/agentic-engineering-protocol-2026-08-03` | Root `AGENTS.md` and `TEST_MATRIX.md` added. |
+| Stage v2 polish sprint | `checkpoint/stage-v2-polish-v1-2026-08-04` | Sand tactile material, shoreline foam, calmer ocean, and night/rain readability refined. |
 
 ## Completed In This Stabilization Track
 
@@ -21,6 +22,7 @@ Updated: 2026-08-04
 - Current Sandbox Snapshot and derived Insight contracts are separated from LLM provider code.
 - Root agent protocol and regression matrix are available for future tasks.
 - Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
+- Phase 3 focused Stage v2 polish completed with sand/ocean/night-rain refinements in `docs/stage-v2-polish-2026-08-04.md`.
 
 ## Next Recommended Sequence
 
@@ -71,7 +73,7 @@ Evidence:
 
 ### Phase 3: Focused Stage v2 Polish Sprint
 
-Status: next.
+Status: complete.
 
 Goal: improve only the highest-value visual gap without weakening interactions.
 
@@ -96,6 +98,11 @@ For broad visual changes:
 npm run qa:visual-baseline
 npm run qa:visual-report
 ```
+
+Evidence:
+
+- `docs/stage-v2-polish-2026-08-04.md`
+- `artifacts/visual-regression/2026-08-04/visual-review.md`
 
 ### Phase 4: Backend-Ready Contract Track
 

@@ -35,7 +35,9 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
   const surfaceSeeds = useMemo(() => createSurfaceSandSeeds(), []);
   const rakeSeeds = useMemo(() => createSandRakeSeeds(), []);
   const foamFleckSeeds = useMemo(() => createFoamFleckSeeds(), []);
+  const foamLaceSeeds = useMemo(() => createFoamLaceSeeds(), []);
   const dunePatchSeeds = useMemo(() => createDunePatchSeeds(), []);
+  const sandDimpleSeeds = useMemo(() => createSandDimpleSeeds(), []);
   const sandSparkleSeeds = useMemo(() => createSandSparkleSeeds(), []);
   const oceanBandSeeds = useMemo(() => createOceanBandSeeds(), []);
 
@@ -45,10 +47,10 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
     foamTexture.offset.set(-elapsed * 0.035, elapsed * 0.014);
   });
 
-  const waterColor = night ? "#2c6571" : rainy ? "#6cb8c8" : cloudy ? "#83d3d7" : "#5ed4dc";
+  const waterColor = night ? "#245a66" : rainy ? "#5aaabc" : cloudy ? "#72cbd0" : "#43c4cc";
   const waterEmissive = night ? "#082936" : "#0a3640";
-  const sandColor = night ? "#d5c895" : rainy ? "#d8bd83" : "#f0cc78";
-  const wetSandColor = night ? "#b9ad82" : rainy ? "#c79d65" : "#dfb05d";
+  const sandColor = night ? "#dfca8e" : rainy ? "#dfc08a" : "#f2d183";
+  const wetSandColor = night ? "#c4ac77" : rainy ? "#caa06a" : "#d9a653";
 
   return (
     <group>
@@ -97,6 +99,7 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
         />
       </mesh>
       <DuneReliefPatches seeds={dunePatchSeeds} night={night} rainy={rainy} texture={softPatchTexture} />
+      <SandContactDimples seeds={sandDimpleSeeds} night={night} rainy={rainy} texture={softPatchTexture} />
       <SandSparkleFlecks seeds={sandSparkleSeeds} night={night} rainy={rainy} />
 
       <mesh geometry={foamGeometry} receiveShadow renderOrder={3}>
@@ -109,6 +112,7 @@ export function SandTrayMesh({ environment }: SandTrayMeshProps): JSX.Element {
         />
       </mesh>
       <TideFoam geometry={tideFoamGeometry} night={night} rainy={rainy} texture={foamTexture} />
+      <ShoreFoamLace seeds={foamLaceSeeds} night={night} rainy={rainy} texture={softPatchTexture} />
       <ShoreFoamFlecks seeds={foamFleckSeeds} night={night} rainy={rainy} />
 
       <mesh position={[1.58, SAND_SURFACE_Y + 0.035, 0.82]} receiveShadow>
@@ -201,7 +205,7 @@ function OceanCurrentBands({
             map={texture}
             color={night ? "#8fd4df" : rainy ? "#c8f3f0" : "#f5fff8"}
             transparent
-            opacity={(night ? 0.045 : rainy ? 0.07 : 0.092) * seed.opacity}
+            opacity={(night ? 0.052 : rainy ? 0.064 : 0.058) * seed.opacity}
             depthWrite={false}
           />
         </mesh>
@@ -260,6 +264,50 @@ function DuneReliefPatches({
               depthWrite={false}
               side={THREE.DoubleSide}
             />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function SandContactDimples({
+  night,
+  rainy,
+  seeds,
+  texture,
+}: {
+  night: boolean;
+  rainy: boolean;
+  seeds: SandDimpleSeed[];
+  texture: THREE.Texture;
+}): JSX.Element {
+  return (
+    <group>
+      {seeds.map((seed, index) => {
+        const shadow = seed.kind === "shadow";
+        const color = shadow
+          ? night
+            ? "#6f5936"
+            : rainy
+              ? "#8a653d"
+              : "#95602c"
+          : night
+            ? "#fff2bd"
+            : rainy
+              ? "#f2d9a0"
+              : "#ffe3a3";
+        const opacity = seed.opacity * (shadow ? (night ? 0.18 : rainy ? 0.13 : 0.16) : night ? 0.12 : rainy ? 0.08 : 0.11);
+        return (
+          <mesh
+            key={`${seed.x}-${seed.z}-${index}`}
+            position={[seed.x, SAND_SURFACE_Y + 0.096 + seed.lift, seed.z]}
+            rotation={[-Math.PI / 2, 0, seed.rotation]}
+            scale={[seed.radiusX, seed.radiusZ, 1]}
+            renderOrder={7}
+          >
+            <circleGeometry args={[1, 28]} />
+            <meshBasicMaterial map={texture} color={color} transparent opacity={opacity} depthWrite={false} />
           </mesh>
         );
       })}
@@ -355,6 +403,57 @@ function ShoreFoamFlecks({ night, rainy, seeds }: { night: boolean; rainy: boole
           >
             <circleGeometry args={[1, 16]} />
             <meshBasicMaterial color={night ? "#d8f1f3" : "#ffffff"} transparent opacity={opacity} depthWrite={false} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function ShoreFoamLace({
+  night,
+  rainy,
+  seeds,
+  texture,
+}: {
+  night: boolean;
+  rainy: boolean;
+  seeds: FoamLaceSeed[];
+  texture: THREE.Texture;
+}): JSX.Element {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) {
+      return;
+    }
+    const elapsed = clock.getElapsedTime();
+    groupRef.current.rotation.y = Math.sin(elapsed * 0.18) * 0.006;
+    const scale = 1 + Math.sin(elapsed * (rainy ? 1.18 : 0.78)) * 0.01;
+    groupRef.current.scale.set(scale, 1, scale);
+  });
+
+  return (
+    <group ref={groupRef}>
+      {seeds.map((seed, index) => {
+        const inner = getIslandEdgePoint(seed.angle, seed.scale);
+        const opacity = seed.opacity * (night ? 0.42 : rainy ? 0.82 : 0.68);
+        return (
+          <mesh
+            key={`${seed.angle}-${seed.scale}-${index}`}
+            position={[inner.x, SAND_SURFACE_Y + 0.041 + seed.lift, inner.z]}
+            rotation={[-Math.PI / 2, 0, seed.angle + seed.rotation]}
+            scale={[seed.length, seed.width, 1]}
+            renderOrder={6}
+          >
+            <circleGeometry args={[1, 24]} />
+            <meshBasicMaterial
+              map={texture}
+              color={night ? "#d3edf0" : "#ffffff"}
+              transparent
+              opacity={opacity}
+              depthWrite={false}
+            />
           </mesh>
         );
       })}
@@ -479,7 +578,7 @@ function OceanGlimmer({ night, rainy, texture }: { night: boolean; rainy: boolea
     texture.offset.set(elapsed * 0.024, -elapsed * 0.018);
     if (materialRef.current) {
       const pulse = 0.5 + Math.sin(elapsed * (rainy ? 0.9 : 0.62)) * 0.5;
-      materialRef.current.opacity = night ? 0.08 + pulse * 0.035 : rainy ? 0.12 + pulse * 0.04 : 0.18 + pulse * 0.055;
+      materialRef.current.opacity = night ? 0.08 + pulse * 0.04 : rainy ? 0.105 + pulse * 0.035 : 0.11 + pulse * 0.036;
     }
   });
 
@@ -491,7 +590,7 @@ function OceanGlimmer({ night, rainy, texture }: { night: boolean; rainy: boolea
         map={texture}
         color={night ? "#9ad3de" : "#f5ffff"}
         transparent
-        opacity={night ? 0.08 : 0.18}
+        opacity={night ? 0.08 : 0.11}
         depthWrite={false}
       />
     </mesh>
@@ -549,29 +648,29 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
     const night = environment.light === "night";
     const rainy = environment.weather === "rainy";
     const base = context.createRadialGradient(260, 190, 24, 540, 580, 850);
-    base.addColorStop(0, night ? "#efe0ad" : rainy ? "#e8c985" : "#f7d889");
-    base.addColorStop(0.38, night ? "#d7c48d" : rainy ? "#ddbb79" : "#f0c96f");
-    base.addColorStop(0.72, night ? "#b99a62" : rainy ? "#bd9360" : "#d39b50");
-    base.addColorStop(1, night ? "#8d6941" : rainy ? "#a57849" : "#b97738");
+    base.addColorStop(0, night ? "#f1dfa7" : rainy ? "#ecd092" : "#f9df98");
+    base.addColorStop(0.38, night ? "#dec58a" : rainy ? "#dfbd7c" : "#f1cd78");
+    base.addColorStop(0.72, night ? "#bd985c" : rainy ? "#c3955d" : "#d59e52");
+    base.addColorStop(1, night ? "#8f6840" : rainy ? "#a87848" : "#b97738");
     context.fillStyle = base;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    for (let patch = 0; patch < 74; patch += 1) {
+    for (let patch = 0; patch < 92; patch += 1) {
       const x = seeded(patch * 37) * canvas.width;
       const y = seeded(patch * 61) * canvas.height;
       const radius = 42 + seeded(patch * 83) * 128;
       const gradient = context.createRadialGradient(x, y, 2, x, y, radius);
       const light = seeded(patch * 17) > 0.52;
-      gradient.addColorStop(0, light ? (night ? "rgba(255,238,174,0.18)" : "rgba(255,239,170,0.13)") : "rgba(91,58,24,0.11)");
+      gradient.addColorStop(0, light ? (night ? "rgba(255,238,174,0.2)" : "rgba(255,239,170,0.15)") : "rgba(91,58,24,0.105)");
       gradient.addColorStop(1, "rgba(255,255,255,0)");
       context.fillStyle = gradient;
       context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
     }
 
-    for (let index = 0; index < 11800; index += 1) {
+    for (let index = 0; index < 15600; index += 1) {
       const x = seeded(index * 31) * canvas.width;
       const y = seeded(index * 47) * canvas.height;
-      const alpha = 0.022 + seeded(index * 59) * (night ? 0.12 : 0.095);
+      const alpha = 0.018 + seeded(index * 59) * (night ? 0.115 : 0.088);
       const warm = seeded(index * 19);
       context.fillStyle =
         warm > 0.68
@@ -580,15 +679,15 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
             ? `rgba(199,143,63,${alpha})`
             : `rgba(99,65,29,${alpha})`;
       context.beginPath();
-      context.arc(x, y, 0.22 + seeded(index * 71) * 1.35, 0, Math.PI * 2);
+      context.arc(x, y, 0.18 + seeded(index * 71) * 1.12, 0, Math.PI * 2);
       context.fill();
     }
 
-    context.globalAlpha = 0.72;
-    for (let sparkle = 0; sparkle < 360; sparkle += 1) {
+    context.globalAlpha = rainy ? 0.58 : 0.8;
+    for (let sparkle = 0; sparkle < 460; sparkle += 1) {
       const x = seeded(sparkle * 97) * canvas.width;
       const y = seeded(sparkle * 109) * canvas.height;
-      context.strokeStyle = rainy ? "rgba(255,252,219,0.1)" : "rgba(255,250,210,0.18)";
+      context.strokeStyle = rainy ? "rgba(255,252,219,0.095)" : night ? "rgba(255,241,194,0.16)" : "rgba(255,250,210,0.18)";
       context.lineWidth = 0.55 + seeded(sparkle * 67) * 0.8;
       context.beginPath();
       context.moveTo(x - 1.8, y);
@@ -598,10 +697,10 @@ function createSandTexture(environment: SandboxEnvironment): THREE.CanvasTexture
     context.globalAlpha = 1;
 
     context.lineCap = "round";
-    for (let ridge = 0; ridge < 34; ridge += 1) {
+    for (let ridge = 0; ridge < 42; ridge += 1) {
       const y = 42 + ridge * 27 + seeded(ridge * 13) * 18;
-      const shade = rainy ? "rgba(255,255,255,0.075)" : night ? "rgba(91,65,35,0.14)" : "rgba(117,75,31,0.12)";
-      const shine = rainy ? "rgba(226,244,232,0.075)" : night ? "rgba(255,233,169,0.16)" : "rgba(255,232,151,0.13)";
+      const shade = rainy ? "rgba(111,75,34,0.08)" : night ? "rgba(91,65,35,0.13)" : "rgba(117,75,31,0.125)";
+      const shine = rainy ? "rgba(255,236,173,0.08)" : night ? "rgba(255,233,169,0.17)" : "rgba(255,232,151,0.14)";
       context.lineWidth = 1.2 + seeded(ridge * 19) * 1.8;
       context.strokeStyle = shade;
       context.beginPath();
@@ -690,28 +789,36 @@ function createOceanTexture(environment: SandboxEnvironment): THREE.CanvasTextur
   if (context) {
     const night = environment.light === "night";
     const rainy = environment.weather === "rainy";
-    context.fillStyle = night ? "#164050" : rainy ? "#58adbd" : "#26c4d0";
+    const cloudy = environment.weather === "cloudy";
+    context.fillStyle = night ? "#143846" : rainy ? "#4f9dad" : cloudy ? "#63c4ca" : "#32bcc7";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     const depth = context.createRadialGradient(156, 122, 20, 286, 304, 440);
-    depth.addColorStop(0, night ? "rgba(113,184,197,0.25)" : rainy ? "rgba(178,236,232,0.16)" : "rgba(202,255,240,0.18)");
+    depth.addColorStop(0, night ? "rgba(113,184,197,0.26)" : rainy ? "rgba(178,236,232,0.14)" : "rgba(218,255,244,0.15)");
     depth.addColorStop(0.55, "rgba(255,255,255,0)");
-    depth.addColorStop(1, night ? "rgba(0,16,26,0.18)" : "rgba(0,82,112,0.2)");
+    depth.addColorStop(1, night ? "rgba(0,16,26,0.2)" : "rgba(0,76,103,0.18)");
     context.fillStyle = depth;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     for (let wash = 0; wash < 620; wash += 1) {
       const x = seeded(wash * 13) * canvas.width;
       const y = seeded(wash * 29) * canvas.height;
-      const alpha = night ? 0.012 + seeded(wash * 7) * 0.032 : 0.018 + seeded(wash * 7) * 0.045;
+      const alpha = night ? 0.012 + seeded(wash * 7) * 0.036 : 0.014 + seeded(wash * 7) * 0.036;
       context.fillStyle = seeded(wash * 5) > 0.5 ? `rgba(255,255,255,${alpha})` : `rgba(0,77,101,${alpha})`;
       context.fillRect(x, y, 1.2 + seeded(wash * 3) * 5.4, 0.6 + seeded(wash * 11) * 2.6);
     }
 
     for (let line = 0; line < 58; line += 1) {
       const y = -40 + seeded(line * 31) * (canvas.height + 80);
-      context.strokeStyle = line % 2 === 0 ? "rgba(255,255,255,0.16)" : "rgba(7,105,126,0.13)";
-      context.lineWidth = 0.9 + seeded(line * 41) * 1.8;
+      context.strokeStyle =
+        line % 2 === 0
+          ? night
+            ? "rgba(204,246,255,0.13)"
+            : "rgba(255,255,255,0.12)"
+          : night
+            ? "rgba(13,86,104,0.14)"
+            : "rgba(7,105,126,0.1)";
+      context.lineWidth = 0.8 + seeded(line * 41) * 1.55;
       context.beginPath();
       context.moveTo(-50, y);
       context.bezierCurveTo(86, y - 22, 214, y + 25, 354, y - 14);
@@ -1006,8 +1113,29 @@ interface FoamFleckSeed {
   size: number;
 }
 
+interface FoamLaceSeed {
+  angle: number;
+  length: number;
+  lift: number;
+  opacity: number;
+  rotation: number;
+  scale: number;
+  width: number;
+}
+
 interface DunePatchSeed {
   kind: "highlight" | "shadow" | "cool";
+  lift: number;
+  opacity: number;
+  radiusX: number;
+  radiusZ: number;
+  rotation: number;
+  x: number;
+  z: number;
+}
+
+interface SandDimpleSeed {
+  kind: "shadow" | "highlight";
   lift: number;
   opacity: number;
   radiusX: number;
@@ -1078,7 +1206,7 @@ function createSandRakeSeeds(): SandRakeSeed[] {
 }
 
 function createFoamFleckSeeds(): FoamFleckSeed[] {
-  return Array.from({ length: 72 }, (_, index) => ({
+  return Array.from({ length: 92 }, (_, index) => ({
     angle: seeded(index * 31 + 12) * Math.PI * 2,
     lift: seeded(index * 41 + 15) * 0.01,
     opacity: 0.08 + seeded(index * 43 + 3) * 0.18,
@@ -1088,8 +1216,20 @@ function createFoamFleckSeeds(): FoamFleckSeed[] {
   }));
 }
 
+function createFoamLaceSeeds(): FoamLaceSeed[] {
+  return Array.from({ length: 44 }, (_, index) => ({
+    angle: seeded(index * 193 + 29) * Math.PI * 2,
+    length: 0.12 + seeded(index * 197 + 31) * 0.34,
+    lift: seeded(index * 199 + 37) * 0.012,
+    opacity: 0.12 + seeded(index * 211 + 41) * 0.24,
+    rotation: -0.22 + seeded(index * 223 + 43) * 0.44,
+    scale: 1.006 + seeded(index * 227 + 47) * 0.078,
+    width: 0.018 + seeded(index * 229 + 53) * 0.05,
+  }));
+}
+
 function createDunePatchSeeds(): DunePatchSeed[] {
-  return Array.from({ length: 18 }, (_, index) => {
+  return Array.from({ length: 24 }, (_, index) => {
     const angle = seeded(index * 67 + 9) * Math.PI * 2;
     const scale = 0.18 + seeded(index * 79 + 3) * 0.7;
     const point = getIslandEdgePoint(angle, scale);
@@ -1107,8 +1247,27 @@ function createDunePatchSeeds(): DunePatchSeed[] {
   });
 }
 
+function createSandDimpleSeeds(): SandDimpleSeed[] {
+  return Array.from({ length: 36 }, (_, index) => {
+    const angle = seeded(index * 233 + 17) * Math.PI * 2;
+    const scale = 0.16 + seeded(index * 239 + 23) * 0.66;
+    const point = getIslandEdgePoint(angle, scale);
+    const shadow = index % 3 !== 1;
+    return {
+      kind: shadow ? "shadow" : "highlight",
+      lift: seeded(index * 241 + 29) * 0.007,
+      opacity: 0.5 + seeded(index * 251 + 31) * 0.5,
+      radiusX: 0.08 + seeded(index * 257 + 37) * 0.18,
+      radiusZ: 0.025 + seeded(index * 263 + 41) * 0.07,
+      rotation: seeded(index * 269 + 43) * Math.PI * 2,
+      x: point.x,
+      z: point.z,
+    };
+  });
+}
+
 function createSandSparkleSeeds(): SandSparkleSeed[] {
-  return Array.from({ length: 118 }, (_, index) => {
+  return Array.from({ length: 154 }, (_, index) => {
     const angle = seeded(index * 113 + 5) * Math.PI * 2;
     const scale = 0.16 + seeded(index * 127 + 7) * 0.76;
     const point = getIslandEdgePoint(angle, scale);

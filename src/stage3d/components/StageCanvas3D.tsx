@@ -45,9 +45,9 @@ export function StageCanvas3D({
   const night = environment.light === "night";
   const rainy = environment.weather === "rainy";
   const cloudy = environment.weather === "cloudy";
-  const background = night ? "#082331" : rainy ? "#75bbc7" : cloudy ? "#9bd9d8" : "#8de8ec";
-  const keyLight = night ? 1.55 : rainy ? 1.45 : cloudy ? 1.55 : 2.25;
-  const exposure = night ? 1.02 : rainy ? 0.98 : 1.06;
+  const background = night ? "#082331" : rainy ? "#6eb5c3" : cloudy ? "#97d6d5" : "#9ae7e8";
+  const keyLight = night ? 1.72 : rainy ? 1.5 : cloudy ? 1.6 : 2.16;
+  const exposure = night ? 1.06 : rainy ? 1.0 : 1.05;
   const handleDragStateChange = (dragging: boolean, label?: string) => {
     setObjectDragging(dragging);
     onToyDragLabelChange?.(dragging ? label ?? null : null);
@@ -78,9 +78,9 @@ export function StageCanvas3D({
       <color attach="background" args={[background]} />
       <fog attach="fog" args={[night ? "#082331" : background, 20, 38]} />
 
-      <ambientLight intensity={night ? 0.52 : cloudy || rainy ? 0.56 : 0.46} color={night ? "#b8dff0" : "#fff4df"} />
+      <ambientLight intensity={night ? 0.58 : cloudy || rainy ? 0.57 : 0.46} color={night ? "#c4e6f5" : "#fff4df"} />
       <hemisphereLight
-        args={[night ? "#b7dcff" : "#fff7df", night ? "#243a3b" : "#8aa189", night ? 0.96 : 0.58]}
+        args={[night ? "#c7e6ff" : "#fff7df", night ? "#263b36" : "#8aa189", night ? 1.04 : 0.58]}
       />
       <directionalLight
         castShadow
@@ -98,13 +98,13 @@ export function StageCanvas3D({
       />
       <directionalLight
         position={night ? [3.8, 3.5, -5.4] : [4.2, 4.6, -5.2]}
-        intensity={night ? 0.66 : rainy ? 0.26 : cloudy ? 0.32 : 0.42}
+        intensity={night ? 0.78 : rainy ? 0.3 : cloudy ? 0.34 : 0.38}
         color={night ? "#7fbfff" : "#d7fff3"}
       />
       <pointLight
         position={night ? [1.8, 2.2, 1.4] : [-2.6, 1.6, 1.8]}
-        intensity={night ? 0.56 : 0.16}
-        color={night ? "#8ff7d9" : "#fff3cc"}
+        intensity={night ? 0.68 : rainy ? 0.22 : 0.14}
+        color={night ? "#9cffde" : "#fff3cc"}
         distance={7}
       />
 

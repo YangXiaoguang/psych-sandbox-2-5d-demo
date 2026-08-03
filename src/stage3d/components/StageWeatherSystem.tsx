@@ -93,7 +93,7 @@ function RainField(): JSX.Element {
         return (
           <mesh key={index} position={[x, y, 0]} rotation={[0, 0, -0.28]}>
             <boxGeometry args={[0.01, 0.34 + seeded(index * 37) * 0.24, 0.01]} />
-            <meshBasicMaterial color="#d8eef6" transparent opacity={0.17} depthWrite={false} />
+            <meshBasicMaterial color="#d8eef6" transparent opacity={0.135} depthWrite={false} />
           </mesh>
         );
       })}
