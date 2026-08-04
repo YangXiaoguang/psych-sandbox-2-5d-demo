@@ -10,6 +10,7 @@ Updated: 2026-08-04
 |---|---|---|
 | Stage v2 RC accepted | `7088bf6`, `checkpoint/stage-v2-rc-accepted-2026-08-03` | Full Stage v2 acceptance chain passed. |
 | AI analysis layer boundary | `b95febd`, `checkpoint/ai-analysis-layer-boundary-2026-08-03` | Snapshot/Insight moved to `src/analysis`; LLM layer is prompt/provider focused. |
+| AI analysis architecture hardening | `checkpoint/ai-analysis-architecture-v1-2026-08-05` | AI analysis technical architecture expanded with DTO guidance, service boundaries, policy gates, LLM proxy migration, audit, and QA rules. |
 | Agentic engineering protocol | `d30e75e`, `checkpoint/agentic-engineering-protocol-2026-08-03` | Root `AGENTS.md` and `TEST_MATRIX.md` added. |
 | Stage v2 polish sprint | `checkpoint/stage-v2-polish-v1-2026-08-04` | Sand tactile material, shoreline foam, calmer ocean, and night/rain readability refined. |
 | Backend-ready contract | `checkpoint/backend-contract-v1-2026-08-04` | API service boundaries, task migration domain, mock reports, and backend handoff QA added. |
@@ -25,6 +26,7 @@ Updated: 2026-08-04
 - UI shell QA covers navigation, fullscreen AI single-drawer behavior, asset backpack readability, insight drawer fit, major app surfaces, and night-mode text/form contrast.
 - Toy asset QA covers 19 built-in Three.js toy sprites.
 - Current Sandbox Snapshot and derived Insight contracts are separated from LLM provider code.
+- AI analysis architecture is now documented as a backend-ready service design with Snapshot/Insight, Prompt, LLM Gateway, Context Policy, audit, fallback, and future Context Packet boundaries.
 - Root agent protocol and regression matrix are available for future tasks.
 - Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
 - Phase 3 focused Stage v2 polish completed with sand/ocean/night-rain refinements in `docs/stage-v2-polish-2026-08-04.md`.
