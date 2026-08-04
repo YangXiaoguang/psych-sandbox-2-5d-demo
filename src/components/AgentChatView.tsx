@@ -263,8 +263,8 @@ export function AgentChatView({
       <aside className="conversation-rail" aria-label="会话列表">
         <div className="rail-header">
           <div>
-            <p className="eyebrow">Conversations</p>
-            <h2>会话</h2>
+            <p className="eyebrow">Dialogue Rooms</p>
+            <h2>对话舱</h2>
           </div>
           <button type="button" className="small-icon-button" onClick={() => createConversation(activeAgent)} aria-label="新建会话">
             <MessageCirclePlus size={16} />
@@ -299,7 +299,7 @@ export function AgentChatView({
               </button>
             );
           })}
-          {sortedConversations.length === 0 ? <p className="empty-state">还没有会话，选择一个 Agent 开始。</p> : null}
+          {sortedConversations.length === 0 ? <p className="empty-state">选择一个伙伴，开始一段沙盘对话。</p> : null}
         </div>
       </aside>
 
@@ -309,10 +309,14 @@ export function AgentChatView({
             <div className="agent-stage-hero">
               <AgentPortrait agent={activeAgent} size="hero" isSpeaking={Boolean(streamingMessageId)} />
               <div className="agent-title-card">
-                <p className="eyebrow">Live Sandplay Dialogue</p>
+                <p className="eyebrow">Sandplay Dialogue</p>
                 <h2>{activeAgent.name}</h2>
-                <p>{activeAgent.description}</p>
-                <span>{activeAgent.school}</span>
+                <p className="agent-title-copy">{activeAgent.description}</p>
+                <div className="agent-title-meta" aria-label="当前对话上下文">
+                  <span className="agent-school-pill">{activeAgent.school}</span>
+                  <span>{sceneSnapshotPayload.snapshot.analysis.totalObjects} 个沙具</span>
+                  <span>{sceneSnapshotPayload.snapshot.environment.weatherLabel} · {sceneSnapshotPayload.snapshot.environment.lightLabel}</span>
+                </div>
               </div>
             </div>
 
@@ -337,7 +341,7 @@ export function AgentChatView({
               {!activeConversation ? (
                 <div className="agent-empty-chat">
                   <Sparkles size={18} />
-                  <p>点击左侧“新建会话”，或直接输入一句话开始。若配置可用，会优先使用真实 LLM 流式输出。</p>
+                  <p>输入一句话，或者新建会话。系统会优先使用可用的真实 LLM，失败时回到本地模拟。</p>
                 </div>
               ) : null}
               <div ref={chatEndRef} className="agent-chat-end" aria-hidden="true" />
@@ -347,15 +351,15 @@ export function AgentChatView({
             <div className="agent-compose-actions" aria-label="快捷对话动作">
               <button type="button" onClick={insertSceneSummary} disabled={Boolean(streamingMessageId)}>
                 <ClipboardList size={14} />
-                沙盘摘要
+                带入沙盘
               </button>
               <button type="button" onClick={continueWithQuestion} disabled={Boolean(streamingMessageId)}>
                 <MessageSquarePlus size={14} />
-                继续追问
+                追问
               </button>
               <button type="button" onClick={requestConversationSummary} disabled={Boolean(streamingMessageId)}>
                 <ScrollText size={14} />
-                生成小结
+                小结
               </button>
             </div>
             <form

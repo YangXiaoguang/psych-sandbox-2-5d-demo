@@ -16,6 +16,7 @@ Updated: 2026-08-04
 | Product experience compact HUD | `checkpoint/product-experience-hud-v1-2026-08-04` | Engine selector moved into the ambient stage HUD; UI QA now verifies an integrated, unobstructed game capsule. |
 | Product experience backpack polish | `checkpoint/product-experience-backpack-v1-2026-08-04` | Asset backpack idle copy reduced, duplicate favorite control removed, category badges shortened, and card text/readability guards stay green. |
 | Product experience insight drawer | `checkpoint/product-experience-insight-drawer-v1-2026-08-04` | Right scene/AI drawer copy and chrome reduced into compact game instrument panels while preserving insight, AI, and export workflows. |
+| Product experience agent dialogue | `checkpoint/product-experience-agent-dialogue-v1-2026-08-04` | Agent dialogue page polished into a compact sandplay dialogue cockpit with smaller message typography, lighter rails, and readable night-mode controls. |
 
 ## Completed In This Stabilization Track
 
@@ -31,6 +32,7 @@ Updated: 2026-08-04
 - Phase 5A compact HUD completed: the Classic/Stage v2 engine switch is now part of the topbar game capsule instead of a separate floating row.
 - Phase 5B asset backpack polish completed: the left drawer now behaves more like a game inventory, with lower copy density, single-path favorites access, stable toy cards, shortened category badges, and no idle drag instruction occupying layout space.
 - Phase 5C insight drawer polish completed: the right scene/AI drawer now uses shorter instrument labels, compact metrics, lighter collapsible rows, and reduced AI companion chrome.
+- Phase 5D agent dialogue polish completed: the dedicated Agent surface now uses a tighter dialogue cockpit, smaller Markdown/message typography, compact context chips, and reduced helper copy while preserving the centralized Snapshot/Insight prompt path.
 
 ## Next Recommended Sequence
 
@@ -142,7 +144,7 @@ Evidence:
 
 ### Phase 5: Product Experience Track
 
-Status: in progress. Phase 5A compact HUD, Phase 5B asset backpack, and Phase 5C insight drawer checkpoints complete.
+Status: in progress. Phase 5A compact HUD, Phase 5B asset backpack, Phase 5C insight drawer, and Phase 5D agent dialogue checkpoints complete.
 
 Goal: continue reducing office-like chrome and make the system feel like a refined sandplay studio.
 
@@ -166,6 +168,7 @@ Evidence:
 - Engine switch embedded in `TopBar` ambient HUD.
 - Asset backpack idle copy removed from the visible drawer, favorites live in the rail/card affordances, and toy card names/risk tags have fixed readable plates.
 - Right scene/AI drawer reduced to compact instrument metrics, a small selected-object strip, collapsed detail rows, and shorter AI companion quick prompts.
+- Agent dialogue page now reads as a compact sandplay companion cockpit instead of a generic chat admin view, with smaller bubbles, concise controls, and night-mode readability coverage.
 - `npm run qa:ui-shell` passes 91/91 gates.
 - `npm run qa:stage-v2` passes 29/29 gates.
 
