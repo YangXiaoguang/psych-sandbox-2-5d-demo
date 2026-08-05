@@ -17,6 +17,7 @@ Build a personal sandplay workspace where users can create a symbolic sand tray,
 7. Ask the AI companion or Agent to discuss the current composition using bounded Snapshot/Insight context.
 8. Archive personal sandplay sessions and manage local personal memory boundaries.
 9. Manage users, assets, LLM providers, and Agent profiles in a scalable admin console.
+10. Let authorized psychological experts inspect evidence, score AI analysis, revise hypotheses, and preserve the original output for audit.
 
 ## Core Surfaces
 
@@ -29,6 +30,7 @@ Build a personal sandplay workspace where users can create a symbolic sand tray,
 | Agent Dialogue | Dedicated conversation stage for theory-oriented companion roles. |
 | Personal Center | Local identity, sandplay archives, memory candidates, Context Packet preview. |
 | Admin Console | Large-scale management for users, permissions, assets, LLM providers, and Agent profiles. |
+| Analysis Workbench | Future expert-facing surface for evidence inspection, rubric scoring, revisions, rejection, and model comparison. |
 
 ## Data Source Of Truth
 
@@ -53,6 +55,14 @@ The current Snapshot/Insight context intentionally excludes:
 - Authorization context.
 - Screenshots or raw images.
 - API keys.
+
+The standalone analysis engine must keep three different meanings in separate contracts:
+
+```text
+Fact -> Feature -> Hypothesis
+```
+
+Facts describe the snapshot, features are deterministic calculations, and hypotheses are evidence-grounded candidates that require user dialogue or expert review. Snapshot-only input exposes `createdOrder` but not a full interaction history, so process fidelity must remain `weak` until a separately authorized event protocol exists.
 
 ## Interaction Requirements
 
@@ -83,10 +93,13 @@ The current Snapshot/Insight context intentionally excludes:
 ## Safety And Interpretation Boundaries
 
 - The product is not a medical diagnostic system.
+- The standalone analysis engine produces candidate themes and interview material, not privileged access to a user's inner world.
 - AI responses must use observation, reflection, and open questions.
 - Symbolic candidates are prompts for dialogue, not fixed meanings.
 - Personal memory must be user-visible, user-controlled, and source-traceable.
 - API keys and secrets must never appear in exported reports, QA artifacts, docs, or prompt context.
+- Death, conflict, fantasy, or other symbolic toys must not independently trigger crisis conclusions.
+- Expert corrections must preserve the original model output and remain versioned and auditable.
 
 ## Definition Of Done
 

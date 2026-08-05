@@ -24,6 +24,23 @@ SandboxObject[] + SandboxEnvironment
   -> Streamed Dialogue / Report Draft
 ```
 
+独立心理分析引擎是该链路之上的可选、可拆分能力，不替代当前 Snapshot/Insight：
+
+```text
+CurrentSandboxSnapshot
+  -> Fact / Feature / Evidence Graph
+  -> Candidate Hypothesis / Interview Questions
+  -> Expert Review / Revision
+```
+
+其冻结边界见：
+
+- `docs/sandbox-analysis-engine-charter.md`
+- `docs/sandbox-analysis-expert-rubric.md`
+- `docs/sandbox-analysis-calibration-dataset.md`
+
+当前 `CurrentSandboxInsight` 继续作为确定性规则基线。独立引擎必须兼容它，但不能把标签加权结果直接提升为心理结论。
+
 ## 2. 总体技术架构
 
 ```mermaid

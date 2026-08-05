@@ -2,7 +2,7 @@
 
 Current execution plan for the 2.5D psychological sandplay collaboration system.
 
-Updated: 2026-08-04
+Updated: 2026-08-05
 
 ## Current Stable Checkpoints
 
@@ -11,6 +11,7 @@ Updated: 2026-08-04
 | Stage v2 RC accepted | `7088bf6`, `checkpoint/stage-v2-rc-accepted-2026-08-03` | Full Stage v2 acceptance chain passed. |
 | AI analysis layer boundary | `b95febd`, `checkpoint/ai-analysis-layer-boundary-2026-08-03` | Snapshot/Insight moved to `src/analysis`; LLM layer is prompt/provider focused. |
 | AI analysis architecture hardening | `checkpoint/ai-analysis-architecture-v1-2026-08-05` | AI analysis technical architecture expanded with DTO guidance, service boundaries, policy gates, LLM proxy migration, audit, and QA rules. |
+| Standalone analysis engine Phase 0 | `checkpoint/sandbox-analysis-engine-phase-0-2026-08-05` | Module charter, expert rubric, 24-case calibration plan, privacy boundaries, and machine-readable specification QA frozen. |
 | Agentic engineering protocol | `d30e75e`, `checkpoint/agentic-engineering-protocol-2026-08-03` | Root `AGENTS.md` and `TEST_MATRIX.md` added. |
 | Stage v2 polish sprint | `checkpoint/stage-v2-polish-v1-2026-08-04` | Sand tactile material, shoreline foam, calmer ocean, and night/rain readability refined. |
 | Backend-ready contract | `checkpoint/backend-contract-v1-2026-08-04` | API service boundaries, task migration domain, mock reports, and backend handoff QA added. |
@@ -27,6 +28,7 @@ Updated: 2026-08-04
 - Toy asset QA covers 19 built-in Three.js toy sprites.
 - Current Sandbox Snapshot and derived Insight contracts are separated from LLM provider code.
 - AI analysis architecture is now documented as a backend-ready service design with Snapshot/Insight, Prompt, LLM Gateway, Context Policy, audit, fallback, and future Context Packet boundaries.
+- Standalone analysis engine Phase 0 freezes Fact/Feature/Hypothesis separation, snapshot-only process limitations, expert acceptance rules, and the 24-case calibration portfolio without fabricating expert labels.
 - Root agent protocol and regression matrix are available for future tasks.
 - Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
 - Phase 3 focused Stage v2 polish completed with sand/ocean/night-rain refinements in `docs/stage-v2-polish-2026-08-04.md`.
@@ -182,6 +184,43 @@ Evidence:
 - Multiplayer collaboration.
 - Full image-based psychological analysis.
 - Pixel-diff visual regression thresholds.
+
+## Standalone Sandbox Analysis Engine Track
+
+### Phase 0: Scope, Rubric, And Calibration Specification
+
+Status: complete at the specification level. Expert data collection remains an external research activity and is explicitly reported as 0/24 labeled cases.
+
+Deliverables:
+
+- `docs/sandbox-analysis-engine-charter.md`
+- `docs/sandbox-analysis-expert-rubric.md`
+- `docs/sandbox-analysis-calibration-dataset.md`
+- `specs/sandbox-analysis/*.json`
+- `npm run qa:analysis-spec`
+
+### Phase 1: Independent Package And Contracts
+
+Status: next.
+
+Goal: scaffold `@psych-sandbox/analysis-engine` as a framework-independent TypeScript package with versioned JSON schemas, migrations, validation, public ports, and zero React/Konva/Three.js dependencies.
+
+Minimum validation:
+
+```bash
+npm run build
+npm run qa:analysis-spec
+npm run qa:snapshot-contract
+```
+
+### Later Phases
+
+- Phase 2: deterministic reconstruction, feature extraction, and evidence graph.
+- Phase 3: structured LLM hypotheses, explanations, and interview questions.
+- Phase 4: safety gates, unsupported-claim detection, and diagnostic-language rejection.
+- Phase 5: expert scoring, revision history, adjudication, and export.
+- Phase 6: multi-model benchmark, frozen test set, and regression reporting.
+- Phase 7: adapter-based integration into the current product and future backend service.
 
 ## Working Rule
 

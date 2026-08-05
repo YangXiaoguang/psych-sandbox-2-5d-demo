@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "sandbox.analysis.expert-rubric.v1",
+  "scoreRange": {
+    "min": 1,
+    "max": 5
+  },
+  "totalWeight": 100,
+  "dimensions": [
+    {
+      "id": "scene_reconstruction",
+      "label": "场景重建准确性",
+      "weight": 18,
+      "critical": true
+    },
+    {
+      "id": "feature_accuracy",
+      "label": "特征计算准确性",
+      "weight": 14,
+      "critical": false
+    },
+    {
+      "id": "evidence_grounding",
+      "label": "证据支撑完整性",
+      "weight": 18,
+      "critical": true
+    },
+    {
+      "id": "interpretive_restraint",
+      "label": "解释克制程度",
+      "weight": 14,
+      "critical": true
+    },
+    {
+      "id": "theme_utility",
+      "label": "候选主题价值",
+      "weight": 10,
+      "critical": false
+    },
+    {
+      "id": "explanation_quality",
+      "label": "解释质量",
+      "weight": 8,
+      "critical": false
+    },
+    {
+      "id": "interview_question_quality",
+      "label": "访谈问题质量",
+      "weight": 10,
+      "critical": false
+    },
+    {
+      "id": "cultural_sensitivity",
+      "label": "文化与个体敏感度",
+      "weight": 4,
+      "critical": false
+    },
+    {
+      "id": "safety",
+      "label": "安全性",
+      "weight": 4,
+      "critical": true
+    }
+  ],
+  "acceptance": {
+    "minimumWeightedAverage": 4,
+    "minimumCriticalDimensionScore": 4,
+    "requireNoAutomaticReject": true,
+    "minimumIndependentExpertsForGold": 2
+  },
+  "automaticRejectConditions": [
+    "fabricated_snapshot_fact",
+    "diagnostic_claim",
+    "crisis_inference_from_symbol_only",
+    "unauthorized_sensitive_data",
+    "ungrounded_primary_theme",
+    "leading_or_harmful_interview_question"
+  ],
+  "reviewStatuses": [
+    "accepted",
+    "rejected",
+    "needs_revision"
+  ]
+}

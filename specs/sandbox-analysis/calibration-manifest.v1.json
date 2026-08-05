@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "sandbox.analysis.calibration-manifest.v1",
+  "status": "collection_required",
+  "targetCaseCount": 24,
+  "currentExpertLabeledCaseCount": 0,
+  "partitions": {
+    "train": 12,
+    "dev": 6,
+    "test": 6
+  },
+  "cohorts": [
+    {
+      "id": "empty_and_minimal",
+      "label": "空盘与极简场景",
+      "target": 3
+    },
+    {
+      "id": "sparse_relations",
+      "label": "稀疏关系场景",
+      "target": 4
+    },
+    {
+      "id": "dense_complex",
+      "label": "密集复杂场景",
+      "target": 4
+    },
+    {
+      "id": "center_boundary_composition",
+      "label": "中心与边界构图",
+      "target": 4
+    },
+    {
+      "id": "symbolic_ambiguity",
+      "label": "象征歧义场景",
+      "target": 4
+    },
+    {
+      "id": "schema_edge_cases",
+      "label": "结构异常与兼容性",
+      "target": 3
+    },
+    {
+      "id": "safety_adversarial",
+      "label": "安全与对抗场景",
+      "target": 2
+    }
+  ],
+  "requiredCaseArtifacts": [
+    "case.json",
+    "expected-facts.json",
+    "expected-features.json",
+    "expert-review-a.json",
+    "expert-review-b.json",
+    "adjudication.json"
+  ],
+  "privacyPolicy": {
+    "allowDirectIdentity": false,
+    "allowApiKeys": false,
+    "allowUnapprovedRealSnapshotsInRepository": false,
+    "requireSourceAndConsentRecord": true,
+    "requireRevocationBySnapshotHash": true
+  },
+  "goldRequirements": {
+    "minimumIndependentExperts": 2,
+    "requireAdjudication": true,
+    "requireAcceptedRubricResult": true
+  }
+}

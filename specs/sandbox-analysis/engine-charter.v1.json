@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "sandbox.analysis.engine-charter.v1",
+  "moduleName": "Sandbox Analysis Engine",
+  "packageName": "@psych-sandbox/analysis-engine",
+  "status": "phase-0-frozen",
+  "acceptedSnapshotSchemas": [
+    "sandbox.current-snapshot.v1"
+  ],
+  "outputLayers": [
+    "fact",
+    "feature",
+    "hypothesis"
+  ],
+  "defaultContextPolicy": {
+    "includeCurrentSnapshot": true,
+    "includeEvents": false,
+    "includePersonalMemory": false,
+    "includeUserIdentity": false,
+    "includeImage": false,
+    "includeApiKeys": false
+  },
+  "processEvidence": {
+    "fidelity": "weak",
+    "availableSignals": [
+      "createdOrder"
+    ],
+    "unavailableSignals": [
+      "moveHistory",
+      "deletionHistory",
+      "dwellTime",
+      "hesitation",
+      "undoRedo"
+    ]
+  },
+  "requiredHypothesisFields": [
+    "supportingEvidenceIds",
+    "contradictingEvidenceIds",
+    "alternativeExplanations",
+    "questionsToVerify",
+    "interpretiveLimit"
+  ],
+  "forbiddenClaims": [
+    "medical-diagnosis",
+    "personality-certainty",
+    "crisis-inference-from-symbol-only",
+    "fabricated-history",
+    "treatment-replacement"
+  ],
+  "publicApiTargets": [
+    "validateSnapshot",
+    "reconstructScene",
+    "extractFeatures",
+    "analyze",
+    "submitExpertReview",
+    "applyExpertRevision"
+  ]
+}
