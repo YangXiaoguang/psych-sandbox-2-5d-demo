@@ -418,8 +418,20 @@ packages/sandbox-analysis-engine/
 
 包禁止依赖 React、Konva、Three.js、浏览器 DOM 和 LLM 厂商 SDK。前端继续负责生成 Snapshot；独立包负责拒绝无版本、引用错误、统计不一致或无法迁移的数据。Phase 2 的确定性特征计算必须建立在 `parseSnapshot()` 成功之后。
 
+Phase 2 已实现：
+
+```text
+Validated Snapshot
+  -> ReconstructedSceneV1
+  -> FeatureBundleV1
+  -> EvidenceGraphV1
+```
+
+场景、关系、特征、证据节点和边均使用规范 ID 排序、六位小数归一和深度冻结。Evidence Graph 当前只允许 Fact 与 Feature，LLM 不参与这条链路。详细公式与限制见 `docs/sandbox-analysis-engine-phase-2.md`。
+
 验收：
 
 ```bash
 npm run qa:analysis-engine
+npm run qa:analysis-features
 ```

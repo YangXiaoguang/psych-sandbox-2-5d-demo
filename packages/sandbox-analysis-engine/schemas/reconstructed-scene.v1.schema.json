@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/reconstructed-scene.v1.schema.json",
+  "title": "Reconstructed Sandbox Scene v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceSnapshotId", "sourceSnapshotSchemaVersion", "canvas", "environment", "objects", "relations", "selectedObjectId", "aggregates", "reconstructionPolicy"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.reconstructed-scene.v1" },
+    "sourceSnapshotId": { "type": "string", "minLength": 1 },
+    "sourceSnapshotSchemaVersion": { "const": "sandbox.current-snapshot.v1" },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "coordinateSystem", "normalizedCoordinateSystem"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "coordinateSystem": { "const": "board-pixel" },
+        "normalizedCoordinateSystem": { "const": "0-1" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["weather", "weatherLabel", "light", "lightLabel"],
+      "properties": {
+        "weather": { "type": "string", "minLength": 1 },
+        "weatherLabel": { "type": "string", "minLength": 1 },
+        "light": { "enum": ["day", "night"] },
+        "lightLabel": { "type": "string", "minLength": 1 }
+      }
+    },
+    "objects": { "type": "array", "items": { "$ref": "#/$defs/object" } },
+    "relations": { "type": "array", "items": { "$ref": "#/$defs/relation" } },
+    "selectedObjectId": { "type": ["string", "null"] },
+    "aggregates": { "$ref": "#/$defs/aggregates" },
+    "reconstructionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectOrder", "relationOrder", "spatialBasis", "footprintPolicy", "precisionDigits"],
+      "properties": {
+        "objectOrder": { "const": "object-id-ascending" },
+        "relationOrder": { "const": "canonical-object-pair" },
+        "spatialBasis": { "const": "normalized-placement-point" },
+        "footprintPolicy": { "const": "preserved-not-measured" },
+        "precisionDigits": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "zone": { "enum": ["top-left", "top-center", "top-right", "middle-left", "middle-center", "middle-right", "bottom-left", "bottom-center", "bottom-right"] },
+    "stringArray": { "type": "array", "items": { "type": "string" } },
+    "count": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "count"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceIndex", "assetId", "name", "category", "riskTag", "riskLabel", "symbolicCandidates", "semanticTags", "placement", "transform", "footprint", "createdOrder", "sourcePaths"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sourceIndex": { "type": "integer", "minimum": 0 },
+        "assetId": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "minLength": 1 },
+        "riskTag": { "enum": ["normal", "conflict", "death", "fantasy", "unknown"] },
+        "riskLabel": { "type": "string" },
+        "symbolicCandidates": { "$ref": "#/$defs/stringArray" },
+        "semanticTags": { "$ref": "#/$defs/stringArray" },
+        "placement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "xNorm", "yNorm", "zone", "zoneLabel", "inCenter", "inBoundary", "depthRank", "distanceFromCenterNorm", "distanceToNearestBoundaryNorm"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "xNorm": { "type": "number", "minimum": 0, "maximum": 1 },
+            "yNorm": { "type": "number", "minimum": 0, "maximum": 1 },
+            "zone": { "$ref": "#/$defs/zone" },
+            "zoneLabel": { "type": "string" },
+            "inCenter": { "type": "boolean" },
+            "inBoundary": { "type": "boolean" },
+            "depthRank": { "type": "integer", "minimum": 0 },
+            "distanceFromCenterNorm": { "type": "number", "minimum": 0 },
+            "distanceToNearestBoundaryNorm": { "type": "number", "minimum": 0, "maximum": 0.5 }
+          }
+        },
+        "transform": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rotationDeg", "normalizedRotationDeg", "scale", "width", "height", "projectedWidthNorm", "projectedHeightNorm", "projectedAreaRatio"],
+          "properties": {
+            "rotationDeg": { "type": "number" },
+            "normalizedRotationDeg": { "type": "number", "minimum": 0, "exclusiveMaximum": 360 },
+            "scale": { "type": "number", "exclusiveMinimum": 0 },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 },
+            "projectedWidthNorm": { "type": "number", "minimum": 0 },
+            "projectedHeightNorm": { "type": "number", "minimum": 0 },
+            "projectedAreaRatio": { "type": "number", "minimum": 0 }
+          }
+        },
+        "footprint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "width", "depth", "height", "measurementPolicy"],
+          "properties": {
+            "kind": { "enum": ["compact", "wide", "tall", "flat"] },
+            "width": { "type": "number", "minimum": 0 },
+            "depth": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 },
+            "measurementPolicy": { "const": "preserved-only" }
+          }
+        },
+        "createdOrder": { "type": "integer", "minimum": 0 },
+        "sourcePaths": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceObjectId", "targetObjectId", "deltaXNorm", "deltaYNorm", "distanceNorm", "direction", "proximityBand", "sameZone", "sameCategory", "sourcePaths"],
+      "properties": {
+        "id": { "type": "string" },
+        "sourceObjectId": { "type": "string" },
+        "targetObjectId": { "type": "string" },
+        "deltaXNorm": { "type": "number" },
+        "deltaYNorm": { "type": "number" },
+        "distanceNorm": { "type": "number", "minimum": 0 },
+        "direction": { "enum": ["same-position", "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"] },
+        "proximityBand": { "enum": ["near", "middle", "far"] },
+        "sameZone": { "type": "boolean" },
+        "sameCategory": { "type": "boolean" },
+        "sourcePaths": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "aggregates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalObjects", "centerCount", "boundaryCount", "occupiedZones", "emptyZones", "zoneCounts", "categoryCounts", "riskCounts", "depthOrder", "creationOrder"],
+      "properties": {
+        "totalObjects": { "type": "integer", "minimum": 0 },
+        "centerCount": { "type": "integer", "minimum": 0 },
+        "boundaryCount": { "type": "integer", "minimum": 0 },
+        "occupiedZones": { "type": "array", "items": { "$ref": "#/$defs/zone" } },
+        "emptyZones": { "type": "array", "items": { "$ref": "#/$defs/zone" } },
+        "zoneCounts": { "type": "array", "items": { "$ref": "#/$defs/count" } },
+        "categoryCounts": { "type": "array", "items": { "$ref": "#/$defs/count" } },
+        "riskCounts": { "type": "array", "items": { "$ref": "#/$defs/count" } },
+        "depthOrder": { "$ref": "#/$defs/stringArray" },
+        "creationOrder": { "$ref": "#/$defs/stringArray" }
+      }
+    }
+  }
+}

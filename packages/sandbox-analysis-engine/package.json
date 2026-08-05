@@ -1,6 +1,6 @@
 {
   "name": "@psych-sandbox/analysis-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-independent contracts, validation, migration and analysis interfaces for digital psychological sandplay snapshots.",
   "type": "module",
   "sideEffects": false,
@@ -13,7 +13,10 @@
     },
     "./schemas/current-sandbox-snapshot.v1": "./schemas/current-sandbox-snapshot.v1.schema.json",
     "./schemas/sandbox-analysis-result.v1": "./schemas/sandbox-analysis-result.v1.schema.json",
-    "./schemas/expert-review.v1": "./schemas/expert-review.v1.schema.json"
+    "./schemas/expert-review.v1": "./schemas/expert-review.v1.schema.json",
+    "./schemas/reconstructed-scene.v1": "./schemas/reconstructed-scene.v1.schema.json",
+    "./schemas/evidence-graph.v1": "./schemas/evidence-graph.v1.schema.json",
+    "./schemas/feature-bundle.v1": "./schemas/feature-bundle.v1.schema.json"
   },
   "files": [
     "dist",
@@ -21,7 +24,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.mjs"
   },
   "engines": {
     "node": ">=18"

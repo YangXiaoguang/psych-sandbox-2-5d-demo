@@ -13,6 +13,7 @@ Updated: 2026-08-05
 | AI analysis architecture hardening | `checkpoint/ai-analysis-architecture-v1-2026-08-05` | AI analysis technical architecture expanded with DTO guidance, service boundaries, policy gates, LLM proxy migration, audit, and QA rules. |
 | Standalone analysis engine Phase 0 | `checkpoint/sandbox-analysis-engine-phase-0-2026-08-05` | Module charter, expert rubric, 24-case calibration plan, privacy boundaries, and machine-readable specification QA frozen. |
 | Standalone analysis engine Phase 1 | `checkpoint/sandbox-analysis-engine-phase-1-2026-08-05` | Framework-independent package, versioned contracts, JSON Schema, deterministic validation, explicit migrations, and public ingestion API. |
+| Standalone analysis engine Phase 2 | `checkpoint/sandbox-analysis-engine-phase-2-2026-08-05` | Immutable scene reconstruction, canonical pair relations, deterministic feature bundle, Fact/Feature evidence graph, and unit-test baseline. |
 | Agentic engineering protocol | `d30e75e`, `checkpoint/agentic-engineering-protocol-2026-08-03` | Root `AGENTS.md` and `TEST_MATRIX.md` added. |
 | Stage v2 polish sprint | `checkpoint/stage-v2-polish-v1-2026-08-04` | Sand tactile material, shoreline foam, calmer ocean, and night/rain readability refined. |
 | Backend-ready contract | `checkpoint/backend-contract-v1-2026-08-04` | API service boundaries, task migration domain, mock reports, and backend handoff QA added. |
@@ -31,6 +32,7 @@ Updated: 2026-08-05
 - AI analysis architecture is now documented as a backend-ready service design with Snapshot/Insight, Prompt, LLM Gateway, Context Policy, audit, fallback, and future Context Packet boundaries.
 - Standalone analysis engine Phase 0 freezes Fact/Feature/Hypothesis separation, snapshot-only process limitations, expert acceptance rules, and the 24-case calibration portfolio without fabricating expert labels.
 - Standalone analysis engine Phase 1 provides a Node/browser-safe ESM package with no React/Konva/Three.js/LLM SDK dependency; current application snapshots and approved version migrations are validated before later analysis stages.
+- Standalone analysis engine Phase 2 reconstructs canonical immutable scenes and calculates traceable spatial, category, risk-tag, visual-composition, relation, and weak creation-order features without LLM calls or psychological inference.
 - Root agent protocol and regression matrix are available for future tasks.
 - Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
 - Phase 3 focused Stage v2 polish completed with sand/ocean/night-rain refinements in `docs/stage-v2-polish-2026-08-04.md`.
@@ -225,7 +227,7 @@ Evidence:
 
 ### Phase 2: Deterministic Scene Reconstruction And Features
 
-Status: next.
+Status: complete.
 
 Goal: reconstruct an immutable scene model from the validated Snapshot and calculate reproducible spatial, category, salience, and weak-process features with evidence paths.
 
@@ -236,9 +238,39 @@ Required boundaries:
 - Snapshot-only process signals remain `weak`; no movement, hesitation, deletion, or dwell-time claims.
 - Same Snapshot plus same algorithm version must produce byte-stable normalized features.
 
+Evidence:
+
+- `packages/sandbox-analysis-engine/src/reconstruction/`
+- `packages/sandbox-analysis-engine/src/features/`
+- `packages/sandbox-analysis-engine/src/contracts/scene.ts`
+- `packages/sandbox-analysis-engine/src/contracts/features.ts`
+- `packages/sandbox-analysis-engine/tests/deterministic-features.test.mjs`
+- `docs/sandbox-analysis-engine-phase-2.md`
+
+Minimum validation:
+
+```bash
+npm run build
+npm run qa:analysis-engine
+npm run qa:analysis-features
+npm run qa:snapshot-contract
+```
+
+### Phase 3: Structured LLM Hypotheses And Interview Questions
+
+Status: next.
+
+Goal: consume only the Phase 2 FeatureBundle and Evidence Graph to generate schema-valid candidate themes, constrained explanations, alternatives, and non-leading interview questions.
+
+Required boundaries:
+
+- LLM output may create Hypothesis nodes but cannot modify Fact or Feature nodes.
+- Every claim must reference existing evidence IDs.
+- Single symbolic metadata cannot exceed low confidence.
+- Diagnostic, crisis, personality-certainty, or unsupported process language must be rejected.
+
 ### Later Phases
 
-- Phase 3: structured LLM hypotheses, explanations, and interview questions.
 - Phase 4: safety gates, unsupported-claim detection, and diagnostic-language rejection.
 - Phase 5: expert scoring, revision history, adjudication, and export.
 - Phase 6: multi-model benchmark, frozen test set, and regression reporting.

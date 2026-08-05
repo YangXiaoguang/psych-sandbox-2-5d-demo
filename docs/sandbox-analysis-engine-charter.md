@@ -2,7 +2,7 @@
 
 版本：v1.0
 日期：2026-08-05
-阶段：Phase 1 独立包与输入契约已完成
+阶段：Phase 2 场景重建、特征引擎与证据图谱已完成
 
 ## 1. 模块定位
 
@@ -154,4 +154,21 @@ IdGeneratorPort
 
 ```bash
 npm run qa:analysis-engine
+```
+
+## 11. Phase 2 实现状态
+
+- `reconstructScene()` 把已校验 Snapshot 转换为规范排序、深度冻结的场景。
+- 对象关系使用归一化放置点计算，不使用单位不稳定的 `footprint`。
+- `extractFeatures()` 输出版本化 FeatureBundle 和 Fact/Feature Evidence Graph。
+- 已实现空间分布、投影面积、类别、风险标签、对象邻域、视觉构图显著度、对象对关系和创建顺序特征。
+- 所有特征包含 `method`、`interpretiveLimit`、`objectIds` 和 `evidenceIds`。
+- `createdOrder` 相关特征统一标记为 `weak`，不推断移动、删除、停留、犹豫或撤销。
+- 同一 Snapshot 和算法版本输出经过规范排序与六位小数归一，可进行字节级回归比较。
+- 单元测试覆盖空场景、规范排序、关系分带、显著度、证据图完整性、不可变性和重复性。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-2.md`：
+
+```bash
+npm run qa:analysis-features
 ```

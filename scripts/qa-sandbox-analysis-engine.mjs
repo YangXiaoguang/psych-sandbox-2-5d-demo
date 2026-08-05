@@ -6,6 +6,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   CURRENT_SANDBOX_SNAPSHOT_V1,
+  EVIDENCE_GRAPH_V1,
+  FEATURE_ALGORITHM_V1,
+  FEATURE_BUNDLE_V1,
+  RECONSTRUCTED_SCENE_V1,
   SANDBOX_ANALYSIS_RESULT_V1,
   SANDBOX_EXPERT_REVIEW_V1,
   createSandboxAnalysisEngine,
@@ -34,6 +38,16 @@ try {
 
   const parsed = engine.parseSnapshot(snapshot);
   assert("Current v1 Snapshot parses without migration", parsed.ok && parsed.appliedMigrations.length === 0, parsed.ok ? "" : formatIssues(parsed.issues));
+
+  const deterministic = engine.analyzeDeterministically(snapshot);
+  assert("Current app Snapshot reconstructs deterministically", deterministic.ok && deterministic.value.scene.schemaVersion === RECONSTRUCTED_SCENE_V1);
+  assert("Feature bundle exposes frozen algorithm version", deterministic.ok && deterministic.value.featureBundle.algorithmVersion === FEATURE_ALGORITHM_V1);
+  assert("Feature bundle exposes current schema", deterministic.ok && deterministic.value.featureBundle.schemaVersion === FEATURE_BUNDLE_V1);
+  assert("Evidence graph exposes current schema", deterministic.ok && deterministic.value.featureBundle.evidenceGraph.schemaVersion === EVIDENCE_GRAPH_V1);
+  assert("Evidence graph keeps fact and feature layers", deterministic.ok && deterministic.value.featureBundle.evidenceGraph.nodes.some((node) => node.layer === "fact") && deterministic.value.featureBundle.evidenceGraph.nodes.some((node) => node.layer === "feature"));
+  assert("Deterministic output is deeply frozen", deterministic.ok && Object.isFrozen(deterministic.value.scene.objects) && Object.isFrozen(deterministic.value.featureBundle.evidenceGraph));
+  const deterministicRepeat = engine.analyzeDeterministically(structuredClone(snapshot));
+  assert("Repeated deterministic output is byte stable", deterministic.ok && deterministicRepeat.ok && JSON.stringify(deterministic.value) === JSON.stringify(deterministicRepeat.value));
 
   const snowySnapshot = structuredClone(snapshot);
   snowySnapshot.environment.weather = "snowy";
@@ -143,6 +157,9 @@ async function assertSchemas() {
   const snapshotSchema = JSON.parse(await readFile(path.join(schemaDirectory, "current-sandbox-snapshot.v1.schema.json"), "utf8"));
   const analysisSchema = JSON.parse(await readFile(path.join(schemaDirectory, "sandbox-analysis-result.v1.schema.json"), "utf8"));
   const reviewSchema = JSON.parse(await readFile(path.join(schemaDirectory, "expert-review.v1.schema.json"), "utf8"));
+  const sceneSchema = JSON.parse(await readFile(path.join(schemaDirectory, "reconstructed-scene.v1.schema.json"), "utf8"));
+  const evidenceGraphSchema = JSON.parse(await readFile(path.join(schemaDirectory, "evidence-graph.v1.schema.json"), "utf8"));
+  const featureBundleSchema = JSON.parse(await readFile(path.join(schemaDirectory, "feature-bundle.v1.schema.json"), "utf8"));
 
   assert("Snapshot JSON Schema uses draft 2020-12", snapshotSchema.$schema === "https://json-schema.org/draft/2020-12/schema");
   assert("Snapshot JSON Schema locks current version", snapshotSchema.properties.schemaVersion.const === CURRENT_SANDBOX_SNAPSHOT_V1);
@@ -152,6 +169,12 @@ async function assertSchemas() {
   assert("Interview question schema forbids leading questions", analysisSchema.$defs.question.properties.leading.const === false);
   assert("Expert review JSON Schema locks rubric version", reviewSchema.properties.rubricVersion.const === "sandbox.analysis.expert-rubric.v1");
   assert("Expert review scores stay in 1-5 range", reviewSchema.properties.scores.items.properties.score.minimum === 1 && reviewSchema.properties.scores.items.properties.score.maximum === 5);
+  assert("Reconstructed Scene JSON Schema locks version", sceneSchema.properties.schemaVersion.const === RECONSTRUCTED_SCENE_V1);
+  assert("Reconstructed Scene JSON Schema documents preserved footprint policy", sceneSchema.$defs.object.properties.footprint.properties.measurementPolicy.const === "preserved-only");
+  assert("Evidence Graph JSON Schema locks version", evidenceGraphSchema.properties.schemaVersion.const === EVIDENCE_GRAPH_V1);
+  assert("Evidence Graph only permits Fact and Feature layers", evidenceGraphSchema.$defs.node.properties.layer.enum.join(",") === "fact,feature");
+  assert("Feature Bundle JSON Schema locks version", featureBundleSchema.properties.schemaVersion.const === FEATURE_BUNDLE_V1);
+  assert("Feature Bundle JSON Schema locks weak process inputs", featureBundleSchema.properties.processEvidence.properties.availableSignals.const.join(",") === "createdOrder");
 }
 
 function hasIssue(issues, code) {
