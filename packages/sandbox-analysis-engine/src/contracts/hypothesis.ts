@@ -2,11 +2,12 @@ import type { SandboxAnalysisResultV1 } from "./analysis.js";
 import type { EvidenceGraphNodeV1, FeatureBundleV1, JsonValue } from "./features.js";
 import type { SnapshotMigration } from "./migration.js";
 import type { ReconstructedSceneV1 } from "./scene.js";
+import type { SafetyEvaluationReportV1, SafetyPolicy } from "./safety.js";
 
 export const SANDBOX_HYPOTHESIS_DRAFT_V1 = "sandbox.hypothesis-draft.v1" as const;
 export const SANDBOX_HYPOTHESIS_CONTEXT_V1 = "sandbox.hypothesis-context.v1" as const;
 export const SANDBOX_HYPOTHESIS_PROMPT_V1 = "sandbox.hypothesis-prompt.v1" as const;
-export const SANDBOX_ANALYSIS_ENGINE_VERSION = "0.3.0" as const;
+export const SANDBOX_ANALYSIS_ENGINE_VERSION = "0.4.0" as const;
 
 export interface LlmMessage {
   readonly role: "system" | "user";
@@ -131,13 +132,16 @@ export type HypothesisAnalysisIssueCode =
   | "LLM_PORT_ERROR"
   | "LLM_OUTPUT_INVALID_JSON"
   | "LLM_OUTPUT_SCHEMA_INVALID"
+  | "SAFETY_POLICY_ERROR"
   | "UNKNOWN_EVIDENCE_REFERENCE"
   | "UNKNOWN_HYPOTHESIS_REFERENCE"
   | "INSUFFICIENT_EVIDENCE"
   | "CONFIDENCE_MISMATCH"
   | "LEADING_QUESTION"
   | "FORBIDDEN_LANGUAGE"
-  | "UNSUPPORTED_PROCESS_CLAIM";
+  | "UNSUPPORTED_PROCESS_CLAIM"
+  | "UNSUPPORTED_EVIDENCE_CLAIM"
+  | "SYMBOLIC_OVERREACH";
 
 export interface HypothesisAnalysisIssue {
   readonly code: HypothesisAnalysisIssueCode;
@@ -151,12 +155,14 @@ export type SandboxHypothesisAnalysisResult =
       readonly value: SandboxAnalysisResultV1;
       readonly promptContext: HypothesisPromptContextV1;
       readonly llm: LlmStructuredResponse;
+      readonly safetyEvaluation: SafetyEvaluationReportV1;
     }
   | {
       readonly ok: false;
-      readonly stage: "input" | "knowledge-base" | "llm" | "output";
+      readonly stage: "input" | "knowledge-base" | "llm" | "output" | "safety";
       readonly issues: readonly HypothesisAnalysisIssue[];
       readonly promptContext?: HypothesisPromptContextV1;
+      readonly safetyEvaluation?: SafetyEvaluationReportV1;
     };
 
 export interface CreateSandboxHypothesisAnalyzerOptions {
@@ -165,6 +171,7 @@ export interface CreateSandboxHypothesisAnalyzerOptions {
   readonly clock?: ClockPort;
   readonly idGenerator?: IdGeneratorPort;
   readonly knowledgeBase?: KnowledgeBasePort;
+  readonly safetyPolicy?: SafetyPolicy;
   readonly relationFeatureLimit?: number;
   readonly temperature?: number;
   readonly maxOutputTokens?: number;

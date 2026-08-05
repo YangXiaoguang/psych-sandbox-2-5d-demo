@@ -2,7 +2,7 @@
 
 版本：v1.0
 日期：2026-08-05
-阶段：Phase 3 受约束候选主题与访谈问题生成已完成
+阶段：Phase 4 分层安全策略与红队基线已完成
 
 ## 1. 模块定位
 
@@ -188,4 +188,20 @@ npm run qa:analysis-features
 
 ```bash
 npm run qa:analysis-hypotheses
+```
+
+## 13. Phase 4 实现状态
+
+- 新增可版本化 `SafetyPolicy` 和可组合 `SafetyRule`，与草稿结构校验器解耦。
+- 每段模型文本都关联 JSON Pointer、Evidence IDs 和 Hypothesis IDs。
+- 核心策略区分 `allow`、`review`、`block`，并记录严重度、命中规则和处置原因。
+- 诊断、危机推断、人格确定性、诱导问题、无依据过程陈述、对象/空间/语义证据越界、象征过度解释和证据冲突具备独立规则。
+- 自定义规则支持追加或完整替换；规则异常时 fail-closed。
+- 新生成的成功分析结果包含 `sandbox.safety-evaluation.v1` 审计报告；被阻断草稿返回 `stage: safety`。
+- 中英文红队语料和单元测试覆盖允许、人工复核和阻断三条路径。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-4.md`：
+
+```bash
+npm run qa:analysis-safety
 ```

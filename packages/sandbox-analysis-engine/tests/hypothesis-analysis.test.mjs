@@ -155,8 +155,30 @@ test("allows symbolic metadata only as a low-confidence lead when used alone", a
   assert.equal(medium.ok, false);
   assert.equal(medium.issues.some((current) => current.code === "INSUFFICIENT_EVIDENCE"), true);
 
-  const low = await analyzerFor(validDraft({ hypothesis: { confidence: 0.25, confidenceLevel: "low", supportingEvidenceIds: [semanticEvidenceId] } })).analyze(sceneSnapshot());
+  const low = await analyzerFor(validDraft({ hypothesis: {
+    confidence: 0.25,
+    confidenceLevel: "low",
+    supportingEvidenceIds: [semanticEvidenceId],
+    label: "关于成长一词的开放式探索线索",
+    explanation: "资产语义元数据包含成长一词，只将它作为等待用户解释的访谈入口。",
+    alternativeExplanations: ["成长也可能只是资产目录中的默认标签。"],
+    questionsToVerify: ["你会怎样理解这个沙具资料里的成长一词？"],
+    interpretiveLimit: "资产语义元数据不是固定象征解释，需要用户确认。",
+  } })).analyze(sceneSnapshot());
   assert.equal(low.ok, true);
+});
+
+test("rejects evidence claims that are not entailed by the cited Phase 2 nodes", async () => {
+  const semanticEvidenceId = "fact:object:child:semantics";
+  const result = await analyzerFor(validDraft({ hypothesis: {
+    confidence: 0.25,
+    confidenceLevel: "low",
+    supportingEvidenceIds: [semanticEvidenceId],
+  } })).analyze(sceneSnapshot());
+  assert.equal(result.ok, false);
+  assert.equal(result.stage, "safety");
+  assert.equal(result.issues.some((current) => current.code === "UNSUPPORTED_EVIDENCE_CLAIM"), true);
+  assert.equal(result.safetyEvaluation.decision, "block");
 });
 
 test("rejects leading questions, diagnostic certainty, and unsupported process claims", async () => {
@@ -175,6 +197,30 @@ test("rejects leading questions, diagnostic certainty, and unsupported process c
   const unsafeWarning = await analyzerFor(validDraft({ root: { warnings: ["该用户存在自伤风险。"] } })).analyze(sceneSnapshot());
   assert.equal(unsafeWarning.ok, false);
   assert.equal(unsafeWarning.issues.some((current) => current.code === "FORBIDDEN_LANGUAGE"), true);
+});
+
+test("routes process questions to expert review without discarding an otherwise valid analysis", async () => {
+  const result = await analyzerFor(validDraft({ question: { text: "你是否曾反复移动这个沙具？" } })).analyze(sceneSnapshot());
+  assert.equal(result.ok, true);
+  assert.equal(result.safetyEvaluation.decision, "review");
+  assert.equal(result.value.safetyEvaluation.decision, "review");
+  assert.equal(result.value.warnings.some((warning) => warning.includes("flagged 1 item(s) for expert review")), true);
+  assert.equal(result.safetyEvaluation.findings[0].path, "/interviewQuestions/0/text");
+});
+
+test("fails closed when an injected safety policy is unavailable or malformed", async () => {
+  const unavailable = await analyzerFor(validDraft(), {}, {
+    safetyPolicy: { version: "broken", rules: [], evaluate() { throw new Error("policy unavailable"); } },
+  }).analyze(sceneSnapshot());
+  assert.equal(unavailable.ok, false);
+  assert.equal(unavailable.stage, "safety");
+  assert.equal(unavailable.issues[0].code, "SAFETY_POLICY_ERROR");
+
+  const malformed = await analyzerFor(validDraft(), {}, {
+    safetyPolicy: { version: "malformed", rules: [], evaluate() { return null; } },
+  }).analyze(sceneSnapshot());
+  assert.equal(malformed.ok, false);
+  assert.equal(malformed.issues[0].code, "SAFETY_POLICY_ERROR");
 });
 
 test("deterministically limits pair relations while preserving all non-relation features", () => {

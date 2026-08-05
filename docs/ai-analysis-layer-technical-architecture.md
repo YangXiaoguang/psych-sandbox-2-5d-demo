@@ -462,3 +462,25 @@ ReconstructedSceneV1 + FeatureBundleV1 + EvidenceGraphV1
 ```bash
 npm run qa:analysis-hypotheses
 ```
+
+Phase 4 在结构校验之后增加同步、确定性安全决策层：
+
+```text
+Validated Hypothesis Draft
+  -> collectDraftTextSegments()
+  -> SafetyPolicy.evaluate()
+  -> allow / review / block
+  -> SafetyEvaluationReportV1
+```
+
+- 每条规则都有稳定 ID 和独立版本，不再把所有安全逻辑堆入草稿解析器。
+- 证据支持规则基于 Phase 2 Evidence Graph 检查对象、空间和语义陈述。
+- `review` 结果可以继续生成分析，但必须保留专家复核 warning；`block` 不生成半有效分析。
+- 自定义机构策略通过 `createSandboxSafetyPolicy()` 注入，规则异常采用 fail-closed。
+- `safetyEvaluation` 可随分析持久化，供管理后台或专家工具展示命中路径和依据。
+
+验收：
+
+```bash
+npm run qa:analysis-safety
+```

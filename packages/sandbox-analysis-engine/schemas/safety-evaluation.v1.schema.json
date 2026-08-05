@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/safety-evaluation.v1.schema.json",
+  "title": "Sandbox Safety Evaluation V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policyVersion", "decision", "maxSeverity", "evaluatedTextSegments", "findings", "summary"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.safety-evaluation.v1" },
+    "policyVersion": { "type": "string", "minLength": 1 },
+    "decision": { "enum": ["allow", "review", "block"] },
+    "maxSeverity": { "enum": ["info", "warning", "high", "critical"] },
+    "evaluatedTextSegments": { "type": "integer", "minimum": 0 },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowCount", "reviewCount", "blockCount"],
+      "properties": {
+        "allowCount": { "type": "integer", "minimum": 0 },
+        "reviewCount": { "type": "integer", "minimum": 0 },
+        "blockCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ruleId", "ruleVersion", "category", "severity", "action", "path", "matchedText", "message", "evidenceIds", "hypothesisIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "ruleId": { "type": "string", "minLength": 1 },
+        "ruleVersion": { "type": "string", "minLength": 1 },
+        "category": {
+          "enum": [
+            "diagnostic_claim",
+            "crisis_inference",
+            "personality_certainty",
+            "unsupported_process_claim",
+            "leading_question",
+            "unsupported_object_claim",
+            "unsupported_spatial_claim",
+            "unsupported_semantic_claim",
+            "symbolic_overreach",
+            "evidence_conflict",
+            "custom"
+          ]
+        },
+        "severity": { "enum": ["info", "warning", "high", "critical"] },
+        "action": { "enum": ["allow", "flag_for_review", "block"] },
+        "path": { "type": "string", "pattern": "^/" },
+        "matchedText": { "type": "string", "maxLength": 240 },
+        "message": { "type": "string", "minLength": 1 },
+        "evidenceIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "hypothesisIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    }
+  }
+}

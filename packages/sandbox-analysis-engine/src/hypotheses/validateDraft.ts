@@ -7,25 +7,6 @@ import {
   type SandboxHypothesisDraftV1,
 } from "../contracts/hypothesis.js";
 
-const FORBIDDEN_PATTERNS = [
-  /诊断为|确诊|可以断定|毫无疑问|明确表明|证明(?:了)?|必然|一定说明/u,
-  /抑郁症|焦虑症|人格障碍|精神分裂|自闭症|躁郁症|双相障碍/u,
-  /自杀倾向|暴力倾向|危险人物|高危个体/u,
-  /自伤风险|自我伤害|伤害他人|轻生风险|危机风险/u,
-  /用户(?:一定|必然|显然|就是).{0,16}/u,
-  /diagnosed with|proves? that|definitely means|suicidal tendency|violent tendency|suicide risk|self-harm risk/iu,
-];
-
-const UNSUPPORTED_PROCESS_PATTERNS = [
-  /反复(?:移动|调整|摆放)|来回移动|频繁调整|犹豫|停留(?:了)?很久|最后(?:删除|移除)|撤销|重做/u,
-  /repeatedly (?:moved|adjusted|placed)|hesitat(?:e|ed|ion)|dwell(?:ed)? for a long time|undo|redo/iu,
-];
-
-const LEADING_QUESTION_PATTERNS = [
-  /是不是因为|是否说明|难道|你一定|你其实|这是否意味着你/u,
-  /isn['’]t it because|doesn['’]t this mean|you must be|surely you/iu,
-];
-
 const MAX_LLM_OUTPUT_CHARACTERS = 200_000;
 
 export type DraftValidationResult =
@@ -147,12 +128,6 @@ function validateSemantics(draft: SandboxHypothesisDraftV1, context: HypothesisP
     if (hypothesis.supportingEvidenceIds.length === 1 && evidenceById.get(hypothesis.supportingEvidenceIds[0])?.kind === "object.semantic-metadata" && hypothesis.confidenceLevel !== "low") {
       issues.push(issue("INSUFFICIENT_EVIDENCE", `${path}/confidenceLevel`, "A single symbolic metadata item can only support a low-confidence interview lead."));
     }
-    validateLanguage([hypothesis.label, hypothesis.explanation, ...hypothesis.alternativeExplanations, ...hypothesis.questionsToVerify, hypothesis.interpretiveLimit], path, issues);
-    hypothesis.questionsToVerify.forEach((question, questionIndex) => {
-      if (LEADING_QUESTION_PATTERNS.some((pattern) => pattern.test(question))) {
-        issues.push(issue("LEADING_QUESTION", `${path}/questionsToVerify/${questionIndex}`, "Verification question wording appears leading or presupposes an interpretation."));
-      }
-    });
   });
 
   const questionIds = new Set<string>();
@@ -168,12 +143,7 @@ function validateSemantics(draft: SandboxHypothesisDraftV1, context: HypothesisP
         issues.push(issue("UNKNOWN_HYPOTHESIS_REFERENCE", `${path}/hypothesisIds/${idIndex}`, `Unknown hypothesis ID ${hypothesisId}.`));
       }
     });
-    if (LEADING_QUESTION_PATTERNS.some((pattern) => pattern.test(question.text))) {
-      issues.push(issue("LEADING_QUESTION", `${path}/text`, "Question wording appears leading or presupposes an interpretation."));
-    }
-    validateLanguage([question.text, question.intent], path, issues);
   });
-  validateLanguage(draft.warnings, "/warnings", issues);
   return issues;
 }
 
@@ -181,17 +151,6 @@ function validateEvidenceIds(ids: readonly string[], path: string, evidenceById:
   ids.forEach((id, index) => {
     if (!evidenceById.has(id)) {
       issues.push(issue("UNKNOWN_EVIDENCE_REFERENCE", `${path}/${index}`, `Evidence ID ${id} is not present in the provided Phase 2 context.`));
-    }
-  });
-}
-
-function validateLanguage(values: readonly string[], path: string, issues: HypothesisAnalysisIssue[]): void {
-  values.forEach((value, index) => {
-    if (FORBIDDEN_PATTERNS.some((pattern) => pattern.test(value))) {
-      issues.push(issue("FORBIDDEN_LANGUAGE", `${path}/text/${index}`, "Output contains diagnostic, crisis, or certainty language."));
-    }
-    if (UNSUPPORTED_PROCESS_PATTERNS.some((pattern) => pattern.test(value))) {
-      issues.push(issue("UNSUPPORTED_PROCESS_CLAIM", `${path}/text/${index}`, "Snapshot-only analysis cannot claim movement, deletion, hesitation, dwell, undo, or redo behavior."));
     }
   });
 }

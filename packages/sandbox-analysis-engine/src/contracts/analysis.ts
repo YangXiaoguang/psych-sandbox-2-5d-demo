@@ -1,5 +1,6 @@
 import type { CurrentSandboxSnapshotVersion } from "./snapshot.js";
 import type { JsonValue } from "./features.js";
+import type { SafetyEvaluationReportV1 } from "./safety.js";
 
 export const SANDBOX_ANALYSIS_RESULT_V1 = "sandbox.analysis-result.v1" as const;
 
@@ -80,6 +81,7 @@ export interface SandboxAnalysisResultV1 {
   hypotheses: PsychologicalThemeCandidate[];
   interviewQuestions: AnalysisInterviewQuestion[];
   warnings: string[];
+  safetyEvaluation?: SafetyEvaluationReportV1;
   guardrails: {
     notDiagnosis: true;
     requiresUserConfirmation: true;

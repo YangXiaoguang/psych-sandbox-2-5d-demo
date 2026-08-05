@@ -15,6 +15,8 @@ Phase 2 adds deterministic scene reconstruction, pairwise spatial relations, a v
 
 Phase 3 adds a provider-neutral, evidence-constrained LLM adapter boundary. The model may draft candidate themes and non-leading interview questions, but it cannot create or rewrite facts and features. Runtime validation rejects unknown evidence, unsupported confidence, leading questions, diagnostic certainty, symbol-only crisis claims, and process claims that are not present in the Snapshot.
 
+Phase 4 adds a versioned, composable safety policy. Core rules separate allow, expert-review, and block decisions; detect diagnostic/crisis certainty, unsupported process and evidence claims, leading questions, symbolic overreach, and evidence conflicts; and emit a schema-valid audit report. Custom rules can be appended or used as a complete replacement policy, with fail-closed behavior on rule errors.
+
 ## Usage
 
 ```ts
@@ -86,6 +88,24 @@ if (!result.ok) {
 }
 ```
 
+An analyzer created by v0.4.0 evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
+
+## Extending the safety policy
+
+```ts
+import { createSandboxHypothesisAnalyzer, createSandboxSafetyPolicy } from "@psych-sandbox/analysis-engine";
+
+const safetyPolicy = createSandboxSafetyPolicy({
+  version: "organization.safety.v1",
+  ruleMode: "append",
+  rules: [organizationSafetyRule],
+});
+
+const analyzer = createSandboxHypothesisAnalyzer({ llm, safetyPolicy });
+```
+
+Every finding records its rule/version, severity, action, JSON Pointer path, matched text, evidence IDs, and hypothesis IDs. Safety policy exceptions fail closed instead of silently bypassing the gate.
+
 Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt context. The raw Snapshot, user identity, personal memory, events, images, and API keys remain excluded. Provider SDKs, networking, retries, rate limits, and secret handling belong in external adapters.
 
 ## Published schemas
@@ -97,5 +117,6 @@ Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt cont
 - `schemas/evidence-graph.v1.schema.json`
 - `schemas/feature-bundle.v1.schema.json`
 - `schemas/sandbox-hypothesis-draft.v1.schema.json`
+- `schemas/safety-evaluation.v1.schema.json`
 
 The package has no dependency on React, Konva, Three.js, browser DOM APIs, or any LLM provider SDK.

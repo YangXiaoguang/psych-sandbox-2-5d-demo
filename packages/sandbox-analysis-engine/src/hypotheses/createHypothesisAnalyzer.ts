@@ -16,6 +16,7 @@ import {
 import { createSandboxAnalysisEngine } from "../engine.js";
 import { compareStrings, deepFreeze } from "../internal/deterministic.js";
 import { hashCanonicalJson } from "../internal/sha256.js";
+import { createSandboxSafetyPolicy } from "../safety/createSafetyPolicy.js";
 import { buildHypothesisPromptContext, DEFAULT_RELATION_FEATURE_LIMIT } from "./buildPromptContext.js";
 import { SANDBOX_HYPOTHESIS_DRAFT_SCHEMA } from "./schema.js";
 import { parseAndValidateHypothesisDraft } from "./validateDraft.js";
@@ -32,6 +33,7 @@ export function createSandboxHypothesisAnalyzer(
   const deterministicEngine = createSandboxAnalysisEngine({ migrations: options.migrations ? [...options.migrations] : undefined });
   const clock = options.clock ?? { now: () => new Date().toISOString() };
   const idGenerator = options.idGenerator ?? createDefaultIdGenerator();
+  const safetyPolicy = options.safetyPolicy ?? createSandboxSafetyPolicy();
 
   return {
     async analyze(input, analyzeOptions = {}) {
@@ -90,6 +92,7 @@ export function createSandboxHypothesisAnalyzer(
             sourceSnapshotId: promptContext.sourceSnapshotId,
             featureAlgorithmVersion: deterministic.value.featureBundle.algorithmVersion,
             relationFeaturesOmitted: promptContext.contextPolicy.omittedRelationFeatures,
+            safetyPolicyVersion: safetyPolicy.version,
           },
         });
       } catch (error) {
@@ -128,12 +131,53 @@ export function createSandboxHypothesisAnalyzer(
         };
       }
 
+      let safetyEvaluation;
+      try {
+        safetyEvaluation = safetyPolicy.evaluate(validatedDraft.value, promptContext);
+        if (
+          !safetyEvaluation
+          || !["allow", "review", "block"].includes(safetyEvaluation.decision)
+          || !Array.isArray(safetyEvaluation.findings)
+        ) {
+          throw new Error("Safety policy returned an invalid evaluation report.");
+        }
+      } catch (error) {
+        return {
+          ok: false,
+          stage: "safety",
+          promptContext,
+          issues: [{
+            code: "SAFETY_POLICY_ERROR",
+            path: "/safetyPolicy",
+            message: errorMessage(error, "Safety policy failed."),
+          }],
+        };
+      }
+      if (safetyEvaluation.decision === "block") {
+        return {
+          ok: false,
+          stage: "safety",
+          promptContext,
+          safetyEvaluation,
+          issues: safetyEvaluation.findings
+            .filter((finding) => finding.action === "block")
+            .map((finding) => ({
+              code: issueCodeForSafetyCategory(finding.category),
+              path: finding.path,
+              message: finding.message,
+            })),
+        };
+      }
+
       const featureBundle = deterministic.value.featureBundle;
       const warnings = [
         ...featureBundle.warnings,
         ...validatedDraft.value.warnings,
         ...(promptContext.contextPolicy.omittedRelationFeatures > 0
           ? [`Prompt context omitted ${promptContext.contextPolicy.omittedRelationFeatures} distant relation features by deterministic limit.`]
+          : []),
+        ...(safetyEvaluation.decision === "review"
+          ? [`Safety policy ${safetyEvaluation.policyVersion} flagged ${safetyEvaluation.summary.reviewCount} item(s) for expert review.`]
           : []),
       ];
       const value: SandboxAnalysisResultV1 = {
@@ -183,15 +227,33 @@ export function createSandboxHypothesisAnalyzer(
           hypothesisIds: [...question.hypothesisIds],
         })),
         warnings,
+        safetyEvaluation,
         guardrails: {
           notDiagnosis: true,
           requiresUserConfirmation: true,
           requiresExpertReviewForClinicalUse: true,
         },
       };
-      return deepFreeze({ ok: true, value, promptContext, llm: llmResponse });
+      return deepFreeze({ ok: true, value, promptContext, llm: llmResponse, safetyEvaluation });
     },
   };
+}
+
+function issueCodeForSafetyCategory(category: import("../contracts/safety.js").SafetyFindingCategory): HypothesisAnalysisIssue["code"] {
+  switch (category) {
+    case "diagnostic_claim":
+    case "crisis_inference":
+    case "personality_certainty":
+      return "FORBIDDEN_LANGUAGE";
+    case "unsupported_process_claim":
+      return "UNSUPPORTED_PROCESS_CLAIM";
+    case "leading_question":
+      return "LEADING_QUESTION";
+    case "symbolic_overreach":
+      return "SYMBOLIC_OVERREACH";
+    default:
+      return "UNSUPPORTED_EVIDENCE_CLAIM";
+  }
 }
 
 function buildMessages(context: HypothesisPromptContextV1, knowledgeBase?: AnalysisKnowledgeBase) {

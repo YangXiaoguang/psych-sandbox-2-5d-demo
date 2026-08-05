@@ -80,6 +80,7 @@
       "items": { "$ref": "#/$defs/question" }
     },
     "warnings": { "type": "array", "items": { "type": "string" } },
+    "safetyEvaluation": { "$ref": "safety-evaluation.v1.schema.json" },
     "guardrails": {
       "type": "object",
       "additionalProperties": false,
