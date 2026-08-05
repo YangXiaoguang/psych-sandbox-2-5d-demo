@@ -59,6 +59,7 @@ check("Repository rejects unapproved real snapshots", manifest.privacyPolicy.all
 const requiredDocs = [
   "docs/sandbox-analysis-engine-charter.md",
   "docs/sandbox-analysis-engine-phase-4.md",
+  "docs/sandbox-analysis-engine-phase-5.md",
   "docs/sandbox-analysis-expert-rubric.md",
   "docs/sandbox-analysis-calibration-dataset.md",
 ];

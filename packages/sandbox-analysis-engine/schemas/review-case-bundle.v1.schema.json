@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/review-case-bundle.v1.schema.json",
+  "title": "Sandbox Review Case Bundle V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "exportId", "analysisId", "exportedAt", "originalAnalysisHash",
+    "originalAnalysis", "reviews", "revisionHistory", "adjudication", "goldEligibility"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.review-case-bundle.v1" },
+    "exportId": { "type": "string", "minLength": 1 },
+    "analysisId": { "type": "string", "minLength": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "originalAnalysisHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "originalAnalysis": { "$ref": "sandbox-analysis-result.v1.schema.json" },
+    "reviews": { "type": "array", "items": { "$ref": "expert-review.v1.schema.json" } },
+    "revisionHistory": { "type": "array", "items": { "$ref": "revised-analysis.v1.schema.json" } },
+    "adjudication": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "review-adjudication.v1.schema.json" }
+      ]
+    },
+    "goldEligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligible", "reasons"],
+      "properties": {
+        "eligible": { "type": "boolean" },
+        "reasons": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    }
+  }
+}

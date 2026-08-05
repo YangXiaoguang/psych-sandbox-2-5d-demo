@@ -8,6 +8,8 @@
     "schemaVersion",
     "reviewId",
     "analysisId",
+    "analysisHash",
+    "promptContextHash",
     "reviewerPseudonym",
     "rubricVersion",
     "scores",
@@ -22,10 +24,14 @@
     "schemaVersion": { "const": "sandbox.expert-review.v1" },
     "reviewId": { "type": "string", "minLength": 1 },
     "analysisId": { "type": "string", "minLength": 1 },
-    "reviewerPseudonym": { "type": "string", "minLength": 1 },
+    "analysisHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "promptContextHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reviewerPseudonym": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[^@]+$" },
     "rubricVersion": { "const": "sandbox.analysis.expert-rubric.v1" },
     "scores": {
       "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -38,7 +44,7 @@
       }
     },
     "weightedAverage": { "type": "number", "minimum": 1, "maximum": 5 },
-    "automaticRejectConditions": { "type": "array", "items": { "type": "string" } },
+    "automaticRejectConditions": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
     "status": { "enum": ["accepted", "rejected", "needs_revision"] },
     "summary": { "type": "string" },
     "revisions": {

@@ -17,6 +17,8 @@ Phase 3 adds a provider-neutral, evidence-constrained LLM adapter boundary. The 
 
 Phase 4 adds a versioned, composable safety policy. Core rules separate allow, expert-review, and block decisions; detect diagnostic/crisis certainty, unsupported process and evidence claims, leading questions, symbolic overreach, and evidence conflicts; and emit a schema-valid audit report. Custom rules can be appended or used as a complete replacement policy, with fail-closed behavior on rule errors.
 
+Phase 5 adds a framework-independent expert-supervision workflow. Reviews are bound to a canonical analysis hash; weighted status is computed by the trusted core; experts may revise only hypotheses and interview questions; every revision is revalidated against the Phase 3 evidence contract and Phase 4 safety policy. Gold eligibility requires two accepted, independent reviews of the exact final analysis plus independent adjudication.
+
 ## Usage
 
 ```ts
@@ -88,7 +90,7 @@ if (!result.ok) {
 }
 ```
 
-An analyzer created by v0.4.0 evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
+An analyzer created by v0.5.0 evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
 
 ## Extending the safety policy
 
@@ -106,6 +108,37 @@ const analyzer = createSandboxHypothesisAnalyzer({ llm, safetyPolicy });
 
 Every finding records its rule/version, severity, action, JSON Pointer path, matched text, evidence IDs, and hypothesis IDs. Safety policy exceptions fail closed instead of silently bypassing the gate.
 
+## Expert review and gold-data gate
+
+```ts
+import { createExpertReviewWorkflow } from "@psych-sandbox/analysis-engine";
+
+const workflow = createExpertReviewWorkflow({ repository: myReviewRepository });
+const source = { analysis: analysisResult, promptContext };
+
+const review = await workflow.submitExpertReview(source, {
+  reviewerPseudonym: "expert-a",
+  scores: allRubricScores,
+  automaticRejectConditions: [],
+  recommendation: "needs_revision",
+  summary: "Evidence is sound; one question needs more open wording.",
+  revisions: [{
+    path: "/interviewQuestions/0/text",
+    operation: "replace",
+    proposedValue: "Which part would you like to introduce first?",
+    reason: "Use a more open question.",
+  }],
+});
+
+if (review.ok) {
+  const revision = await workflow.applyExpertRevision(source, review.value.reviewId);
+}
+```
+
+`InMemoryReviewRepository` is provided for tests and prototypes. Production systems should implement `ReviewRepositoryPort` with transactional persistence and authorization outside this package. Reviewer and adjudicator identifiers must be pseudonyms; email addresses and personal identity are intentionally rejected.
+
+Experts cannot revise reconstructed scene data, evidence, deterministic features, guardrails, or safety reports. A revised version is immutable, hash-linked to its parent, and must be independently reviewed again before it can enter a gold dataset.
+
 Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt context. The raw Snapshot, user identity, personal memory, events, images, and API keys remain excluded. Provider SDKs, networking, retries, rate limits, and secret handling belong in external adapters.
 
 ## Published schemas
@@ -113,6 +146,9 @@ Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt cont
 - `schemas/current-sandbox-snapshot.v1.schema.json`
 - `schemas/sandbox-analysis-result.v1.schema.json`
 - `schemas/expert-review.v1.schema.json`
+- `schemas/revised-analysis.v1.schema.json`
+- `schemas/review-adjudication.v1.schema.json`
+- `schemas/review-case-bundle.v1.schema.json`
 - `schemas/reconstructed-scene.v1.schema.json`
 - `schemas/evidence-graph.v1.schema.json`
 - `schemas/feature-bundle.v1.schema.json`

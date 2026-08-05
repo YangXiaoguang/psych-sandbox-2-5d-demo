@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/review-adjudication.v1.schema.json",
+  "title": "Sandbox Review Adjudication V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "adjudicationId", "analysisId", "adjudicatorPseudonym",
+    "reviewIds", "status", "selectedRevisionVersionId", "finalAnalysisHash",
+    "disagreements", "goldEligible", "goldIneligibilityReasons", "rationale", "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.review-adjudication.v1" },
+    "adjudicationId": { "type": "string", "minLength": 1 },
+    "analysisId": { "type": "string", "minLength": 1 },
+    "adjudicatorPseudonym": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "reviewIds": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "status": { "enum": ["accepted", "rejected", "needs_revision"] },
+    "selectedRevisionVersionId": { "type": ["string", "null"] },
+    "finalAnalysisHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "disagreements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "reviewIds", "detail"],
+        "properties": {
+          "kind": { "enum": ["status", "dimension_score", "revision"] },
+          "dimensionId": { "type": "string" },
+          "reviewIds": { "type": "array", "items": { "type": "string" } },
+          "detail": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "goldEligible": { "type": "boolean" },
+    "goldIneligibilityReasons": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "rationale": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

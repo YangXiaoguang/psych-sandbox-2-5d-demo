@@ -2,7 +2,7 @@
 
 版本：v1.0
 日期：2026-08-05
-阶段：Phase 4 分层安全策略与红队基线已完成
+阶段：Phase 5 专家监督、修订审计与金标准准入已完成
 
 ## 1. 模块定位
 
@@ -204,4 +204,21 @@ npm run qa:analysis-hypotheses
 
 ```bash
 npm run qa:analysis-safety
+```
+
+## 14. Phase 5 实现状态
+
+- 新增 `ExpertReviewWorkflow`，把评分、修订、仲裁和导出封装为厂商无关领域接口。
+- 专家复核同时绑定分析结果 SHA-256 与 Prompt Context SHA-256，防止复核对象或证据上下文被替换。
+- 加权分、关键维度阈值、自动驳回和最终状态由核心计算，不接受 UI 手填最终结论。
+- 修订白名单只包含候选主题和访谈问题；Fact、Feature、Evidence、Guardrails 与 Safety Report 不可修改。
+- 每版修订重新执行 Phase 3 结构/证据校验和 Phase 4 安全策略，并保留父版本、前后哈希和字段差异。
+- Gold 候选至少需要两名独立专家接受同一最终版本，并由未参与评分的第三方完成仲裁。
+- 不满足准入条件的记录仍可导出，但必须携带明确的 `goldIneligibilityReasons`。
+- 内存仓库用于测试与原型，生产持久化通过 `ReviewRepositoryPort` 注入。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-5.md`：
+
+```bash
+npm run qa:analysis-review
 ```

@@ -1,6 +1,6 @@
 {
   "name": "@psych-sandbox/analysis-engine",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Framework-independent contracts, validation, migration and analysis interfaces for digital psychological sandplay snapshots.",
   "type": "module",
   "sideEffects": false,
@@ -14,6 +14,9 @@
     "./schemas/current-sandbox-snapshot.v1": "./schemas/current-sandbox-snapshot.v1.schema.json",
     "./schemas/sandbox-analysis-result.v1": "./schemas/sandbox-analysis-result.v1.schema.json",
     "./schemas/expert-review.v1": "./schemas/expert-review.v1.schema.json",
+    "./schemas/revised-analysis.v1": "./schemas/revised-analysis.v1.schema.json",
+    "./schemas/review-adjudication.v1": "./schemas/review-adjudication.v1.schema.json",
+    "./schemas/review-case-bundle.v1": "./schemas/review-case-bundle.v1.schema.json",
     "./schemas/reconstructed-scene.v1": "./schemas/reconstructed-scene.v1.schema.json",
     "./schemas/evidence-graph.v1": "./schemas/evidence-graph.v1.schema.json",
     "./schemas/feature-bundle.v1": "./schemas/feature-bundle.v1.schema.json",
@@ -30,7 +33,8 @@
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:features": "npm run build && node --test tests/deterministic-features.test.mjs",
     "test:hypotheses": "npm run build && node --test tests/hypothesis-analysis.test.mjs",
-    "test:safety": "npm run build && node --test tests/safety-policy.test.mjs"
+    "test:safety": "npm run build && node --test tests/safety-policy.test.mjs",
+    "test:review": "npm run build && node --test tests/expert-review-workflow.test.mjs"
   },
   "engines": {
     "node": ">=18"

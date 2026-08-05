@@ -14,6 +14,9 @@ import {
   SANDBOX_EXPERT_REVIEW_V1,
   SANDBOX_HYPOTHESIS_DRAFT_V1,
   SANDBOX_HYPOTHESIS_PROMPT_V1,
+  SANDBOX_REVISED_ANALYSIS_V1,
+  SANDBOX_REVIEW_ADJUDICATION_V1,
+  SANDBOX_REVIEW_CASE_BUNDLE_V1,
   SANDBOX_SAFETY_EVALUATION_V1,
   createSandboxAnalysisEngine,
 } from "../packages/sandbox-analysis-engine/dist/index.js";
@@ -37,6 +40,9 @@ try {
   assert("Public contracts expose hypothesis draft version", SANDBOX_HYPOTHESIS_DRAFT_V1 === "sandbox.hypothesis-draft.v1");
   assert("Public contracts expose hypothesis prompt version", SANDBOX_HYPOTHESIS_PROMPT_V1 === "sandbox.hypothesis-prompt.v1");
   assert("Public contracts expose safety evaluation version", SANDBOX_SAFETY_EVALUATION_V1 === "sandbox.safety-evaluation.v1");
+  assert("Public contracts expose revised analysis version", SANDBOX_REVISED_ANALYSIS_V1 === "sandbox.revised-analysis.v1");
+  assert("Public contracts expose review adjudication version", SANDBOX_REVIEW_ADJUDICATION_V1 === "sandbox.review-adjudication.v1");
+  assert("Public contracts expose review case bundle version", SANDBOX_REVIEW_CASE_BUNDLE_V1 === "sandbox.review-case-bundle.v1");
 
   const validation = engine.validateSnapshot(snapshot);
   assert("Current app Snapshot validates in standalone package", validation.ok, formatIssues(validation.issues));
@@ -168,6 +174,9 @@ async function assertSchemas() {
   const featureBundleSchema = JSON.parse(await readFile(path.join(schemaDirectory, "feature-bundle.v1.schema.json"), "utf8"));
   const hypothesisDraftSchema = JSON.parse(await readFile(path.join(schemaDirectory, "sandbox-hypothesis-draft.v1.schema.json"), "utf8"));
   const safetyEvaluationSchema = JSON.parse(await readFile(path.join(schemaDirectory, "safety-evaluation.v1.schema.json"), "utf8"));
+  const revisedAnalysisSchema = JSON.parse(await readFile(path.join(schemaDirectory, "revised-analysis.v1.schema.json"), "utf8"));
+  const adjudicationSchema = JSON.parse(await readFile(path.join(schemaDirectory, "review-adjudication.v1.schema.json"), "utf8"));
+  const reviewBundleSchema = JSON.parse(await readFile(path.join(schemaDirectory, "review-case-bundle.v1.schema.json"), "utf8"));
 
   assert("Snapshot JSON Schema uses draft 2020-12", snapshotSchema.$schema === "https://json-schema.org/draft/2020-12/schema");
   assert("Snapshot JSON Schema locks current version", snapshotSchema.properties.schemaVersion.const === CURRENT_SANDBOX_SNAPSHOT_V1);
@@ -177,6 +186,7 @@ async function assertSchemas() {
   assert("Interview question schema forbids leading questions", analysisSchema.$defs.question.properties.leading.const === false);
   assert("Expert review JSON Schema locks rubric version", reviewSchema.properties.rubricVersion.const === "sandbox.analysis.expert-rubric.v1");
   assert("Expert review scores stay in 1-5 range", reviewSchema.properties.scores.items.properties.score.minimum === 1 && reviewSchema.properties.scores.items.properties.score.maximum === 5);
+  assert("Expert review binds to analysis and prompt-context hashes", reviewSchema.required.includes("analysisHash") && reviewSchema.required.includes("promptContextHash") && reviewSchema.properties.analysisHash.pattern === "^[a-f0-9]{64}$");
   assert("Reconstructed Scene JSON Schema locks version", sceneSchema.properties.schemaVersion.const === RECONSTRUCTED_SCENE_V1);
   assert("Reconstructed Scene JSON Schema documents preserved footprint policy", sceneSchema.$defs.object.properties.footprint.properties.measurementPolicy.const === "preserved-only");
   assert("Evidence Graph JSON Schema locks version", evidenceGraphSchema.properties.schemaVersion.const === EVIDENCE_GRAPH_V1);
@@ -190,6 +200,9 @@ async function assertSchemas() {
   assert("Safety evaluation supports allow, review and block", safetyEvaluationSchema.properties.decision.enum.join(",") === "allow,review,block");
   assert("Analysis result optionally embeds auditable safety evaluation", analysisSchema.properties.safetyEvaluation.$ref === "safety-evaluation.v1.schema.json");
   assert("Analysis result accepts recursive JSON feature values", analysisSchema.$defs.feature.properties.value.$ref === "#/$defs/jsonValue");
+  assert("Revised analysis Schema preserves original and revised hashes", revisedAnalysisSchema.required.includes("baseAnalysisHash") && revisedAnalysisSchema.required.includes("revisedAnalysisHash"));
+  assert("Adjudication Schema requires two review IDs", adjudicationSchema.properties.reviewIds.minItems === 2 && adjudicationSchema.properties.reviewIds.uniqueItems === true);
+  assert("Review bundle Schema exposes explicit gold eligibility", reviewBundleSchema.properties.goldEligibility.required.join(",") === "eligible,reasons");
 }
 
 function hasIssue(issues, code) {

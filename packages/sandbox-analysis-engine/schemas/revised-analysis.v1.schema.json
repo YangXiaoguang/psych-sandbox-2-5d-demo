@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/revised-analysis.v1.schema.json",
+  "title": "Sandbox Revised Analysis V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "versionId", "analysisId", "sequence", "parentVersionId",
+    "reviewId", "reviewerPseudonym", "baseAnalysisHash", "revisedAnalysisHash",
+    "appliedRevisions", "analysis", "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.revised-analysis.v1" },
+    "versionId": { "type": "string", "minLength": 1 },
+    "analysisId": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "parentVersionId": { "type": ["string", "null"] },
+    "reviewId": { "type": "string", "minLength": 1 },
+    "reviewerPseudonym": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "baseAnalysisHash": { "$ref": "#/$defs/hash" },
+    "revisedAnalysisHash": { "$ref": "#/$defs/hash" },
+    "appliedRevisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "expert-review.v1.schema.json#/properties/revisions/items" }
+    },
+    "analysis": { "$ref": "sandbox-analysis-result.v1.schema.json" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
