@@ -39,7 +39,7 @@ Never ship a change that breaks these flows:
 | Stage v2 visual or interaction | `docs/scene-contracts.md`, `docs/visual-bible.md`, `docs/stage-engine-v2-goals-and-tasks.md`, `docs/quality-gates.md` |
 | Toy model / asset rendering | `docs/visual-bible.md`, `docs/scene-contracts.md`, `src/stage3d/components/toys/` |
 | AI analysis / LLM context | `docs/ai-analysis-layer-technical-architecture.md`, `docs/sandbox-llm-data-output-spec.md` |
-| Standalone psychological analysis engine | `docs/sandbox-analysis-engine-charter.md`, `docs/sandbox-analysis-engine-phase-1.md`, `docs/sandbox-analysis-engine-phase-2.md`, `docs/sandbox-analysis-expert-rubric.md`, `docs/sandbox-analysis-calibration-dataset.md` |
+| Standalone psychological analysis engine | `docs/sandbox-analysis-engine-charter.md`, `docs/sandbox-analysis-engine-phase-1.md`, `docs/sandbox-analysis-engine-phase-2.md`, `docs/sandbox-analysis-engine-phase-3.md`, `docs/sandbox-analysis-expert-rubric.md`, `docs/sandbox-analysis-calibration-dataset.md` |
 | API / backend contract | `docs/development-and-technical-spec.md`, `src/api/contracts.ts`, `src/platform/` |
 | Personal Memory OS | `docs/development-and-technical-spec.md`, `src/personal/`, `src/auth/` |
 | Admin console / user management | `docs/development-and-technical-spec.md`, `src/admin/`, `src/components/AdminDashboard.tsx` |
@@ -65,7 +65,7 @@ Use the smallest command set that covers the changed surface:
 |---|---|
 | Any TypeScript/runtime code | `npm run build` |
 | Snapshot, Insight, LLM prompt, AI companion, Agent context | `npm run build`, `npm run qa:snapshot-contract` |
-| Standalone analysis engine contracts, reconstruction, features, evidence graph, rubric, calibration | `npm run build`, `npm run qa:analysis-spec`, `npm run qa:analysis-engine`, `npm run qa:analysis-features`, `npm run qa:snapshot-contract` |
+| Standalone analysis engine contracts, reconstruction, features, evidence graph, hypotheses, rubric, calibration | `npm run build`, `npm run qa:analysis-spec`, `npm run qa:analysis-engine`, `npm run qa:analysis-features`, `npm run qa:analysis-hypotheses`, `npm run qa:snapshot-contract` |
 | API DTO, mock API, repository adapters | `npm run build`, `npm run qa:api-contract`, `npm run qa:api-client`, `npm run qa:mock-api`, `npm run qa:repository` |
 | Toy asset renderer or Stage v2 toy models | `npm run build`, `npm run qa:toy-assets`, `npm run qa:stage-v2` |
 | Stage v2 interaction, shell, fullscreen, right/left drawers | `npm run build`, `npm run qa:stage-v2`, `npm run qa:ui-shell` |

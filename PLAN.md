@@ -14,6 +14,7 @@ Updated: 2026-08-05
 | Standalone analysis engine Phase 0 | `checkpoint/sandbox-analysis-engine-phase-0-2026-08-05` | Module charter, expert rubric, 24-case calibration plan, privacy boundaries, and machine-readable specification QA frozen. |
 | Standalone analysis engine Phase 1 | `checkpoint/sandbox-analysis-engine-phase-1-2026-08-05` | Framework-independent package, versioned contracts, JSON Schema, deterministic validation, explicit migrations, and public ingestion API. |
 | Standalone analysis engine Phase 2 | `checkpoint/sandbox-analysis-engine-phase-2-2026-08-05` | Immutable scene reconstruction, canonical pair relations, deterministic feature bundle, Fact/Feature evidence graph, and unit-test baseline. |
+| Standalone analysis engine Phase 3 | `checkpoint/sandbox-analysis-engine-phase-3-2026-08-05` | Provider-neutral LLM port, constrained Hypothesis draft, evidence/confidence validation, non-leading questions, and audit hashing. |
 | Agentic engineering protocol | `d30e75e`, `checkpoint/agentic-engineering-protocol-2026-08-03` | Root `AGENTS.md` and `TEST_MATRIX.md` added. |
 | Stage v2 polish sprint | `checkpoint/stage-v2-polish-v1-2026-08-04` | Sand tactile material, shoreline foam, calmer ocean, and night/rain readability refined. |
 | Backend-ready contract | `checkpoint/backend-contract-v1-2026-08-04` | API service boundaries, task migration domain, mock reports, and backend handoff QA added. |
@@ -33,6 +34,7 @@ Updated: 2026-08-05
 - Standalone analysis engine Phase 0 freezes Fact/Feature/Hypothesis separation, snapshot-only process limitations, expert acceptance rules, and the 24-case calibration portfolio without fabricating expert labels.
 - Standalone analysis engine Phase 1 provides a Node/browser-safe ESM package with no React/Konva/Three.js/LLM SDK dependency; current application snapshots and approved version migrations are validated before later analysis stages.
 - Standalone analysis engine Phase 2 reconstructs canonical immutable scenes and calculates traceable spatial, category, risk-tag, visual-composition, relation, and weak creation-order features without LLM calls or psychological inference.
+- Standalone analysis engine Phase 3 converts only Phase 2 outputs into a bounded model context and rejects fact/feature injection, unknown evidence, unsupported confidence, leading questions, diagnostic certainty, crisis certainty, and unavailable process claims.
 - Root agent protocol and regression matrix are available for future tasks.
 - Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
 - Phase 3 focused Stage v2 polish completed with sand/ocean/night-rain refinements in `docs/stage-v2-polish-2026-08-04.md`.
@@ -258,7 +260,7 @@ npm run qa:snapshot-contract
 
 ### Phase 3: Structured LLM Hypotheses And Interview Questions
 
-Status: next.
+Status: complete.
 
 Goal: consume only the Phase 2 FeatureBundle and Evidence Graph to generate schema-valid candidate themes, constrained explanations, alternatives, and non-leading interview questions.
 
@@ -269,9 +271,16 @@ Required boundaries:
 - Single symbolic metadata cannot exceed low confidence.
 - Diagnostic, crisis, personality-certainty, or unsupported process language must be rejected.
 
+Evidence:
+
+- `packages/sandbox-analysis-engine/src/hypotheses/`
+- `packages/sandbox-analysis-engine/schemas/sandbox-hypothesis-draft.v1.schema.json`
+- `docs/sandbox-analysis-engine-phase-3.md`
+- `npm run qa:analysis-hypotheses`
+
 ### Later Phases
 
-- Phase 4: safety gates, unsupported-claim detection, and diagnostic-language rejection.
+- Phase 4: layered safety policy, richer unsupported-claim detection, severity handling, and red-team corpus.
 - Phase 5: expert scoring, revision history, adjudication, and export.
 - Phase 6: multi-model benchmark, frozen test set, and regression reporting.
 - Phase 7: adapter-based integration into the current product and future backend service.

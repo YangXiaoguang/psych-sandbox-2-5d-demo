@@ -113,14 +113,7 @@
         "id": { "type": "string", "minLength": 1 },
         "kind": { "type": "string", "minLength": 1 },
         "label": { "type": "string", "minLength": 1 },
-        "value": {
-          "oneOf": [
-            { "type": "number" },
-            { "type": "string" },
-            { "type": "boolean" },
-            { "type": "array", "items": { "type": "string" } }
-          ]
-        },
+        "value": { "$ref": "#/$defs/jsonValue" },
         "unit": { "type": "string" },
         "fidelity": { "enum": ["deterministic", "weak"] },
         "evidenceIds": { "type": "array", "items": { "type": "string" } }
@@ -168,6 +161,16 @@
         "evidenceIds": { "type": "array", "items": { "type": "string" } },
         "hypothesisIds": { "type": "array", "items": { "type": "string" } }
       }
+    },
+    "jsonValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "array", "items": { "$ref": "#/$defs/jsonValue" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/$defs/jsonValue" } }
+      ]
     }
   }
 }

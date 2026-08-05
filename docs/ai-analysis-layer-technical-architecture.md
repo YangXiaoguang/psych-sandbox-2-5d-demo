@@ -435,3 +435,30 @@ Validated Snapshot
 npm run qa:analysis-engine
 npm run qa:analysis-features
 ```
+
+Phase 3 已实现独立的受约束模型边界：
+
+```text
+ReconstructedSceneV1 + FeatureBundleV1 + EvidenceGraphV1
+  -> HypothesisPromptContextV1
+  -> LlmPort.generateStructured()
+  -> SandboxHypothesisDraftV1
+  -> Runtime Evidence / Confidence / Language Validation
+  -> SandboxAnalysisResultV1
+```
+
+关键工程边界：
+
+- `LlmPort` 是唯一模型调用端口，包内没有 HTTP、SDK、API Key 或厂商协议代码。
+- Prompt Context 明确标记未包含原始 Snapshot、事件、个人记忆、身份和图像。
+- 对象对关系按距离与稳定 ID 排序后裁剪，裁剪数量写入 context policy 和结果 warnings。
+- LLM 草稿协议没有 Fact/Feature 字段；额外字段会被拒绝。
+- 最终 Fact、Feature、Evidence、审计哈希与 guardrails 由核心包组装。
+- 运行时校验覆盖证据引用、候选主题引用、置信度分带、最低证据数、单一象征证据上限、诱导式问题和禁止表达。
+- Snapshot 审计哈希采用规范 JSON + SHA-256，算法不依赖 Node `crypto` 或浏览器 Web Crypto。
+
+验收：
+
+```bash
+npm run qa:analysis-hypotheses
+```

@@ -2,7 +2,7 @@
 
 版本：v1.0
 日期：2026-08-05
-阶段：Phase 2 场景重建、特征引擎与证据图谱已完成
+阶段：Phase 3 受约束候选主题与访谈问题生成已完成
 
 ## 1. 模块定位
 
@@ -171,4 +171,21 @@ npm run qa:analysis-engine
 
 ```bash
 npm run qa:analysis-features
+```
+
+## 12. Phase 3 实现状态
+
+- 新增厂商无关 `LlmPort`，核心包不依赖任何模型 SDK、网络框架或密钥系统。
+- LLM 只能返回 `sandbox.hypothesis-draft.v1`，该协议不包含 Fact 或 Feature 字段。
+- Prompt Context 只消费 Phase 2 场景、特征和证据图；不包含原始 Snapshot、身份、记忆、事件、图像或密钥。
+- 模型引用的每个证据 ID 和候选主题 ID 都必须在本次上下文存在。
+- 中、高置信候选主题至少需要两个不同证据 ID；单一资产象征元数据只能形成低置信线索。
+- 诊断、危机确定性、人格确定性、诱导式问题和无事件依据的过程描述会被运行时拒绝。
+- 最终 `sandbox.analysis-result.v1` 的事实、特征、证据图、审计字段和 guardrails 全部由核心包组装，LLM 无法回写。
+- Snapshot 使用规范 JSON 和纯 TypeScript SHA-256 生成可复现审计哈希。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-3.md`：
+
+```bash
+npm run qa:analysis-hypotheses
 ```

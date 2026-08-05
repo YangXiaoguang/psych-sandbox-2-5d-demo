@@ -12,6 +12,8 @@ import {
   RECONSTRUCTED_SCENE_V1,
   SANDBOX_ANALYSIS_RESULT_V1,
   SANDBOX_EXPERT_REVIEW_V1,
+  SANDBOX_HYPOTHESIS_DRAFT_V1,
+  SANDBOX_HYPOTHESIS_PROMPT_V1,
   createSandboxAnalysisEngine,
 } from "../packages/sandbox-analysis-engine/dist/index.js";
 
@@ -31,6 +33,8 @@ try {
   assert("Public API exposes current snapshot version", engine.currentSnapshotSchemaVersion === CURRENT_SANDBOX_SNAPSHOT_V1);
   assert("Public contracts expose analysis result version", SANDBOX_ANALYSIS_RESULT_V1 === "sandbox.analysis-result.v1");
   assert("Public contracts expose expert review version", SANDBOX_EXPERT_REVIEW_V1 === "sandbox.expert-review.v1");
+  assert("Public contracts expose hypothesis draft version", SANDBOX_HYPOTHESIS_DRAFT_V1 === "sandbox.hypothesis-draft.v1");
+  assert("Public contracts expose hypothesis prompt version", SANDBOX_HYPOTHESIS_PROMPT_V1 === "sandbox.hypothesis-prompt.v1");
 
   const validation = engine.validateSnapshot(snapshot);
   assert("Current app Snapshot validates in standalone package", validation.ok, formatIssues(validation.issues));
@@ -160,6 +164,7 @@ async function assertSchemas() {
   const sceneSchema = JSON.parse(await readFile(path.join(schemaDirectory, "reconstructed-scene.v1.schema.json"), "utf8"));
   const evidenceGraphSchema = JSON.parse(await readFile(path.join(schemaDirectory, "evidence-graph.v1.schema.json"), "utf8"));
   const featureBundleSchema = JSON.parse(await readFile(path.join(schemaDirectory, "feature-bundle.v1.schema.json"), "utf8"));
+  const hypothesisDraftSchema = JSON.parse(await readFile(path.join(schemaDirectory, "sandbox-hypothesis-draft.v1.schema.json"), "utf8"));
 
   assert("Snapshot JSON Schema uses draft 2020-12", snapshotSchema.$schema === "https://json-schema.org/draft/2020-12/schema");
   assert("Snapshot JSON Schema locks current version", snapshotSchema.properties.schemaVersion.const === CURRENT_SANDBOX_SNAPSHOT_V1);
@@ -175,6 +180,10 @@ async function assertSchemas() {
   assert("Evidence Graph only permits Fact and Feature layers", evidenceGraphSchema.$defs.node.properties.layer.enum.join(",") === "fact,feature");
   assert("Feature Bundle JSON Schema locks version", featureBundleSchema.properties.schemaVersion.const === FEATURE_BUNDLE_V1);
   assert("Feature Bundle JSON Schema locks weak process inputs", featureBundleSchema.properties.processEvidence.properties.availableSignals.const.join(",") === "createdOrder");
+  assert("Hypothesis Draft JSON Schema locks version", hypothesisDraftSchema.properties.schemaVersion.const === SANDBOX_HYPOTHESIS_DRAFT_V1);
+  assert("Hypothesis Draft forbids fact or feature injection", hypothesisDraftSchema.additionalProperties === false && !("facts" in hypothesisDraftSchema.properties) && !("features" in hypothesisDraftSchema.properties));
+  assert("Hypothesis Draft requires non-leading questions", hypothesisDraftSchema.$defs.question.properties.leading.const === false);
+  assert("Analysis result accepts recursive JSON feature values", analysisSchema.$defs.feature.properties.value.$ref === "#/$defs/jsonValue");
 }
 
 function hasIssue(issues, code) {

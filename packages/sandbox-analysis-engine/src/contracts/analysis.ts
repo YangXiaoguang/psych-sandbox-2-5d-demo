@@ -1,4 +1,5 @@
 import type { CurrentSandboxSnapshotVersion } from "./snapshot.js";
+import type { JsonValue } from "./features.js";
 
 export const SANDBOX_ANALYSIS_RESULT_V1 = "sandbox.analysis-result.v1" as const;
 
@@ -19,7 +20,7 @@ export interface AnalysisFeatureRecord {
   id: string;
   kind: string;
   label: string;
-  value: number | string | boolean | string[];
+  value: JsonValue;
   unit?: string;
   fidelity: "deterministic" | "weak";
   evidenceIds: string[];
