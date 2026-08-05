@@ -1,0 +1,31 @@
+{
+  "name": "@psych-sandbox/analysis-engine",
+  "version": "0.1.0",
+  "description": "Framework-independent contracts, validation, migration and analysis interfaces for digital psychological sandplay snapshots.",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas/current-sandbox-snapshot.v1": "./schemas/current-sandbox-snapshot.v1.schema.json",
+    "./schemas/sandbox-analysis-result.v1": "./schemas/sandbox-analysis-result.v1.schema.json",
+    "./schemas/expert-review.v1": "./schemas/expert-review.v1.schema.json"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

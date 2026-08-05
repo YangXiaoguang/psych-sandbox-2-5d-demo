@@ -12,6 +12,7 @@ Updated: 2026-08-05
 | AI analysis layer boundary | `b95febd`, `checkpoint/ai-analysis-layer-boundary-2026-08-03` | Snapshot/Insight moved to `src/analysis`; LLM layer is prompt/provider focused. |
 | AI analysis architecture hardening | `checkpoint/ai-analysis-architecture-v1-2026-08-05` | AI analysis technical architecture expanded with DTO guidance, service boundaries, policy gates, LLM proxy migration, audit, and QA rules. |
 | Standalone analysis engine Phase 0 | `checkpoint/sandbox-analysis-engine-phase-0-2026-08-05` | Module charter, expert rubric, 24-case calibration plan, privacy boundaries, and machine-readable specification QA frozen. |
+| Standalone analysis engine Phase 1 | `checkpoint/sandbox-analysis-engine-phase-1-2026-08-05` | Framework-independent package, versioned contracts, JSON Schema, deterministic validation, explicit migrations, and public ingestion API. |
 | Agentic engineering protocol | `d30e75e`, `checkpoint/agentic-engineering-protocol-2026-08-03` | Root `AGENTS.md` and `TEST_MATRIX.md` added. |
 | Stage v2 polish sprint | `checkpoint/stage-v2-polish-v1-2026-08-04` | Sand tactile material, shoreline foam, calmer ocean, and night/rain readability refined. |
 | Backend-ready contract | `checkpoint/backend-contract-v1-2026-08-04` | API service boundaries, task migration domain, mock reports, and backend handoff QA added. |
@@ -29,6 +30,7 @@ Updated: 2026-08-05
 - Current Sandbox Snapshot and derived Insight contracts are separated from LLM provider code.
 - AI analysis architecture is now documented as a backend-ready service design with Snapshot/Insight, Prompt, LLM Gateway, Context Policy, audit, fallback, and future Context Packet boundaries.
 - Standalone analysis engine Phase 0 freezes Fact/Feature/Hypothesis separation, snapshot-only process limitations, expert acceptance rules, and the 24-case calibration portfolio without fabricating expert labels.
+- Standalone analysis engine Phase 1 provides a Node/browser-safe ESM package with no React/Konva/Three.js/LLM SDK dependency; current application snapshots and approved version migrations are validated before later analysis stages.
 - Root agent protocol and regression matrix are available for future tasks.
 - Phase 2 visual review completed with the 2026-08-04 baseline and human gap brief in `docs/stage-v2-visual-review-2026-08-04.md`.
 - Phase 3 focused Stage v2 polish completed with sand/ocean/night-rain refinements in `docs/stage-v2-polish-2026-08-04.md`.
@@ -201,7 +203,7 @@ Deliverables:
 
 ### Phase 1: Independent Package And Contracts
 
-Status: next.
+Status: complete.
 
 Goal: scaffold `@psych-sandbox/analysis-engine` as a framework-independent TypeScript package with versioned JSON schemas, migrations, validation, public ports, and zero React/Konva/Three.js dependencies.
 
@@ -210,12 +212,32 @@ Minimum validation:
 ```bash
 npm run build
 npm run qa:analysis-spec
+npm run qa:analysis-engine
 npm run qa:snapshot-contract
 ```
 
+Evidence:
+
+- `packages/sandbox-analysis-engine/`
+- `packages/sandbox-analysis-engine/schemas/*.schema.json`
+- `scripts/qa-sandbox-analysis-engine.mjs`
+- `docs/sandbox-analysis-engine-phase-1.md`
+
+### Phase 2: Deterministic Scene Reconstruction And Features
+
+Status: next.
+
+Goal: reconstruct an immutable scene model from the validated Snapshot and calculate reproducible spatial, category, salience, and weak-process features with evidence paths.
+
+Required boundaries:
+
+- No LLM call and no psychological inference in deterministic feature code.
+- Every fact and feature must reference source JSON Pointer paths or object IDs.
+- Snapshot-only process signals remain `weak`; no movement, hesitation, deletion, or dwell-time claims.
+- Same Snapshot plus same algorithm version must produce byte-stable normalized features.
+
 ### Later Phases
 
-- Phase 2: deterministic reconstruction, feature extraction, and evidence graph.
 - Phase 3: structured LLM hypotheses, explanations, and interview questions.
 - Phase 4: safety gates, unsupported-claim detection, and diagnostic-language rejection.
 - Phase 5: expert scoring, revision history, adjudication, and export.

@@ -2,7 +2,7 @@
 
 版本：v1.0
 日期：2026-08-05
-阶段：Phase 0 规格冻结
+阶段：Phase 1 独立包与输入契约已完成
 
 ## 1. 模块定位
 
@@ -138,3 +138,20 @@ IdGeneratorPort
 - 24 例校准集的采集结构和覆盖分层已经冻结。
 - 不伪造专家标签；当前校准集状态明确为待采集。
 - `npm run qa:analysis-spec` 能自动验证规格的一致性。
+
+## 10. Phase 1 实现状态
+
+- 独立包位置：`packages/sandbox-analysis-engine/`。
+- 当前公开输入版本：`sandbox.current-snapshot.v1`。
+- 已提供 Snapshot、分析结果、专家复核三份 JSON Schema。
+- 已提供确定性运行时校验，包括对象 ID、引用、聚合计数和深度顺序一致性。
+- 已提供显式迁移注册表；无版本数据与无迁移路径数据会被拒绝。
+- 已提供 `createSandboxAnalysisEngine()` 公共入口。
+- 包内不依赖 React、Konva、Three.js、DOM 或任何 LLM SDK。
+- Phase 1 不生成心理假设；下一阶段只实现确定性重建、特征与证据图。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-1.md`，自动验收命令为：
+
+```bash
+npm run qa:analysis-engine
+```

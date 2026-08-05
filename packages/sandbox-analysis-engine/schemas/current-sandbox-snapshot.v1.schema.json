@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/current-sandbox-snapshot.v1.schema.json",
+  "title": "Current Sandbox Snapshot V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "snapshotId", "generatedAt", "source", "canvas", "environment", "objects", "analysis"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.current-snapshot.v1" },
+    "snapshotId": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "source": { "const": "current_sandbox" },
+    "canvas": { "$ref": "#/$defs/canvas" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "objects": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/object" }
+    },
+    "analysis": { "$ref": "#/$defs/analysis" },
+    "selectedObjectId": {
+      "type": ["string", "null"]
+    }
+  },
+  "$defs": {
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "coordinateSystem", "normalizedCoordinateSystem", "guides"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "coordinateSystem": { "const": "board-pixel" },
+        "normalizedCoordinateSystem": { "const": "0-1" },
+        "guides": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["weather", "weatherLabel", "light", "lightLabel"],
+      "properties": {
+        "weather": {
+          "type": "string",
+          "minLength": 1,
+          "x-knownValues": ["sunny", "cloudy", "rainy", "snowy"]
+        },
+        "weatherLabel": { "type": "string", "minLength": 1 },
+        "light": { "enum": ["day", "night"] },
+        "lightLabel": { "type": "string", "minLength": 1 }
+      }
+    },
+    "zoneId": {
+      "enum": [
+        "top-left",
+        "top-center",
+        "top-right",
+        "middle-left",
+        "middle-center",
+        "middle-right",
+        "bottom-left",
+        "bottom-center",
+        "bottom-right"
+      ]
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assetId",
+        "name",
+        "category",
+        "riskTag",
+        "riskLabel",
+        "symbolicCandidates",
+        "semanticTags",
+        "position",
+        "transform",
+        "footprint",
+        "createdOrder"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "assetId": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "minLength": 1 },
+        "riskTag": { "enum": ["normal", "conflict", "death", "fantasy", "unknown"] },
+        "riskLabel": { "type": "string", "minLength": 1 },
+        "symbolicCandidates": { "type": "array", "items": { "type": "string" } },
+        "semanticTags": { "type": "array", "items": { "type": "string" } },
+        "position": { "$ref": "#/$defs/position" },
+        "transform": { "$ref": "#/$defs/transform" },
+        "footprint": { "$ref": "#/$defs/footprint" },
+        "createdOrder": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "xNorm", "yNorm", "zone", "zoneLabel", "inCenter", "inBoundary", "depthRank"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "xNorm": { "type": "number", "minimum": 0, "maximum": 1 },
+        "yNorm": { "type": "number", "minimum": 0, "maximum": 1 },
+        "zone": { "$ref": "#/$defs/zoneId" },
+        "zoneLabel": { "type": "string", "minLength": 1 },
+        "inCenter": { "type": "boolean" },
+        "inBoundary": { "type": "boolean" },
+        "depthRank": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rotationDeg", "scale", "width", "height"],
+      "properties": {
+        "rotationDeg": { "type": "number" },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+    "footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "width", "depth", "height"],
+      "properties": {
+        "kind": { "enum": ["compact", "wide", "tall", "flat"] },
+        "width": { "type": "number", "minimum": 0 },
+        "depth": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+    "countItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "count"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalObjects",
+        "centerCount",
+        "boundaryCount",
+        "zoneCounts",
+        "categoryCounts",
+        "riskCounts",
+        "emptyZones",
+        "depthOrder",
+        "summaryText"
+      ],
+      "properties": {
+        "totalObjects": { "type": "integer", "minimum": 0 },
+        "centerCount": { "type": "integer", "minimum": 0 },
+        "boundaryCount": { "type": "integer", "minimum": 0 },
+        "zoneCounts": { "type": "array", "items": { "$ref": "#/$defs/countItem" } },
+        "categoryCounts": { "type": "array", "items": { "$ref": "#/$defs/countItem" } },
+        "riskCounts": { "type": "array", "items": { "$ref": "#/$defs/countItem" } },
+        "emptyZones": { "type": "array", "items": { "$ref": "#/$defs/zoneId" }, "uniqueItems": true },
+        "depthOrder": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "summaryText": { "type": "string" }
+      }
+    }
+  }
+}

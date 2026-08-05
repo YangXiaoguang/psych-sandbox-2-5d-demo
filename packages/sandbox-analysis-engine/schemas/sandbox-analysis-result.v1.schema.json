@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/sandbox-analysis-result.v1.schema.json",
+  "title": "Sandbox Analysis Result V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "analysisId",
+    "generatedAt",
+    "snapshotId",
+    "snapshotHash",
+    "snapshotSchemaVersion",
+    "engineVersion",
+    "featureAlgorithmVersion",
+    "processEvidence",
+    "reconstructedScene",
+    "evidence",
+    "features",
+    "hypotheses",
+    "interviewQuestions",
+    "warnings",
+    "guardrails"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.analysis-result.v1" },
+    "analysisId": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "snapshotId": { "type": "string", "minLength": 1 },
+    "snapshotHash": { "type": "string", "minLength": 1 },
+    "snapshotSchemaVersion": { "const": "sandbox.current-snapshot.v1" },
+    "engineVersion": { "type": "string", "minLength": 1 },
+    "featureAlgorithmVersion": { "type": "string", "minLength": 1 },
+    "knowledgeBaseVersion": { "type": "string" },
+    "promptVersion": { "type": "string" },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "name"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "processEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fidelity", "availableSignals", "unavailableSignals"],
+      "properties": {
+        "fidelity": { "enum": ["weak", "full"] },
+        "availableSignals": { "type": "array", "items": { "type": "string" } },
+        "unavailableSignals": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "reconstructedScene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectCount", "objectIds", "occupiedZones", "selectedObjectId"],
+      "properties": {
+        "objectCount": { "type": "integer", "minimum": 0 },
+        "objectIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "occupiedZones": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "selectedObjectId": { "type": ["string", "null"] }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" }
+    },
+    "features": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/feature" }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/hypothesis" }
+    },
+    "interviewQuestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/question" }
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "guardrails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["notDiagnosis", "requiresUserConfirmation", "requiresExpertReviewForClinicalUse"],
+      "properties": {
+        "notDiagnosis": { "const": true },
+        "requiresUserConfirmation": { "const": true },
+        "requiresExpertReviewForClinicalUse": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "layer", "kind", "description", "sourcePaths", "objectIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "layer": { "enum": ["fact", "feature"] },
+        "kind": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "sourcePaths": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "objectIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "label", "value", "fidelity", "evidenceIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "value": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "string" },
+            { "type": "boolean" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "unit": { "type": "string" },
+        "fidelity": { "enum": ["deterministic", "weak"] },
+        "evidenceIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "status",
+        "confidence",
+        "confidenceLevel",
+        "supportingEvidenceIds",
+        "contradictingEvidenceIds",
+        "alternativeExplanations",
+        "explanation",
+        "questionsToVerify",
+        "interpretiveLimit"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["candidate", "rejected_by_user", "accepted_for_exploration"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidenceLevel": { "enum": ["low", "medium", "high"] },
+        "supportingEvidenceIds": { "type": "array", "items": { "type": "string" } },
+        "contradictingEvidenceIds": { "type": "array", "items": { "type": "string" } },
+        "alternativeExplanations": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "explanation": { "type": "string", "minLength": 1 },
+        "questionsToVerify": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "interpretiveLimit": { "type": "string", "minLength": 1 }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "intent", "leading", "evidenceIds", "hypothesisIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 },
+        "intent": { "type": "string", "minLength": 1 },
+        "leading": { "const": false },
+        "evidenceIds": { "type": "array", "items": { "type": "string" } },
+        "hypothesisIds": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -400,3 +400,26 @@ npm run qa:mock-api
 - 新视觉 artifact 只能创建描述符，不能把图片数据塞入 Prompt。
 - 新个人记忆能力必须走独立 Context Packet，不得修改当前 Snapshot 最小边界。
 - 新后端接口必须复用 `ApiResponseDto`、标准错误码和认证上下文。
+
+## 14. 独立分析引擎包边界
+
+Phase 1 已把可复用输入契约从前端应用中抽离到：
+
+```text
+packages/sandbox-analysis-engine/
+```
+
+包的公共入口为 `createSandboxAnalysisEngine()`，当前只承担四项职责：
+
+1. 校验 `sandbox.current-snapshot.v1` 的结构和语义一致性；
+2. 通过显式注册的迁移链升级旧版本；
+3. 输出稳定的 TypeScript 合同和 JSON Schema；
+4. 为后续场景重建、特征提取、LLM 分析和专家复核提供版本化边界。
+
+包禁止依赖 React、Konva、Three.js、浏览器 DOM 和 LLM 厂商 SDK。前端继续负责生成 Snapshot；独立包负责拒绝无版本、引用错误、统计不一致或无法迁移的数据。Phase 2 的确定性特征计算必须建立在 `parseSnapshot()` 成功之后。
+
+验收：
+
+```bash
+npm run qa:analysis-engine
+```

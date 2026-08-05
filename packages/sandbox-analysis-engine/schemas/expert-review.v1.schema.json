@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/expert-review.v1.schema.json",
+  "title": "Sandbox Expert Review V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reviewId",
+    "analysisId",
+    "reviewerPseudonym",
+    "rubricVersion",
+    "scores",
+    "weightedAverage",
+    "automaticRejectConditions",
+    "status",
+    "summary",
+    "revisions",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.expert-review.v1" },
+    "reviewId": { "type": "string", "minLength": 1 },
+    "analysisId": { "type": "string", "minLength": 1 },
+    "reviewerPseudonym": { "type": "string", "minLength": 1 },
+    "rubricVersion": { "const": "sandbox.analysis.expert-rubric.v1" },
+    "scores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dimensionId", "score", "comment"],
+        "properties": {
+          "dimensionId": { "type": "string", "minLength": 1 },
+          "score": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "comment": { "type": "string" }
+        }
+      }
+    },
+    "weightedAverage": { "type": "number", "minimum": 1, "maximum": 5 },
+    "automaticRejectConditions": { "type": "array", "items": { "type": "string" } },
+    "status": { "enum": ["accepted", "rejected", "needs_revision"] },
+    "summary": { "type": "string" },
+    "revisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "operation", "reason"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "operation": { "enum": ["replace", "remove", "add"] },
+          "previousValue": true,
+          "proposedValue": true,
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
