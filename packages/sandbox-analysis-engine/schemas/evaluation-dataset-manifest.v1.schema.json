@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/evaluation-dataset-manifest.v1.schema.json",
+  "title": "Sandbox Evaluation Dataset Manifest V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetId", "datasetVersion", "status", "datasetHash", "createdAt", "frozenAt", "targetPlan", "actualCounts", "cases", "policy"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.evaluation-dataset-manifest.v1" },
+    "datasetId": { "type": "string", "minLength": 1 },
+    "datasetVersion": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["collection_required", "ready", "frozen"] },
+    "datasetHash": { "$ref": "#/$defs/hash" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "frozenAt": { "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }] },
+    "targetPlan": { "$ref": "#/$defs/targetPlan" },
+    "actualCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["totalCases", "partitions", "cohorts", "tiers"],
+      "properties": {
+        "totalCases": { "$ref": "#/$defs/count" },
+        "partitions": { "$ref": "#/$defs/partitions" },
+        "cohorts": { "$ref": "#/$defs/cohorts" },
+        "tiers": {
+          "type": "object", "additionalProperties": false, "required": ["gold", "validation", "challenge"],
+          "properties": { "gold": { "$ref": "#/$defs/count" }, "validation": { "$ref": "#/$defs/count" }, "challenge": { "$ref": "#/$defs/count" } }
+        }
+      }
+    },
+    "cases": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["caseId", "caseHash", "snapshotHash", "sourceGroupId", "cohort", "partition", "tier", "finalAnalysisHash"],
+        "properties": {
+          "caseId": { "type": "string" }, "caseHash": { "$ref": "#/$defs/hash" }, "snapshotHash": { "$ref": "#/$defs/hash" },
+          "sourceGroupId": { "type": "string" }, "cohort": { "type": "string" }, "partition": { "enum": ["train", "dev", "test"] },
+          "tier": { "enum": ["gold", "validation", "challenge"] }, "finalAnalysisHash": { "$ref": "#/$defs/hash" }
+        }
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["expertLabeledCasesOnly", "goldRequiresAdjudication", "groupExclusivePartitions", "trainingUseAllowed", "testPartitionBlindUntilRun"],
+      "properties": {
+        "expertLabeledCasesOnly": { "const": true }, "goldRequiresAdjudication": { "const": true },
+        "groupExclusivePartitions": { "const": true }, "trainingUseAllowed": { "const": false }, "testPartitionBlindUntilRun": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 }, "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "partitions": { "type": "object", "additionalProperties": false, "required": ["train", "dev", "test"], "properties": { "train": { "$ref": "#/$defs/count" }, "dev": { "$ref": "#/$defs/count" }, "test": { "$ref": "#/$defs/count" } } },
+    "cohorts": { "type": "object", "additionalProperties": false, "required": ["empty_and_minimal", "sparse_relations", "dense_complex", "center_boundary_composition", "symbolic_ambiguity", "schema_edge_cases", "safety_adversarial"], "properties": { "empty_and_minimal": { "$ref": "#/$defs/count" }, "sparse_relations": { "$ref": "#/$defs/count" }, "dense_complex": { "$ref": "#/$defs/count" }, "center_boundary_composition": { "$ref": "#/$defs/count" }, "symbolic_ambiguity": { "$ref": "#/$defs/count" }, "schema_edge_cases": { "$ref": "#/$defs/count" }, "safety_adversarial": { "$ref": "#/$defs/count" } } },
+    "targetPlan": { "type": "object", "additionalProperties": false, "required": ["totalCases", "partitions", "cohorts"], "properties": { "totalCases": { "$ref": "#/$defs/count" }, "partitions": { "$ref": "#/$defs/partitions" }, "cohorts": { "$ref": "#/$defs/cohorts" } } }
+  }
+}

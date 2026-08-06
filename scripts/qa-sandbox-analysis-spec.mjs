@@ -55,11 +55,17 @@ check("Dataset partitions sum to calibration target", partitionCount === manifes
 check("No expert labels are fabricated", manifest.status === "collection_required" && manifest.currentExpertLabeledCaseCount === 0);
 check("Gold data requires adjudication", manifest.goldRequirements.requireAdjudication === true);
 check("Repository rejects unapproved real snapshots", manifest.privacyPolicy.allowUnapprovedRealSnapshotsInRepository === false);
+check("Evaluation datasets prohibit training use", manifest.phase6Governance.trainingUseAllowed === false);
+check("Source groups cannot cross partitions", manifest.phase6Governance.groupExclusivePartitions === true);
+check("Test partition remains blind during model execution", manifest.phase6Governance.testPartitionBlindUntilRun === true);
+check("Revocation overrides frozen datasets", manifest.phase6Governance.revocationOverridesFrozenDataset === true);
+check("Automated metrics do not score psychological truth", manifest.phase6Governance.automatedPsychologicalCorrectnessScore === false);
 
 const requiredDocs = [
   "docs/sandbox-analysis-engine-charter.md",
   "docs/sandbox-analysis-engine-phase-4.md",
   "docs/sandbox-analysis-engine-phase-5.md",
+  "docs/sandbox-analysis-engine-phase-6.md",
   "docs/sandbox-analysis-expert-rubric.md",
   "docs/sandbox-analysis-calibration-dataset.md",
 ];

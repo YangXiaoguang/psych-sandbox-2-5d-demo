@@ -19,6 +19,8 @@ Phase 4 adds a versioned, composable safety policy. Core rules separate allow, e
 
 Phase 5 adds a framework-independent expert-supervision workflow. Reviews are bound to a canonical analysis hash; weighted status is computed by the trusted core; experts may revise only hypotheses and interview questions; every revision is revalidated against the Phase 3 evidence contract and Phase 4 safety policy. Gold eligibility requires two accepted, independent reviews of the exact final analysis plus independent adjudication.
 
+Phase 6 adds governed evaluation datasets and reproducible model benchmarks. Admission requires an exact Snapshot hash, a gold-eligible adjudication bundle, de-identification attestations and purpose restrictions. Source groups cannot cross train/dev/test partitions, frozen test cases remain blind to model subjects, revocation by Snapshot hash overrides dataset freeze, and automated metrics explicitly do not score psychological truth.
+
 ## Usage
 
 ```ts
@@ -90,7 +92,7 @@ if (!result.ok) {
 }
 ```
 
-An analyzer created by v0.5.0 evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
+An analyzer created by v0.6.0 evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
 
 ## Extending the safety policy
 
@@ -139,6 +141,33 @@ if (review.ok) {
 
 Experts cannot revise reconstructed scene data, evidence, deterministic features, guardrails, or safety reports. A revised version is immutable, hash-linked to its parent, and must be independently reviewed again before it can enter a gold dataset.
 
+## Governed evaluation datasets and blind benchmarks
+
+```ts
+import {
+  createBenchmarkRunner,
+  createEvaluationDatasetService,
+} from "@psych-sandbox/analysis-engine";
+
+const datasets = createEvaluationDatasetService({ repository: myDatasetRepository });
+const admitted = await datasets.admitCase(candidate);
+
+if (admitted.ok) {
+  const frozen = await datasets.buildDataset({
+    datasetId: "sandbox-calibration",
+    datasetVersion: "1.0.0",
+    targetPlan,
+    freeze: true,
+  });
+
+  if (frozen.ok) {
+    const run = await createBenchmarkRunner().run(frozen.value, modelSubject, "seed-2026-08");
+  }
+}
+```
+
+`EvaluationSubjectPort` receives only the case ID, partition, run seed and Snapshot. Gold analyses, expert reviews and adjudication are never included in model input. The objective report covers Snapshot binding, exact scene/features, evidence traceability, question structure and safety. Candidate psychological quality remains a separate blind-expert judgment.
+
 Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt context. The raw Snapshot, user identity, personal memory, events, images, and API keys remain excluded. Provider SDKs, networking, retries, rate limits, and secret handling belong in external adapters.
 
 ## Published schemas
@@ -149,6 +178,11 @@ Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt cont
 - `schemas/revised-analysis.v1.schema.json`
 - `schemas/review-adjudication.v1.schema.json`
 - `schemas/review-case-bundle.v1.schema.json`
+- `schemas/evaluation-case.v1.schema.json`
+- `schemas/evaluation-dataset-manifest.v1.schema.json`
+- `schemas/data-revocation.v1.schema.json`
+- `schemas/model-evaluation-run.v1.schema.json`
+- `schemas/benchmark-report.v1.schema.json`
 - `schemas/reconstructed-scene.v1.schema.json`
 - `schemas/evidence-graph.v1.schema.json`
 - `schemas/feature-bundle.v1.schema.json`

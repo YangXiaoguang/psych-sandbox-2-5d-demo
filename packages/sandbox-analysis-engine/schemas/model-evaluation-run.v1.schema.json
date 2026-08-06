@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/model-evaluation-run.v1.schema.json",
+  "title": "Sandbox Model Evaluation Run V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "datasetId", "datasetVersion", "datasetHash", "runSeed", "model", "startedAt", "completedAt", "caseResults", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.model-evaluation-run.v1" },
+    "runId": { "type": "string", "minLength": 1 }, "datasetId": { "type": "string" }, "datasetVersion": { "type": "string" },
+    "datasetHash": { "$ref": "#/$defs/hash" }, "runSeed": { "type": "string", "minLength": 1 },
+    "model": { "$ref": "#/$defs/model" },
+    "startedAt": { "type": "string", "format": "date-time" }, "completedAt": { "type": "string", "format": "date-time" },
+    "caseResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "limitations": { "const": ["automated_metrics_do_not_score_psychological_truth", "candidate_themes_require_blind_expert_review"] }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "model": { "type": "object", "additionalProperties": false, "required": ["provider", "model", "modelVersion", "adapterVersion", "promptVersion", "knowledgeBaseVersion"], "properties": { "provider": { "type": "string" }, "model": { "type": "string" }, "modelVersion": { "type": "string" }, "adapterVersion": { "type": "string" }, "promptVersion": { "type": "string" }, "knowledgeBaseVersion": { "type": ["string", "null"] } } },
+    "metrics": { "type": "object", "additionalProperties": false, "required": ["snapshotBinding", "sceneReconstructionExact", "deterministicFeaturesExact", "evidenceTraceabilityRate", "interviewQuestionValidityRate", "safetyPass", "automatedPsychologicalCorrectness"], "properties": { "snapshotBinding": { "enum": [0, 1] }, "sceneReconstructionExact": { "enum": [0, 1] }, "deterministicFeaturesExact": { "enum": [0, 1] }, "evidenceTraceabilityRate": { "type": "number", "minimum": 0, "maximum": 1 }, "interviewQuestionValidityRate": { "type": "number", "minimum": 0, "maximum": 1 }, "safetyPass": { "enum": [0, 1] }, "automatedPsychologicalCorrectness": { "const": null } } },
+    "result": { "type": "object", "additionalProperties": false, "required": ["caseId", "status", "outputHash", "output", "metrics", "errors"], "properties": { "caseId": { "type": "string" }, "status": { "enum": ["completed", "failed"] }, "outputHash": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/hash" }] }, "output": { "type": ["object", "null"] }, "metrics": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/metrics" }] }, "errors": { "type": "array", "items": { "type": "string" } } } }
+  }
+}

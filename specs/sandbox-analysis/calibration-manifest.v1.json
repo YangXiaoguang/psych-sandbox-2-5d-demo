@@ -64,5 +64,13 @@
     "minimumIndependentExperts": 2,
     "requireAdjudication": true,
     "requireAcceptedRubricResult": true
+  },
+  "phase6Governance": {
+    "trainingUseAllowed": false,
+    "groupExclusivePartitions": true,
+    "testPartitionBlindUntilRun": true,
+    "realCasesRequireConsentAndEthicsReferences": true,
+    "revocationOverridesFrozenDataset": true,
+    "automatedPsychologicalCorrectnessScore": false
   }
 }

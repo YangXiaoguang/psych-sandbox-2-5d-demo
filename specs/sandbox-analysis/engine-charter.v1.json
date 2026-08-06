@@ -52,6 +52,10 @@
     "extractFeatures",
     "analyze",
     "submitExpertReview",
-    "applyExpertRevision"
+    "applyExpertRevision",
+    "admitEvaluationCase",
+    "freezeEvaluationDataset",
+    "runBenchmark",
+    "createBenchmarkReport"
   ]
 }

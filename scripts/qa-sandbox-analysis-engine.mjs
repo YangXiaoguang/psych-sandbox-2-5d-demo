@@ -11,9 +11,14 @@ import {
   FEATURE_BUNDLE_V1,
   RECONSTRUCTED_SCENE_V1,
   SANDBOX_ANALYSIS_RESULT_V1,
+  SANDBOX_BENCHMARK_REPORT_V1,
+  SANDBOX_DATA_REVOCATION_V1,
+  SANDBOX_DATASET_MANIFEST_V1,
+  SANDBOX_EVALUATION_CASE_V1,
   SANDBOX_EXPERT_REVIEW_V1,
   SANDBOX_HYPOTHESIS_DRAFT_V1,
   SANDBOX_HYPOTHESIS_PROMPT_V1,
+  SANDBOX_MODEL_EVALUATION_RUN_V1,
   SANDBOX_REVISED_ANALYSIS_V1,
   SANDBOX_REVIEW_ADJUDICATION_V1,
   SANDBOX_REVIEW_CASE_BUNDLE_V1,
@@ -43,6 +48,11 @@ try {
   assert("Public contracts expose revised analysis version", SANDBOX_REVISED_ANALYSIS_V1 === "sandbox.revised-analysis.v1");
   assert("Public contracts expose review adjudication version", SANDBOX_REVIEW_ADJUDICATION_V1 === "sandbox.review-adjudication.v1");
   assert("Public contracts expose review case bundle version", SANDBOX_REVIEW_CASE_BUNDLE_V1 === "sandbox.review-case-bundle.v1");
+  assert("Public contracts expose governed evaluation case version", SANDBOX_EVALUATION_CASE_V1 === "sandbox.evaluation-case.v1");
+  assert("Public contracts expose frozen dataset manifest version", SANDBOX_DATASET_MANIFEST_V1 === "sandbox.evaluation-dataset-manifest.v1");
+  assert("Public contracts expose data revocation version", SANDBOX_DATA_REVOCATION_V1 === "sandbox.data-revocation.v1");
+  assert("Public contracts expose model evaluation run version", SANDBOX_MODEL_EVALUATION_RUN_V1 === "sandbox.model-evaluation-run.v1");
+  assert("Public contracts expose benchmark report version", SANDBOX_BENCHMARK_REPORT_V1 === "sandbox.benchmark-report.v1");
 
   const validation = engine.validateSnapshot(snapshot);
   assert("Current app Snapshot validates in standalone package", validation.ok, formatIssues(validation.issues));
@@ -177,6 +187,11 @@ async function assertSchemas() {
   const revisedAnalysisSchema = JSON.parse(await readFile(path.join(schemaDirectory, "revised-analysis.v1.schema.json"), "utf8"));
   const adjudicationSchema = JSON.parse(await readFile(path.join(schemaDirectory, "review-adjudication.v1.schema.json"), "utf8"));
   const reviewBundleSchema = JSON.parse(await readFile(path.join(schemaDirectory, "review-case-bundle.v1.schema.json"), "utf8"));
+  const evaluationCaseSchema = JSON.parse(await readFile(path.join(schemaDirectory, "evaluation-case.v1.schema.json"), "utf8"));
+  const datasetManifestSchema = JSON.parse(await readFile(path.join(schemaDirectory, "evaluation-dataset-manifest.v1.schema.json"), "utf8"));
+  const revocationSchema = JSON.parse(await readFile(path.join(schemaDirectory, "data-revocation.v1.schema.json"), "utf8"));
+  const modelRunSchema = JSON.parse(await readFile(path.join(schemaDirectory, "model-evaluation-run.v1.schema.json"), "utf8"));
+  const benchmarkSchema = JSON.parse(await readFile(path.join(schemaDirectory, "benchmark-report.v1.schema.json"), "utf8"));
 
   assert("Snapshot JSON Schema uses draft 2020-12", snapshotSchema.$schema === "https://json-schema.org/draft/2020-12/schema");
   assert("Snapshot JSON Schema locks current version", snapshotSchema.properties.schemaVersion.const === CURRENT_SANDBOX_SNAPSHOT_V1);
@@ -203,6 +218,13 @@ async function assertSchemas() {
   assert("Revised analysis Schema preserves original and revised hashes", revisedAnalysisSchema.required.includes("baseAnalysisHash") && revisedAnalysisSchema.required.includes("revisedAnalysisHash"));
   assert("Adjudication Schema requires two review IDs", adjudicationSchema.properties.reviewIds.minItems === 2 && adjudicationSchema.properties.reviewIds.uniqueItems === true);
   assert("Review bundle Schema exposes explicit gold eligibility", reviewBundleSchema.properties.goldEligibility.required.join(",") === "eligible,reasons");
+  assert("Evaluation case Schema prohibits training use", evaluationCaseSchema.properties.governance.properties.trainingUseAllowed.const === false);
+  assert("Evaluation case Schema requires a revocation Snapshot hash", evaluationCaseSchema.properties.governance.required.includes("revocationSnapshotHash"));
+  assert("Dataset manifest Schema keeps source groups partition-exclusive", datasetManifestSchema.properties.policy.properties.groupExclusivePartitions.const === true);
+  assert("Dataset manifest Schema keeps test cases blind", datasetManifestSchema.properties.policy.properties.testPartitionBlindUntilRun.const === true);
+  assert("Data revocation Schema binds deletion to Snapshot hash", revocationSchema.properties.snapshotHash.pattern === "^[a-f0-9]{64}$");
+  assert("Model run Schema refuses an automated psychological truth score", modelRunSchema.$defs.metrics.properties.automatedPsychologicalCorrectness.const === null);
+  assert("Benchmark Schema labels ranking as engineering-only", benchmarkSchema.properties.limitations.const.includes("ranking_uses_objective_engineering_metrics_only"));
 }
 
 function hasIssue(issues, code) {

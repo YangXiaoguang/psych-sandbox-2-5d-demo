@@ -7,7 +7,7 @@ import type { SafetyEvaluationReportV1, SafetyPolicy } from "./safety.js";
 export const SANDBOX_HYPOTHESIS_DRAFT_V1 = "sandbox.hypothesis-draft.v1" as const;
 export const SANDBOX_HYPOTHESIS_CONTEXT_V1 = "sandbox.hypothesis-context.v1" as const;
 export const SANDBOX_HYPOTHESIS_PROMPT_V1 = "sandbox.hypothesis-prompt.v1" as const;
-export const SANDBOX_ANALYSIS_ENGINE_VERSION = "0.5.0" as const;
+export const SANDBOX_ANALYSIS_ENGINE_VERSION = "0.6.0" as const;
 
 export interface LlmMessage {
   readonly role: "system" | "user";

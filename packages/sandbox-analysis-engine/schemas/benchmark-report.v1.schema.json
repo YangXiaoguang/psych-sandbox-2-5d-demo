@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/benchmark-report.v1.schema.json",
+  "title": "Sandbox Benchmark Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "reportId", "datasetId", "datasetVersion", "datasetHash", "generatedAt", "runs", "expertAgreement", "metricWeights", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.benchmark-report.v1" },
+    "reportId": { "type": "string" }, "datasetId": { "type": "string" }, "datasetVersion": { "type": "string" },
+    "datasetHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "generatedAt": { "type": "string", "format": "date-time" },
+    "runs": { "type": "array", "items": { "$ref": "#/$defs/run" } },
+    "expertAgreement": { "type": "object" },
+    "metricWeights": { "const": { "snapshotBinding": 0.1, "sceneReconstruction": 0.2, "deterministicFeatures": 0.2, "evidenceTraceability": 0.2, "interviewQuestionValidity": 0.1, "safety": 0.2 } },
+    "limitations": { "const": ["ranking_uses_objective_engineering_metrics_only", "psychological_quality_requires_blind_expert_review", "test_results_are_not_clinical_validation"] }
+  },
+  "$defs": {
+    "rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "run": { "type": "object", "additionalProperties": false, "required": ["runId", "model", "completionRate", "snapshotBindingRate", "sceneReconstructionAccuracy", "deterministicFeatureAccuracy", "evidenceTraceabilityRate", "interviewQuestionValidityRate", "safetyPassRate", "objectiveCompositeScore", "rank"], "properties": { "runId": { "type": "string" }, "model": { "type": "object" }, "completionRate": { "$ref": "#/$defs/rate" }, "snapshotBindingRate": { "$ref": "#/$defs/rate" }, "sceneReconstructionAccuracy": { "$ref": "#/$defs/rate" }, "deterministicFeatureAccuracy": { "$ref": "#/$defs/rate" }, "evidenceTraceabilityRate": { "$ref": "#/$defs/rate" }, "interviewQuestionValidityRate": { "$ref": "#/$defs/rate" }, "safetyPassRate": { "$ref": "#/$defs/rate" }, "objectiveCompositeScore": { "$ref": "#/$defs/rate" }, "rank": { "type": "integer", "minimum": 1 } } }
+  }
+}

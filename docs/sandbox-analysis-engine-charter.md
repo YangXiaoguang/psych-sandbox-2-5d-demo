@@ -2,7 +2,7 @@
 
 版本：v1.0
 日期：2026-08-05
-阶段：Phase 5 专家监督、修订审计与金标准准入已完成
+阶段：Phase 6 受治理数据集与可复现实验已完成
 
 ## 1. 模块定位
 
@@ -221,4 +221,21 @@ npm run qa:analysis-safety
 
 ```bash
 npm run qa:analysis-review
+```
+
+## 15. Phase 6 实现状态
+
+- 新增 `EvaluationDatasetService`，统一执行脱敏案例准入、分区防泄漏、目标计划核对、冻结和撤回。
+- 案例必须绑定同一 Snapshot SHA-256、Gold 合格复核包和仲裁最终分析哈希。
+- `deidentified_real` 来源必须提供同意记录与伦理审批引用；所有案例固定 `trainingUseAllowed: false`。
+- 同一 `sourceGroupId` 不得跨 `train/dev/test`，避免同一作品或同一来源的变体污染评测。
+- 冻结数据集使用规范 JSON 生成稳定哈希；测试分区只把 Snapshot 暴露给模型执行端。
+- 自动指标只检查场景、特征、证据、问题结构和安全边界，`automatedPsychologicalCorrectness` 永远为 `null`。
+- 横向报告包含模型版本、Prompt/Adapter/知识库版本、运行种子、完成率、工程指标和专家一致性。
+- Snapshot 哈希撤回优先于冻结状态；撤回生成不可变 tombstone，并使旧冻结数据集失效。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-6.md`：
+
+```bash
+npm run qa:analysis-dataset
 ```

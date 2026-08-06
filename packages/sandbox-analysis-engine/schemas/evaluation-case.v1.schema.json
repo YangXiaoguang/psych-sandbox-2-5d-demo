@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/evaluation-case.v1.schema.json",
+  "title": "Sandbox Evaluation Case V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "caseId", "caseHash", "snapshotHash", "finalAnalysisHash", "sourceGroupId", "cohort", "partition", "tier", "challengeTags", "snapshot", "reviewBundle", "governance", "finalAnalysis", "importedAt"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.evaluation-case.v1" },
+    "caseId": { "type": "string", "minLength": 1 },
+    "caseHash": { "$ref": "#/$defs/hash" },
+    "snapshotHash": { "$ref": "#/$defs/hash" },
+    "finalAnalysisHash": { "$ref": "#/$defs/hash" },
+    "sourceGroupId": { "type": "string", "minLength": 1 },
+    "cohort": { "enum": ["empty_and_minimal", "sparse_relations", "dense_complex", "center_boundary_composition", "symbolic_ambiguity", "schema_edge_cases", "safety_adversarial"] },
+    "partition": { "enum": ["train", "dev", "test"] },
+    "tier": { "enum": ["gold", "validation", "challenge"] },
+    "challengeTags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "snapshot": { "$ref": "current-sandbox-snapshot.v1.schema.json" },
+    "reviewBundle": { "$ref": "review-case-bundle.v1.schema.json" },
+    "finalAnalysis": { "$ref": "sandbox-analysis-result.v1.schema.json" },
+    "importedAt": { "type": "string", "format": "date-time" },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceKind", "sourceRecordPseudonym", "deidentified", "directIdentityPresent", "consentRecordId", "ethicsApprovalId", "allowedPurposes", "trainingUseAllowed", "revocationSnapshotHash", "retentionUntil"],
+      "properties": {
+        "sourceKind": { "enum": ["synthetic", "deidentified_real"] },
+        "sourceRecordPseudonym": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "deidentified": { "const": true },
+        "directIdentityPresent": { "const": false },
+        "consentRecordId": { "type": ["string", "null"] },
+        "ethicsApprovalId": { "type": ["string", "null"] },
+        "allowedPurposes": { "type": "array", "uniqueItems": true, "contains": { "const": "evaluation" }, "items": { "enum": ["evaluation", "prompt_calibration", "safety_research"] } },
+        "trainingUseAllowed": { "const": false },
+        "revocationSnapshotHash": { "$ref": "#/$defs/hash" },
+        "retentionUntil": { "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }] }
+      }
+    }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}
