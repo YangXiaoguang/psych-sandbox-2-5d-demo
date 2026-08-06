@@ -72,5 +72,16 @@
     "realCasesRequireConsentAndEthicsReferences": true,
     "revocationOverridesFrozenDataset": true,
     "automatedPsychologicalCorrectnessScore": false
+  },
+  "phase7Runtime": {
+    "idempotentJobSubmission": true,
+    "optimisticConcurrency": true,
+    "expiringWorkerLeases": true,
+    "cooperativeCancellation": true,
+    "orderedProgressEvents": true,
+    "auditBundleIncludesRawDatasetCases": false,
+    "auditBundleIncludesGoldAnalysis": false,
+    "auditBundleIncludesApiKeys": false,
+    "auditBundleIncludesDirectIdentity": false
   }
 }

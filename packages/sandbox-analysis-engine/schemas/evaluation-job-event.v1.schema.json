@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/evaluation-job-event.v1.schema.json",
+  "title": "Sandbox Evaluation Job Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "jobId", "sequence", "type", "attempt", "occurredAt", "detail"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.evaluation-job-event.v1" },
+    "eventId": { "type": "string", "minLength": 1 },
+    "jobId": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "type": { "enum": ["job_queued", "job_started", "job_resumed", "case_completed", "case_failed", "cancel_requested", "job_cancelled", "retry_scheduled", "job_succeeded", "job_failed"] },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "detail": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean", "null"] } }
+  }
+}

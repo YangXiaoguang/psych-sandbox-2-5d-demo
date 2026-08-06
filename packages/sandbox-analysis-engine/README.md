@@ -21,6 +21,8 @@ Phase 5 adds a framework-independent expert-supervision workflow. Reviews are bo
 
 Phase 6 adds governed evaluation datasets and reproducible model benchmarks. Admission requires an exact Snapshot hash, a gold-eligible adjudication bundle, de-identification attestations and purpose restrictions. Source groups cannot cross train/dev/test partitions, frozen test cases remain blind to model subjects, revocation by Snapshot hash overrides dataset freeze, and automated metrics explicitly do not score psychological truth.
 
+Phase 7 adds infrastructure-neutral evaluation job orchestration and tamper-evident audit delivery. Jobs use idempotency keys, optimistic revisions, expiring worker leases, ordered progress events, cooperative cancellation and bounded retries. Audit bundles bind the frozen dataset manifest, job, event stream, run and report with canonical hashes while excluding raw cases, Gold analyses, API keys and direct identity.
+
 ## Usage
 
 ```ts
@@ -92,7 +94,7 @@ if (!result.ok) {
 }
 ```
 
-An analyzer created by v0.6.0 evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
+The current analyzer evaluates the validated draft with the core safety policy before assembling a successful result. A blocked draft returns `stage: "safety"`. Review findings remain available in `result.safetyEvaluation` and `result.value.safetyEvaluation`.
 
 ## Extending the safety policy
 
@@ -170,6 +172,30 @@ if (admitted.ok) {
 
 Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt context. The raw Snapshot, user identity, personal memory, events, images, and API keys remain excluded. Provider SDKs, networking, retries, rate limits, and secret handling belong in external adapters.
 
+## Resilient evaluation jobs and audit bundles
+
+```ts
+import {
+  InMemoryEvaluationRuntimeRepository,
+  createEvaluationJobOrchestrator,
+  createExperimentAuditService,
+} from "@psych-sandbox/analysis-engine";
+
+const repository = new InMemoryEvaluationRuntimeRepository();
+const jobs = createEvaluationJobOrchestrator({ repository, workerId: "worker-a" });
+const submitted = await jobs.submit(request);
+
+if (submitted.ok) {
+  const completed = await jobs.execute(submitted.value.jobId, frozenDataset, modelSubject);
+  if (completed.ok && completed.value.status === "succeeded") {
+    const audit = await createExperimentAuditService({ repository })
+      .exportBundle(completed.value.jobId, frozenDataset);
+  }
+}
+```
+
+`InMemoryEvaluationRuntimeRepository` is not a production queue or database. Production adapters must make job revision updates and event appends transactional. Runtime retries repeat a failed benchmark attempt; provider-level backoff, request timeouts and secrets remain responsibilities of the injected model adapter.
+
 ## Published schemas
 
 - `schemas/current-sandbox-snapshot.v1.schema.json`
@@ -183,6 +209,9 @@ Only the Phase 2 scene, feature bundle, and evidence graph enter the prompt cont
 - `schemas/data-revocation.v1.schema.json`
 - `schemas/model-evaluation-run.v1.schema.json`
 - `schemas/benchmark-report.v1.schema.json`
+- `schemas/evaluation-job.v1.schema.json`
+- `schemas/evaluation-job-event.v1.schema.json`
+- `schemas/experiment-audit-bundle.v1.schema.json`
 - `schemas/reconstructed-scene.v1.schema.json`
 - `schemas/evidence-graph.v1.schema.json`
 - `schemas/feature-bundle.v1.schema.json`

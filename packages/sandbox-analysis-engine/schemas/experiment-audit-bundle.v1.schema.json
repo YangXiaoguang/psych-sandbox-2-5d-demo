@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/experiment-audit-bundle.v1.schema.json",
+  "title": "Sandbox Experiment Audit Bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bundleId", "exportedAt", "datasetManifest", "job", "events", "run", "report", "integrity", "policy"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.experiment-audit-bundle.v1" },
+    "bundleId": { "type": "string", "minLength": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "datasetManifest": { "$ref": "evaluation-dataset-manifest.v1.schema.json" },
+    "job": { "$ref": "evaluation-job.v1.schema.json" },
+    "events": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "evaluation-job-event.v1.schema.json" } },
+    "run": { "$ref": "model-evaluation-run.v1.schema.json" },
+    "report": { "$ref": "benchmark-report.v1.schema.json" },
+    "integrity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["datasetManifestHash", "jobHash", "eventsHash", "runHash", "reportHash", "bundleHash"],
+      "properties": {
+        "datasetManifestHash": { "$ref": "#/$defs/hash" }, "jobHash": { "$ref": "#/$defs/hash" },
+        "eventsHash": { "$ref": "#/$defs/hash" }, "runHash": { "$ref": "#/$defs/hash" },
+        "reportHash": { "$ref": "#/$defs/hash" }, "bundleHash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["includesRawDatasetCases", "includesGoldAnalysis", "includesApiKeys", "includesDirectIdentity"],
+      "properties": {
+        "includesRawDatasetCases": { "const": false }, "includesGoldAnalysis": { "const": false },
+        "includesApiKeys": { "const": false }, "includesDirectIdentity": { "const": false }
+      }
+    }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

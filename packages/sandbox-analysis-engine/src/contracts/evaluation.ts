@@ -144,4 +144,10 @@ export interface BenchmarkRunner {
 export interface CreateBenchmarkRunnerOptions {
   readonly clock?: { now(): string };
   readonly idGenerator?: { createId(prefix: string): string };
+  readonly onCaseComplete?: (progress: {
+    readonly caseId: string;
+    readonly status: "completed" | "failed";
+    readonly processedCases: number;
+    readonly totalCases: number;
+  }) => void | Promise<void>;
 }

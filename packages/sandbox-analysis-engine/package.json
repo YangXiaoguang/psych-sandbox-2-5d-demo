@@ -1,6 +1,6 @@
 {
   "name": "@psych-sandbox/analysis-engine",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Framework-independent contracts, validation, migration and analysis interfaces for digital psychological sandplay snapshots.",
   "type": "module",
   "sideEffects": false,
@@ -22,6 +22,9 @@
     "./schemas/data-revocation.v1": "./schemas/data-revocation.v1.schema.json",
     "./schemas/model-evaluation-run.v1": "./schemas/model-evaluation-run.v1.schema.json",
     "./schemas/benchmark-report.v1": "./schemas/benchmark-report.v1.schema.json",
+    "./schemas/evaluation-job.v1": "./schemas/evaluation-job.v1.schema.json",
+    "./schemas/evaluation-job-event.v1": "./schemas/evaluation-job-event.v1.schema.json",
+    "./schemas/experiment-audit-bundle.v1": "./schemas/experiment-audit-bundle.v1.schema.json",
     "./schemas/reconstructed-scene.v1": "./schemas/reconstructed-scene.v1.schema.json",
     "./schemas/evidence-graph.v1": "./schemas/evidence-graph.v1.schema.json",
     "./schemas/feature-bundle.v1": "./schemas/feature-bundle.v1.schema.json",
@@ -40,7 +43,8 @@
     "test:hypotheses": "npm run build && node --test tests/hypothesis-analysis.test.mjs",
     "test:safety": "npm run build && node --test tests/safety-policy.test.mjs",
     "test:review": "npm run build && node --test tests/expert-review-workflow.test.mjs",
-    "test:dataset": "npm run build && node --test tests/evaluation-dataset.test.mjs"
+    "test:dataset": "npm run build && node --test tests/evaluation-dataset.test.mjs",
+    "test:runtime": "npm run build && node --test tests/evaluation-runtime.test.mjs"
   },
   "engines": {
     "node": ">=18"

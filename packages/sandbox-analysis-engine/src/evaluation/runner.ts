@@ -41,7 +41,8 @@ export function createBenchmarkRunner(options: CreateBenchmarkRunnerOptions = {}
 
       const startedAt = clock.now();
       const caseResults = [];
-      for (const evaluationCase of [...dataset.cases].sort((left, right) => compareStrings(left.caseId, right.caseId))) {
+      const orderedCases = [...dataset.cases].sort((left, right) => compareStrings(left.caseId, right.caseId));
+      for (const evaluationCase of orderedCases) {
         try {
           const output = await subject.analyze(deepFreeze({
             caseId: evaluationCase.caseId,
@@ -67,6 +68,13 @@ export function createBenchmarkRunner(options: CreateBenchmarkRunnerOptions = {}
             errors: [error instanceof Error ? error.message : String(error)],
           }));
         }
+        const latest = caseResults[caseResults.length - 1];
+        await options.onCaseComplete?.({
+          caseId: latest.caseId,
+          status: latest.status,
+          processedCases: caseResults.length,
+          totalCases: orderedCases.length,
+        });
       }
       const value: ModelEvaluationRunV1 = deepFreeze({
         schemaVersion: SANDBOX_MODEL_EVALUATION_RUN_V1,

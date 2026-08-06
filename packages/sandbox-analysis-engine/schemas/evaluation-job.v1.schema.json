@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://psych-sandbox.local/schemas/evaluation-job.v1.schema.json",
+  "title": "Sandbox Evaluation Job v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "jobId", "idempotencyKey", "requestHash", "dataset", "model", "runSeed", "maxAttempts", "acceptance", "labels", "status", "attempt", "revision", "progress", "lease", "runId", "reportId", "error", "requestedAt", "startedAt", "completedAt", "cancellationRequestedAt"],
+  "properties": {
+    "schemaVersion": { "const": "sandbox.evaluation-job.v1" },
+    "jobId": { "type": "string", "minLength": 1 },
+    "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "requestHash": { "$ref": "#/$defs/hash" },
+    "dataset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["datasetId", "datasetVersion", "datasetHash", "caseCount"],
+      "properties": {
+        "datasetId": { "type": "string", "minLength": 1 },
+        "datasetVersion": { "type": "string", "minLength": 1 },
+        "datasetHash": { "$ref": "#/$defs/hash" },
+        "caseCount": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "model": { "$ref": "#/$defs/model" },
+    "runSeed": { "type": "string", "minLength": 1 },
+    "maxAttempts": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "acceptance": {
+      "type": "object", "additionalProperties": false, "required": ["minimumCompletionRate"],
+      "properties": { "minimumCompletionRate": { "type": "number", "minimum": 0, "maximum": 1 } }
+    },
+    "labels": { "type": "object", "maxProperties": 20, "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 128 } },
+    "status": { "enum": ["queued", "running", "cancelling", "succeeded", "failed", "cancelled"] },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "progress": {
+      "type": "object", "additionalProperties": false,
+      "required": ["totalCases", "processedCases", "completedCases", "failedCases"],
+      "properties": {
+        "totalCases": { "type": "integer", "minimum": 1 },
+        "processedCases": { "type": "integer", "minimum": 0 },
+        "completedCases": { "type": "integer", "minimum": 0 },
+        "failedCases": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "lease": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object", "additionalProperties": false, "required": ["ownerId", "expiresAt"], "properties": { "ownerId": { "type": "string", "minLength": 1 }, "expiresAt": { "type": "string", "format": "date-time" } } }
+      ]
+    },
+    "runId": { "type": ["string", "null"] },
+    "reportId": { "type": ["string", "null"] },
+    "error": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object", "additionalProperties": false, "required": ["code", "message", "retryable", "occurredAt"], "properties": {
+          "code": { "enum": ["RUNTIME_INPUT_INVALID", "SUBJECT_COMPLETION_BELOW_THRESHOLD", "EXECUTION_INTERRUPTED", "LEASE_LOST"] },
+          "message": { "type": "string", "minLength": 1 }, "retryable": { "type": "boolean" }, "occurredAt": { "type": "string", "format": "date-time" }
+        } }
+      ]
+    },
+    "requestedAt": { "type": "string", "format": "date-time" },
+    "startedAt": { "type": ["string", "null"], "format": "date-time" },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "cancellationRequestedAt": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "model", "modelVersion", "adapterVersion", "promptVersion", "knowledgeBaseVersion"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1 }, "model": { "type": "string", "minLength": 1 },
+        "modelVersion": { "type": "string", "minLength": 1 }, "adapterVersion": { "type": "string", "minLength": 1 },
+        "promptVersion": { "type": "string", "minLength": 1 }, "knowledgeBaseVersion": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

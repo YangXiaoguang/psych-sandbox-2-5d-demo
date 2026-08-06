@@ -60,12 +60,21 @@ check("Source groups cannot cross partitions", manifest.phase6Governance.groupEx
 check("Test partition remains blind during model execution", manifest.phase6Governance.testPartitionBlindUntilRun === true);
 check("Revocation overrides frozen datasets", manifest.phase6Governance.revocationOverridesFrozenDataset === true);
 check("Automated metrics do not score psychological truth", manifest.phase6Governance.automatedPsychologicalCorrectnessScore === false);
+check("Evaluation jobs are idempotent", manifest.phase7Runtime.idempotentJobSubmission === true);
+check("Evaluation jobs use optimistic concurrency", manifest.phase7Runtime.optimisticConcurrency === true);
+check("Worker leases expire and can be recovered", manifest.phase7Runtime.expiringWorkerLeases === true);
+check("Cancellation is cooperative", manifest.phase7Runtime.cooperativeCancellation === true);
+check("Runtime progress is an ordered event stream", manifest.phase7Runtime.orderedProgressEvents === true);
+check("Audit bundles exclude raw cases", manifest.phase7Runtime.auditBundleIncludesRawDatasetCases === false);
+check("Audit bundles exclude Gold analysis", manifest.phase7Runtime.auditBundleIncludesGoldAnalysis === false);
+check("Audit bundles exclude keys and identity", manifest.phase7Runtime.auditBundleIncludesApiKeys === false && manifest.phase7Runtime.auditBundleIncludesDirectIdentity === false);
 
 const requiredDocs = [
   "docs/sandbox-analysis-engine-charter.md",
   "docs/sandbox-analysis-engine-phase-4.md",
   "docs/sandbox-analysis-engine-phase-5.md",
   "docs/sandbox-analysis-engine-phase-6.md",
+  "docs/sandbox-analysis-engine-phase-7.md",
   "docs/sandbox-analysis-expert-rubric.md",
   "docs/sandbox-analysis-calibration-dataset.md",
 ];

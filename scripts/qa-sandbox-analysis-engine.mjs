@@ -15,7 +15,10 @@ import {
   SANDBOX_DATA_REVOCATION_V1,
   SANDBOX_DATASET_MANIFEST_V1,
   SANDBOX_EVALUATION_CASE_V1,
+  SANDBOX_EVALUATION_JOB_EVENT_V1,
+  SANDBOX_EVALUATION_JOB_V1,
   SANDBOX_EXPERT_REVIEW_V1,
+  SANDBOX_EXPERIMENT_AUDIT_BUNDLE_V1,
   SANDBOX_HYPOTHESIS_DRAFT_V1,
   SANDBOX_HYPOTHESIS_PROMPT_V1,
   SANDBOX_MODEL_EVALUATION_RUN_V1,
@@ -53,6 +56,9 @@ try {
   assert("Public contracts expose data revocation version", SANDBOX_DATA_REVOCATION_V1 === "sandbox.data-revocation.v1");
   assert("Public contracts expose model evaluation run version", SANDBOX_MODEL_EVALUATION_RUN_V1 === "sandbox.model-evaluation-run.v1");
   assert("Public contracts expose benchmark report version", SANDBOX_BENCHMARK_REPORT_V1 === "sandbox.benchmark-report.v1");
+  assert("Public contracts expose evaluation job version", SANDBOX_EVALUATION_JOB_V1 === "sandbox.evaluation-job.v1");
+  assert("Public contracts expose evaluation job event version", SANDBOX_EVALUATION_JOB_EVENT_V1 === "sandbox.evaluation-job-event.v1");
+  assert("Public contracts expose experiment audit bundle version", SANDBOX_EXPERIMENT_AUDIT_BUNDLE_V1 === "sandbox.experiment-audit-bundle.v1");
 
   const validation = engine.validateSnapshot(snapshot);
   assert("Current app Snapshot validates in standalone package", validation.ok, formatIssues(validation.issues));
@@ -192,6 +198,9 @@ async function assertSchemas() {
   const revocationSchema = JSON.parse(await readFile(path.join(schemaDirectory, "data-revocation.v1.schema.json"), "utf8"));
   const modelRunSchema = JSON.parse(await readFile(path.join(schemaDirectory, "model-evaluation-run.v1.schema.json"), "utf8"));
   const benchmarkSchema = JSON.parse(await readFile(path.join(schemaDirectory, "benchmark-report.v1.schema.json"), "utf8"));
+  const evaluationJobSchema = JSON.parse(await readFile(path.join(schemaDirectory, "evaluation-job.v1.schema.json"), "utf8"));
+  const evaluationJobEventSchema = JSON.parse(await readFile(path.join(schemaDirectory, "evaluation-job-event.v1.schema.json"), "utf8"));
+  const auditBundleSchema = JSON.parse(await readFile(path.join(schemaDirectory, "experiment-audit-bundle.v1.schema.json"), "utf8"));
 
   assert("Snapshot JSON Schema uses draft 2020-12", snapshotSchema.$schema === "https://json-schema.org/draft/2020-12/schema");
   assert("Snapshot JSON Schema locks current version", snapshotSchema.properties.schemaVersion.const === CURRENT_SANDBOX_SNAPSHOT_V1);
@@ -225,6 +234,12 @@ async function assertSchemas() {
   assert("Data revocation Schema binds deletion to Snapshot hash", revocationSchema.properties.snapshotHash.pattern === "^[a-f0-9]{64}$");
   assert("Model run Schema refuses an automated psychological truth score", modelRunSchema.$defs.metrics.properties.automatedPsychologicalCorrectness.const === null);
   assert("Benchmark Schema labels ranking as engineering-only", benchmarkSchema.properties.limitations.const.includes("ranking_uses_objective_engineering_metrics_only"));
+  assert("Evaluation job Schema locks runtime version", evaluationJobSchema.properties.schemaVersion.const === SANDBOX_EVALUATION_JOB_V1);
+  assert("Evaluation job Schema caps bounded attempts", evaluationJobSchema.properties.maxAttempts.maximum === 5);
+  assert("Evaluation job event Schema locks ordered sequence", evaluationJobEventSchema.properties.sequence.minimum === 1);
+  assert("Audit bundle Schema locks runtime version", auditBundleSchema.properties.schemaVersion.const === SANDBOX_EXPERIMENT_AUDIT_BUNDLE_V1);
+  assert("Audit bundle Schema excludes raw cases and Gold analysis", auditBundleSchema.properties.policy.properties.includesRawDatasetCases.const === false && auditBundleSchema.properties.policy.properties.includesGoldAnalysis.const === false);
+  assert("Audit bundle Schema excludes API keys and direct identity", auditBundleSchema.properties.policy.properties.includesApiKeys.const === false && auditBundleSchema.properties.policy.properties.includesDirectIdentity.const === false);
 }
 
 function hasIssue(issues, code) {

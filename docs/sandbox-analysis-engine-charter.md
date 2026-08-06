@@ -239,3 +239,20 @@ npm run qa:analysis-review
 ```bash
 npm run qa:analysis-dataset
 ```
+
+## 16. Phase 7 实现状态
+
+- 新增 `EvaluationJobOrchestrator`，提供幂等提交、执行、取消、重试、查询和有序事件流。
+- 任务使用乐观 `revision` 与原子任务/事件更新，避免并发 Worker 静默覆盖状态。
+- Worker 使用可过期租约；有效租约禁止重复执行，过期租约可由其他 Worker 恢复。
+- 每个案例完成后记录进度并续租；取消在当前模型请求结束后生效，不持久化不完整 Run。
+- 运行完成率低于任务阈值时形成可重试失败，重试次数受 `maxAttempts` 限制。
+- 审计包绑定冻结 Manifest、任务、事件、Run 和 Report，并以分量哈希与总包哈希检测篡改。
+- 审计包不包含原始案例、Gold 分析、API Key 和直接身份；恢复前必须完成全链路校验。
+- 内存仓库用于测试，生产队列、事务数据库、鉴权和密钥托管通过外围适配器实现。
+
+详细说明见 `docs/sandbox-analysis-engine-phase-7.md`：
+
+```bash
+npm run qa:analysis-runtime
+```
